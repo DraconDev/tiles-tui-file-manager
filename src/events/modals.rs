@@ -1156,7 +1156,7 @@ fn handle_input_modals_keys(
                             }
                         }
                     }
-                    AppMode::BulkRename { ref files, ref pattern, ref replacement, .. } => {
+                    AppMode::BulkRename { ref files, ref replacement, .. } => {
                         if !input.is_empty() {
                             let re = regex::Regex::new(&input);
                             if let Ok(re) = re {

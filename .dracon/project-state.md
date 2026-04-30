@@ -1,9 +1,8 @@
 # Project State
 
 ## Current Focus
-Simplify bulk rename modal UI by removing unused input field placeholders and streamlining preview line rendering
+Remove unused `pattern` field from BulkRename mode input handling to complete modal simplification
 
 ## Completed
-- [x] refactor(ui): remove unused "Find (regex):" and "Replace:" placeholder labels from bulk rename modal
-- [x] refactor(ui): consolidate preview line styling by collecting lines into a vector before rendering
-- [x] chore(deps): refresh Cargo.lock
+- [x] refactor(bulk-rename): remove unused `pattern` field from input handler destructuring
+- [x] deps: update Cargo.lock (dependency resolution)
