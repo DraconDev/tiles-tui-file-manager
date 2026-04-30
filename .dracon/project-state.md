@@ -1,9 +1,7 @@
 # Project State
 
 ## Current Focus
-Implement tree depth tracking for file tree visualization
+Refactor the tree sidebar to correctly use the indentation string instead of discarding it.
 
 ## Completed
-- [x] feat(tree): collect and store tree depth information for each file during recursive directory traversal
-- [x] feat(tree): pass tree_depths from blocking task to main application state via fs.tree_file_depths
-- [x] refactor(sidebar): mark unused indent_str variables with underscore prefix in sidebar rendering
+- [x] refactor(sidebar): replace unused `_indent_str` with `indent_str` to properly apply tree depth indentation.
