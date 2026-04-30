@@ -208,6 +208,14 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     }
                     return true;
                 }
+                KeyCode::Char('w') | KeyCode::Char('W') if has_control => {
+                    // Ctrl+W: Toggle tree mode in the main file listing
+                    if let Some(fs) = app.current_file_state_mut() {
+                        fs.tree_mode = !fs.tree_mode;
+                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                    }
+                    return true;
+                }
                 KeyCode::Left if has_alt => {
                     app.resize_sidebar(-2);
                     return true;

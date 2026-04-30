@@ -683,11 +683,7 @@ pub fn draw_tree_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
 
     let base_path = if let Some(pane) = app.panes.get(app.focused_pane_index) {
         if let Some(fs) = pane.current_state() {
-            if fs.current_path == PathBuf::from("/") || fs.current_path == *dirs::home_dir().unwrap_or(&PathBuf::from("/")) {
-                fs.current_path.clone()
-            } else {
-                fs.current_path.clone()
-            }
+            fs.current_path.clone()
         } else {
             dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"))
         }
