@@ -1054,7 +1054,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
-                let (files, mut metadata, g_files, g_meta) =
+                let (files, mut metadata, g_files, g_meta, tree_depths) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         let (mut files, mut metadata) = if let Some(session) = &list_remote {
@@ -1065,6 +1065,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         };
 
                         // Tree mode: recursively walk expanded folders
+                        let mut tree_depths: Vec<u16> = Vec::new();
                         if is_tree_mode {
                             let max_depth = 10;
                             let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
@@ -1111,7 +1112,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let (all_files, all_meta) = crate::modules::files::read_dir_recursive_meta(&tree_paths);
                             files = all_files;
                             metadata = all_meta;
-                            // Store depths in the app (will be applied after lock)
+                            tree_depths = tree_files.iter().map(|(_, d)| *d).collect();
                         }
 
                         let trimmed_filter = list_filter.trim();
@@ -1132,7 +1133,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         };
 
                         crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-                        (files, metadata, g_files, g_meta)
+                        (files, metadata, g_files, g_meta, tree_depths)
                     })
                     .await
                     .unwrap_or_else(|_| {
@@ -1141,6 +1142,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             std::collections::HashMap::new(),
                             Vec::new(),
                             std::collections::HashMap::new(),
+                            Vec::new(),
                         )
                     });
 
@@ -1154,6 +1156,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             // Only apply if the filter hasn't changed since we started
                             if fs.search_filter != current_filter {
                                 return;
+                            }
+
+                            // Apply tree depths if available
+                            if !tree_depths.is_empty() {
+                                fs.tree_file_depths = tree_depths;
                             }
 
                             // Filter hidden files if needed

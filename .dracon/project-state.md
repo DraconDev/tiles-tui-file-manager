@@ -1,7 +1,9 @@
 # Project State
 
 ## Current Focus
-Implement Enter key handling in tree mode to toggle folder expand/collapse instead of navigating
+Implement tree depth tracking for file tree visualization
 
 ## Completed
-- [x] feat(tree-mode): Add Enter key handler that toggles folder expansion/collapse when in tree mode, respecting the `tree_mode` flag and using `expanded_folders` set to track state
+- [x] feat(tree): collect and store tree depth information for each file during recursive directory traversal
+- [x] feat(tree): pass tree_depths from blocking task to main application state via fs.tree_file_depths
+- [x] refactor(sidebar): mark unused indent_str variables with underscore prefix in sidebar rendering

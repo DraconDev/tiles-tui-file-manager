@@ -639,8 +639,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         };
 
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
-        let indent_str = "  ".repeat(depth as usize);
-        let indent_str = "  ".repeat(depth as usize);
+        let _indent_str = "  ".repeat(depth as usize);
 
         let open_indicator = if !is_dir && open_files.contains(&path) {
             Some(Span::styled(
@@ -775,7 +774,7 @@ pub fn draw_tree_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         };
 
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
-        let indent_str = "  ".repeat(depth as usize);
+        let _indent_str = "  ".repeat(depth as usize);
 
         let open_indicator = if !is_dir && open_files.contains(&path) {
             Some(Span::styled(
