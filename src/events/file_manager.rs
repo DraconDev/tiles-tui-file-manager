@@ -538,9 +538,46 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     return true;
                 }
 
+                KeyCode::Char('r') | KeyCode::Char('R') if has_control => {
+                    // Ctrl+R: run the currently selected file
+                    if let Some(fs) = app.current_file_state() {
+                        if let Some(idx) = fs.selection.selected {
+                            if let Some(path) = fs.files.get(idx) {
+                                if !path.is_dir() {
+                                    if let Some((work_dir, program, args)) =
+                                        crate::modules::files::get_run_command(path)
+                                    {
+                                        let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                                            path: work_dir,
+                                            new_tab: true,
+                                            remote: fs.remote_session.clone(),
+                                            command: Some(format!("{} {}", program, args.join(" "))),
+                                        });
+                                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                            "Running: {} {}",
+                                            program,
+                                            args.join(" ")
+                                        )));
+                                    } else {
+                                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                            "No run command for: {}",
+                                            path.extension()
+                                                .and_then(|e| e.to_str())
+                                                .map(|e| format!(".{e}"))
+                                                .unwrap_or_else(|| "unknown".to_string())
+                                        )));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+
                 KeyCode::Enter => {
                     if key.modifiers.contains(KeyModifiers::CONTROL) {
-                        // Ctrl+Enter: run the currently selected file
+                        // Ctrl+Enter (Kitty/modifyOtherKeys): run the currently selected file
+                        // NOTE: Only works in terminals with Kitty keyboard protocol or modifyOtherKeys enabled
                         if let Some(fs) = app.current_file_state() {
                             if let Some(idx) = fs.selection.selected {
                                 if let Some(path) = fs.files.get(idx) {

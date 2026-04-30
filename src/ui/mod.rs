@@ -249,7 +249,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     Span::styled("^S ", Style::default().fg(Color::DarkGray)),
                     Span::styled("Save", Style::default().fg(crate::ui::theme::accent_secondary())),
                     Span::raw("  "),
-                    Span::styled("^↵ ", Style::default().fg(Color::DarkGray)),
+                    Span::styled("^R ", Style::default().fg(Color::DarkGray)),
                     Span::styled("Run", Style::default().fg(crate::ui::theme::accent_secondary())),
                 ]);
                 f.render_widget(Paragraph::new(footer_line).alignment(Alignment::Left), footer_area);
@@ -855,7 +855,7 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
             vec![
                 ("Arrows", "Navigate"),
                 ("Enter", "Open Folder / Launch"),
-                ("Ctrl + Enter", "Run File"),
+                ("Ctrl + R", "Run File"),
                 ("Space", "Editor"),
                 ("Ctrl + I", "Information"),
                 ("Backspace", "Go Up Directory"),
@@ -2935,7 +2935,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                 crate::ui::theme::accent_secondary(),
             ));
             shortcuts.extend(HotkeyHint::render(
-                "^↵",
+                "^R",
                 "Run",
                 crate::ui::theme::accent_secondary(),
             ));
@@ -3923,7 +3923,7 @@ fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
                 ("Ctrl + v", "Paste Selected"),
                 ("Ctrl + a", "Select All"),
                 ("F2", "Rename Selected"),
-                ("Ctrl + Enter", "Run Selected File"),
+                ("Ctrl + R", "Run Selected File"),
                 ("Delete", "Delete to Trash"),
                 ("Alt + Enter", "Show Properties"),
             ],

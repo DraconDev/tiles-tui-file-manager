@@ -160,8 +160,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             return true;
         }
 
-        // Ctrl+Enter: run the current file
-        if has_control && key.code == KeyCode::Enter {
+        // Ctrl+R: run the current file
+        if has_control && (key.code == KeyCode::Char('r') || key.code == KeyCode::Char('R')) {
             let mut did_handle = false;
             if let Some(pane) = app.panes.get(pane_idx) {
                 if let Some(fs) = pane.current_state() {
