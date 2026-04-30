@@ -855,13 +855,14 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
             vec![
                 ("Arrows", "Navigate"),
                 ("Enter", "Open Folder / Launch"),
+                ("Ctrl + Enter", "Run File"),
                 ("Space", "Editor"),
                 ("Ctrl + I", "Information"),
                 ("Backspace", "Go Up Directory"),
                 ("Home / ~", "Go Home"),
                 ("Alt + Left/Right", "Resize Sidebar"),
                 ("F2", "Rename File"),
-                ("Delete", "Delete File"),
+                ("Delete", "Delete to Trash"),
             ],
         ),
         (
@@ -2931,6 +2932,11 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             shortcuts.extend(HotkeyHint::render(
                 "^K",
                 "TermWin",
+                crate::ui::theme::accent_secondary(),
+            ));
+            shortcuts.extend(HotkeyHint::render(
+                "^↵",
+                "Run",
                 crate::ui::theme::accent_secondary(),
             ));
             shortcuts.extend(HotkeyHint::render(
