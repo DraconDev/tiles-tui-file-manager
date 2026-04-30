@@ -1026,7 +1026,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
         // Handle Refreshes
         for pane_idx in panes_needing_refresh.drain() {
-            let (path, remote, current_filter, git_view) = {
+            let (path, remote, current_filter, git_view, tree_mode, tree_expanded) = {
                 let app_guard = app.lock();
                 if let Some(pane) = app_guard.panes.get(pane_idx) {
                     if let Some(fs) = pane.current_state() {
@@ -1035,6 +1035,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session.clone(),
                             fs.search_filter.clone(),
                             matches!(app_guard.current_view, CurrentView::Git | CurrentView::Commit),
+                            fs.tree_mode,
+                            app_guard.expanded_folders.clone(),
                         )
                     } else {
                         continue;
@@ -1046,6 +1048,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
             let tx = event_tx.clone();
             let app_clone = app.clone();
+            let is_tree_mode = tree_mode;
+            let expanded_folders = tree_expanded;
             tokio::spawn(async move {
                 let list_path = path.clone();
                 let list_remote = remote.clone();
@@ -1053,12 +1057,59 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 let (files, mut metadata, g_files, g_meta) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
-                        let (files, metadata) = if let Some(session) = &list_remote {
+                        let (mut files, metadata) = if let Some(session) = &list_remote {
                             crate::modules::remote::read_dir_with_metadata(session, &list_path)
                                 .unwrap_or_else(|_| (Vec::new(), std::collections::HashMap::new()))
                         } else {
                             crate::modules::files::read_dir_with_metadata(&list_path)
                         };
+
+                        // Tree mode: recursively walk expanded folders
+                        if is_tree_mode {
+                            let max_depth = 10;
+                            let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
+                            fn walk_tree(
+                                path: &std::path::Path,
+                                depth: u16,
+                                max_depth: u16,
+                                expanded: &std::collections::HashSet<PathBuf>,
+                                hidden: bool,
+                                tree_files: &mut Vec<(PathBuf, u16)>,
+                            ) {
+                                if depth >= max_depth {
+                                    return;
+                                }
+                                let Ok(entries) = std::fs::read_dir(path) else { return };
+                                let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+                                sorted.sort_by(|a, b| {
+                                    let a_is_dir = a.path().is_dir();
+                                    let b_is_dir = b.path().is_dir();
+                                    if a_is_dir != b_is_dir {
+                                        return if a_is_dir {
+                                            std::cmp::Ordering::Less
+                                        } else {
+                                            std::cmp::Ordering::Greater
+                                        };
+                                    }
+                                    a.file_name().cmp(&b.file_name())
+                                });
+                                for entry in sorted {
+                                    let p = entry.path();
+                                    let name = p.file_name().unwrap_or_default().to_string_lossy();
+                                    if !hidden && name.starts_with('.') {
+                                        continue;
+                                    }
+                                    tree_files.push((p.clone(), depth));
+                                    if p.is_dir() && expanded.contains(&p) {
+                                        walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
+                                    }
+                                }
+                            }
+                            walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
+                            // Replace flat files with tree-structured files
+                            // Keep metadata for existing paths
+                            files = tree_files.into_iter().map(|(p, _)| p).collect();
+                        }
 
                         let trimmed_filter = list_filter.trim();
                         let (g_files, g_meta) = if trimmed_filter.len() > 3 {
