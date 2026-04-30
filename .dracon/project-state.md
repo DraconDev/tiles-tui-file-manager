@@ -1,7 +1,7 @@
 # Project State
 
 ## Current Focus
-Regenerate `Cargo.lock` to reflect resolved dependency versions without altering source code.
+Add note.md outlining missing git branch display bug and todo list
 
 ## Completed
-- [x] chore(docs): refresh `Cargo.lock` binary to ensure lockfile consistency.
+- [x] Added note.md documenting the omission of git branch display in both file view and editor, and created a corresponding todo list.
