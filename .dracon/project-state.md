@@ -1,9 +1,9 @@
 # Project State
 
 ## Current Focus
-Add Ctrl+Enter run file shortcut, update delete hotkey description to "Delete to Trash", add run shortcut hint to UI footer
+Enhanced UI shortcuts: Added new options for running selected files and updated delete hotkey description.
 
 ## Completed
-- [x] Add "Ctrl + Enter" shortcut entry to the hotkeys help modal for running files
-- [x] Update "Delete" hotkey description in help modal from "Delete File" to "Delete to Trash"
-- [x] Render "Ctrl + Enter" (displayed as "^↵") "Run" shortcut hint in the application footer
+- [x] feat(add ctrl+enter): Introduced Ctrl+Enter shortcut to run selected files, important for quick execution tasks.
+- [x] feat(add bulk): Updated "Delete" hotkey description to "Delete to Trash", aligning with updated functionality in the bulk rename feature.
+(Note: The addition of "Delete to Trash" is implied from the change in the "Delete" hotkey description and the context of the bulk rename modal enhancement.)
