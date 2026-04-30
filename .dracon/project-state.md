@@ -1,8 +1,7 @@
 # Project State
 
 ## Current Focus
-Remove unused `pattern` field from BulkRename mode input handling to complete modal simplification
+This file was modified to adjust dependencies.
 
 ## Completed
-- [x] refactor(bulk-rename): remove unused `pattern` field from input handler destructuring
-- [x] deps: update Cargo.lock (dependency resolution)
+- [x] Updated Cargo.lock configuration.
