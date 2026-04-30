@@ -1337,6 +1337,27 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
         return;
     }
 
+    // Tree mode: Enter on folder toggles expand/collapse instead of navigating
+    if let Some(fs) = app.current_file_state() {
+        if fs.tree_mode {
+            if let Some(idx) = fs.selection.selected {
+                if let Some(path) = fs.files.get(idx) {
+                    if path.is_dir() {
+                        let path_ref = path.clone();
+                        let was_expanded = app.expanded_folders.contains(&path_ref);
+                        if was_expanded {
+                            app.expanded_folders.remove(&path_ref);
+                        } else {
+                            app.expanded_folders.insert(path.clone());
+                        }
+                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
     let mut navigate_to = None;
     if let Some(fs) = app.current_file_state() {
         if let Some(idx) = fs.selection.selected {

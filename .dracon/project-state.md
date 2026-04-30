@@ -1,10 +1,7 @@
 # Project State
 
 ## Current Focus
-Implement tree‑mode visual cues (indentation and expand/collapse markers) and adjust layout calculations accordingly.
+Implement Enter key handling in tree mode to toggle folder expand/collapse instead of navigating
 
 ## Completed
-- [x] Make `metadata` mutable in main.rs when reading remote directory to allow future modifications.
-- [x] Add tree‑mode indentation and expand/collapse markers in file list rendering.
-- [x] Adjust available width calculation to account for marker width in tree mode.
-- [x] Update display formatting to prepend depth marker when in tree mode.
+- [x] feat(tree-mode): Add Enter key handler that toggles folder expansion/collapse when in tree mode, respecting the `tree_mode` flag and using `expanded_folders` set to track state
