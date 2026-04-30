@@ -1,7 +1,7 @@
 # Project State
 
 ## Current Focus
-Refactor the tree sidebar to correctly use the indentation string instead of discarding it.
+Enable indentation string usage in tree sidebar rendering by removing unused variable prefix.
 
 ## Completed
-- [x] refactor(sidebar): replace unused `_indent_str` with `indent_str` to properly apply tree depth indentation.
+- [x] refactor(sidebar): use computed indentation string in tree view instead of discarding it
