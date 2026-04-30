@@ -396,6 +396,11 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         }
                         return true;
                     }
+                    if app.sidebar_focus && !has_alt {
+                        // Navigate sidebar items with Up/Down
+                        app.sidebar_move_up();
+                        return true;
+                    }
                     app.move_up(shift);
                     return true;
                 }
@@ -423,6 +428,12 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                 }
                             }
                         }
+                        return true;
+                    }
+                    if app.sidebar_focus && !has_alt {
+                        // Navigate sidebar items with Up/Down
+                        let max_items = app.sidebar_bounds.len();
+                        app.sidebar_move_down(max_items);
                         return true;
                     }
                     app.move_down(shift);

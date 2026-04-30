@@ -75,6 +75,7 @@ pub struct App {
     pub tab_bounds: Vec<(ratatui::layout::Rect, usize, usize)>,
     pub hovered_header_icon: Option<String>,
     pub expanded_folders: HashSet<PathBuf>,
+    pub tree_expanded_folders: HashSet<PathBuf>,
     pub mouse_last_click: std::time::Instant,
     pub mouse_click_pos: (u16, u16),
     pub mouse_click_count: usize,
@@ -225,6 +226,7 @@ impl App {
             tab_bounds: Vec::new(),
             hovered_header_icon: None,
             expanded_folders: HashSet::new(),
+            tree_expanded_folders: HashSet::new(),
             mouse_last_click: std::time::Instant::now(),
             mouse_click_pos: (0, 0),
             mouse_click_count: 0,
@@ -430,6 +432,18 @@ impl App {
                     }
                 }
             }
+        }
+    }
+
+    pub fn sidebar_move_up(&mut self) {
+        if self.sidebar_index > 0 {
+            self.sidebar_index -= 1;
+        }
+    }
+
+    pub fn sidebar_move_down(&mut self, max: usize) {
+        if self.sidebar_index < max.saturating_sub(1) {
+            self.sidebar_index += 1;
         }
     }
 
