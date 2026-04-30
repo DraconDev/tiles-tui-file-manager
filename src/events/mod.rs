@@ -1,6 +1,7 @@
 use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, DropTarget, SidebarTarget,
 };
+use crate::state::SidebarScope;
 use dracon_terminal_engine::contracts::{
     InputEvent as Event, KeyCode, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
@@ -104,7 +105,6 @@ pub fn handle_event(
                     }
                     KeyCode::Char('b') | KeyCode::Char('B') => {
                         if key.modifiers.contains(KeyModifiers::CONTROL) && app.show_sidebar {
-                            use crate::state::SidebarScope;
                             app.sidebar_scope = match app.sidebar_scope {
                                 SidebarScope::All => SidebarScope::Favorites,
                                 SidebarScope::Favorites => SidebarScope::Remotes,
