@@ -1057,7 +1057,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 let (files, mut metadata, g_files, g_meta) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
-                        let (mut files, metadata) = if let Some(session) = &list_remote {
+                        let (mut files, mut metadata) = if let Some(session) = &list_remote {
                             crate::modules::remote::read_dir_with_metadata(session, &list_path)
                                 .unwrap_or_else(|_| (Vec::new(), std::collections::HashMap::new()))
                         } else {

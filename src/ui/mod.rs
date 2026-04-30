@@ -2632,12 +2632,30 @@ fn draw_file_view(
                                     .fg(Color::Yellow)
                                     .add_modifier(Modifier::BOLD);
                                 "> Global results".to_string()
-                            } else {
-                                let name =
+} else {
+                                    let name =
                                     path.file_name().and_then(|n| n.to_str()).unwrap_or("..");
                                 let is_dir = metadata.map(|m| m.is_dir).unwrap_or(false);
                                 let cat = crate::modules::files::get_file_category(path);
                                 let icon_str = Icon::get_for_path(path, cat, is_dir, app.icon_mode);
+
+                                // Tree mode: get depth and expand/collapse marker
+                                let (depth_indent, expand_marker) = if file_state.tree_mode {
+                                    let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
+                                    let indent = "  ".repeat(depth);
+                                    let marker = if is_dir {
+                                        if app.expanded_folders.contains(path) {
+                                            "▾ "
+                                        } else {
+                                            "▸ "
+                                        }
+                                    } else {
+                                        "  "
+                                    };
+                                    (format!("{}{}", indent, marker), true)
+                                } else {
+                                    (String::new(), false)
+                                };
 
                                 let mut suffix = String::new();
                                 if app.starred.contains(path) {
@@ -2657,9 +2675,10 @@ fn draw_file_view(
                                     }
                                 }
                                 let icon_w = icon_str.chars().map(get_visual_width).sum::<usize>();
-                                // Super-Aggressive Hard-Cut: reservers generous safety for icons/status
+                                let marker_w = if expand_marker { 2 } else { 0 }; // ▾ or ▸ is 2 chars
+                                // Super-Aggressive Hard-Cut: reserves generous safety for icons/status
                                 let available_width =
-                                    (col_rect.width as usize).saturating_sub(icon_w + 12);
+                                    (col_rect.width as usize).saturating_sub(icon_w + marker_w + 12);
 
                                 let display_name = if file_idx > file_state.local_count {
                                     let full_str = path.to_string_lossy();
@@ -2678,7 +2697,11 @@ fn draw_file_view(
 
                                 let truncated_name =
                                     truncate_to_width(&display_name, available_width, "..");
-                                format!(" {} {}{}", icon_str, truncated_name, suffix)
+                                if depth_indent.is_empty() {
+                                    format!(" {} {}{}", icon_str, truncated_name, suffix)
+                                } else {
+                                    format!("{}{} {}{}", depth_indent, icon_str, truncated_name, suffix)
+                                }
                             }
                         }
                         FileColumn::Size => {
