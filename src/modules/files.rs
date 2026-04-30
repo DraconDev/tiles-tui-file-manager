@@ -68,6 +68,36 @@ pub fn read_dir_with_metadata(path: &Path) -> (Vec<PathBuf>, HashMap<PathBuf, Fi
     (files, metadata)
 }
 
+pub fn read_dir_recursive_meta(paths: &[PathBuf]) -> (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) {
+    let mut files = Vec::new();
+    let mut metadata = HashMap::new();
+    for path in paths {
+        let p = path.clone();
+        let symlink_meta = std::fs::symlink_metadata(&p).ok();
+        let target_meta = std::fs::metadata(&p).ok();
+        let meta = target_meta.as_ref().or(symlink_meta.as_ref());
+        files.push(p.clone());
+        if let Some(m) = meta {
+            let is_dir = target_meta
+                .as_ref()
+                .map(|tm| tm.is_dir())
+                .or_else(|| symlink_meta.as_ref().map(|sm| sm.file_type().is_dir()))
+                .unwrap_or(false);
+            metadata.insert(
+                p,
+                FileMetadata {
+                    size: m.len(),
+                    modified: m.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+                    created: m.created().unwrap_or(SystemTime::UNIX_EPOCH),
+                    permissions: permissions_bits(m),
+                    is_dir,
+                },
+            );
+        }
+    }
+    (files, metadata)
+}
+
 fn permissions_bits(meta: &std::fs::Metadata) -> u32 {
     #[cfg(unix)]
     {

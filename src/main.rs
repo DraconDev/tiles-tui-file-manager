@@ -1106,9 +1106,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 }
                             }
                             walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
-                            // Replace flat files with tree-structured files
-                            // Keep metadata for existing paths
-                            files = tree_files.into_iter().map(|(p, _)| p).collect();
+                            // Collect metadata for all tree items
+                            let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
+                            let (all_files, all_meta) = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                            files = all_files;
+                            metadata = all_meta;
+                            // Store depths in the app (will be applied after lock)
                         }
 
                         let trimmed_filter = list_filter.trim();

@@ -1,9 +1,8 @@
 # Project State
 
 ## Current Focus
-Implement recursive directory listing for tree mode, respecting expanded folders and limiting depth.
+Recursively gather file metadata in tree mode and preserve it for display.
 
 ## Completed
-- [x] Add tree mode toggle handling when refreshing panes, passing `tree_mode` and `tree_expanded` info.
-- [x] Implement recursive walk inside `run_tty` to collect files for tree mode, up to a maximum depth of 10, and skip hidden files.
-- [x] Replace flat file list with tree‑structured list when tree mode is active, preserving metadata for existing paths.
+- [x] Add `read_dir_recursive_meta` in `files.rs` to recursively collect `PathBuf` list and associated `FileMetadata` for given paths, handling symlinks and directories.
+- [x] Update `main.rs` to use the new recursive metadata function when building the file tree, storing both file paths and their metadata for UI rendering.
