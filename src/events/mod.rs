@@ -503,23 +503,38 @@ fn handle_sidebar_mouse(
                         }
                         SidebarTarget::Project(path) => {
                             if path.is_dir() {
-                                // Toggle folder expansion
                                 let path_ref = path.clone();
-                                let was_expanded = app.expanded_folders.contains(&path_ref);
-                                if was_expanded {
-                                    app.expanded_folders.remove(&path_ref);
+                                let is_tree_mode = matches!(app.sidebar_scope, SidebarScope::Tree);
+                                let expanded_set = if is_tree_mode {
+                                    &app.tree_expanded_folders
                                 } else {
-                                    app.expanded_folders.insert(path.clone());
-                                    // Only navigate and refresh when expanding
-                                    if let Some(fs) = app.current_file_state_mut() {
-                                        fs.current_path = path.clone();
-                                        fs.selection.selected = Some(0);
-                                        fs.selection.anchor = Some(0);
-                                        fs.selection.clear_multi();
-                                        crate::event_helpers::push_history(fs, path.clone());
-                                        let _ = event_tx.try_send(AppEvent::RefreshFiles(
-                                            app.focused_pane_index,
-                                        ));
+                                    &app.expanded_folders
+                                };
+                                let was_expanded = expanded_set.contains(&path_ref);
+                                if was_expanded {
+                                    if is_tree_mode {
+                                        app.tree_expanded_folders.remove(&path_ref);
+                                    } else {
+                                        app.expanded_folders.remove(&path_ref);
+                                    }
+                                } else {
+                                    if is_tree_mode {
+                                        app.tree_expanded_folders.insert(path.clone());
+                                    } else {
+                                        app.expanded_folders.insert(path.clone());
+                                    }
+                                    // Only navigate to folder when expanding, not in tree sidebar mode
+                                    if !is_tree_mode {
+                                        if let Some(fs) = app.current_file_state_mut() {
+                                            fs.current_path = path.clone();
+                                            fs.selection.selected = Some(0);
+                                            fs.selection.anchor = Some(0);
+                                            fs.selection.clear_multi();
+                                            crate::event_helpers::push_history(fs, path.clone());
+                                            let _ = event_tx.try_send(AppEvent::RefreshFiles(
+                                                app.focused_pane_index,
+                                            ));
+                                        }
                                     }
                                 }
                                 app.sidebar_focus = false;
