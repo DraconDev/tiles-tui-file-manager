@@ -1,8 +1,7 @@
 # Project State
 
 ## Current Focus
-Recursively gather file metadata in tree mode and preserve it for display.
+docs(chore): regenerate Cargo.lock to reflect resolved dependency versions
 
 ## Completed
-- [x] Add `read_dir_recursive_meta` in `files.rs` to recursively collect `PathBuf` list and associated `FileMetadata` for given paths, handling symlinks and directories.
-- [x] Update `main.rs` to use the new recursive metadata function when building the file tree, storing both file paths and their metadata for UI rendering.
+- [x] docs(chore): regenerated Cargo.lock to match current dependency resolution
