@@ -1,25 +1,22 @@
 # Project State
 
 ## Current Focus
-Enhanced debug logging for directory tree marker hit detection in file manager
+Improved directory tree marker hit detection in file manager with enhanced debug logging
 
 ## Context
-The change improves debugging capabilities for the file manager's directory tree interactions by:
-1. Simplifying the marker hit detection logic
-2. Providing more detailed debug information about the hit detection process
-3. Making the debug output more consistent between directory and file cases
+The changes refactor the directory tree marker handling to better account for pane area positioning, while adding comprehensive debug logging to track marker hit detection accuracy.
 
 ## Completed
-- [x] Refactored directory tree marker hit detection logic to be more concise
-- [x] Enhanced debug output to include all relevant marker detection parameters
-- [x] Standardized debug message format for both directory and file cases
+- [x] Refactored directory tree marker position calculation to handle both absolute and relative coordinates
+- [x] Enhanced debug logging with detailed marker hit detection information
+- [x] Updated Cargo.lock to resolve dependency versions
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] No active work in progress beyond these changes
 
 ## Blockers
-- None identified
+- The `dracon-files` dependency manifest loading failure (blocking slice execution)
 
 ## Next Steps
-1. Verify the enhanced debug output provides sufficient information for troubleshooting
-2. Consider whether additional debug logging is needed for other file manager interactions
+1. Resolve the `dracon-files` dependency issue to unblock the planning phase
+2. Verify the improved marker hit detection works correctly with various pane configurations
