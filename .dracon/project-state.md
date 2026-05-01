@@ -1,7 +1,8 @@
 # Project State
 
 ## Current Focus
-Removed debug logging from the file view rendering to streamline the output and improve performance.
+Refactored pane column calculation in file manager to improve mouse interaction handling. The variable `cp` (current pane) was renamed to `_cp` to indicate it's intentionally unused, suggesting this logic may be replaced or refactored further.
 
 ## Completed
-- [x] Removed `debug_tree` logging from `draw_file_view` to eliminate unnecessary diagnostic output
+- [x] Refactored pane column calculation in file manager to improve mouse interaction handling
+```

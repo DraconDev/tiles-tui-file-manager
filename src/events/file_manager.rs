@@ -826,7 +826,7 @@ pub fn handle_file_mouse(
     let (w, _h) = app.terminal_size;
     let sw = app.sidebar_width();
     let pc = app.panes.len();
-    let cp = if column >= sw && pc > 0 {
+    let _cp = if column >= sw && pc > 0 {
         let cw = w.saturating_sub(sw);
         let pw = cw / pc as u16;
         if pw == 0 { 0 } else { (column.saturating_sub(sw) / pw) as usize }
