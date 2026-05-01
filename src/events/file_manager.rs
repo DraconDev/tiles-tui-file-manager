@@ -983,8 +983,11 @@ pub fn handle_file_mouse(
                         sp = Some(p);
 
                         // Check if click was on expand/collapse marker
+                        eprintln!("[CLICK] column={} row={} marker_count={}", column, row, fs.tree_marker_bounds.len());
                         for (marker_rect, marker_idx) in &fs.tree_marker_bounds {
+                            eprintln!("[CLICK] checking rect={:?} idx={}", marker_rect, marker_idx);
                             if marker_rect.contains(ratatui::layout::Position { x: column, y: row }) {
+                                eprintln!("[CLICK] MATCH! idx={}", marker_idx);
                                 if *marker_idx < fs.files.len() {
                                     let folder_path = fs.files[*marker_idx].clone();
                                     let was_expanded = app.expanded_folders.contains(&folder_path);

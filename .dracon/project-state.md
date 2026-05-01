@@ -1,5 +1,10 @@
-# Project State## Current Focus
-Resolved dependency version conflicts by regenerating Cargo.lock, fixing manifest loading issues for dependency `dracon-files`
+# Project State
+
+## Current Focus
+Added debug `eprintln!` logging to trace the handling of tree‑marker clicks and rendering of file view:
+- In `src/events/file_manager.rs`, instrumented the click handler to log column, row, marker count, iterate over `tree_marker_bounds`, and report when a click matches a marker rectangle.
+- In `src/ui/mod.rs`, added a debug log for the marker rectangle, its directory status, and the file name before pushing it to `tree_marker_bounds`.
 
 ## Completed
-- [x] Resolved failed manifest loading for `dracon-files` dependency by updating Cargo.lock with correct version constraints
+- [x] Instrumented click handling for tree markers with debug logging of bounding rectangles, indices, and detection matches in `src/events/file_manager.rs`.
+- [x] Added debug logging in `src/ui/mod.rs` rendering to print marker rectangle, directory flag, and file name during drawing.
