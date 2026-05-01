@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Added debug logging for directory tree marker hit detection in file manager
 
 ## Context
-The Cargo.lock file was modified to update dependency versions, likely triggered by recent refactoring work in the directory tree handling and file manager components.
+Improved hit detection for folder expand/collapse markers by adding debug logging to track click coordinates and hit detection logic
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Added debug logging for folder click detection showing column position, marker bounds, and hit status
+- [x] Enhanced visibility of folder interaction debugging with timestamped messages
 
 ## In Progress
-- [x] Dependency resolution process
+- [ ] None (debug logging is complete)
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` (blocking slice `synth-1774826981`)
+- None (debug logging is functional)
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Verify all dependencies are properly resolved and project builds successfully
+1. Verify debug messages provide sufficient information for troubleshooting
+2. Consider whether to keep debug logging in production or make it configurable
