@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved directory tree marker hit detection in file manager
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The previous implementation had inconsistent hit detection for directory tree expand/collapse markers due to hardcoded column assumptions. This change makes the detection more robust by using explicit column lookup and adjusting the hit area buffer.
+The Cargo.lock file was modified to update dependency versions after several refactoring changes in the directory tree and file manager components. This ensures consistent dependency resolution across the project.
 
 ## Completed
-- [x] Refactored marker hit detection to use explicit `FileColumn::Name` lookup
-- [x] Increased hit area buffer from 1 to 2 columns for better usability
-- [x] Added depth-based marker positioning that accounts for indentation
+- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## In Progress
 - [ ] No active work in progress
 
 ## Blockers
-- None identified
+- The slice `synth-1774826981` is blocked due to a failed manifest load for dependency `dracon-files`
 
 ## Next Steps
-1. Verify the new hit detection works across different terminal sizes
-2. Consider adding visual feedback for hit detection during development
+1. Investigate and resolve the manifest loading issue for `dracon-files`
+2. Continue with the planned refactoring of directory tree marker hit detection
+```
