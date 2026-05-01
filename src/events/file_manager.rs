@@ -981,6 +981,23 @@ pub fn handle_file_mouse(
                         let p = fs.files[idx].clone();
                         is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                         sp = Some(p);
+
+                        // Check if click was on expand/collapse marker
+                        for (marker_rect, marker_idx) in &fs.tree_marker_bounds {
+                            if marker_rect.contains(ratatui::layout::Position { x: column, y: row }) {
+                                if *marker_idx < fs.files.len() {
+                                    let folder_path = fs.files[*marker_idx].clone();
+                                    let was_expanded = app.expanded_folders.contains(&folder_path);
+                                    if was_expanded {
+                                        app.expanded_folders.remove(&folder_path);
+                                    } else {
+                                        app.expanded_folders.insert(folder_path.clone());
+                                    }
+                                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                }
+                                return true;
+                            }
+                        }
                     } else if button == MouseButton::Left && !has_mods {
                         fs.selection.clear();
                         fs.table_state.select(None);

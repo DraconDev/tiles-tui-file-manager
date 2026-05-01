@@ -2564,6 +2564,7 @@ fn draw_file_view(
         // 2. Render Rows
         let offset_val = file_state.table_state.offset();
         let total_files = file_state.files.len();
+        file_state.tree_marker_bounds.clear();
         for i in 0..visible_height {
             let file_idx = offset_val + i;
             if file_idx >= total_files {
@@ -2635,71 +2636,80 @@ fn draw_file_view(
 } else {
                                     let name =
                                     path.file_name().and_then(|n| n.to_str()).unwrap_or("..");
-                                let is_dir = metadata.map(|m| m.is_dir).unwrap_or(false);
-                                let cat = crate::modules::files::get_file_category(path);
-                                let icon_str = Icon::get_for_path(path, cat, is_dir, app.icon_mode);
+                                    let is_dir = metadata.map(|m| m.is_dir).unwrap_or(false);
+                                    let cat = crate::modules::files::get_file_category(path);
+                                    let icon_str = Icon::get_for_path(path, cat, is_dir, app.icon_mode);
 
-                                // Dolphin-style inline tree: always show depth indent + expand marker for folders
-                                let (depth_indent, expand_marker) = {
                                     let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
                                     let indent = "  ".repeat(depth);
+                                    let is_expanded = is_dir && app.expanded_folders.contains(path);
                                     let marker = if is_dir {
-                                        if app.expanded_folders.contains(path) {
-                                            "▾ "
+                                        if is_expanded { "▾ " } else { "▸ " }
+                                    } else {
+                                        ""
+                                    };
+                                    let (depth_indent, expand_marker, is_dir_marker) = (
+                                        format!("{}{}", indent, marker),
+                                        is_dir && !marker.is_empty(),
+                                        is_expanded,
+                                    );
+
+                                    let mut suffix = String::new();
+                                    if app.starred.contains(path) {
+                                        suffix.push_str(" [*]");
+                                    }
+                                    if !is_selected
+                                        && !is_multi_selected
+                                        && !app.path_colors.contains_key(path)
+                                        && !is_hovered_drop
+                                        && app.semantic_coloring
+                                    {
+                                        if is_dir {
+                                            cell_style =
+                                                cell_style.fg(crate::ui::theme::accent_secondary());
                                         } else {
-                                            "▸ "
+                                            cell_style = cell_style.fg(cat.cyber_color());
+                                        }
+                                    }
+                                    let icon_w = icon_str.chars().map(get_visual_width).sum::<usize>();
+                                    let marker_w = if expand_marker { 2 } else { 0 };
+                                    let available_width =
+                                        (col_rect.width as usize).saturating_sub(icon_w + marker_w + 12);
+
+                                    let display_name = if file_idx > file_state.local_count {
+                                        let full_str = path.to_string_lossy();
+                                        let home = dirs::home_dir()
+                                            .map(|p| p.to_string_lossy().to_string())
+                                            .unwrap_or_else(|| "/root".to_string());
+                                        if full_str.starts_with(&home) {
+                                            full_str.replacen(&home, "~", 1)
+                                        } else {
+                                            full_str.to_string()
                                         }
                                     } else {
-                                        "  "
+                                        name.to_string()
                                     };
-                                    (format!("{}{}", indent, marker), true)
-                                };
+                                    let display_name = squarify(&display_name);
 
-                                let mut suffix = String::new();
-                                if app.starred.contains(path) {
-                                    suffix.push_str(" [*]");
-                                }
-                                if !is_selected
-                                    && !is_multi_selected
-                                    && !app.path_colors.contains_key(path)
-                                    && !is_hovered_drop
-                                    && app.semantic_coloring
-                                {
-                                    if is_dir {
-                                        cell_style =
-                                            cell_style.fg(crate::ui::theme::accent_secondary());
+                                    let truncated_name =
+                                        truncate_to_width(&display_name, available_width, "..");
+                                    let cell_text = if depth_indent.is_empty() {
+                                        format!(" {} {}{}", icon_str, truncated_name, suffix)
                                     } else {
-                                        cell_style = cell_style.fg(cat.cyber_color());
-                                    }
-                                }
-                                let icon_w = icon_str.chars().map(get_visual_width).sum::<usize>();
-                                let marker_w = if expand_marker { 2 } else { 0 }; // ▾ or ▸ is 2 chars
-                                // Super-Aggressive Hard-Cut: reserves generous safety for icons/status
-                                let available_width =
-                                    (col_rect.width as usize).saturating_sub(icon_w + marker_w + 12);
+                                        format!("{}{} {}{}", depth_indent, icon_str, truncated_name, suffix)
+                                    };
 
-                                let display_name = if file_idx > file_state.local_count {
-                                    let full_str = path.to_string_lossy();
-                                    let home = dirs::home_dir()
-                                        .map(|p| p.to_string_lossy().to_string())
-                                        .unwrap_or_else(|| "/root".to_string());
-                                    if full_str.starts_with(&home) {
-                                        full_str.replacen(&home, "~", 1)
-                                    } else {
-                                        full_str.to_string()
+                                    if is_dir_marker {
+                                        let marker_rect = Rect::new(
+                                            col_rect.x + depth as u16 * 2,
+                                            row_y,
+                                            2,
+                                            1,
+                                        );
+                                        file_state.tree_marker_bounds.push((marker_rect, file_idx));
                                     }
-                                } else {
-                                    name.to_string()
-                                };
-                                let display_name = squarify(&display_name);
 
-                                let truncated_name =
-                                    truncate_to_width(&display_name, available_width, "..");
-                                if depth_indent.is_empty() {
-                                    format!(" {} {}{}", icon_str, truncated_name, suffix)
-                                } else {
-                                    format!("{}{} {}{}", depth_indent, icon_str, truncated_name, suffix)
-                                }
+                                    cell_text
                             }
                         }
                         FileColumn::Size => {
