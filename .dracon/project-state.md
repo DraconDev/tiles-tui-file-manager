@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved directory tree marker hit detection in file manager
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The previous implementation had inconsistent marker positioning calculations when the pane area had horizontal scrolling. This change ensures accurate hit detection regardless of pane position.
+The Cargo.lock file was modified to update dependency versions, likely triggered by recent refactoring work in the file manager and directory tree handling.
 
 ## Completed
-- [x] Fixed marker position calculation by accounting for icon width and space before marker
-- [x] Simplified hit detection logic by removing redundant relative position checks
-- [x] Removed debug logging that was cluttering the codebase
+- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Slice `synth-1774826981` - failed to load manifest for dependency `dracon-files`
 
 ## Blockers
-- None identified
+- Missing manifest for dependency `dracon-files` preventing slice completion
 
 ## Next Steps
-1. Verify marker hit detection works with deeply nested directories
-2. Consider adding visual feedback for marker hover state
+1. Investigate and resolve the missing manifest for `dracon-files`
+2. Complete the refactoring work in the file manager directory tree handling
