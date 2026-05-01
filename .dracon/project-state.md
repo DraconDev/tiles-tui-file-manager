@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Improved directory tree marker hit detection in file manager
 
 ## Context
-The Cargo.lock file was modified to update dependency versions, likely triggered by recent refactoring work in the directory tree and file manager components.
+The change enhances the accuracy of detecting clicks on directory tree expand/collapse markers by adjusting the hit area calculation to include a -1 offset from the marker start position.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Refactored directory tree marker hit detection to include -1 offset from marker start
+- [x] Updated hit detection logic to use saturating_sub(1) for safer boundary handling
 
 ## In Progress
-- [ ] No active work in progress
+- [x] Testing the improved hit detection in various UI scenarios
 
 ## Blockers
-- The project is currently blocked due to a failed manifest load for dependency `dracon-files`
+- None identified
 
 ## Next Steps
-1. Investigate and resolve the failed manifest load for `dracon-files`
-2. Continue with the planned `synth-1774826981` slice once dependencies are resolved
+1. Verify the change doesn't affect other UI interactions
+2. Consider adding visual feedback for the expanded/collapsed state
