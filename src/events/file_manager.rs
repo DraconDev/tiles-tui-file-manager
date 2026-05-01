@@ -989,15 +989,12 @@ pub fn handle_file_mouse(
                         sp = Some(p.clone());
 
                         // Check if click was on expand/collapse marker
+                        // Hit from marker start through end of name column
                         let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
                         let name_col_rect = fs.column_bounds.first().map(|(r, _)| *r);
                         if let Some(name_rect) = name_col_rect {
                             let marker_x = name_rect.x + depth as u16 * 2;
-                            let hit = column >= marker_x.saturating_sub(1) && column < name_rect.x + name_rect.width;
-                            app.last_action_msg = Some((format!(
-                                "FOLDER col={} mx={}-{} name_x={}w={} depth={} hit={}",
-                                column, marker_x.saturating_sub(1), name_rect.x + name_rect.width, name_rect.x, name_rect.width, depth, hit
-                            ), std::time::Instant::now()));
+                            let hit = column >= marker_x && column < name_rect.x + name_rect.width;
                             if is_dir && hit {
                                 let folder_path = p;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
