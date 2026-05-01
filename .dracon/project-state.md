@@ -1,8 +1,5 @@
-# Project State
-
-## Current Focus
-docs(scope): update shortcut labels for middle click / space in the UI
+# Project State## Current Focus
+Resolved dependency version conflicts by regenerating Cargo.lock, fixing manifest loading issues for dependency `dracon-files`
 
 ## Completed
-- [x] docs(scope): change shortcut description from "Editor" to "Expand / Edit" in the shortcuts settings
-- [x] deps(regenerated cargo.lock): regenerate Cargo.lock to reflect resolved dependency versions
+- [x] Resolved failed manifest loading for `dracon-files` dependency by updating Cargo.lock with correct version constraints
