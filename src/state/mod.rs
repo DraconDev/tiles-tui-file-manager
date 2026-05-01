@@ -341,7 +341,6 @@ pub struct FileState {
     pub git_stashes: Vec<String>,
     #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
-    pub tree_mode: bool,
     pub tree_file_depths: Vec<u16>,
 }
 
@@ -387,7 +386,6 @@ impl FileState {
             git_remotes: Vec::new(),
             git_stashes: Vec::new(),
             search_debounce_until: None,
-            tree_mode: false,
             tree_file_depths: Vec::new(),
         }
     }

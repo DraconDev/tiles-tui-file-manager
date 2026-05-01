@@ -856,7 +856,7 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
                 ("Arrows", "Navigate"),
                 ("Enter", "Open Folder / Launch"),
                 ("Ctrl + R", "Run File"),
-                ("Space", "Editor"),
+                ("Space", "Expand/Collapse Folder"),
                 ("Ctrl + I", "Information"),
                 ("Backspace", "Go Up Directory"),
                 ("Home / ~", "Go Home"),
@@ -2639,8 +2639,8 @@ fn draw_file_view(
                                 let cat = crate::modules::files::get_file_category(path);
                                 let icon_str = Icon::get_for_path(path, cat, is_dir, app.icon_mode);
 
-                                // Tree mode: get depth and expand/collapse marker
-                                let (depth_indent, expand_marker) = if file_state.tree_mode {
+                                // Dolphin-style inline tree: always show depth indent + expand marker for folders
+                                let (depth_indent, expand_marker) = {
                                     let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
                                     let indent = "  ".repeat(depth);
                                     let marker = if is_dir {
@@ -2653,8 +2653,6 @@ fn draw_file_view(
                                         "  "
                                     };
                                     (format!("{}{}", indent, marker), true)
-                                } else {
-                                    (String::new(), false)
                                 };
 
                                 let mut suffix = String::new();

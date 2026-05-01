@@ -208,14 +208,6 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     }
                     return true;
                 }
-                KeyCode::Char('w') | KeyCode::Char('W') if has_control => {
-                    // Ctrl+W: Toggle tree mode in the main file listing
-                    if let Some(fs) = app.current_file_state_mut() {
-                        fs.tree_mode = !fs.tree_mode;
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                    }
-                    return true;
-                }
                 KeyCode::Left if has_alt => {
                     app.resize_sidebar(-2);
                     return true;
@@ -1245,22 +1237,30 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 if is_virtual_divider(&path) {
                     return;
                 }
-                let target_pane = app
-                    .focused_pane_index
-                    .min(app.panes.len().saturating_sub(1));
-
-                let _ = event_tx.try_send(AppEvent::PreviewRequested(target_pane, path));
-                app.save_current_view_prefs();
-                app.current_view = CurrentView::Editor;
-                app.load_view_prefs(CurrentView::Editor);
-                app.show_sidebar = true; // Ensure sidebar is visible for "file view on left"
-
-                if app.panes.len() == 1 {
-                    app.focused_pane_index = 0;
+                if path.is_dir() {
+                    let was_expanded = app.expanded_folders.contains(&path);
+                    if was_expanded {
+                        app.expanded_folders.remove(&path);
+                    } else {
+                        app.expanded_folders.insert(path.clone());
+                    }
+                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
                 } else {
-                    app.focused_pane_index = target_pane;
+                    let target_pane = app
+                        .focused_pane_index
+                        .min(app.panes.len().saturating_sub(1));
+                    let _ = event_tx.try_send(AppEvent::PreviewRequested(target_pane, path));
+                    app.save_current_view_prefs();
+                    app.current_view = CurrentView::Editor;
+                    app.load_view_prefs(CurrentView::Editor);
+                    app.show_sidebar = true;
+                    if app.panes.len() == 1 {
+                        app.focused_pane_index = 0;
+                    } else {
+                        app.focused_pane_index = target_pane;
+                    }
+                    app.sidebar_focus = false;
                 }
-                app.sidebar_focus = false;
             }
         }
     }
@@ -1335,27 +1335,6 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             }
         }
         return;
-    }
-
-    // Tree mode: Enter on folder toggles expand/collapse instead of navigating
-    if let Some(fs) = app.current_file_state() {
-        if fs.tree_mode {
-            if let Some(idx) = fs.selection.selected {
-                if let Some(path) = fs.files.get(idx) {
-                    if path.is_dir() {
-                        let path_ref = path.clone();
-                        let was_expanded = app.expanded_folders.contains(&path_ref);
-                        if was_expanded {
-                            app.expanded_folders.remove(&path_ref);
-                        } else {
-                            app.expanded_folders.insert(path.clone());
-                        }
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                        return;
-                    }
-                }
-            }
-        }
     }
 
     let mut navigate_to = None;

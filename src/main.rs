@@ -1026,7 +1026,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
         // Handle Refreshes
         for pane_idx in panes_needing_refresh.drain() {
-            let (path, remote, current_filter, git_view, tree_mode, tree_expanded) = {
+            let (path, remote, current_filter, git_view, tree_expanded) = {
                 let app_guard = app.lock();
                 if let Some(pane) = app_guard.panes.get(pane_idx) {
                     if let Some(fs) = pane.current_state() {
@@ -1035,7 +1035,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session.clone(),
                             fs.search_filter.clone(),
                             matches!(app_guard.current_view, CurrentView::Git | CurrentView::Commit),
-                            fs.tree_mode,
                             app_guard.expanded_folders.clone(),
                         )
                     } else {
@@ -1050,7 +1049,6 @@ let list_path_for_filter = path.clone();
 
             let tx = event_tx.clone();
             let app_clone = app.clone();
-            let is_tree_mode = tree_mode;
             let expanded_folders = tree_expanded;
             tokio::spawn(async move {
                 let list_path = path.clone();
@@ -1066,56 +1064,54 @@ let list_path_for_filter = path.clone();
                             crate::modules::files::read_dir_with_metadata(&list_path)
                         };
 
-                        // Tree mode: recursively walk expanded folders
+                        // Always walk expanded folders (Dolphin-style inline tree)
                         let mut tree_depths: Vec<u16> = Vec::new();
-                        if is_tree_mode {
-                            let max_depth = 10;
-                            let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
-                            fn walk_tree(
-                                path: &std::path::Path,
-                                depth: u16,
-                                max_depth: u16,
-                                expanded: &std::collections::HashSet<PathBuf>,
-                                hidden: bool,
-                                tree_files: &mut Vec<(PathBuf, u16)>,
-                            ) {
-                                if depth >= max_depth {
-                                    return;
+                        let max_depth = 10;
+                        let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
+                        fn walk_tree(
+                            path: &std::path::Path,
+                            depth: u16,
+                            max_depth: u16,
+                            expanded: &std::collections::HashSet<PathBuf>,
+                            hidden: bool,
+                            tree_files: &mut Vec<(PathBuf, u16)>,
+                        ) {
+                            if depth >= max_depth {
+                                return;
+                            }
+                            let Ok(entries) = std::fs::read_dir(path) else { return };
+                            let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+                            sorted.sort_by(|a, b| {
+                                let a_is_dir = a.path().is_dir();
+                                let b_is_dir = b.path().is_dir();
+                                if a_is_dir != b_is_dir {
+                                    return if a_is_dir {
+                                        std::cmp::Ordering::Less
+                                    } else {
+                                        std::cmp::Ordering::Greater
+                                    };
                                 }
-                                let Ok(entries) = std::fs::read_dir(path) else { return };
-                                let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
-                                sorted.sort_by(|a, b| {
-                                    let a_is_dir = a.path().is_dir();
-                                    let b_is_dir = b.path().is_dir();
-                                    if a_is_dir != b_is_dir {
-                                        return if a_is_dir {
-                                            std::cmp::Ordering::Less
-                                        } else {
-                                            std::cmp::Ordering::Greater
-                                        };
-                                    }
-                                    a.file_name().cmp(&b.file_name())
-                                });
-                                for entry in sorted {
-                                    let p = entry.path();
-                                    let name = p.file_name().unwrap_or_default().to_string_lossy();
-                                    if !hidden && name.starts_with('.') {
-                                        continue;
-                                    }
-                                    tree_files.push((p.clone(), depth));
-                                    if p.is_dir() && expanded.contains(&p) {
-                                        walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
-                                    }
+                                a.file_name().cmp(&b.file_name())
+                            });
+                            for entry in sorted {
+                                let p = entry.path();
+                                let name = p.file_name().unwrap_or_default().to_string_lossy();
+                                if !hidden && name.starts_with('.') {
+                                    continue;
+                                }
+                                tree_files.push((p.clone(), depth));
+                                if p.is_dir() && expanded.contains(&p) {
+                                    walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
                                 }
                             }
-                            walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
-                            // Collect metadata for all tree items
-                            let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                            let (all_files, all_meta) = crate::modules::files::read_dir_recursive_meta(&tree_paths);
-                            files = all_files;
-                            metadata = all_meta;
-                            tree_depths = tree_files.iter().map(|(_, d)| *d).collect();
                         }
+                        walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
+                        // Collect metadata for all tree items
+                        let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
+                        let (all_files, all_meta) = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                        files = all_files;
+                        metadata = all_meta;
+                        tree_depths = tree_files.iter().map(|(_, d)| *d).collect();
 
                         let trimmed_filter = list_filter.trim();
                         let (g_files, g_meta) = if trimmed_filter.len() > 3 {
@@ -1196,8 +1192,8 @@ let list_path_for_filter = path.clone();
                                 })
                                 .collect();
 
-                            // Tree mode + search filter: include ancestor folders
-                            if fs.tree_mode && !fs.search_filter.is_empty() {
+                            // Search filter: include ancestor folders so matching children are visible
+                            if !fs.search_filter.is_empty() {
                                 use std::collections::HashSet;
                                 let filter_lower = fs.search_filter.to_lowercase();
                                 // Pass 1: collect matching paths + their depths
