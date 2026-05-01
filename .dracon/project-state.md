@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored directory tree marker hit detection in file manager to simplify pane area calculations.
+Refactored directory tree marker hit detection in file manager to improve accuracy and readability
 
 ## Context
-The previous implementation had redundant calculations for absolute and relative marker positions. This change simplifies the logic by removing the conditional check for pane area adjustments.
+The previous implementation had redundant calculations for the marker position and less clear variable names. This change simplifies the logic while maintaining the same functionality.
 
 ## Completed
-- [x] Removed redundant conditional logic for marker position calculation
-- [x] Simplified the marker hit detection by directly using absolute coordinates
+- [x] Refactored marker position calculation to use a single `marker_x` variable
+- [x] Simplified the hit detection logic with clearer variable names
+- [x] Maintained the same functionality while improving code readability
 
 ## In Progress
-- [x] Refactored directory tree marker handling
+- [ ] No active work in progress
 
 ## Blockers
-- None identified in this change
+- None identified
 
 ## Next Steps
-1. Verify the refactored logic maintains the same visual behavior
+1. Verify the refactored code maintains the same behavior through testing
 2. Consider adding unit tests for the marker hit detection logic

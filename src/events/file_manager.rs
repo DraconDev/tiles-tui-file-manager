@@ -989,14 +989,12 @@ pub fn handle_file_mouse(
                         sp = Some(p.clone());
 
                         // Check if click was on expand/collapse marker
-                        // The ▸ marker appears after icon (~2 cols) + space, so offset by +2
+                        // The ▸ marker appears after icon (~2 cols) + space, so offset by +2 from name column start
                         let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
-                        let pane_x = fs.pane_area_x;
                         let name_x = fs.column_bounds.first().map(|(r, _)| r.x).unwrap_or(0);
-                        let abs_marker_x = name_x + depth as u16 * 2 + 2;
-                        let hit_if_absolute = column >= abs_marker_x && column < abs_marker_x + 2;
-                        let marker_hit = is_dir && hit_if_absolute;
-                        if marker_hit {
+                        let marker_x = name_x + depth as u16 * 2 + 2;
+                        let hit = column >= marker_x && column < marker_x + 2;
+                        if is_dir && hit {
                             let folder_path = p;
                             let was_expanded = app.expanded_folders.contains(&folder_path);
                             if was_expanded {
