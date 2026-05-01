@@ -1054,14 +1054,13 @@ let list_path_for_filter = path.clone();
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
-                let (tree_files, (files, mut metadata), g_files, g_meta) =
+                let (tree_files, metadata, g_files, g_meta) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
-                        let (mut files, mut metadata) = if let Some(session) = &list_remote {
-                            crate::modules::remote::read_dir_with_metadata(session, &list_path)
-                                .unwrap_or_else(|_| (Vec::new(), std::collections::HashMap::new()))
+                        let (_): () = if let Some(session) = &list_remote {
+                            let _ = crate::modules::remote::read_dir_with_metadata(session, &list_path);
                         } else {
-                            crate::modules::files::read_dir_with_metadata(&list_path)
+                            let _ = crate::modules::files::read_dir_with_metadata(&list_path);
                         };
 
                         // Always walk expanded folders (Dolphin-style inline tree)
@@ -1109,7 +1108,7 @@ let list_path_for_filter = path.clone();
                         walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
                         // Collect metadata for all tree items
                         let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                        let (mut all_meta, g_files, g_meta) = {
+                        let (metadata, g_files, g_meta) = {
                             let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
                             let trimmed_filter = list_filter.trim();
                             let g_result = if trimmed_filter.len() > 3 {
@@ -1131,7 +1130,7 @@ let list_path_for_filter = path.clone();
                         };
 
                         crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-                        (tree_files, all_meta, g_files, g_meta)
+                        (tree_files, metadata, g_files, g_meta)
                     })
                     .await
                     .unwrap_or_else(|_| {
@@ -1211,76 +1210,11 @@ let list_path_for_filter = path.clone();
                                         new_paired.push((p, d));
                                     }
                                 }
-                                paired = new_paired;
+paired = new_paired;
                             }
 
-                            // Sort: Folders First, then by Column
-                            paired.sort_by(|(a, _), (b, _)| {
-                                let meta_a = metadata.get(a);
-                                let meta_b = metadata.get(b);
-                                let is_dir_a = meta_a.map(|m| m.is_dir).unwrap_or(false);
-                                let is_dir_b = meta_b.map(|m| m.is_dir).unwrap_or(false);
-
-                                // 1. Folders First (Always on top)
-                                if is_dir_a != is_dir_b {
-                                    return if is_dir_a {
-                                        std::cmp::Ordering::Less
-                                    } else {
-                                        std::cmp::Ordering::Greater
-                                    };
-                                }
-
-                                // 2. Column Sort
-                                let ord = match fs.sort_column {
-                                    crate::app::FileColumn::Name => {
-                                        let na = a
-                                            .file_name()
-                                            .and_then(|s| s.to_str())
-                                            .unwrap_or("")
-                                            .to_lowercase();
-                                        let nb = b
-                                            .file_name()
-                                            .and_then(|s| s.to_str())
-                                            .unwrap_or("")
-                                            .to_lowercase();
-                                        na.cmp(&nb)
-                                    }
-                                    crate::app::FileColumn::Size => {
-                                        let sa = meta_a.map(|m| m.size).unwrap_or(0);
-                                        let sb = meta_b.map(|m| m.size).unwrap_or(0);
-                                        sa.cmp(&sb)
-                                    }
-                                    crate::app::FileColumn::Modified => {
-                                        let da = meta_a
-                                            .map(|m| m.modified)
-                                            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                                        let db = meta_b
-                                            .map(|m| m.modified)
-                                            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                                        da.cmp(&db)
-                                    }
-                                    crate::app::FileColumn::Created => {
-                                        let da = meta_a
-                                            .map(|m| m.created)
-                                            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                                        let db = meta_b
-                                            .map(|m| m.created)
-                                            .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                                        da.cmp(&db)
-                                    }
-                                    crate::app::FileColumn::Permissions => {
-                                        let pa = meta_a.map(|m| m.permissions).unwrap_or(0);
-                                        let pb = meta_b.map(|m| m.permissions).unwrap_or(0);
-                                        pa.cmp(&pb)
-                                    }
-                                };
-
-                                if fs.sort_ascending {
-                                    ord
-                                } else {
-                                    ord.reverse()
-                                }
-                            });
+                            // Tree order from walk_tree is already sorted (folders-first, alphabetical).
+                            // Do NOT re-sort here — it would scatter children away from parent folders.
 
                             fs.local_count = paired.len();
 

@@ -1387,6 +1387,8 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             fs.search_filter.clear();
             *fs.table_state.offset_mut() = 0;
             crate::event_helpers::push_history(fs, p);
+            // Clear expanded folders when entering a new directory — start fresh
+            app.expanded_folders.clear();
             let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
         }
     }
