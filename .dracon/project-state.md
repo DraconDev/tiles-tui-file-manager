@@ -1,11 +1,9 @@
 # Project State
 
 ## Current Focus
-Refactored directory tree marker handling in file manager to improve performance and reduce debug logging overhead
+Removed debug logging and tree marker bounds from file state to streamline directory tree rendering in the file manager.
 
 ## Completed
-- [x] Removed debug logging from file mouse handling
-- [x] Simplified tree marker detection logic by using column position calculation instead of stored bounds
-- [x] Fixed directory expansion/collapse behavior to use proper depth-based marker positioning
-- [x] Cleaned up file state by removing unused tree marker bounds tracking
+- [x] Removed unused debug logging in `draw_file_view` function
+- [x] Eliminated dead code related to tree marker bounds calculation
 ```

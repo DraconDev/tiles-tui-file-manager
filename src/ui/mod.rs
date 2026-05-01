@@ -2699,10 +2699,6 @@ fn draw_file_view(
                                         format!("{}{} {}{}", depth_indent, icon_str, truncated_name, suffix)
                                     };
 
-                                    if is_dir_marker {
-                                        let _ = (col_rect, row_y, depth, file_idx);
-                                    }
-
                                     cell_text
                             }
                         }
