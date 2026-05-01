@@ -1,13 +1,8 @@
 # Project State
 
 ## Current Focus
-Refactored directory tree marker handling in the file manager to simplify the code and improve performance by:
-1. Moving the marker hit detection logic out of the main mouse handler
-2. Properly cloning paths to avoid ownership issues
-3. Removing debug logging that was previously added
+Refactored directory tree marker handling in the file manager to simplify resource management by replacing an explicit `drop` with a `let _` binding, which achieves the same effect more idiomatically.
 
 ## Completed
-- [x] Refactored directory tree marker handling to separate the hit detection logic
-- [x] Fixed path cloning to prevent ownership issues in the marker handling
-- [x] Removed debug logging related to tree marker detection
-```
+- [x] Refactored directory tree marker handling to use `let _ = fs` instead of explicit `drop(fs)` for cleaner resource management
+- [x] Updated Cargo.lock to reflect resolved dependency versions after recent refactoring

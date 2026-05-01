@@ -997,7 +997,7 @@ pub fn handle_file_mouse(
                                 marker_hit = column >= marker_x && column < marker_x + 2;
                             }
                         }
-                        drop(fs);
+                        let _ = fs;
                         if marker_hit {
                             let folder_path = p;
                             let was_expanded = app.expanded_folders.contains(&folder_path);
