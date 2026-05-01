@@ -335,13 +335,10 @@ pub struct FileState {
     pub git_pending: Vec<GitPendingChange>,
     #[serde(skip)]
     pub git_summary: Option<String>,
-    #[serde(skip)]
-    pub git_remotes: Vec<String>,
-    #[serde(skip)]
-    pub git_stashes: Vec<String>,
-    #[serde(skip)]
-    pub search_debounce_until: Option<std::time::Instant>,
+#[serde(skip)]
     pub tree_file_depths: Vec<u16>,
+    #[serde(skip)]
+    pub tree_marker_bounds: Vec<(ratatui::layout::Rect, usize)>,
 }
 
 impl FileState {
@@ -387,6 +384,7 @@ impl FileState {
             git_stashes: Vec::new(),
             search_debounce_until: None,
             tree_file_depths: Vec::new(),
+            tree_marker_bounds: Vec::new(),
         }
     }
 }
