@@ -1054,7 +1054,7 @@ let list_path_for_filter = path.clone();
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
-                let (files, mut metadata, g_files, g_meta, mut tree_depths) =
+                let (tree_files, (files, mut metadata), g_files, g_meta) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         let (mut files, mut metadata) = if let Some(session) = &list_remote {
@@ -1065,7 +1065,8 @@ let list_path_for_filter = path.clone();
                         };
 
                         // Always walk expanded folders (Dolphin-style inline tree)
-                        let mut tree_depths: Vec<u16> = Vec::new();
+                        // Keep files and depths as pairs throughout the entire pipeline
+                        // to avoid index misalignment after filtering/sorting
                         let max_depth = 10;
                         let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
                         fn walk_tree(
@@ -1108,39 +1109,37 @@ let list_path_for_filter = path.clone();
                         walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
                         // Collect metadata for all tree items
                         let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                        let (all_files, all_meta) = crate::modules::files::read_dir_recursive_meta(&tree_paths);
-                        files = all_files;
-                        metadata = all_meta;
-                        tree_depths = tree_files.iter().map(|(_, d)| *d).collect();
-
-                        let trimmed_filter = list_filter.trim();
-                        let (g_files, g_meta) = if trimmed_filter.len() > 3 {
-                            if let Some(session) = &list_remote {
-                                crate::modules::remote::global_search(
-                                    session,
-                                    &list_path,
-                                    trimmed_filter,
-                                )
+                        let (mut all_meta, g_files, g_meta) = {
+                            let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                            let trimmed_filter = list_filter.trim();
+                            let g_result = if trimmed_filter.len() > 3 {
+                                if let Some(session) = &list_remote {
+                                    crate::modules::remote::global_search(
+                                        session,
+                                        &list_path,
+                                        trimmed_filter,
+                                    )
+                                } else {
+                                    let search_root =
+                                        dirs::home_dir().unwrap_or_else(|| list_path.clone());
+                                    crate::modules::files::global_search(&search_root, trimmed_filter)
+                                }
                             } else {
-                                let search_root =
-                                    dirs::home_dir().unwrap_or_else(|| list_path.clone());
-                                crate::modules::files::global_search(&search_root, trimmed_filter)
-                            }
-                        } else {
-                            (Vec::new(), std::collections::HashMap::new())
+                                (Vec::new(), std::collections::HashMap::new())
+                            };
+                            (meta, g_result.0, g_result.1)
                         };
 
                         crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-                        (files, metadata, g_files, g_meta, tree_depths)
+                        (tree_files, all_meta, g_files, g_meta)
                     })
                     .await
                     .unwrap_or_else(|_| {
                         (
                             Vec::new(),
-                            std::collections::HashMap::new(),
+                            (Vec::new(), std::collections::HashMap::new()),
                             Vec::new(),
                             std::collections::HashMap::new(),
-                            Vec::new(),
                         )
                     });
 
@@ -1151,54 +1150,42 @@ let list_path_for_filter = path.clone();
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             // RACE CONDITION CHECK:
-                            // Only apply if the filter hasn't changed since we started
                             if fs.search_filter != current_filter {
                                 return;
                             }
 
-                            // Apply tree depths if available
-                            if !tree_depths.is_empty() {
-                                fs.tree_file_depths = tree_depths;
-                            }
+                            // tree_files is Vec<(PathBuf, u16)> — keep pairs intact through filter/sort
+                            let mut paired: Vec<(PathBuf, u16)> = tree_files.into_iter().filter(|(p, _)| {
+                                let is_hidden = p
+                                    .file_name()
+                                    .and_then(|n| n.to_str())
+                                    .map(|s| s.starts_with('.'))
+                                    .unwrap_or(false);
 
-                            // Filter hidden files if needed
-                            let mut filtered_files: Vec<_> = files
-                                .into_iter()
-                                .filter(|p| {
-                                    // 1. Hidden filter
-                                    let is_hidden = p
+                                if !fs.show_hidden && is_hidden {
+                                    return false;
+                                }
+
+                                if !fs.search_filter.is_empty() {
+                                    let name = p
                                         .file_name()
                                         .and_then(|n| n.to_str())
-                                        .map(|s| s.starts_with('.'))
-                                        .unwrap_or(false);
-
-                                    if !fs.show_hidden && is_hidden {
+                                        .unwrap_or("")
+                                        .to_lowercase();
+                                    if !name.contains(&fs.search_filter.to_lowercase()) {
                                         return false;
                                     }
+                                }
 
-                                    // 2. Search filter
-                                    if !fs.search_filter.is_empty() {
-                                        let name = p
-                                            .file_name()
-                                            .and_then(|n| n.to_str())
-                                            .unwrap_or("")
-                                            .to_lowercase();
-                                        if !name.contains(&fs.search_filter.to_lowercase()) {
-                                            return false;
-                                        }
-                                    }
-
-                                    true
-                                })
-                                .collect();
+                                true
+                            }).collect();
 
                             // Search filter: include ancestor folders so matching children are visible
                             if !fs.search_filter.is_empty() {
                                 use std::collections::HashSet;
                                 let filter_lower = fs.search_filter.to_lowercase();
-                                // Pass 1: collect matching paths + their depths
                                 let mut keep: HashSet<PathBuf> = HashSet::new();
-                                for p in &filtered_files {
+                                for (p, _) in &paired {
                                     let name = p.file_name()
                                         .and_then(|n| n.to_str())
                                         .unwrap_or("")
@@ -1207,39 +1194,28 @@ let list_path_for_filter = path.clone();
                                         keep.insert(p.clone());
                                     }
                                 }
-                                // Pass 2: add all ancestor directories
                                 let mut keep_with_parents = keep.clone();
-                                for path in &keep {
-                                    let mut current = path.parent();
-                                    while let Some(p) = current {
-                                        if p == list_path_for_filter.as_path() {
+                                for p in &keep {
+                                    let mut current = p.parent();
+                                    while let Some(pp) = current {
+                                        if pp == list_path_for_filter.as_path() {
                                             break;
                                         }
-                                        keep_with_parents.insert(p.to_path_buf());
-                                        current = p.parent();
+                                        keep_with_parents.insert(pp.to_path_buf());
+                                        current = pp.parent();
                                     }
                                 }
-                                // Pass 3: rebuild aligned files + depths
-                                let depths = &fs.tree_file_depths;
-                                let mut new_files: Vec<PathBuf> = Vec::new();
-                                let mut new_depths: Vec<u16> = Vec::new();
-                                for (i, p) in filtered_files.iter().enumerate() {
-                                    if keep_with_parents.contains(p) {
-                                        new_files.push(p.clone());
-                                        if let Some(&d) = depths.get(i) {
-                                            new_depths.push(d);
-                                        }
+                                let mut new_paired: Vec<(PathBuf, u16)> = Vec::new();
+                                for (p, d) in paired.into_iter() {
+                                    if keep_with_parents.contains(&p) {
+                                        new_paired.push((p, d));
                                     }
                                 }
-                                // Apply back to variable names used below
-                                filtered_files = new_files;
-                                // Update tree_depths for UI application below
-                                tree_depths = new_depths;
+                                paired = new_paired;
                             }
 
                             // Sort: Folders First, then by Column
-                            let mut filtered_files = filtered_files;
-                            filtered_files.sort_by(|a, b| {
+                            paired.sort_by(|(a, _), (b, _)| {
                                 let meta_a = metadata.get(a);
                                 let meta_b = metadata.get(b);
                                 let is_dir_a = meta_a.map(|m| m.is_dir).unwrap_or(false);
@@ -1306,21 +1282,23 @@ let list_path_for_filter = path.clone();
                                 }
                             });
 
-                            fs.local_count = filtered_files.len();
+                            fs.local_count = paired.len();
 
                             if !g_files.is_empty() {
-                                if !filtered_files.is_empty() {
-                                filtered_files.push(PathBuf::from("__DIVIDER__"));
-                                }
-                                for gf in g_files {
-                                    if !filtered_files.contains(&gf) {
-                                        filtered_files.push(gf);
+                                for gf in &g_files {
+                                    if !paired.iter().any(|(p, _)| p == gf) {
+                                        paired.push((gf.clone(), 0));
                                     }
                                 }
                                 metadata.extend(g_meta);
                             }
 
-                            fs.files = filtered_files;
+                            // Split paired into files + depths
+                            let tree_file_depths: Vec<u16> = paired.iter().map(|(_, d)| *d).collect();
+                            let files: Vec<PathBuf> = paired.into_iter().map(|(p, _)| p).collect();
+
+                            fs.tree_file_depths = tree_file_depths;
+                            fs.files = files;
                             fs.metadata = metadata;
 
                             // Apply pending selection (e.g., after navigate_up)

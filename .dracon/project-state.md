@@ -1,11 +1,10 @@
 # Project State
 
 ## Current Focus
-Remove explicit tree mode toggle and simplify directory expansion logic to always use an inline tree view, updating event handling accordingly.
+refactor(tree-mode): Keep tree files and depths as paired tuples to prevent index misalignment during filtering
 
 ## Completed
-- [x] Remove Ctrl+W shortcut for toggling tree mode; tree mode is now implicit.
-- [x] Refactor space key handling to toggle folder expansion when a directory is selected.
-- [x] Simplify enter key handling by eliminating tree‑mode specific behavior; now it only opens files or folders normally.
-- [x] Update file listing routine to always walk expanded folders, removing the tree‑mode flag and associated depth logic.
-- [x] Adjust main event loop to remove tree‑mode parameter and clean up related variables.
+- [x] Keep file paths and depths together as `Vec<(PathBuf, u16)>` throughout the filtering pipeline
+- [x] Remove separate `tree_depths` vector that required index alignment with filtered files
+- [x] Consolidate filtering logic to work on paired data, eliminating parent iteration complexity
+- [x] Simplify search-with-ancestor logic by filtering pairs directly instead of rebuilding aligned arrays
