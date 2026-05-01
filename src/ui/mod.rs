@@ -2651,7 +2651,7 @@ fn draw_file_view(
                                     let (depth_indent, expand_marker, is_dir_marker) = (
                                         format!("{}{}", indent, marker),
                                         is_dir && !marker.is_empty(),
-                                        is_expanded,
+                                        is_dir && !marker.is_empty(),
                                     );
 
                                     let mut suffix = String::new();
@@ -2977,7 +2977,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             ));
             shortcuts.extend(HotkeyHint::render(
                 "Space",
-                "Editor",
+                "Expand/Edit",
                 Color::Rgb(88, 166, 255),
             )); // GitHub Blue
         }
