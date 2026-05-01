@@ -831,7 +831,6 @@ pub fn handle_file_mouse(
         let pw = cw / pc as u16;
         if pw == 0 { 0 } else { (column.saturating_sub(sw) / pw) as usize }
     } else { 0 };
-    debug_tree(format!("HANDLE_MOUSE: column={} row={} w={} sw={} pc={} cp={}\n", column, row, w, sw, pc, cp));
 
     if let MouseEventKind::Down(_) = me.kind {
         if column >= sw {
@@ -990,13 +989,12 @@ pub fn handle_file_mouse(
                         sp = Some(p);
 
                         // Check if click was on expand/collapse marker
-                        debug_tree(format!("CLICK: column={} row={} idx={} marker_count={}\n", column, row, idx, fs.tree_marker_bounds.len()));
-                        for (marker_rect, marker_idx) in &fs.tree_marker_bounds {
-                            debug_tree(format!("  check rect={:?} idx={}\n", marker_rect, marker_idx));
-                            if marker_rect.contains(ratatui::layout::Position { x: column, y: row }) {
-                                debug_tree(format!("  *** MATCH idx={} ***\n", marker_idx));
-                                if *marker_idx < fs.files.len() {
-                                    let folder_path = fs.files[*marker_idx].clone();
+                        if is_dir {
+                            let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
+                            if let Some((name_col_rect, _)) = fs.column_bounds.first() {
+                                let marker_x = name_col_rect.x + depth as u16 * 2;
+                                if column >= marker_x && column < marker_x + 2 {
+                                    let folder_path = fs.files[idx].clone();
                                     let was_expanded = app.expanded_folders.contains(&folder_path);
                                     if was_expanded {
                                         app.expanded_folders.remove(&folder_path);
@@ -1004,8 +1002,8 @@ pub fn handle_file_mouse(
                                         app.expanded_folders.insert(folder_path.clone());
                                     }
                                     let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                    return true;
                                 }
-                                return true;
                             }
                         }
                     } else if button == MouseButton::Left && !has_mods {

@@ -2565,7 +2565,6 @@ fn draw_file_view(
         // 2. Render Rows
         let offset_val = file_state.table_state.offset();
         let total_files = file_state.files.len();
-        file_state.tree_marker_bounds.clear();
         for i in 0..visible_height {
             let file_idx = offset_val + i;
             if file_idx >= total_files {
@@ -2701,14 +2700,7 @@ fn draw_file_view(
                                     };
 
                                     if is_dir_marker {
-                                        let marker_rect = Rect::new(
-                                            col_rect.x + depth as u16 * 2,
-                                            row_y,
-                                            2,
-                                            1,
-                                        );
-                                        debug_tree(format!("RENDER: col_rect.x={} depth={} row_y={} marker_rect={:?} name={:?}\n", col_rect.x, depth, row_y, marker_rect, name));
-                                        file_state.tree_marker_bounds.push((marker_rect, file_idx));
+                                        let _ = (col_rect, row_y, depth, file_idx);
                                     }
 
                                     cell_text

@@ -1,8 +1,11 @@
 # Project State
 
 ## Current Focus
-Removed debug logging and tree marker bounds from file state to streamline the codebase and improve performance.
+Refactored directory tree marker handling in file manager to improve performance and reduce debug logging overhead
 
 ## Completed
-- [x] Removed debug_tree logging functionality to eliminate unnecessary debug output
-- [x] Cleaned up conditional compilation for debug_tree to simplify the codebase
+- [x] Removed debug logging from file mouse handling
+- [x] Simplified tree marker detection logic by using column position calculation instead of stored bounds
+- [x] Fixed directory expansion/collapse behavior to use proper depth-based marker positioning
+- [x] Cleaned up file state by removing unused tree marker bounds tracking
+```
