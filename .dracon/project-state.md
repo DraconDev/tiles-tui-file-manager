@@ -1,7 +1,8 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring work on the file manager's directory tree handling and pane navigation.
+Added debug logging for directory tree marker hit detection in the file manager to help diagnose mouse interaction issues with folder expansion.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect resolved dependency versions after refactoring directory tree marker handling and pane navigation improvements
+- [x] Added debug logging for tree marker hit detection showing column position, marker bounds, and depth level
+- [x] Refactored tree marker collision detection to use a boolean variable for clarity
