@@ -993,8 +993,9 @@ pub fn handle_file_mouse(
                         if is_dir {
                             let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
                             if let Some((name_col_rect, _)) = fs.column_bounds.first() {
+                                let rel_column = column.saturating_sub(fs.pane_area_x);
                                 let marker_x = name_col_rect.x + depth as u16 * 2;
-                                marker_hit = column >= marker_x && column < marker_x + 2;
+                                marker_hit = rel_column >= marker_x && rel_column < marker_x + 2;
                             }
                         }
                         let _ = fs;

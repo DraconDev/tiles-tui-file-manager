@@ -1,8 +1,8 @@
 # Project State
 
 ## Current Focus
-Added pane area tracking to file state and UI rendering to improve mouse interaction handling in the file manager.
+Refactored directory tree marker handling in the file manager to improve mouse interaction accuracy by adjusting column position calculations relative to the pane area.
 
 ## Completed
-- [x] Added `pane_area_x` field to `FileState` to track horizontal pane position
-- [x] Updated UI rendering to store pane X coordinate in file state for mouse interaction calculations
+- [x] Modified marker hit detection to use relative column position (`rel_column`) instead of absolute position
+```
