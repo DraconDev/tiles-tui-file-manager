@@ -1,8 +1,8 @@
 # Project State
 
 ## Current Focus
-Refactored directory tree marker handling in the file manager to simplify the rendering logic by removing redundant state tracking for directory markers.
+Updated Cargo.lock to resolve dependency versions after recent refactoring of directory tree handling and debug logging removal.
 
 ## Completed
-- [x] Removed redundant `is_dir_marker` tuple field in `draw_file_view` since it was identical to `expand_marker`
-- [x] Simplified directory marker rendering by consolidating related state into fewer variables
+- [x] Updated Cargo.lock to reflect resolved dependency versions
+```
