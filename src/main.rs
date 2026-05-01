@@ -1054,7 +1054,7 @@ let list_path_for_filter = path.clone();
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
-                let (tree_files, metadata, g_files, g_meta) =
+                let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         if let Some(session) = &list_remote {
@@ -1108,8 +1108,9 @@ let list_path_for_filter = path.clone();
                         walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
                         // Collect metadata for all tree items
                         let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                        let (metadata, g_files, g_meta) = {
+                        let (files_meta, g_files, g_meta) = {
                             let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                            // meta = (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) — we only need the HashMap
                             let trimmed_filter = list_filter.trim();
                             let g_result = if trimmed_filter.len() > 3 {
                                 if let Some(session) = &list_remote {
@@ -1126,17 +1127,17 @@ let list_path_for_filter = path.clone();
                             } else {
                                 (Vec::new(), std::collections::HashMap::new())
                             };
-                            (meta, g_result.0, g_result.1)
+                            (meta.1, g_result.0, g_result.1)
                         };
 
                         crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-                        (tree_files, metadata, g_files, g_meta)
+(tree_files, files_meta, g_files, g_meta)
                     })
                     .await
                     .unwrap_or_else(|_| {
                         (
                             Vec::new(),
-                            (Vec::new(), std::collections::HashMap::new()),
+                            std::collections::HashMap::new(),
                             Vec::new(),
                             std::collections::HashMap::new(),
                         )
@@ -1225,6 +1226,7 @@ paired = new_paired;
                                     }
                                 }
                                 metadata.extend(g_meta);
+                            }
 
                             // Split paired into files + depths
                             let tree_file_depths: Vec<u16> = paired.iter().map(|(_, d)| *d).collect();
