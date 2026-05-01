@@ -1,8 +1,7 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring of directory tree handling and debug logging removal.
+Removed debug logging from the file view rendering to streamline the output and improve performance.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect resolved dependency versions
-```
+- [x] Removed `debug_tree` logging from `draw_file_view` to eliminate unnecessary diagnostic output
