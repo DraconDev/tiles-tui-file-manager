@@ -2706,7 +2706,6 @@ fn draw_file_view(
                                             2,
                                             1,
                                         );
-                                        eprintln!("[RENDER] row_y={} col_rect.x={} depth={} marker_rect={:?} is_dir={} name={:?}", row_y, col_rect.x, depth, marker_rect, is_dir, name);
                                         file_state.tree_marker_bounds.push((marker_rect, file_idx));
                                     }
 

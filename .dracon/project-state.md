@@ -1,7 +1,8 @@
 # Project State
 
 ## Current Focus
-Update Cargo.lock to reflect resolved dependency versions after recent refactorings.
+Removing debug logging statements that were temporarily added for tracing tree-marker click handling and rendering.
 
 ## Completed
-- [x] Regenerated Cargo.lock to align with updated dependency versions
+- [x] Removed debug `eprintln!` statements from file_manager.rs for tree-marker bounds checking during click handling
+- [x] Removed debug `eprintln!` statement from ui/mod.rs for tree marker rendering visualization
