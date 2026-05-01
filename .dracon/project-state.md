@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Refactored directory tree marker hit detection in file manager to simplify pane area calculations.
 
 ## Context
-The Cargo.lock file was modified to update dependency versions, likely triggered by recent refactoring work in the file manager and directory tree handling.
+The previous implementation had redundant calculations for absolute and relative marker positions. This change simplifies the logic by removing the conditional check for pane area adjustments.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Removed redundant conditional logic for marker position calculation
+- [x] Simplified the marker hit detection by directly using absolute coordinates
 
 ## In Progress
-- [ ] Slice `synth-1774826981` - failed to load manifest for dependency `dracon-files`
+- [x] Refactored directory tree marker handling
 
 ## Blockers
-- Missing manifest for dependency `dracon-files` preventing slice completion
+- None identified in this change
 
 ## Next Steps
-1. Investigate and resolve the missing manifest for `dracon-files`
-2. Complete the refactoring work in the file manager directory tree handling
+1. Verify the refactored logic maintains the same visual behavior
+2. Consider adding unit tests for the marker hit detection logic
