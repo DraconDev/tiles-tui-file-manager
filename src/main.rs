@@ -1046,6 +1046,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
             };
 
+let list_path_for_filter = path.clone();
+
             let tx = event_tx.clone();
             let app_clone = app.clone();
             let is_tree_mode = tree_mode;
@@ -1164,7 +1166,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
 
                             // Filter hidden files if needed
-                            let filtered_files: Vec<_> = files
+                            let mut filtered_files: Vec<_> = files
                                 .into_iter()
                                 .filter(|p| {
                                     // 1. Hidden filter
@@ -1193,6 +1195,52 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                     true
                                 })
                                 .collect();
+
+                            // Tree mode + search filter: include ancestor folders
+                            if fs.tree_mode && !fs.search_filter.is_empty() {
+                                use std::collections::HashSet;
+                                let filter_lower = fs.search_filter.to_lowercase();
+                                // Pass 1: collect matching paths + their depths
+                                let mut keep: HashSet<PathBuf> = HashSet::new();
+                                for p in &filtered_files {
+                                    let name = p.file_name()
+                                        .and_then(|n| n.to_str())
+                                        .unwrap_or("")
+                                        .to_lowercase();
+                                    if name.contains(&filter_lower) {
+                                        keep.insert(p.clone());
+                                    }
+                                }
+                                // Pass 2: add all ancestor directories
+                                let mut keep_with_parents = keep.clone();
+                                for path in &keep {
+                                    let mut current = path.parent();
+                                    while let Some(p) = current {
+                                        if p == list_path_for_filter.as_path() {
+                                            break;
+                                        }
+                                        keep_with_parents.insert(p.to_path_buf());
+                                        current = p.parent();
+                                    }
+                                }
+                                // Pass 3: rebuild aligned files + depths
+                                let list_filter_lower = fs.search_filter.to_lowercase();
+                                let depths = &fs.tree_file_depths;
+                                let mut new_files: Vec<PathBuf> = Vec::new();
+                                let mut new_depths: Vec<u16> = Vec::new();
+                                for (i, p) in filtered_files.iter().enumerate() {
+                                    if keep_with_parents.contains(p) {
+                                        new_files.push(p.clone());
+                                        if let Some(&d) = depths.get(i) {
+                                            new_depths.push(d);
+                                        }
+                                    }
+                                }
+                                // Apply back to variable names used below
+                                filtered_files = new_files;
+                                // Update tree_depths for UI application below
+                                tree_depths = new_depths;
+                            }
 
                             // Sort: Folders First, then by Column
                             let mut filtered_files = filtered_files;
