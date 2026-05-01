@@ -1057,11 +1057,11 @@ let list_path_for_filter = path.clone();
                 let (tree_files, metadata, g_files, g_meta) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
-                        let (_): () = if let Some(session) = &list_remote {
+                        if let Some(session) = &list_remote {
                             let _ = crate::modules::remote::read_dir_with_metadata(session, &list_path);
                         } else {
                             let _ = crate::modules::files::read_dir_with_metadata(&list_path);
-                        };
+                        }
 
                         // Always walk expanded folders (Dolphin-style inline tree)
                         // Keep files and depths as pairs throughout the entire pipeline
@@ -1225,7 +1225,6 @@ paired = new_paired;
                                     }
                                 }
                                 metadata.extend(g_meta);
-                            }
 
                             // Split paired into files + depths
                             let tree_file_depths: Vec<u16> = paired.iter().map(|(_, d)| *d).collect();
