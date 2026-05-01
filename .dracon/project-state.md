@@ -1,8 +1,13 @@
 # Project State
 
 ## Current Focus
-Added debug logging for directory tree marker hit detection in the file manager to help diagnose mouse interaction issues with folder expansion.
+Refactored directory tree marker handling in the file manager to simplify the code and improve performance by:
+1. Moving the marker hit detection logic out of the main mouse handler
+2. Properly cloning paths to avoid ownership issues
+3. Removing debug logging that was previously added
 
 ## Completed
-- [x] Added debug logging for tree marker hit detection showing column position, marker bounds, and depth level
-- [x] Refactored tree marker collision detection to use a boolean variable for clarity
+- [x] Refactored directory tree marker handling to separate the hit detection logic
+- [x] Fixed path cloning to prevent ownership issues in the marker handling
+- [x] Removed debug logging related to tree marker detection
+```

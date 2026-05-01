@@ -986,30 +986,28 @@ pub fn handle_file_mouse(
 
                         let p = fs.files[idx].clone();
                         is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
-                        sp = Some(p);
+                        sp = Some(p.clone());
 
                         // Check if click was on expand/collapse marker
+                        let mut marker_hit = false;
                         if is_dir {
                             let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
                             if let Some((name_col_rect, _)) = fs.column_bounds.first() {
                                 let marker_x = name_col_rect.x + depth as u16 * 2;
-                                let hit = column >= marker_x && column < marker_x + 2;
-                                app.last_action_msg = Some((
-                                    format!("col={} marker_x={}-{} depth={} hit={}", column, marker_x, marker_x+2, depth, hit),
-                                    std::time::Instant::now(),
-                                ));
-                                if hit {
-                                    let folder_path = fs.files[idx].clone();
-                                    let was_expanded = app.expanded_folders.contains(&folder_path);
-                                    if was_expanded {
-                                        app.expanded_folders.remove(&folder_path);
-                                    } else {
-                                        app.expanded_folders.insert(folder_path.clone());
-                                    }
-                                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                                    return true;
-                                }
+                                marker_hit = column >= marker_x && column < marker_x + 2;
                             }
+                        }
+                        drop(fs);
+                        if marker_hit {
+                            let folder_path = p;
+                            let was_expanded = app.expanded_folders.contains(&folder_path);
+                            if was_expanded {
+                                app.expanded_folders.remove(&folder_path);
+                            } else {
+                                app.expanded_folders.insert(folder_path.clone());
+                            }
+                            let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                            return true;
                         }
                     } else if button == MouseButton::Left && !has_mods {
                         fs.selection.clear();
