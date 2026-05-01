@@ -342,8 +342,6 @@ pub struct FileState {
     #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
     pub tree_file_depths: Vec<u16>,
-    #[serde(skip)]
-    pub tree_marker_bounds: Vec<(ratatui::layout::Rect, usize)>,
 }
 
 impl FileState {
@@ -389,7 +387,6 @@ impl FileState {
             git_stashes: Vec::new(),
             search_debounce_until: None,
             tree_file_depths: Vec::new(),
-            tree_marker_bounds: Vec::new(),
         }
     }
 }

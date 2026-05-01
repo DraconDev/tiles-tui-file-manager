@@ -8,19 +8,6 @@ use ratatui::{
     },
     Frame,
 };
-
-#[cfg(debug_tree)]
-fn debug_tree(msg: impl AsRef<[u8]>) {
-    use std::io::Write;
-    let _ = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("/tmp/tiles_tree.log")
-        .and_then(|mut f| f.write_all(msg.as_ref()));
-}
-
-#[cfg(not(debug_tree))]
-fn debug_tree(_msg: impl AsRef<[u8]>) {}
 use std::time::SystemTime;
 
 use crate::app::{

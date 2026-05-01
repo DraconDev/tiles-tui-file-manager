@@ -1,8 +1,9 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to reflect resolved dependency versions after recent refactoring work on directory navigation and tree-mode handling.
+Removed debug logging and tree marker bounds from file state to streamline the UI rendering process.
 
 ## Completed
-- [x] Updated dependency versions in Cargo.lock to resolve failed slice loading for `dracon-files`
-```
+- [x] Removed `tree_marker_bounds` field from `FileState` to eliminate unnecessary state tracking
+- [x] Removed debug logging functionality (`debug_tree` helper) to reduce runtime overhead
+- [x] Simplified Cargo.toml by removing debug-related dependencies or features
