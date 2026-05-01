@@ -1,8 +1,8 @@
 # Project State
 
 ## Current Focus
-Align tree UI markers with directory state and clarify space-key action label.
+docs(scope): update shortcut labels for middle click / space in the UI
 
 ## Completed
-- [x] Use `is_dir && !marker.is_empty()` instead of `is_expanded` for directory marker logic to ensure only valid directories show expansion state.
-- [x] Rename space-key hint from "Editor" to "Expand/Edit" to accurately reflect its dual behavior in tree mode.
+- [x] docs(scope): change shortcut description from "Editor" to "Expand / Edit" in the shortcuts settings
+- [x] deps(regenerated cargo.lock): regenerate Cargo.lock to reflect resolved dependency versions

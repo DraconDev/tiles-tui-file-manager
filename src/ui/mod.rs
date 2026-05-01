@@ -3927,7 +3927,7 @@ fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
                 ("Backspace", "Go to Parent Directory"),
                 ("Alt + Left / Right", "Back / Forward in History"),
                 ("~", "Go to Home Directory"),
-                ("Middle Click / Space", "Editor"),
+                ("Middle Click / Space", "Expand / Edit"),
             ],
         ),
         (
