@@ -1,8 +1,8 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring of directory tree marker handling in the file manager.
+Added pane area tracking to file state and UI rendering to improve mouse interaction handling in the file manager.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect resolved dependency versions
-```
+- [x] Added `pane_area_x` field to `FileState` to track horizontal pane position
+- [x] Updated UI rendering to store pane X coordinate in file state for mouse interaction calculations
