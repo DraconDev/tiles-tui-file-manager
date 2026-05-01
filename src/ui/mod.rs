@@ -2556,6 +2556,7 @@ fn draw_file_view(
         let header_y = inner_area.y;
         let content_y = header_y + 1;
         let visible_height = inner_area.height.saturating_sub(1) as usize;
+        debug_tree(format!("RENDER_FRAME: inner_area={:?} header_y={} content_y={} visible_height={}\n", inner_area, header_y, content_y, visible_height));
 
         // 1. Render Headers
         for (col_idx, rect) in column_layout.iter().enumerate() {
