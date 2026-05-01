@@ -990,15 +990,21 @@ pub fn handle_file_mouse(
 
                         // Check if click was on expand/collapse marker
                         let mut marker_hit = false;
-                        if is_dir {
+                        let debug_msg = if is_dir {
                             let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
                             if let Some((name_col_rect, _)) = fs.column_bounds.first() {
                                 let rel_column = column.saturating_sub(fs.pane_area_x);
                                 let marker_x = name_col_rect.x + depth as u16 * 2;
                                 marker_hit = rel_column >= marker_x && rel_column < marker_x + 2;
+                                format!("col={} row={} idx={} is_dir={} pane_x={} name_x={} depth={} rel_col={} marker_x={}-{} hit={}",
+                                    column, row, idx, is_dir, fs.pane_area_x, name_col_rect.x, depth, rel_column, marker_x, marker_x+2, marker_hit)
+                            } else {
+                                format!("col={} row={} idx={} is_dir={} pane_x={} [NO COLUMN BOUNDS]", column, row, idx, is_dir, fs.pane_area_x)
                             }
-                        }
-                        let _ = fs;
+                        } else {
+                            format!("col={} row={} idx={} is_dir={}", column, row, idx, is_dir)
+                        };
+                        app.last_action_msg = Some((debug_msg, std::time::Instant::now()));
                         if marker_hit {
                             let folder_path = p;
                             let was_expanded = app.expanded_folders.contains(&folder_path);

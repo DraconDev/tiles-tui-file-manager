@@ -1,7 +1,23 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring work on the directory tree and file manager components.
+Added debug logging for directory tree marker hit detection in file manager
+
+## Context
+This change improves debugging of the file manager's directory tree marker handling by capturing detailed information about mouse interactions with expand/collapse markers.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect resolved dependency versions after refactoring the directory tree marker handling and pane area tracking in the file manager
+- [x] Added comprehensive debug logging for directory tree marker hit detection
+- [x] Logs include column, row, index, depth, and marker coordinates
+- [x] Special handling for directory vs non-directory cases
+- [x] Stores debug messages in app state for later display
+
+## In Progress
+- [ ] None (this is a focused debugging improvement)
+
+## Blockers
+- None (this is a standalone debugging enhancement)
+
+## Next Steps
+1. Verify debug messages appear in the UI when expected
+2. Consider adding a debug view to display these messages persistently
