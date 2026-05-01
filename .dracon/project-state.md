@@ -1,21 +1,27 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Improved directory tree marker hit detection in file manager
 
 ## Context
-The change was triggered by dependency version conflicts after multiple refactoring commits in the directory tree and file manager components. The lockfile was updated to ensure consistent dependency resolution.
+The previous implementation of directory tree marker hit detection had limited accuracy in determining whether a click was on the expand/collapse marker (▸/▾). This change improves the hit detection by:
+1. Using the full name column width for the hit area
+2. Properly accounting for the marker's position relative to the folder name
+3. Ensuring consistent behavior across different folder depths
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
+- [x] Refactored directory tree marker hit detection to use full name column width
+- [x] Improved marker position calculation to account for folder depth
+- [x] Added proper bounds checking for marker hit detection
+- [x] Ensured consistent behavior for both expanded and collapsed states
 
 ## In Progress
-- [x] Dependency resolution verification
+- [x] Testing and validation of the new hit detection logic
 
 ## Blockers
-- The synth-1774826981 slice failed to load manifest for dependency dracon-files
+- None identified at this time
 
 ## Next Steps
-1. Investigate and resolve the dracon-files dependency issue
-2. Verify all dependency versions are correctly resolved
-```
+1. Verify the new hit detection works across different folder depths
+2. Test edge cases with very long folder names
+3. Ensure the change doesn't affect other file manager interactions

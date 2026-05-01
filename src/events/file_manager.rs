@@ -989,21 +989,23 @@ pub fn handle_file_mouse(
                         sp = Some(p.clone());
 
                         // Check if click was on expand/collapse marker
-                        // The ▸ marker appears after icon (~2 cols) + space, so offset by +2 from name column start
+                        // Hit area: from ▸/▾ marker through end of the name column (includes arrow + folder name)
                         let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
-                        let name_x = fs.column_bounds.first().map(|(r, _)| r.x).unwrap_or(0);
-                        let marker_x = name_x + depth as u16 * 2 + 2;
-                        let hit = column >= marker_x && column < marker_x + 2;
-                        if is_dir && hit {
-                            let folder_path = p;
-                            let was_expanded = app.expanded_folders.contains(&folder_path);
-                            if was_expanded {
-                                app.expanded_folders.remove(&folder_path);
-                            } else {
-                                app.expanded_folders.insert(folder_path.clone());
+                        let name_col_rect = fs.column_bounds.first().map(|(r, _)| *r);
+                        if let Some(name_rect) = name_col_rect {
+                            let marker_x = name_rect.x + depth as u16 * 2;
+                            let hit = column >= marker_x && column < name_rect.x + name_rect.width;
+                            if is_dir && hit {
+                                let folder_path = p;
+                                let was_expanded = app.expanded_folders.contains(&folder_path);
+                                if was_expanded {
+                                    app.expanded_folders.remove(&folder_path);
+                                } else {
+                                    app.expanded_folders.insert(folder_path.clone());
+                                }
+                                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                return true;
                             }
-                            let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                            return true;
                         }
                     } else if button == MouseButton::Left && !has_mods {
                         fs.selection.clear();
