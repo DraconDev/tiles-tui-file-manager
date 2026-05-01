@@ -989,22 +989,15 @@ pub fn handle_file_mouse(
                         sp = Some(p.clone());
 
                         // Check if click was on expand/collapse marker
+                        // The ▸ marker appears AFTER the icon and a space (icon takes ~2 cols, then space, then marker starts)
                         let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
                         let pane_x = fs.pane_area_x;
                         let name_x = fs.column_bounds.first().map(|(r, _)| r.x).unwrap_or(0);
-                        let abs_marker_x = name_x + depth as u16 * 2;
+                        let abs_marker_x = name_x + depth as u16 * 2 + 2; // +2 accounts for icon + space before marker
                         let rel_marker_x = abs_marker_x.saturating_sub(pane_x);
                         let marker_x = if pane_x > 0 { rel_marker_x } else { abs_marker_x };
                         let hit_if_absolute = column >= abs_marker_x && column < abs_marker_x + 2;
-                        let hit_if_relative = (column.saturating_sub(pane_x)) >= marker_x && (column.saturating_sub(pane_x)) < marker_x + 2;
                         let marker_hit = is_dir && hit_if_absolute;
-                        let debug_msg = if is_dir {
-                            format!("DIR col={} row={} idx={} pane_x={} name_x={} depth={} abs_mx={} rel_mx={} hit_abs={} hit_rel={}",
-                                column, row, idx, pane_x, name_x, depth, abs_marker_x, rel_marker_x, hit_if_absolute, hit_if_relative)
-                        } else {
-                            format!("FILE col={} row={} idx={}", column, row, idx)
-                        };
-                        app.last_action_msg = Some((debug_msg, std::time::Instant::now()));
                         if marker_hit {
                             let folder_path = p;
                             let was_expanded = app.expanded_folders.contains(&folder_path);
