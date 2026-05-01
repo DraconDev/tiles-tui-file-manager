@@ -1,23 +1,22 @@
 # Project State
 
 ## Current Focus
-Added debug logging for directory tree marker hit detection in file manager
+Enhanced debug logging for file manager directory tree interactions
 
 ## Context
-This change improves debugging of the file manager's directory tree marker handling by capturing detailed information about mouse interactions with expand/collapse markers.
+Improving debugging capabilities for the file manager's directory tree marker handling to better understand mouse interaction behavior
 
 ## Completed
-- [x] Added comprehensive debug logging for directory tree marker hit detection
-- [x] Logs include column, row, index, depth, and marker coordinates
-- [x] Special handling for directory vs non-directory cases
-- [x] Stores debug messages in app state for later display
+- [x] Added debug logging for directory tree marker hit detection
+- [x] Enhanced debug messages to distinguish between directory and file interactions
+- [x] Updated debug output to show pane area tracking information
 
 ## In Progress
-- [ ] None (this is a focused debugging improvement)
+- [x] Debug logging implementation for file manager interactions
 
 ## Blockers
-- None (this is a standalone debugging enhancement)
+- Dependency resolution for `dracon-files` manifest loading
 
 ## Next Steps
-1. Verify debug messages appear in the UI when expected
-2. Consider adding a debug view to display these messages persistently
+1. Verify debug logging provides sufficient interaction data
+2. Address dependency resolution for file system operations
