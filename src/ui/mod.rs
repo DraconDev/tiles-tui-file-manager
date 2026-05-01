@@ -8,6 +8,19 @@ use ratatui::{
     },
     Frame,
 };
+
+#[cfg(debug_tree)]
+fn debug_tree(msg: impl AsRef<[u8]>) {
+    use std::io::Write;
+    let _ = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("/tmp/tiles_tree.log")
+        .and_then(|mut f| f.write_all(msg.as_ref()));
+}
+
+#[cfg(not(debug_tree))]
+fn debug_tree(_msg: impl AsRef<[u8]>) {}
 use std::time::SystemTime;
 
 use crate::app::{
@@ -2706,6 +2719,7 @@ fn draw_file_view(
                                             2,
                                             1,
                                         );
+                                        debug_tree(format!("RENDER: col_rect.x={} depth={} row_y={} marker_rect={:?} name={:?}\n", col_rect.x, depth, row_y, marker_rect, name));
                                         file_state.tree_marker_bounds.push((marker_rect, file_idx));
                                     }
 

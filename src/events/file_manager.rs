@@ -6,6 +6,19 @@ use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
+#[cfg(debug_tree)]
+fn debug_tree(msg: impl AsRef<[u8]>) {
+    use std::io::Write;
+    let _ = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("/tmp/tiles_tree.log")
+        .and_then(|mut f| f.write_all(msg.as_ref()));
+}
+
+#[cfg(not(debug_tree))]
+fn debug_tree(_msg: impl AsRef<[u8]>) {}
+
 use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, SidebarTarget, UndoAction,
 };
@@ -983,9 +996,11 @@ pub fn handle_file_mouse(
                         sp = Some(p);
 
                         // Check if click was on expand/collapse marker
+                        debug_tree(format!("CLICK: column={} row={} idx={} marker_count={}\n", column, row, idx, fs.tree_marker_bounds.len()));
                         for (marker_rect, marker_idx) in &fs.tree_marker_bounds {
+                            debug_tree(format!("  check rect={:?} idx={}\n", marker_rect, marker_idx));
                             if marker_rect.contains(ratatui::layout::Position { x: column, y: row }) {
-                                eprintln!("[CLICK] MATCH! idx={}", marker_idx);
+                                debug_tree(format!("  *** MATCH idx={} ***\n", marker_idx));
                                 if *marker_idx < fs.files.len() {
                                     let folder_path = fs.files[*marker_idx].clone();
                                     let was_expanded = app.expanded_folders.contains(&folder_path);

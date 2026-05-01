@@ -1,8 +1,11 @@
 # Project State
 
-## Current Focus
-Removing debug logging statements that were temporarily added for tracing tree-marker click handling and rendering.
+## CurrentFocus
+Add a `debug_tree` helper that logs diagnostic messages to `/tmp/tiles_tree.log` only when the `debug_tree` feature is enabled, and use it to trace file manager marker clicks and UI rendering events.
 
 ## Completed
-- [x] Removed debug `eprintln!` statements from file_manager.rs for tree-marker bounds checking during click handling
-- [x] Removed debug `eprintln!` statement from ui/mod.rs for tree marker rendering visualization
+- [x] Introduced `debug_tree` in `src/events/file_manager.rs` with conditional logging to `/tmp/tiles_tree.log` and added necessary `use` imports for `App` types.
+- [x] Replaced `eprintln!` with `debug_tree` calls in `handle_file_mouse` to log click coordinates, marker rectangle checks, and successful match events.
+- [x] Added `debug_tree` in `src/ui/mod.rs` with identical conditional logging behavior.
+- [x] Inserted a `debug_tree` call in `draw_file_view` to log rendering details such as column, depth, row, marker rectangle, and file name.
+- [x] Regenerated `Cargo.lock` and updated `Cargo.toml` to reflect resolved dependency versions after refactoring.
