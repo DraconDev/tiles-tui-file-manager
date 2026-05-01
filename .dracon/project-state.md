@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring of directory tree marker handling
+Improved directory tree marker hit detection in file manager with enhanced debug logging
 
 ## Context
-The Cargo.lock file was modified to accommodate version resolution changes triggered by refactoring work on directory tree marker detection in the file manager. This is part of an ongoing effort to improve file system interactions.
+The change refines how the file manager calculates whether a mouse click hits a directory marker, making the detection more robust and adding detailed debug logging for troubleshooting.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Refactored directory marker hit detection to use `saturating_sub(1)` for safer bounds checking
+- [x] Enhanced debug logging to show hit detection details including coordinates and depth
 
 ## In Progress
-- [x] Refactoring of directory tree marker handling in file manager
+- [ ] No active work in progress
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in slice `synth-1774826981`
+- No blockers identified
 
 ## Next Steps
-1. Investigate and resolve the dependency manifest loading failure for `dracon-files`
-2. Continue refactoring directory tree marker handling in file manager
+1. Verify the improved hit detection works correctly in UI tests
+2. Consider adding visual feedback for hit detection during development

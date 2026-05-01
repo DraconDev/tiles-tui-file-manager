@@ -993,11 +993,10 @@ pub fn handle_file_mouse(
                         let name_col_rect = fs.column_bounds.first().map(|(r, _)| *r);
                         if let Some(name_rect) = name_col_rect {
                             let marker_x = name_rect.x + depth as u16 * 2;
-                            let hit = column >= marker_x && column < name_rect.x + name_rect.width;
-                            // DEBUG: always show folder click info for 2 seconds
+                            let hit = column >= marker_x.saturating_sub(1) && column < name_rect.x + name_rect.width;
                             app.last_action_msg = Some((format!(
                                 "FOLDER col={} mx={}-{} name_x={}w={} depth={} hit={}",
-                                column, marker_x, name_rect.x + name_rect.width, name_rect.x, name_rect.width, depth, hit
+                                column, marker_x.saturating_sub(1), name_rect.x + name_rect.width, name_rect.x, name_rect.width, depth, hit
                             ), std::time::Instant::now()));
                             if is_dir && hit {
                                 let folder_path = p;
