@@ -2648,9 +2648,8 @@ fn draw_file_view(
                                     } else {
                                         ""
                                     };
-                                    let (depth_indent, expand_marker, is_dir_marker) = (
+                                    let (depth_indent, expand_marker) = (
                                         format!("{}{}", indent, marker),
-                                        is_dir && !marker.is_empty(),
                                         is_dir && !marker.is_empty(),
                                     );
 
