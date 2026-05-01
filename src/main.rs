@@ -1056,7 +1056,7 @@ let list_path_for_filter = path.clone();
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
-                let (files, mut metadata, g_files, g_meta, tree_depths) =
+                let (files, mut metadata, g_files, g_meta, mut tree_depths) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         let (mut files, mut metadata) = if let Some(session) = &list_remote {
@@ -1224,7 +1224,6 @@ let list_path_for_filter = path.clone();
                                     }
                                 }
                                 // Pass 3: rebuild aligned files + depths
-                                let list_filter_lower = fs.search_filter.to_lowercase();
                                 let depths = &fs.tree_file_depths;
                                 let mut new_files: Vec<PathBuf> = Vec::new();
                                 let mut new_depths: Vec<u16> = Vec::new();
