@@ -6,19 +6,6 @@ use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-#[cfg(debug_tree)]
-fn debug_tree(msg: impl AsRef<[u8]>) {
-    use std::io::Write;
-    let _ = std::fs::OpenOptions::new()
-        .create(true)
-        .append(true)
-        .open("/tmp/tiles_tree.log")
-        .and_then(|mut f| f.write_all(msg.as_ref()));
-}
-
-#[cfg(not(debug_tree))]
-fn debug_tree(_msg: impl AsRef<[u8]>) {}
-
 use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, SidebarTarget, UndoAction,
 };

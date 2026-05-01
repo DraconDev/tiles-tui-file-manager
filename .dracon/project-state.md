@@ -1,9 +1,8 @@
 # Project State
 
 ## Current Focus
-Removed debug logging and tree marker bounds from file state to streamline the UI rendering process.
+Removed debug logging and tree marker bounds from file state to streamline the codebase and improve performance.
 
 ## Completed
-- [x] Removed `tree_marker_bounds` field from `FileState` to eliminate unnecessary state tracking
-- [x] Removed debug logging functionality (`debug_tree` helper) to reduce runtime overhead
-- [x] Simplified Cargo.toml by removing debug-related dependencies or features
+- [x] Removed debug_tree logging functionality to eliminate unnecessary debug output
+- [x] Cleaned up conditional compilation for debug_tree to simplify the codebase
