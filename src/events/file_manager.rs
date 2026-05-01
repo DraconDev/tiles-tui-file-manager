@@ -988,24 +988,19 @@ pub fn handle_file_mouse(
                         is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                         sp = Some(p.clone());
 
-                        // Always show debug on row click
-                        app.last_action_msg = Some((format!("CLICK idx={} row={} is_dir={} col={}", idx, row, is_dir, column), std::time::Instant::now()));
-
                         // Check if click was on expand/collapse marker
                         let mut marker_hit = false;
+                        let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
+                        let pane_x = fs.pane_area_x;
+                        let name_x = fs.column_bounds.first().map(|(r, _)| r.x);
+                        let rel_column = column.saturating_sub(pane_x);
+                        let marker_x = name_x.unwrap_or(0) + depth as u16 * 2;
+                        marker_hit = is_dir && name_x.is_some() && rel_column >= marker_x && rel_column < marker_x + 2;
                         let debug_msg = if is_dir {
-                            let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
-                            if let Some((name_col_rect, _)) = fs.column_bounds.first() {
-                                let rel_column = column.saturating_sub(fs.pane_area_x);
-                                let marker_x = name_col_rect.x + depth as u16 * 2;
-                                marker_hit = rel_column >= marker_x && rel_column < marker_x + 2;
-                                format!("DIR col={} row={} idx={} pane_x={} name_x={} depth={} rel_col={} marker_x={}-{} hit={}",
-                                    column, row, idx, fs.pane_area_x, name_col_rect.x, depth, rel_column, marker_x, marker_x+2, marker_hit)
-                            } else {
-                                format!("DIR col={} row={} idx={} pane_x={} [NO COLUMN BOUNDS]", column, row, idx, fs.pane_area_x)
-                            }
+                            format!("DIR col={} row={} idx={} pane_x={} name_x={:?} depth={} rel_col={} marker_x={}-{} hit={}",
+                                column, row, idx, pane_x, name_x, depth, rel_column, marker_x, marker_x+2, marker_hit)
                         } else {
-                            format!("FILE col={} row={} idx={}", column, row, idx)
+                            format!("FILE col={} row={} idx={} hit={}", column, row, idx, marker_hit)
                         };
                         app.last_action_msg = Some((debug_msg, std::time::Instant::now()));
                         if marker_hit {
