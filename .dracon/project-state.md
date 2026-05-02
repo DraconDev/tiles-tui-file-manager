@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed unused `SidebarScope` import from events module
+Removed unused `SidebarScope` field from `App` struct
 
 ## Context
-The `SidebarScope` enum was previously imported but not used in the events module, which is a code smell that should be cleaned up.
+This change was part of a series of refactorings to simplify the sidebar navigation system. The `SidebarScope` field was no longer being used after recent refactorings of folder expansion behavior.
 
 ## Completed
-- [x] Removed unused `SidebarScope` import from `app.rs`
+- [x] Removed unused `SidebarScope` field from `App` struct
+- [x] Cleaned up related imports (from previous commits)
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress
 
 ## Blockers
-- None
+- None identified
 
 ## Next Steps
-1. Verify no other unused imports remain in the events module
-2. Continue refactoring sidebar-related code to improve maintainability
+1. Verify no functionality was affected by this removal
+2. Continue with ongoing refactorings of sidebar behavior

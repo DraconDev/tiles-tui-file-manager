@@ -35,7 +35,6 @@ pub struct App {
     pub system_state: SystemState,
     pub sidebar_focus: bool,
     pub sidebar_index: usize,
-    pub sidebar_scope: SidebarScope,
     pub starred: Vec<PathBuf>,
     pub recent_folders: Vec<PathBuf>,
     pub remote_bookmarks: Vec<RemoteBookmark>,
