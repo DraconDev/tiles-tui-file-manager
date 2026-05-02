@@ -580,6 +580,34 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 );
             }
 
+            // Apply scroll offset: slice visible items and adjust bounds
+            let visible_height = inner.height as usize;
+            let total_items = sidebar_items.len();
+
+            // Auto-scroll to keep selected item in view
+            if app.sidebar_index < app.sidebar_scroll_offset {
+                app.sidebar_scroll_offset = app.sidebar_index;
+            } else if app.sidebar_index >= app.sidebar_scroll_offset + visible_height {
+                app.sidebar_scroll_offset = app.sidebar_index.saturating_sub(visible_height - 1);
+            }
+
+            let max_scroll = total_items.saturating_sub(visible_height);
+            app.sidebar_scroll_offset = app.sidebar_scroll_offset.min(max_scroll);
+
+            let start = app.sidebar_scroll_offset;
+            let visible_items: Vec<_> = sidebar_items.into_iter().skip(start).take(visible_height).collect();
+
+            // Rebuild sidebar_bounds for visible items with adjusted y coordinates
+            let mut new_bounds = Vec::new();
+            for b in app.sidebar_bounds.iter() {
+                if b.index >= start && b.index < start + visible_height {
+                    let mut adjusted_b = b.clone();
+                    adjusted_b.y = inner.y + (b.index - start) as u16;
+                    new_bounds.push(adjusted_b);
+                }
+            }
+            app.sidebar_bounds = new_bounds;
+
             let title_text = app.current_file_state()
                 .map(|fs| fs.current_path.to_string_lossy().to_string())
                 .unwrap_or_else(|| "Files".to_string());
@@ -596,7 +624,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
 
             let list_block = block.clone();
             let list_inner = list_block.inner(area);
-            f.render_widget(List::new(sidebar_items).block(list_block), area);
+            f.render_widget(List::new(visible_items).block(list_block), area);
 
             let hint_target = app
                 .sidebar_bounds

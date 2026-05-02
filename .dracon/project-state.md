@@ -1,21 +1,23 @@
 # Project State
 
 ## Current Focus
-Added scroll offset tracking for sidebar navigation to maintain position during updates.
+Added scroll offset tracking for sidebar navigation to maintain visible position of selected items
 
 ## Context
-This change enables persistent scroll position in the sidebar when navigating between folders or updating the tree structure. It addresses usability issues where users lose their scroll position during common operations.
+The sidebar was displaying all items at once, making navigation difficult for long lists. This change implements a scroll offset system to keep the selected item visible while navigating.
 
 ## Completed
-- [x] Added `sidebar_scroll_offset` field to track scroll position
-- [x] Prepared infrastructure for scroll position restoration
+- [x] Added scroll offset tracking for sidebar items
+- [x] Implemented auto-scroll to keep selected item in view
+- [x] Adjusted bounds calculation for visible items only
+- [x] Limited scroll offset to prevent empty space at bottom
 
 ## In Progress
-- [ ] Implementation of actual scroll position restoration logic
+- [ ] None (this change is complete)
 
 ## Blockers
-- Need to implement scroll position restoration when rebuilding the tree
+- None (dependency `dracon-files` failed to load, but this change is independent)
 
 ## Next Steps
-1. Implement scroll position restoration when rebuilding the tree
-2. Add tests for scroll position persistence during navigation
+1. Test scroll behavior with different list lengths
+2. Verify performance impact with very large item lists
