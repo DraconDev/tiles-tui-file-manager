@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved sidebar tree navigation by optimizing path tracking and folder expansion logic.
+Added tree item collection for sidebar navigation
 
 ## Context
-The sidebar tree now more efficiently tracks the current folder path and ensures proper expansion of ancestor folders when navigating, maintaining Dolphin-style behavior while reducing redundant operations.
+This change implements the core functionality for building the sidebar's folder tree structure, which was previously missing. It enables the sidebar to display hierarchical file system navigation.
 
 ## Completed
-- [x] Optimized path tracking by moving current path retrieval before mutable borrow
-- [x] Simplified tree item collection by removing redundant path checks
-- [x] Maintained Dolphin-style auto-expansion while improving performance
+- [x] Added `collect_tree_items` call to populate sidebar tree data
+- [x] Enabled hierarchical folder display in sidebar
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Testing and visual verification of tree rendering
 
 ## Blockers
-- None identified
+- Need to verify tree rendering matches expected behavior
 
 ## Next Steps
-1. Verify visual consistency with current folder highlighting
-2. Test performance impact with large directory structures
+1. Test sidebar tree rendering with various directory structures
+2. Implement visual indicators for current folder selection
