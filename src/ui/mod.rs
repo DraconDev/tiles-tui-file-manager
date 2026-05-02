@@ -4213,6 +4213,12 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             bool_state: None,
         },
         GeneralOption {
+            label: "─── Sidebar Sections ───",
+            status: "".to_string(),
+            key: "",
+            bool_state: None,
+        },
+        GeneralOption {
             label: "Sidebar Folders",
             status: if app.sidebar_folders {
                 "ENABLED ".to_string()

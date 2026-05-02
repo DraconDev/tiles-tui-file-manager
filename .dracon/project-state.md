@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Increased the maximum index for the General settings section from 12 to 13.
+Added a visual separator in the general settings UI to group sidebar-related options.
 
 ## Context
-This change was made to accommodate an additional setting option in the General settings section of the application.
+This change improves the organization of the general settings UI by visually separating sidebar-related options from other settings. The separator helps users quickly identify which settings control the sidebar behavior.
 
 ## Completed
-- [x] Updated the maximum index for General settings from 12 to 13
+- [x] Added a visual separator labeled "─── Sidebar Sections ───" in the general settings UI
 
 ## In Progress
-- [x] None - this is a focused, complete change
+- [x] None - this is a complete, standalone change
 
 ## Blockers
-- None - this is a simple configuration adjustment
+- None - this change is complete and doesn't depend on other work
 
 ## Next Steps
-1. Verify that the new setting option works as expected
-2. Ensure the UI properly handles the increased index range
+1. Verify the visual separator appears correctly in the UI
+2. Ensure the separator doesn't interfere with existing functionality
