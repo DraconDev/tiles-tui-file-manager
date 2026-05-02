@@ -81,7 +81,7 @@ fn execute_undo(
     if success {
         app.redo_stack.push(action);
     }
-    let _ = event_tx.try_send(AppEvent::StatusMsg(if success {
+    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(if success {
         format!("Undo OK ({})", action_name)
     } else {
         format!("Undo failed ({})", action_name)
@@ -130,7 +130,7 @@ fn execute_redo(
     if success {
         app.undo_stack.push(action);
     }
-    let _ = event_tx.try_send(AppEvent::StatusMsg(if success {
+    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(if success {
         format!("Redo OK ({})", action_name)
     } else {
         format!("Redo failed ({})", action_name)
@@ -222,14 +222,14 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                 pane.active_tab_index = pane.tabs.len() - 1;
                             }
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Closed: {}",
                                 removed.current_path.file_name()
                                     .map(|n| n.to_string_lossy().to_string())
                                     .unwrap_or_default()
                             )));
                         } else {
-                            let _ = event_tx.try_send(AppEvent::StatusMsg("Cannot close last tab".to_string()));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Cannot close last tab".to_string()));
                         }
                     }
                     return true;
@@ -331,7 +331,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                 }
                                 crate::app::ClipboardOp::Cut => {
                                     let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
-                                    if result.is_ok() {
+                                    if result {
                                         app.clipboard = None;
                                     }
                                 }
@@ -611,13 +611,13 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                             remote: fs.remote_session.clone(),
                                             command: Some(format!("{} {}", program, args.join(" "))),
                                         });
-                                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                             "Running: {} {}",
                                             program,
                                             args.join(" ")
                                         )));
                                     } else {
-                                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                             "No run command for: {}",
                                             path.extension()
                                                 .and_then(|e| e.to_str())
@@ -649,13 +649,13 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                                 remote: fs.remote_session.clone(),
                                                 command: Some(format!("{} {}", program, args.join(" "))),
                                             });
-                                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                                 "Running: {} {}",
                                                 program,
                                                 args.join(" ")
                                             )));
                                         } else {
-                                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                                 "No run command for: {}",
                                                 path.extension()
                                                     .and_then(|e| e.to_str())
@@ -955,7 +955,7 @@ pub fn handle_file_mouse(
                     let path = fs.current_path.to_string_lossy().to_string();
                     crate::event_helpers::open_path_input(app);
                     crate::event_helpers::copy_text_to_clipboard_async(path);
-                    let _ = event_tx.try_send(AppEvent::StatusMsg(
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                         "Copied current path to clipboard".to_string(),
                     ));
                     return true;

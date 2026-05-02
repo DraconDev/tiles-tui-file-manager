@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Standardized event dispatch mechanism in file manager operations
+Standardized event dispatch mechanism across file manager operations
 
 ## Context
-The change standardizes how events are dispatched across file manager operations by replacing direct channel usage with a centralized utility function. This improves consistency and error handling in event propagation.
+The code changes standardize how events are dispatched throughout the file manager module, ensuring consistent behavior and reducing code duplication.
 
 ## Completed
-- [x] Replaced direct `event_tx.try_send()` with centralized `try_send_event` utility function
-- [x] Maintained same functionality while improving error handling and logging
+- [x] Created a centralized `try_send_event` function in `app.rs` for standardized event dispatch
+- [x] Replaced all direct `try_send` calls with calls to the new `try_send_event` function
+- [x] Removed the unused `AppEvent` import from `app.rs`
 
 ## In Progress
-- [x] Event dispatch standardization across file manager operations
+- [ ] No active work in progress
 
 ## Blockers
-- None identified in this change
+- None identified
 
 ## Next Steps
-1. Verify no regression in event handling behavior
-2. Expand standardization to other event-triggering components
+1. Verify all event dispatches are working correctly
+2. Consider adding error logging for failed event dispatches
