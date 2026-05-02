@@ -85,6 +85,10 @@ pub struct App {
     /// Folders expanded in the sidebar Tree view.
 /// Independent of `expanded_folders` — Tree scope maintains its own expansion state.
     pub tree_expanded_folders: HashSet<PathBuf>,
+    /// Cached sidebar tree items to avoid re-reading directories every frame.
+    pub sidebar_tree_cache: Option<Vec<(PathBuf, u16)>>,
+    /// Cache key for invalidation (hash of tree_expanded_folders + show_hidden).
+    pub sidebar_tree_cache_key: u64,
     pub mouse_last_click: std::time::Instant,
     pub mouse_click_pos: (u16, u16),
     pub mouse_click_count: usize,

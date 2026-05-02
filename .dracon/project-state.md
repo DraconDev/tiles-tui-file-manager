@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored space key handler to properly propagate events in the sidebar
+Added caching for sidebar tree items to avoid re-reading directories every frame
 
 ## Context
-The change was prompted by the need to ensure proper event propagation when handling space key presses in the sidebar. The previous implementation had an unused parameter that needed to be properly utilized.
+The Dolphin-style sidebar was recently implemented, but it was reading directory contents on every frame, which is inefficient. This change adds caching to improve performance.
 
 ## Completed
-- [x] Refactored `handle_space_key` to use the `event_tx` parameter for proper event propagation
-- [x] Updated Cargo.lock to resolve dependency versions after the change
+- [x] Added `sidebar_tree_cache` field to store tree items
+- [x] Added `sidebar_tree_cache_key` for cache invalidation
+- [x] Updated documentation for new fields
 
 ## In Progress
-- [x] No active work in progress beyond this commit
+- [ ] Implement cache invalidation logic when `tree_expanded_folders` or `show_hidden` changes
 
 ## Blockers
-- None identified for this specific change
+- Need to implement cache invalidation logic before this can be fully utilized
 
 ## Next Steps
-1. Verify the sidebar's folder expand/collapse functionality works as expected
-2. Continue with other sidebar-related improvements
+1. Implement cache invalidation when `tree_expanded_folders` or `show_hidden` changes
+2. Add performance metrics to verify the caching improvements
