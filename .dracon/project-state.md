@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored folder expansion behavior in the sidebar to maintain consistent navigation patterns
+Refactored sidebar toggle behavior to simplify keyboard shortcut handling
 
 ## Context
-The change standardizes folder expansion behavior when pressing Enter on a directory in the sidebar, ensuring it matches the behavior when clicking on folder names. This improves user consistency in the file navigation system.
+The previous implementation had complex logic for toggling between different sidebar scopes (All/Favorites/Remotes) when holding Ctrl+key. This was simplified to just toggle the sidebar visibility with Ctrl+key, removing the scope-switching functionality.
 
 ## Completed
-- [x] Unified folder expansion behavior for both Enter key and name clicks
-- [x] Maintained consistent navigation when expanding folders
-- [x] Updated Cargo.lock to resolve dependency versions
+- [x] Removed complex scope-switching logic when toggling sidebar
+- [x] Simplified sidebar toggle to just show/hide with Ctrl+key
+- [x] Maintained view preference saving for consistent state
 
 ## In Progress
-- [x] Refactored folder expansion logic to reduce code duplication
+- [ ] No active work in progress
 
 ## Blockers
-- None identified in this change
+- None identified
 
 ## Next Steps
-1. Verify the new behavior matches user expectations in testing
-2. Consider additional sidebar navigation improvements based on user feedback
+1. Verify the simplified behavior meets user expectations
+2. Consider adding a dedicated keybinding for scope switching if needed
