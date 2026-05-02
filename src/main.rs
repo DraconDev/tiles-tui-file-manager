@@ -1425,6 +1425,11 @@ fn setup_app(
         app.is_split_mode = state.is_split_mode;
         app.semantic_coloring = state.semantic_coloring;
         app.show_sidebar = state.show_sidebar;
+        app.sidebar_folders = state.sidebar_folders;
+        app.sidebar_favorites = state.sidebar_favorites;
+        app.sidebar_recent = state.sidebar_recent;
+        app.sidebar_storage = state.sidebar_storage;
+        app.sidebar_remotes = state.sidebar_remotes;
         app.show_side_panel = state.show_side_panel;
         app.default_show_hidden = state.default_show_hidden;
         app.auto_save = state.auto_save;

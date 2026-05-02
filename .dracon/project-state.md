@@ -4,7 +4,7 @@
 Added configurable sidebar sections to enable/disable individual components.
 
 ## Context
-To improve user customization, we needed to make sidebar sections independently configurable. This allows users to show/hide specific sidebar components like folders, favorites, recent files, storage, and remotes.
+This change implements a feature request to allow users to customize which sidebar sections are visible. The sidebar now supports enabling/disabling folders, favorites, recent files, storage locations, and remote connections independently.
 
 ## Completed
 - [x] Added `sidebar_folders` configuration option
@@ -14,10 +14,10 @@ To improve user customization, we needed to make sidebar sections independently 
 - [x] Added `sidebar_remotes` configuration option
 
 ## In Progress
-- [ ] Implement UI controls to toggle these options
+- [ ] Testing and validation of sidebar configuration persistence
 
 ## Blockers
-- UI implementation depends on frontend framework integration
+- User interface for configuring these options needs to be implemented
 
 ## Next Steps
 1. Implement UI controls for toggling sidebar sections
