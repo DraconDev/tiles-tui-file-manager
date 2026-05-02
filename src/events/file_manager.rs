@@ -991,11 +991,13 @@ pub fn handle_file_mouse(
                         // Check if click was on expand/collapse marker
                         // Use explicit FileColumn::Name lookup and 2-column buffer to catch rendering offset
                         let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
-                        eprintln!("CLICK col={} row={} idx={} depth={} cb_len={}", column, row, idx, depth, fs.column_bounds.len());
+                        let log_line = format!("CLICK col={} row={} idx={} depth={} cb_len={}\n", column, row, idx, depth, fs.column_bounds.len());
+                        let _ = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/click.log").and_then(|mut f| std::io::Write::write_all(&mut f, log_line.as_bytes()));
                         if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
                             let marker_x = name_rect.x + depth as u16 * 2;
                             let hit = column >= marker_x.saturating_sub(2) && column < name_rect.x + name_rect.width;
-                            eprintln!("  name_x={} marker_x={} hit={}", name_rect.x, marker_x, hit);
+                            let log_line2 = format!("  name_x={} marker_x={} hit={}\n", name_rect.x, marker_x, hit);
+                            let _ = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/click.log").and_then(|mut f| std::io::Write::write_all(&mut f, log_line2.as_bytes()));
                             if is_dir && hit {
                                 let folder_path = p;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
