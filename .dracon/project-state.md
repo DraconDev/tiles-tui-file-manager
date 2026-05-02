@@ -4,19 +4,18 @@
 Added file category labels to sidebar file view for consistent display formatting
 
 ## Context
-The change implements consistent file category labeling in the sidebar file view to improve visual scanning and file type identification.
+This change implements consistent display formatting for file categories in the sidebar file view, building on previous work to ensure uniform presentation across the UI.
 
 ## Completed
-- [x] Added `FileCategoryExt` trait with `label()` method to provide standardized category labels
-- [x] Integrated category labels in sidebar file view when semantic coloring is enabled
-- [x] Removed duplicate category label implementation from vendor utils
+- [x] Added `FileCategoryExt` import to `ui/mod.rs` for category display functionality
+- [x] Added `FileCategoryExt` import to `sidebar.rs` to enable category label rendering
 
 ## In Progress
-- [ ] None (change is complete)
+- [x] Implementation of category label display in sidebar file view
 
 ## Blockers
-- None (change is complete)
+- None identified in this commit
 
 ## Next Steps
-1. Verify label display consistency across different file types
-2. Consider adding user-configurable label formats
+1. Implement the actual category label rendering in the sidebar view
+2. Verify consistent display across different file types and states

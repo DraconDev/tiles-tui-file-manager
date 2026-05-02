@@ -15,6 +15,7 @@ use crate::app::{
     SettingsSection, SettingsTarget,
 };
 use crate::icons::Icon;
+use crate::state::FileCategoryExt;
 use crate::ui::theme::THEME;
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::{
