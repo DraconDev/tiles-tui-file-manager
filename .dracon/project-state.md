@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Added Konsole tab support for terminal spawning in Linux environments
 
 ## Context
-The change was triggered by dependency version conflicts during recent refactoring work on the sidebar component. The Cargo.lock file was updated to maintain consistent dependency resolution.
+The change improves cross-platform terminal compatibility by adding specific support for Konsole terminals when detected. This addresses the need for better terminal integration in Linux environments while maintaining the existing behavior for other platforms.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
-- [x] Maintained consistent dependency resolution
+- [x] Added conditional Konsole tab support when KONSOLE_VERSION environment variable is detected
+- [x] Maintained backward compatibility with existing terminal spawning logic
+- [x] Preserved the ability to specify working directory and command execution
 
 ## In Progress
-- [x] Dependency resolution verification
+- [ ] None
 
 ## Blockers
-- None identified in this change
+- None
 
 ## Next Steps
-1. Verify dependency resolution stability
-2. Continue with sidebar component refactoring
+1. Test Konsole integration across different Linux distributions
+2. Consider adding similar support for other popular terminal emulators

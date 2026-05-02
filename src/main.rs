@@ -893,7 +893,18 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         )
                     });
                     let cmd_str = remote_cmd.as_deref().or(command.as_deref());
-                    dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
+                    
+                    // Custom Konsole tab support
+                    if new_tab && std::env::var("KONSOLE_VERSION").is_ok() {
+                        let mut cmd = std::process::Command::new("konsole");
+                        cmd.arg("--new-tab").arg("--workdir").arg(&path);
+                        if let Some(cmd_to_run) = cmd_str {
+                            cmd.arg("-e").arg("sh").arg("-c").arg(cmd_to_run);
+                        }
+                        let _ = cmd.spawn();
+                    } else {
+                        dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
+                    }
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);
