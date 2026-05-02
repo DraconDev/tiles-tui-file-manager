@@ -157,7 +157,6 @@ pub enum SidebarScope {
     All,
     Favorites,
     Remotes,
-    Tree,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

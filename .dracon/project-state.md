@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Added configurable sidebar sections to enable/disable individual components
 
 ## Context
-The Cargo.lock file was modified to update dependency versions, likely triggered by recent refactoring work in the project. This is part of the ongoing dependency management process.
+The sidebar was previously a monolithic component. This change allows users to customize which sections appear (folders, favorites, recent, storage, remotes) by adding individual toggle flags to the App state.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Added five new boolean fields to App struct for sidebar section visibility
+- [x] Initialized all new sidebar section flags to true in App constructor
+- [x] Removed the Tree variant from SidebarScope enum as it's no longer needed
 
 ## In Progress
-- [ ] Dependency resolution for `dracon-files` package (blocked by failed manifest load)
+- [ ] Implement UI controls to toggle these sidebar sections
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files`
+- UI components need to be updated to respect these new visibility flags
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Verify all dependencies are properly resolved in Cargo.lock
+1. Create UI controls for toggling sidebar sections
+2. Add persistence for these settings to maintain user preferences
