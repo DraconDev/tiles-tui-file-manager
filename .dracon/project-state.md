@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Added safety documentation for raw file descriptor handling in terminal input polling
+Dependency version resolution and Cargo.toml updates after terminal session management changes
 
 ## Context
-The change addresses potential safety concerns around raw file descriptor usage in the terminal input polling mechanism. This is part of ongoing work to improve code safety and documentation in the terminal handling subsystem.
+The binary modification to Cargo.toml was likely triggered by recent changes in terminal session management and the removal of the Dracon Terminal Engine vendor dependency. This update resolves dependency versions to maintain project stability.
 
 ## Completed
-- [x] Added safety documentation for raw file descriptor handling in terminal input polling
-- [x] Documented the safety considerations for using BorrowedFd in the input polling loop
+- [x] Updated Cargo.toml to resolve dependency versions
+- [x] Updated Cargo.lock to reflect resolved versions
 
 ## In Progress
-- [ ] No active work in progress beyond this change
+- [ ] Verification of terminal session management functionality
 
 ## Blockers
-- None identified for this specific change
+- Missing manifest for dependency `dracon-files` in slice `synth-1774826981`
 
 ## Next Steps
-1. Review the safety documentation for completeness
-2. Continue with terminal subsystem improvements and safety audits
+1. Resolve the missing manifest for `dracon-files`
+2. Verify terminal session management functionality after dependency updates

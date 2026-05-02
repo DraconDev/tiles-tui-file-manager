@@ -22,10 +22,7 @@ dracon-git = { git = "https://github.com/DraconDev/dracon-libs", tag = "v12.6.0"
 dracon-system = { git = "https://github.com/DraconDev/dracon-libs", tag = "v12.6.0" }
 
 tokio = { version = "1.0", features = ["full"] }
-openssl = { version = "0.10", features = ["vendored"] }
 parking_lot = "0.12"
-toml = "0.9.11"
-libc = "0.2.180"
 unicode-width = "0.2.0"
 uuid = { version = "1.11.0", features = ["v4"] }
 image = "0.24"
