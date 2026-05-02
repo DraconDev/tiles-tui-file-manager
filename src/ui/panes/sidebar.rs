@@ -597,16 +597,14 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             let start = app.sidebar_scroll_offset;
             let visible_items: Vec<_> = sidebar_items.into_iter().skip(start).take(visible_height).collect();
 
-            // Rebuild sidebar_bounds for visible items with adjusted y coordinates
-            let mut new_bounds = Vec::new();
-            for b in app.sidebar_bounds.iter() {
+            // Adjust sidebar_bounds y coordinates for visible items; non-visible get sentinel
+            for b in app.sidebar_bounds.iter_mut() {
                 if b.index >= start && b.index < start + visible_height {
-                    let mut adjusted_b = b.clone();
-                    adjusted_b.y = inner.y + (b.index - start) as u16;
-                    new_bounds.push(adjusted_b);
+                    b.y = inner.y + (b.index - start) as u16;
+                } else {
+                    b.y = u16::MAX;
                 }
             }
-            app.sidebar_bounds = new_bounds;
 
             let title_text = app.current_file_state()
                 .map(|fs| fs.current_path.to_string_lossy().to_string())

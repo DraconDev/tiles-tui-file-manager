@@ -1,22 +1,25 @@
 # Project State
 
 ## Current Focus
-Added scroll offset tracking for sidebar navigation to maintain position during scrolling.
+Optimized sidebar rendering by adjusting bounds for visible items and marking non-visible items with sentinel values.
 
 ## Context
-The sidebar navigation needed improved handling of scroll position to maintain visibility of the current folder when scrolling through long lists of items.
+This change improves sidebar performance by:
+1. Only processing bounds for currently visible items
+2. Using sentinel values (u16::MAX) for non-visible items to maintain consistent data structure
+3. Reducing unnecessary bounds calculations during rendering
 
 ## Completed
-- [x] Added scroll up/down handling with offset tracking
-- [x] Implemented scroll clamping in the draw function (implied by comment)
-- [x] Maintained existing mouse event handling behavior
+- [x] Refactored bounds calculation to only process visible items
+- [x] Added sentinel values for non-visible items
+- [x] Updated Cargo.lock for dependency resolution
 
 ## In Progress
-- [x] Scroll offset tracking implementation
+- [ ] No active work in progress
 
 ## Blockers
-- None identified in this change
+- Dependency resolution for `dracon-files` (blocked by manifest loading failure)
 
 ## Next Steps
-1. Verify scroll behavior in UI tests
-2. Optimize performance for large sidebar trees
+1. Verify performance impact with large sidebar trees
+2. Address `dracon-files` dependency issue to enable execution
