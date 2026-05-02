@@ -894,17 +894,26 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     });
                     let cmd_str = remote_cmd.as_deref().or(command.as_deref());
                     
-                    // Custom Konsole tab support
-                    if new_tab && std::env::var("KONSOLE_VERSION").is_ok() {
-                        let mut cmd = std::process::Command::new("konsole");
-                        cmd.arg("--new-tab").arg("--workdir").arg(&path);
-                        if let Some(cmd_to_run) = cmd_str {
-                            cmd.arg("-e").arg("sh").arg("-c").arg(cmd_to_run);
+                    // Try Konsole tab support when new_tab is requested
+                    if new_tab {
+                        let konsole_available = std::process::Command::new("which")
+                            .arg("konsole")
+                            .output()
+                            .map(|output| output.status.success())
+                            .unwrap_or(false);
+                        
+                        if konsole_available {
+                            let mut cmd = std::process::Command::new("konsole");
+                            cmd.arg("--new-tab").arg("--workdir").arg(&path);
+                            if let Some(cmd_to_run) = cmd_str {
+                                cmd.arg("-e").arg("sh").arg("-c").arg(cmd_to_run);
+                            }
+                            let _ = cmd.spawn();
+                            return;
                         }
-                        let _ = cmd.spawn();
-                    } else {
-                        dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
                     }
+                    
+                    dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);

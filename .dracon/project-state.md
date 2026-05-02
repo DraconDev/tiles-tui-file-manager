@@ -1,15 +1,15 @@
 # Project State
 
 ## Current Focus
-Added Konsole tab support for terminal spawning in Linux environments
+Improved Konsole tab support for terminal spawning in Linux environments
 
 ## Context
-The change improves cross-platform terminal compatibility by adding specific support for Konsole terminals when detected. This addresses the need for better terminal integration in Linux environments while maintaining the existing behavior for other platforms.
+The previous implementation had a hard dependency check for Konsole which could fail silently. This change makes the Konsole tab support more robust by first verifying Konsole's availability before attempting to use it.
 
 ## Completed
-- [x] Added conditional Konsole tab support when KONSOLE_VERSION environment variable is detected
-- [x] Maintained backward compatibility with existing terminal spawning logic
-- [x] Preserved the ability to specify working directory and command execution
+- [x] Added explicit Konsole availability check using `which` command
+- [x] Improved error handling for Konsole tab spawning
+- [x] Maintained fallback to default terminal spawning when Konsole is unavailable
 
 ## In Progress
 - [ ] None
@@ -18,5 +18,5 @@ The change improves cross-platform terminal compatibility by adding specific sup
 - None
 
 ## Next Steps
-1. Test Konsole integration across different Linux distributions
-2. Consider adding similar support for other popular terminal emulators
+1. Test Konsole tab spawning across different Linux distributions
+2. Consider adding similar availability checks for other terminal emulators
