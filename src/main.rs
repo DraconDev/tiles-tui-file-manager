@@ -147,7 +147,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             let fd = stdin.as_raw_fd();
             let mut buffer = [0; 1024];
             while !shutdown_input.load(Ordering::Relaxed) {
-                // SAFETY: poll_input takes a borrowed file descriptor ( BorrowedFd) and only
+                // Validate fd before unsafe block — if stdin was closed or redirected such that
+                // the fd became invalid, we would get UB. Breaking here is safe and clean.
+                if fd < 0 {
+                    crate::app::log_debug("stdin fd is invalid (< 0), breaking input loop");
+                    break;
+                }
+                // SAFETY: poll_input takes a borrowed file descriptor (BorrowedFd) and only
                 // checks for input availability (returns bool). The fd is valid for the duration
                 // of this loop since stdin lives at least as long as the process. We hold the
                 // only reference to stdin here, so there are no aliasing issues.

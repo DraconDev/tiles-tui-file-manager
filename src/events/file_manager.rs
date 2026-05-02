@@ -1373,16 +1373,14 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                             fs.selection.anchor = Some(0);
                             fs.selection.clear_multi();
                             crate::event_helpers::push_history(fs, path.clone());
-                            let _ = event_tx
-                                .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                         if !was_expanded {
                             app.tree_expanded_folders.insert(path_ref);
                         }
                         app.sidebar_focus = false;
                     } else {
-                        let _ = event_tx
-                            .try_send(AppEvent::PreviewRequested(app.focused_pane_index, path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(app.focused_pane_index, path));
                         app.sidebar_focus = false;
                     }
                 }
