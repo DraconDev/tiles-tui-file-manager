@@ -78,9 +78,99 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 name.to_lowercase().contains(&search_filter.to_lowercase())
             };
 
-            let show_favorites = true;
-            let show_storage = true;
-            let show_remotes = true;
+            let show_folders = app.sidebar_folders;
+            let show_favorites = app.sidebar_favorites;
+            let show_recent = app.sidebar_recent;
+            let show_storage = app.sidebar_storage;
+            let show_remotes = app.sidebar_remotes;
+
+            // === FOLDERS Section (Tree) ===
+            if show_folders {
+                let folder_header_idx = sidebar_items.len();
+                let folders_icon = Icon::Folder.get(app.icon_mode);
+                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut folders_style = Style::default()
+                    .fg(crate::ui::theme::accent_primary())
+                    .add_modifier(Modifier::BOLD);
+                if app.sidebar_index == folder_header_idx {
+                    line_style = line_style.fg(crate::ui::theme::border_active());
+                    folders_style = folders_style
+                        .fg(crate::ui::theme::border_active())
+                        .add_modifier(Modifier::UNDERLINED);
+                }
+                let label = format!("{} FOLDERS", folders_icon);
+                let row_w = area.width.saturating_sub(2) as usize;
+                sidebar_items.push(ListItem::new(section_header_line(
+                    &label,
+                    row_w,
+                    line_style,
+                    folders_style,
+                )));
+                app.sidebar_bounds.push(SidebarBounds {
+                    y: current_y,
+                    index: folder_header_idx,
+                    target: SidebarTarget::Header("FOLDERS".to_string()),
+                });
+                current_y += 1;
+
+                // Collect and render folder tree
+                let base_path = if let Some(fs) = app.current_file_state() {
+                    fs.current_path.clone()
+                } else {
+                    dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"))
+                };
+
+                let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
+                collect_tree_items(&base_path, 0, app, &mut tree_items);
+
+                for (path, depth) in tree_items {
+                    let is_dir = path.is_dir();
+                    let name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or("?".to_string());
+
+                    if !matches_filter(&name) {
+                        continue;
+                    }
+
+                    let current_idx = sidebar_items.len();
+                    let is_selected = app.sidebar_focus && app.sidebar_index == current_idx;
+
+                    let style = if is_selected {
+                        Style::default()
+                            .bg(selection_bg)
+                            .fg(Color::Black)
+                            .add_modifier(Modifier::BOLD)
+                    } else {
+                        Style::default().fg(THEME.fg)
+                    };
+
+                    let marker = if is_dir {
+                        if app.tree_expanded_folders.contains(&path) {
+                            "▾ "
+                        } else {
+                            "▸ "
+                        }
+                    } else {
+                        "  "
+                    };
+
+                    let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.icon_mode);
+                    let indent_str = "  ".repeat(depth as usize);
+                    let line = Line::from(vec![
+                        Span::raw(format!("{}{}", indent_str, marker)),
+                        Span::raw(format!("{}{}", icon, name)),
+                    ]);
+                    sidebar_items.push(ListItem::new(line).style(style));
+                    app.sidebar_bounds.push(SidebarBounds {
+                        y: current_y,
+                        index: current_idx,
+                        target: SidebarTarget::Project(path.clone()),
+                    });
+                    current_y += 1;
+                }
+            }
 
             app.sidebar_bounds.push(SidebarBounds {
                 y: area.y,
