@@ -13,7 +13,6 @@ use unicode_width::UnicodeWidthStr;
 use crate::app::{App, CurrentView, DropTarget, SidebarBounds, SidebarTarget};
 use crate::config::{fuzzy_contains, FUZZY_SEARCH};
 use crate::icons::Icon;
-use crate::state::FileCategoryExt;
 use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::truncate_to_width;
 
@@ -349,7 +348,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     app.sidebar_bounds.push(SidebarBounds {
                         y: current_y,
                         index: current_idx,
-                        target: SidebarTarget::Favorite(path.clone()),
+                        target: SidebarTarget::Recent(path.clone()),
                         ..Default::default()
                     });
                     current_y += 1;
@@ -642,7 +641,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 });
             if let Some(bound) = hint_target {
                 let hint = match &bound.target {
-                    SidebarTarget::Favorite(path) | SidebarTarget::Project(path) => {
+                    SidebarTarget::Favorite(path) | SidebarTarget::Recent(path) | SidebarTarget::Project(path) => {
                         path.to_string_lossy().to_string()
                     }
                     SidebarTarget::Remote(idx) => app
@@ -847,12 +846,6 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
         let indent_str = "  ".repeat(depth as usize);
 
-        let category_label = if app.semantic_coloring && !is_dir {
-            cat.label()
-        } else {
-            ""
-        };
-
         let open_indicator = if !is_dir && open_files.contains(&path) {
             Some(Span::styled(
                 " ●",
@@ -869,12 +862,6 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             ];
             if let Some(ind) = open_indicator {
                 spans.push(ind);
-            }
-            if !category_label.is_empty() {
-                spans.push(Span::styled(
-                    category_label,
-                    Style::default().fg(cat.cyber_color()),
-                ));
             }
             spans.push(Span::raw(name));
             spans

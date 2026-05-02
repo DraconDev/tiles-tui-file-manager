@@ -842,14 +842,15 @@ pub fn push_history(fs: &mut FileState, path: PathBuf) {
 
 const FILE_LIST_START_ROW: u16 = 3; // row 0=header icons, rows 1-2=breadcrumbs, row 3+=file list
 
-pub fn fs_mouse_index(row: u16, app: &App) -> usize {
-    if let Some(fs) = app.current_file_state() {
-        let offset = fs.table_state.offset();
-        let rel_row = row.saturating_sub(FILE_LIST_START_ROW) as usize;
-        offset.saturating_add(rel_row)
-    } else {
-        0
+pub fn fs_mouse_index(row: u16, app: &App) -> Option<usize> {
+    let fs = app.current_file_state()?;
+    let offset = fs.table_state.offset();
+    let rel_row = row.saturating_sub(FILE_LIST_START_ROW) as usize;
+    let idx = offset.saturating_add(rel_row);
+    if idx >= fs.files.len() {
+        return None;
     }
+    Some(idx)
 }
 
 pub fn get_open_with_suggestions(_app: &App, ext: &str) -> Vec<String> {

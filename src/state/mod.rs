@@ -9,25 +9,6 @@ use dracon_terminal_engine::widgets::TextEditor;
 pub use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
 pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, SelectionState};
 
-pub trait FileCategoryExt {
-    fn label(&self) -> &'static str;
-}
-
-impl FileCategoryExt for FileCategory {
-    fn label(&self) -> &'static str {
-        match self {
-            FileCategory::Archive => "[ARCH]",
-            FileCategory::Image => "[IMG]",
-            FileCategory::Script => "[SCRIPT]",
-            FileCategory::Text => "[TEXT]",
-            FileCategory::Document => "[DOC]",
-            FileCategory::Audio => "[AUDIO]",
-            FileCategory::Video => "[VIDEO]",
-            FileCategory::Other => "",
-        }
-    }
-}
-
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum AppEvent {
@@ -255,6 +236,7 @@ pub struct CommandItem {
 #[derive(Clone, Debug, PartialEq)]
 pub enum SidebarTarget {
     Favorite(PathBuf),
+    Recent(PathBuf),
     Remote(usize),
     Storage(usize),
     Project(PathBuf),
@@ -317,6 +299,8 @@ pub struct FileState {
     pub selection: SelectionState,
     pub show_hidden: bool,
     pub search_filter: String,
+    #[serde(skip)]
+    pub search_generation: u64,
     pub columns: Vec<FileColumn>,
     pub history: Vec<PathBuf>,
     pub history_index: usize,
@@ -386,6 +370,7 @@ impl FileState {
             selection: SelectionState::default(),
             show_hidden,
             search_filter: String::new(),
+            search_generation: 0,
             columns,
             history: vec![path],
             history_index: 0,

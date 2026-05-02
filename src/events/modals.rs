@@ -307,6 +307,7 @@ fn handle_search_keys(
         KeyCode::Esc => {
             if let Some(fs) = app.current_file_state_mut() {
                 fs.search_filter.clear();
+                fs.search_generation += 1;
                 let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
             }
             app.mode = AppMode::Normal;
@@ -318,13 +319,7 @@ fn handle_search_keys(
             if !query.is_empty() {
                 if let Some(fs) = app.current_file_state_mut() {
                     fs.search_filter = query;
-                    // Trigger refresh or filtering logic if needed
-                    // Usually search filter is live, but if this is a modal, it applies on Enter?
-                    // file_manager.rs uses fs.search_filter for live filtering.
-                    // AppMode::Search is likely the "Find" modal mentioned in Ctrl+F.
-                    // If we are in "Search" mode, we are typing into app.input.
-                    // We should likely update fs.search_filter live OR on Enter.
-                    // For now, let's update on Enter.
+                    fs.search_generation += 1;
                 }
                 let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
             }

@@ -15,7 +15,6 @@ use crate::app::{
     SettingsSection, SettingsTarget,
 };
 use crate::icons::Icon;
-use crate::state::FileCategoryExt;
 use crate::ui::theme::THEME;
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::{
@@ -2736,15 +2735,10 @@ fn draw_file_view(
 
                                     let truncated_name =
                                         truncate_to_width(&display_name, available_width, "..");
-                                    let category_label = if app.semantic_coloring && !is_dir {
-                                        cat.label()
-                                    } else {
-                                        ""
-                                    };
                                     let cell_text = if depth_indent.is_empty() {
-                                        format!(" {} {}{}{}", icon_str, category_label, truncated_name, suffix)
+                                        format!(" {} {}{}", icon_str, truncated_name, suffix)
                                     } else {
-                                        format!("{}{} {}{}{}", depth_indent, icon_str, category_label, truncated_name, suffix)
+                                        format!("{}{} {}{}", depth_indent, icon_str, truncated_name, suffix)
                                     };
 
                                     cell_text

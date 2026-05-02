@@ -42,7 +42,7 @@ async fn main() -> color_eyre::Result<()> {
             .location()
             .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
             .unwrap_or_else(|| "unknown location".to_string());
-        crate::app::log_debug(&format!("PANIC at {}: {}", location, msg));
+        eprintln!("[{}] PANIC at {}: {}", chrono::Utc::now(), location, msg);
     }));
 
     let shutdown = Arc::new(AtomicBool::new(false));
@@ -1029,7 +1029,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
         // Handle Refreshes
         for pane_idx in panes_needing_refresh.drain() {
-            let (path, remote, current_filter, git_view, tree_expanded) = {
+            let (path, remote, current_filter, current_generation, git_view, tree_expanded) = {
                 let app_guard = app.lock();
                 if let Some(pane) = app_guard.panes.get(pane_idx) {
                     if let Some(fs) = pane.current_state() {
@@ -1037,6 +1037,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.current_path.clone(),
                             fs.remote_session.clone(),
                             fs.search_filter.clone(),
+                            fs.search_generation,
                             matches!(app_guard.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
                             app_guard.expanded_folders.clone(),
                         )
@@ -1057,6 +1058,7 @@ let list_path_for_filter = path.clone();
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
+                let start_generation = current_generation;
                 let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
@@ -1154,9 +1156,9 @@ let list_path_for_filter = path.clone();
                             if let Some(fs) = pane.current_state_mut() {
                                 // RACE CONDITION CHECK:
                                 // If filter changed while we were reading, discard stale results
-                                if fs.search_filter != current_filter {
+                                if fs.search_generation != start_generation {
                                     crate::app::log_debug(&format!(
-                                        "RefreshFiles: filter changed during read (pane={}), dropping stale results",
+                                        "RefreshFiles: generation mismatch (pane={}), dropping stale results",
                                         pane_idx
                                     ));
                                     return;
