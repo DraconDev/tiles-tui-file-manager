@@ -177,12 +177,38 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 }
             }
 
-            app.sidebar_bounds.push(SidebarBounds {
-                y: area.y,
-                index: usize::MAX - 2,
-                target: SidebarTarget::Header("FAVORITES".to_string()),
-                ..Default::default()
-            });
+            // === FAVORITES Section Header ===
+            if show_favorites {
+                sidebar_items.push(ListItem::new(""));
+                current_y += 1;
+                let fav_header_idx = sidebar_items.len();
+                let fav_icon = Icon::Star.get(app.icon_mode);
+                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut fav_style = Style::default()
+                    .fg(crate::ui::theme::accent_primary())
+                    .add_modifier(Modifier::BOLD);
+                if app.sidebar_index == fav_header_idx {
+                    line_style = line_style.fg(crate::ui::theme::border_active());
+                    fav_style = fav_style
+                        .fg(crate::ui::theme::border_active())
+                        .add_modifier(Modifier::UNDERLINED);
+                }
+                let label = format!("{} FAVORITES", fav_icon);
+                let row_w = area.width.saturating_sub(2) as usize;
+                sidebar_items.push(ListItem::new(section_header_line(
+                    &label,
+                    row_w,
+                    line_style,
+                    fav_style,
+                )));
+                app.sidebar_bounds.push(SidebarBounds {
+                    y: current_y,
+                    index: fav_header_idx,
+                    target: SidebarTarget::Header("FAVORITES".to_string()),
+                    ..Default::default()
+                });
+                current_y += 1;
+            }
 
             // Render Starred Folders (Favorites - NO markers as requested)
             if show_favorites {
