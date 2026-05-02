@@ -1291,7 +1291,7 @@ fn handle_settings_keys(
         }
         KeyCode::Down => {
             let max = match app.settings_section {
-                SettingsSection::General => 7,
+                SettingsSection::General => 12,
                 SettingsSection::Columns => 3,
                 SettingsSection::Style => STYLE_MAX_INDEX,
                 _ => 0,

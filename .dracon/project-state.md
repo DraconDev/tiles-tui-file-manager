@@ -1,23 +1,20 @@
 # Project State
 
 ## Current Focus
-Added configurable sidebar sections with toggleable visibility options
+Adjust the maximum index for the General settings section in the modal handler.
 
 ## Context
-Enhancing the UI with more granular control over sidebar components to improve user customization and workflow efficiency
+This change modifies the hardcoded maximum index value for the General settings section, likely to accommodate additional UI elements or options in the settings modal.
 
 ## Completed
-- [x] Added toggleable sidebar sections for Folders, Favorites, Recent, Storage, and Remotes
-- [x] Implemented keyboard shortcuts (f, v, c, g, m) for each section
-- [x] Added visual status indicators (ENABLED/DISABLED) for each section
+- [x] Updated the maximum index from 7 to 12 for the General settings section
 
 ## In Progress
-- [x] Section visibility configuration implementation
+- [x] None - this is a focused code change
 
 ## Blockers
-- Missing integration with actual section rendering logic
-- Need to implement state persistence for user preferences
+- None - this is a straightforward code adjustment
 
 ## Next Steps
-1. Implement section rendering based on toggle states
-2. Add preference persistence to save user settings
+1. Verify the UI behavior with the new index value
+2. Ensure no other related settings sections require similar adjustments
