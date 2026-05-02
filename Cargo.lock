@@ -616,8 +616,8 @@ dependencies = [
 
 [[package]]
 name = "dracon-terminal-engine"
-version = "27.68.2"
-source = "git+https://github.com/DraconDev/dracon-libs?tag=v12.6.1#2be25fe2193e279ffb0579aa358b71f90e15dea1"
+version = "27.68.4"
+source = "git+https://github.com/DraconDev/dracon-libs?branch=master#fccb265f8cd835bbb436633db8e52bf098ee7978"
 dependencies = [
  "bitflags 2.11.1",
  "chrono",
