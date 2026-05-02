@@ -1,15 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved race condition handling in file filtering and refactored theme management
+Added Git branch status display in editor view tabs with visual indicators for changes
 
 ## Context
-The changes address a race condition in file filtering and optimize theme management by replacing standard RwLock with parking_lot's RwLock for better performance.
+Improving UI visibility of Git state by showing branch information and change status directly in the editor tabs
 
 ## Completed
-- [x] Added debug logging for race condition detection in file filtering
-- [x] Refactored theme management to use parking_lot::RwLock instead of std::sync::RwLock
-- [x] Simplified theme accessor functions by removing unnecessary unwrap() calls
+- [x] Added Git branch display in editor tabs
+- [x] Implemented color-coded status indicators:
+  - Red for pending changes
+  - Yellow for commits ahead/behind
+  - Green for clean branches
+- [x] Added visual indicators for:
+  - Pending changes (+X)
+  - Commits ahead (↑X)
+  - Commits behind (↓X)
+- [x] Maintained visual consistency with active tab styling
 
 ## In Progress
 - [ ] No active work in progress
@@ -18,6 +25,5 @@ The changes address a race condition in file filtering and optimize theme manage
 - None identified
 
 ## Next Steps
-1. Verify performance improvements from parking_lot::RwLock
-2. Test edge cases in file filtering with concurrent operations
-```
+1. Verify visual consistency across different terminal themes
+2. Add unit tests for Git status rendering logic

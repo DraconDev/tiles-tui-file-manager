@@ -1844,7 +1844,49 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                         Style::default().fg(crate::ui::theme::accent_primary()),
                     ));
                 }
-                spans.push(Span::styled(" ", base_style));
+
+                // Show git branch in Editor view tabs too
+                if let Some(branch) = &tab.git_branch {
+                    let pending = tab.git_pending.len();
+                    let ahead = tab.git_ahead;
+                    let behind = tab.git_behind;
+
+                    let branch_color = if pending > 0 {
+                        Color::Red
+                    } else if ahead > 0 || behind > 0 {
+                        Color::Yellow
+                    } else {
+                        Color::Green
+                    };
+
+                    let mut branch_style = Style::default().fg(branch_color);
+                    if is_active_tab && is_focused_pane {
+                        branch_style = branch_style.add_modifier(Modifier::BOLD);
+                    }
+
+                    spans.push(Span::styled(format!("({})", branch), branch_style));
+
+                    if pending > 0 {
+                        spans.push(Span::styled(
+                            format!(" +{}", pending),
+                            Style::default().fg(Color::Red),
+                        ));
+                    }
+                    if ahead > 0 {
+                        spans.push(Span::styled(
+                            format!(" ↑{}", ahead),
+                            Style::default().fg(Color::Yellow),
+                        ));
+                    }
+                    if behind > 0 {
+                        spans.push(Span::styled(
+                            format!(" ↓{}", behind),
+                            Style::default().fg(Color::Yellow),
+                        ));
+                    }
+                    spans.push(Span::raw(" "));
+                }
+
                 let line = Line::from(spans.clone());
                 let total_width = line.width() as u16;
                 let max_width = chunk.x + chunk.width - current_x;
