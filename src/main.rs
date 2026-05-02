@@ -300,12 +300,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                         tx.send(AppEvent::RemoteConnected(p_idx, session)).await;
                                 }
                                 Ok(Err(e)) => {
-                                    let _ = tx.try_send(AppEvent::StatusMsg(format!(
+                                    let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
                                         "Connection failed: {e}"
                                     )));
                                 }
                                 Err(e) => {
-                                    let _ = tx.try_send(AppEvent::StatusMsg(format!(
+                                    let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
                                         "Connection task failed: {e}"
                                     )));
                                 }
