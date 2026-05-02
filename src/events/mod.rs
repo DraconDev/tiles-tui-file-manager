@@ -610,8 +610,7 @@ fn handle_sidebar_mouse(
                             if source_path.is_dir() && !app.starred.contains(&source_path) {
                                 app.starred.push(source_path.clone());
                                 crate::config::save_state_quiet(app);
-                                let _ = event_tx
-                                    .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Added to favorites: {}",
                                     source_path
