@@ -899,39 +899,102 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     if new_tab {
                         // Check if we're running inside Konsole
                         if std::env::var("KONSOLE_VERSION").is_ok() {
-                            if let Ok(konsole_service) = std::env::var("KONSOLE_DBUS_SERVICE") {
-                                if let Ok(konsole_window) = std::env::var("KONSOLE_DBUS_WINDOW") {
+                            // Find the well-known Konsole service name from dbus
+                            let dbus_list = std::process::Command::new("dbus-send")
+                                .arg("--session")
+                                .arg("--dest=org.freedesktop.DBus")
+                                .arg("--type=method_call")
+                                .arg("--print-reply")
+                                .arg("/org/freedesktop/DBus")
+                                .arg("org.freedesktop.DBus.ListNames")
+                                .output();
+                            
+                            if let Ok(list_output) = dbus_list {
+                                let list_str = String::from_utf8_lossy(&list_output.stdout);
+                                let mut konsole_service = None;
+                                for line in list_str.lines() {
+                                    let trimmed = line.trim();
+                                    if trimmed.starts_with("string \"") && trimmed.contains("org.kde.konsole-") {
+                                        if let Some(start) = trimmed.find("\"") {
+                                            if let Some(end) = trimmed.rfind("\"") {
+                                                if start < end {
+                                                    konsole_service = Some(trimmed[start+1..end].to_string());
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if let Some(service) = konsole_service {
                                     // Get default profile
-                                    let profile_result = std::process::Command::new("qdbus")
-                                        .arg(&konsole_service)
-                                        .arg(&konsole_window)
+                                    let profile_result = std::process::Command::new("dbus-send")
+                                        .arg("--session")
+                                        .arg(format!("--dest={}", service))
+                                        .arg("--type=method_call")
+                                        .arg("--print-reply")
+                                        .arg("/Windows/1")
                                         .arg("org.kde.konsole.Window.defaultProfile")
                                         .output();
                                     
                                     if let Ok(profile_output) = profile_result {
-                                        let profile = String::from_utf8_lossy(&profile_output.stdout).trim().to_string();
+                                        let profile_str = String::from_utf8_lossy(&profile_output.stdout);
+                                        let mut profile = String::new();
+                                        for line in profile_str.lines() {
+                                            let trimmed = line.trim();
+                                            if trimmed.starts_with("string \"") {
+                                                if let Some(start) = trimmed.find("\"") {
+                                                    if let Some(end) = trimmed.rfind("\"") {
+                                                        if start < end {
+                                                            profile = trimmed[start+1..end].to_string();
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                        
                                         if !profile.is_empty() {
                                             // Create new session with profile and directory
-                                            let session_result = std::process::Command::new("qdbus")
-                                                .arg(&konsole_service)
-                                                .arg(&konsole_window)
+                                            let session_result = std::process::Command::new("dbus-send")
+                                                .arg("--session")
+                                                .arg(format!("--dest={}", service))
+                                                .arg("--type=method_call")
+                                                .arg("--print-reply")
+                                                .arg("/Windows/1")
                                                 .arg("org.kde.konsole.Window.newSession")
-                                                .arg(&profile)
-                                                .arg(path.to_string_lossy().as_ref())
+                                                .arg(format!("string:{}\"", profile))
+                                                .arg(format!("string:{}\"", path.to_string_lossy()))
                                                 .output();
                                             
                                             if let Ok(session_output) = session_result {
-                                                let session_id = String::from_utf8_lossy(&session_output.stdout).trim().parse::<i32>().unwrap_or(-1);
+                                                let session_str = String::from_utf8_lossy(&session_output.stdout);
+                                                let mut session_id = -1i32;
+                                                for line in session_str.lines() {
+                                                    let trimmed = line.trim();
+                                                    if trimmed.starts_with("int32 ") {
+                                                        if let Some(val_str) = trimmed.strip_prefix("int32 ") {
+                                                            if let Ok(val) = val_str.parse::<i32>() {
+                                                                session_id = val;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                
                                                 if session_id >= 0 {
                                                     let session_path = format!("/Sessions/{}", session_id);
                                                     
                                                     // Run the command if provided
                                                     if let Some(cmd_to_run) = cmd_str {
-                                                        let _ = std::process::Command::new("qdbus")
-                                                            .arg(&konsole_service)
+                                                        let _ = std::process::Command::new("dbus-send")
+                                                            .arg("--session")
+                                                            .arg(format!("--dest={}", service))
+                                                            .arg("--type=method_call")
+                                                            .arg("--print-reply")
                                                             .arg(&session_path)
                                                             .arg("org.kde.konsole.Session.runCommand")
-                                                            .arg(cmd_to_run)
+                                                            .arg(format!("string:{}\"", cmd_to_run))
                                                             .spawn();
                                                     }
                                                     
