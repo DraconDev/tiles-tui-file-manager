@@ -26,10 +26,7 @@ pub const FILE_WATCH_DEBOUNCE_MS: u64 = 200;
 pub const SAVE_DEBOUNCE_MS: u64 = 350;
 /// Maximum preview file size (megabytes)
 pub const PREVIEW_MAX_MB: u16 = 20;
-/// MPSC channel capacity for event queue
 pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
-
-const SAVE_DEBOUNCE_MS: u64 = 350;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExternalTool {

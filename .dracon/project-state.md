@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored history management by removing the `MAX_HISTORY` constant from `event_helpers.rs`
+Removed redundant MPSC channel capacity constant from configuration
 
 ## Context
-The change was part of a broader effort to centralize configuration constants for better maintainability. The constant was moved to a centralized location to avoid duplication and improve consistency in history management.
+The change was part of ongoing refactoring to centralize configuration constants, eliminating duplication and improving maintainability.
 
 ## Completed
-- [x] Removed `MAX_HISTORY` constant from `event_helpers.rs` to consolidate configuration constants
+- [x] Removed duplicate `MPSC_CHANNEL_CAPACITY` constant definition
+- [x] Removed duplicate `SAVE_DEBOUNCE_MS` constant definition
+- [x] Updated Cargo.lock for dependency resolution
 
 ## In Progress
-- [ ] (none)
+- [ ] No active work in progress
 
 ## Blockers
-- The `MAX_HISTORY` constant is now defined elsewhere, but the refactoring is complete
+- None identified
 
 ## Next Steps
-1. Verify that the centralized constant is properly used in history management
-2. Ensure no other instances of `MAX_HISTORY` exist in the codebase
+1. Verify no runtime impact from constant removal
+2. Continue configuration constant consolidation
