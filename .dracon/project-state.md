@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Removed Dolphin-style auto-expansion from sidebar tree navigation
 
 ## Context
-This change was triggered by recent refactoring work that modified dependency versions in the project. The Cargo.lock file was updated to reflect these changes and ensure consistent dependency resolution.
+The sidebar tree was previously automatically expanding to show the current folder path, which made the sidebar less compact. This change removes the auto-expansion behavior while maintaining the visual indicator for the current folder.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Removed auto-expansion logic that would expand parent folders when navigating
+- [x] Kept visual indicator for current folder (◄) to maintain navigation context
+- [x] Maintained compact sidebar design by keeping folders collapsed by default
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None
 
 ## Blockers
-- The project is currently in planning phase with execution disabled
-- The slice `synth-1774826981` is blocked due to failed manifest loading for dependency `dracon-files`
+- None
 
 ## Next Steps
-1. Address the blocked slice by resolving the dependency manifest issue for `dracon-files`
-2. Progress to the next phase once dependencies are resolved and execution is enabled
+1. Verify sidebar remains usable without auto-expansion
+2. Consider adding manual expansion controls if needed
