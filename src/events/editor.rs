@@ -119,8 +119,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     if let Some(fs) = pane.current_state_mut() {
                         fs.preview = None;
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
-                    let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                         "Closed: {}",
                         removed.current_path.file_name()
                             .map(|n| n.to_string_lossy().to_string())
@@ -130,7 +130,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     if let Some(fs) = pane.current_state_mut() {
                         fs.preview = None;
                     }
-                    let _ = event_tx.try_send(AppEvent::StatusMsg("No more tabs to close".to_string()));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("No more tabs to close".to_string()));
                 }
             }
             return true;
@@ -170,19 +170,19 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                         if let Some((work_dir, program, args)) =
                             crate::modules::files::get_run_command(&preview.path)
                         {
-                            let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                 path: work_dir,
                                 new_tab: true,
                                 remote: fs.remote_session.clone(),
                                 command: Some(format!("{} {}", program, args.join(" "))),
                             });
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Running: {} {}",
                                 program,
                                 args.join(" ")
                             )));
                         } else {
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "No run command for: {}",
                                 preview
                                     .path
@@ -264,19 +264,19 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     if let Some((work_dir, program, args)) =
                         crate::modules::files::get_run_command(&preview.path)
                     {
-                        let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                             path: work_dir,
                             new_tab: true,
                             remote,
                             command: Some(format!("{} {}", program, args.join(" "))),
                         });
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Running: {} {}",
                             program,
                             args.join(" ")
                         )));
                     } else {
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "No run command for: {}",
                             preview
                                 .path
@@ -608,7 +608,7 @@ fn handle_text_editor_mouse(
 
     // Auto-save on modification
     if auto_save && editor.modified {
-        let _ = event_tx.try_send(AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
         editor.modified = false;
     }
 
@@ -653,7 +653,7 @@ fn handle_generic_editor_shortcuts(
     }
 
     if has_control && (key.code == KeyCode::Char('s') || key.code == KeyCode::Char('S')) {
-        let _ = event_tx.try_send(AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
         return true;
     }
 
@@ -683,7 +683,7 @@ fn handle_generic_editor_shortcuts(
         };
         *clipboard = Some(content.clone());
         dracon_terminal_engine::utils::set_clipboard_text(&content);
-        let _ = event_tx.try_send(AppEvent::StatusMsg("Copied to clipboard".to_string()));
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Copied to clipboard".to_string()));
         return true;
     }
 
@@ -707,9 +707,9 @@ fn handle_generic_editor_shortcuts(
         } else {
             editor.delete_line(editor.cursor_row);
         }
-        let _ = event_tx.try_send(AppEvent::StatusMsg("Cut to clipboard".to_string()));
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Cut to clipboard".to_string()));
         if auto_save {
-            let _ = event_tx.try_send(AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
         }
         return true;
     }
@@ -763,7 +763,7 @@ fn handle_generic_editor_shortcuts(
                 *mode = AppMode::EditorReplace;
                 input.clear();
                 replace_buffer.clear();
-                let _ = event_tx.try_send(AppEvent::StatusMsg(
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                     "Replace: Type term to FIND, then press Enter/Tab".to_string(),
                 ));
                 return true;
@@ -791,7 +791,7 @@ fn handle_generic_editor_shortcuts(
 
     if editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area) {
         if auto_save && editor.modified {
-            let _ = event_tx.try_send(AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
             editor.modified = false;
         }
         return true;
