@@ -1034,7 +1034,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.current_path.clone(),
                             fs.remote_session.clone(),
                             fs.search_filter.clone(),
-                            matches!(app_guard.current_view, CurrentView::Git | CurrentView::Commit),
+                            matches!(app_guard.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
                             app_guard.expanded_folders.clone(),
                         )
                     } else {
