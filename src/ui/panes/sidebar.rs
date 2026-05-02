@@ -22,9 +22,6 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     });
     match app.current_view {
         CurrentView::Files => {
-            if app.sidebar_scope == SidebarScope::Tree {
-                draw_tree_sidebar(f, area, app);
-            } else {
             let (mut sidebar_items, search_filter) = {
                 let items = Vec::new();
                 let filter = app
@@ -481,7 +478,6 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                         ),
                     );
                 }
-            }
             }
         }
         CurrentView::Editor => {
