@@ -1097,8 +1097,7 @@ pub fn handle_file_mouse(
                                 fs.selection.clear();
                                 fs.git_cache_until = None;
                                 crate::event_helpers::push_history(fs, path);
-                                let _ = event_tx
-                                    .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         } else {
                             dracon_terminal_engine::utils::spawn_detached(
