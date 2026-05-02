@@ -118,6 +118,21 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 // Tree is always rooted at home (Dolphin-style) regardless of current pane path
                 let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
 
+                // Dolphin-style auto-expand: when current_path changes, expand ancestors
+                // so the current folder is visible in the tree (respects manual collapse)
+                if let Some(fs) = app.current_file_state() {
+                    if app.last_tree_current_path.as_ref() != Some(&fs.current_path) {
+                        app.last_tree_current_path = Some(fs.current_path.clone());
+                        let mut current = Some(fs.current_path.clone());
+                        while let Some(path) = current {
+                            if path != base_path {
+                                app.tree_expanded_folders.insert(path.clone());
+                            }
+                            current = path.parent().map(|p| p.to_path_buf());
+                        }
+                    }
+                }
+
                 let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
                 collect_tree_items(&base_path, 0, app, &mut tree_items);
 

@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Added tracking for the last current path in the sidebar tree to enable persistent navigation state.
+Added Dolphin-style auto-expansion for sidebar tree to ensure current folder visibility
 
 ## Context
-This change supports maintaining the user's navigation position in the sidebar tree between sessions or state changes, improving the user experience by preserving context.
+To improve navigation in the sidebar, we need to ensure the current folder is always visible in the tree view. This matches Dolphin's behavior where the tree automatically expands to show the current path.
 
 ## Completed
-- [x] Added `last_tree_current_path` field to `App` struct to store the most recently viewed path in the sidebar tree
+- [x] Added tracking for last current path to detect changes
+- [x] Implemented auto-expansion of ancestor folders when current path changes
+- [x] Preserved manual collapse state by only expanding folders not already collapsed
 
 ## In Progress
-- [x] Implementation of path persistence logic (not yet shown in this diff)
+- [ ] Testing edge cases with different path structures
 
 ## Blockers
-- Missing implementation of the actual path persistence mechanism (storage and retrieval)
+- None identified
 
 ## Next Steps
-1. Implement logic to save and restore the path from persistent storage
-2. Add tests for path tracking behavior
+1. Verify behavior with deeply nested paths
+2. Add visual indicators for expanded/collapsed states
