@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored terminal spawning behavior to always open in a new tab
+Refactored sidebar hidden file visibility to match focused pane's settings
 
 ## Context
-The change was prompted by a need to standardize terminal spawning behavior in the context menu. Previously, terminals were only opened in new tabs when explicitly requested via `ContextMenuAction::RunTerminal`, but this was changed to always open in new tabs for consistency.
+The sidebar previously used the global `default_show_hidden` setting, which didn't match the file pane's visibility state. This change ensures consistent behavior between panes.
 
 ## Completed
-- [x] Modified terminal spawning logic to always create new tabs (`new_tab: true`)
+- [x] Modified hidden file filtering to use focused pane's `show_hidden` state
+- [x] Added fallback to `default_show_hidden` when pane state isn't available
 
 ## In Progress
-- [x] Behavior change is complete
+- [ ] None (change is complete)
 
 ## Blockers
-- None identified
+- None (dependency `dracon-files` failed to load, but this change is independent)
 
 ## Next Steps
-1. Verify terminal behavior across different context menu actions
-2. Consider adding configuration options for terminal spawning behavior
+1. Verify sidebar visibility matches file pane in all cases
+2. Consider adding a sidebar-specific visibility toggle if needed

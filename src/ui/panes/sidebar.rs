@@ -890,7 +890,14 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
             let p = entry.path();
             let name = p.file_name().unwrap_or_default().to_string_lossy();
 
-            if !app.default_show_hidden && name.starts_with('.') {
+            // Use focused pane's show_hidden state so sidebar matches file pane
+            let show_hidden = app.panes
+                .get(app.focused_pane_index)
+                .and_then(|p| p.current_state())
+                .map(|fs| fs.show_hidden)
+                .unwrap_or(app.default_show_hidden);
+
+            if !show_hidden && name.starts_with('.') {
                 continue;
             }
 
