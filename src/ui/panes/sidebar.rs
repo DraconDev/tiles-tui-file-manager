@@ -6,6 +6,7 @@ use ratatui::{
     Frame,
 };
 use std::collections::{HashMap, HashSet};
+use std::hash::{Hash, Hasher, DefaultHasher};
 use std::path::PathBuf;
 use unicode_width::UnicodeWidthStr;
 
@@ -756,22 +757,22 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(block, area);
 
     // Compute cache key for editor sidebar
-    use std::hash::{Hash, Hasher};
-    let mut cache_key: u64 = 0;
-    {
-        let mut hasher = DefaultHasher::new();
-        base_path.hash(&mut hasher);
-        app.tree_expanded_folders.hash(&mut hasher);
-        cache_key = hasher.finish();
-    }
+    let editor_cache_key: u64 = {
+        let mut h = DefaultHasher::new();
+        base_path.hash(&mut h);
+        for p in app.tree_expanded_folders.iter() {
+            p.hash(&mut h);
+        }
+        h.finish()
+    };
 
-    let tree_items: Vec<(PathBuf, u16)> = if app.editor_sidebar_cache_key == cache_key {
+    let tree_items: Vec<(PathBuf, u16)> = if app.editor_sidebar_cache_key == editor_cache_key {
         app.editor_sidebar_cache.clone().unwrap_or_default()
     } else {
         let mut items = Vec::new();
         collect_tree_items(&base_path, 0, app, &mut items);
         app.editor_sidebar_cache = Some(items.clone());
-        app.editor_sidebar_cache_key = cache_key;
+        app.editor_sidebar_cache_key = editor_cache_key;
         items
     };
 
