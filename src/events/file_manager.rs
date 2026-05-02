@@ -1312,25 +1312,20 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 }
                 SidebarTarget::Project(path) => {
                     if path.is_dir() {
+                        // Enter on folder = navigate + expand (consistent with name click)
                         let path_ref = path.clone();
-                        let expanded_set = &app.tree_expanded_folders;
-                        let was_expanded = expanded_set.contains(&path_ref);
-                        if was_expanded {
-                            app.tree_expanded_folders.remove(&path_ref);
-                        } else {
-                            app.tree_expanded_folders.insert(path.clone());
+                        let was_expanded = app.tree_expanded_folders.contains(&path_ref);
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.current_path = path.clone();
+                            fs.selection.selected = Some(0);
+                            fs.selection.anchor = Some(0);
+                            fs.selection.clear_multi();
+                            crate::event_helpers::push_history(fs, path.clone());
+                            let _ = event_tx
+                                .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
                         }
-                        // Always navigate to folder when expanding
                         if !was_expanded {
-                            if let Some(fs) = app.current_file_state_mut() {
-                                fs.current_path = path.clone();
-                                fs.selection.selected = Some(0);
-                                fs.selection.anchor = Some(0);
-                                fs.selection.clear_multi();
-                                crate::event_helpers::push_history(fs, path.clone());
-                                let _ = event_tx
-                                    .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                            }
+                            app.tree_expanded_folders.insert(path_ref);
                         }
                         app.sidebar_focus = false;
                     } else {

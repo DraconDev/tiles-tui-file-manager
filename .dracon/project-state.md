@@ -1,24 +1,22 @@
 # Project State
 
 ## Current Focus
-Added scroll offset tracking for sidebar navigation to maintain visibility of selected items
+Refactored folder expansion behavior in the sidebar to maintain consistent navigation patterns
 
 ## Context
-The sidebar was previously rendering all items at once without handling scrolling, which could cause selected items to be off-screen. This change implements proper scroll offset tracking to ensure the selected item remains visible.
+The change standardizes folder expansion behavior when pressing Enter on a directory in the sidebar, ensuring it matches the behavior when clicking on folder names. This improves user consistency in the file navigation system.
 
 ## Completed
-- [x] Added scroll offset tracking for sidebar items
-- [x] Implemented bounds adjustment for visible items
-- [x] Added scroll position validation to prevent out-of-bounds access
-- [x] Updated rendering to only show visible items within the viewport
+- [x] Unified folder expansion behavior for both Enter key and name clicks
+- [x] Maintained consistent navigation when expanding folders
+- [x] Updated Cargo.lock to resolve dependency versions
 
 ## In Progress
-- [x] Scroll offset implementation is complete
+- [x] Refactored folder expansion logic to reduce code duplication
 
 ## Blockers
-- None identified
+- None identified in this change
 
 ## Next Steps
-1. Verify scroll behavior with large directory structures
-2. Add smooth scrolling animations if needed
-3. Test with different terminal sizes to ensure consistent behavior
+1. Verify the new behavior matches user expectations in testing
+2. Consider additional sidebar navigation improvements based on user feedback
