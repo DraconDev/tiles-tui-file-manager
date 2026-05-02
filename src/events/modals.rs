@@ -1318,13 +1318,18 @@ fn handle_settings_keys(
                                 IconMode::ASCII => IconMode::Nerd,
                             }
                         }
-                        7 => {
+                        7 => app.sidebar_folders = !app.sidebar_folders,
+                        8 => app.sidebar_favorites = !app.sidebar_favorites,
+                        9 => app.sidebar_recent = !app.sidebar_recent,
+                        10 => app.sidebar_storage = !app.sidebar_storage,
+                        11 => app.sidebar_remotes = !app.sidebar_remotes,
+                        12 => {
                             app.mode = AppMode::ResetSettingsConfirm;
                             app.input.clear();
                         }
                         _ => {}
                     }
-                    if app.settings_index != 7 {
+                    if app.settings_index != 12 {
                         crate::config::save_state_quiet(app);
                     }
                 }
