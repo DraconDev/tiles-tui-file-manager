@@ -61,7 +61,7 @@ pub fn handle_monitor_events(
                     if app.monitor_subview == MonitorSubview::Processes {
                         if let Some(idx) = app.process_table_state.selected() {
                             if let Some(p) = app.system_state.processes.get(idx) {
-                                let _ = event_tx.try_send(AppEvent::KillProcess(p.pid));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::KillProcess(p.pid));
                             }
                         }
                         return true;

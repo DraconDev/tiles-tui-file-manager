@@ -723,7 +723,7 @@ fn handle_generic_editor_shortcuts(
             editor.modified = true;
             if auto_save {
                 let _ =
-                    event_tx.try_send(AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
+                    crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
                 editor.modified = false;
             }
         }

@@ -98,8 +98,8 @@ pub fn handle_event(
                         app.toggle_split();
                         app.save_current_view_prefs();
                         crate::config::save_state_quiet(app);
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(0));
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(1));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
                         return true;
                     }
                     KeyCode::Char('b') | KeyCode::Char('B') => {
@@ -110,11 +110,11 @@ pub fn handle_event(
                         return true;
                     }
                     KeyCode::Char('e') | KeyCode::Char('E') => {
-                        let _ = event_tx.try_send(AppEvent::Editor);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Editor);
                         return true;
                     }
                     KeyCode::Char('l') | KeyCode::Char('L') => {
-                        let _ = event_tx.try_send(AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
                         return true;
                     }
                     _ => {}
@@ -161,7 +161,7 @@ pub fn handle_event(
                     if let Some(editor) = &mut preview.editor {
                         editor.insert_string(text);
                         if app.auto_save {
-                            let _ = event_tx.try_send(AppEvent::SaveFile(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(
                                 preview.path.clone(),
                                 editor.get_content(),
                             ));
@@ -223,14 +223,14 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                 app.current_view = CurrentView::Files;
                 app.input_shield_until =
                     Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 return true;
             }
             CurrentView::Editor => {
                 if let Some(preview) = &app.editor_state {
                     if let Some(editor) = &preview.editor {
                         if editor.modified {
-                            let _ = event_tx.try_send(AppEvent::SaveFile(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(
                                 preview.path.clone(),
                                 editor.get_content(),
                             ));
@@ -242,7 +242,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                         if let Some(preview) = &fs.preview {
                             if let Some(editor) = &preview.editor {
                                 if editor.modified {
-                                    let _ = event_tx.try_send(AppEvent::SaveFile(
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(
                                         preview.path.clone(),
                                         editor.get_content(),
                                     ));
@@ -262,7 +262,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                 app.input_shield_until =
                     Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
                 // Force a refresh to prevent "path display" glitches or empty lists
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 return true;
             }
             _ => {}
@@ -328,18 +328,18 @@ fn handle_general_mouse(
                 match action_id.as_str() {
                     "back" => {
                         crate::event_helpers::navigate_back(app);
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     "forward" => {
                         crate::event_helpers::navigate_forward(app);
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     "split" => {
                         app.toggle_split();
                         app.save_current_view_prefs();
                         crate::config::save_state_quiet(app);
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(0));
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(1));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
                     }
                     "burger" => {
                         app.save_current_view_prefs();
@@ -347,13 +347,13 @@ fn handle_general_mouse(
                         app.settings_scroll = 0;
                     }
                     "monitor" => {
-                        let _ = event_tx.try_send(AppEvent::SystemMonitor);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SystemMonitor);
                     }
                     "git" => {
-                        let _ = event_tx.try_send(AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
                     }
                     "project" => {
-                        let _ = event_tx.try_send(AppEvent::Editor);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Editor);
                     }
                     _ => {}
                 }
@@ -385,7 +385,7 @@ fn handle_general_mouse(
                 if let Some(p) = app.panes.get_mut(p_idx) {
                     p.active_tab_index = t_idx;
                     app.focused_pane_index = p_idx;
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(p_idx));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(p_idx));
                 }
                 app.sidebar_focus = false;
                 return true;
@@ -397,7 +397,7 @@ fn handle_general_mouse(
                         if p.active_tab_index >= p.tabs.len() {
                             p.active_tab_index = p.tabs.len() - 1;
                         }
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(p_idx));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(p_idx));
                     }
                 }
                 return true;
@@ -486,13 +486,11 @@ fn handle_sidebar_mouse(
                                 fs.current_path = path.clone();
                                 fs.selection.clear();
                                 crate::event_helpers::push_history(fs, path.clone());
-                                let _ = event_tx
-                                    .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         }
                         SidebarTarget::Remote(idx) => {
-                            let _ = event_tx
-                                .try_send(AppEvent::ConnectToRemote(app.focused_pane_index, *idx));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(app.focused_pane_index, *idx));
                         }
                         SidebarTarget::Project(path) => {
                             if path.is_dir() {
@@ -515,7 +513,7 @@ fn handle_sidebar_mouse(
                                         fs.selection.anchor = Some(0);
                                         fs.selection.clear_multi();
                                         crate::event_helpers::push_history(fs, path_ref.clone());
-                                        let _ = event_tx.try_send(AppEvent::RefreshFiles(
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                                             app.focused_pane_index,
                                         ));
                                     }
@@ -547,7 +545,7 @@ fn handle_sidebar_mouse(
                                     }
                                 };
                                 app.focused_pane_index = target_pane;
-                                let _ = event_tx.try_send(AppEvent::PreviewRequested(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
                                     target_pane,
                                     path.clone(),
                                 ));
@@ -603,8 +601,7 @@ fn handle_sidebar_mouse(
                                     let insert_idx = insert_idx.min(app.starred.len());
                                     app.starred.insert(insert_idx, item);
                                     crate::config::save_state_quiet(app);
-                                    let _ = event_tx
-                                        .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 }
                             }
                         }
@@ -615,7 +612,7 @@ fn handle_sidebar_mouse(
                                 crate::config::save_state_quiet(app);
                                 let _ = event_tx
                                     .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                                let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Added to favorites: {}",
                                     source_path
                                         .file_name()

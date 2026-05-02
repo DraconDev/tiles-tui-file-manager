@@ -32,8 +32,7 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                         }
                     }
                     if let Some(path) = open_preview {
-                        let _ = event_tx
-                            .try_send(AppEvent::PreviewRequested(app.focused_pane_index, path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(app.focused_pane_index, path));
                         if open_commit_view {
                             app.current_view = CurrentView::Commit;
                             app.mode = AppMode::Viewer;
@@ -84,7 +83,7 @@ pub fn handle_git_mouse(
                             tab.git_history_state.select(Some(rel_row));
                             tab.git_pending_state.select(None);
                             if let Some(commit) = tab.git_history.get(rel_row) {
-                                let _ = event_tx.try_send(AppEvent::PreviewRequested(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
                                     app.focused_pane_index,
                                     std::path::PathBuf::from(format!("git://{}", commit.hash)),
                                 ));
