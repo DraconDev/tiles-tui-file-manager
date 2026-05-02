@@ -2671,8 +2671,10 @@ fn draw_file_view(
                                     }
                                     let icon_w = icon_str.chars().map(get_visual_width).sum::<usize>();
                                     let marker_w = if expand_marker { 2 } else { 0 };
+                                    // 12 = leading space (1) + minimal trailing pad + room for "[*]" suffix (4)
+                                    const CELL_TEXT_RESERVE: usize = 12;
                                     let available_width =
-                                        (col_rect.width as usize).saturating_sub(icon_w + marker_w + 12);
+                                        (col_rect.width as usize).saturating_sub(icon_w + marker_w + CELL_TEXT_RESERVE);
 
                                     let display_name = if file_idx > file_state.local_count {
                                         let full_str = path.to_string_lossy();

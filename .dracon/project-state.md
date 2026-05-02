@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored file list column boundary calculation to simplify sorting logic
+Refactored file list column boundary calculation to use a named constant for text reserve space.
 
 ## Context
-The change was prompted by ongoing refactoring of the file manager's state handling. The previous implementation had redundant boundary calculations that were simplified for consistency.
+This change improves maintainability by replacing a magic number (12) with a named constant (CELL_TEXT_RESERVE) that clearly documents its purpose: accounting for leading space, minimal trailing padding, and room for "[*]" suffix.
 
 ## Completed
-- [x] Removed redundant boundary calculation in column sorting logic
-- [x] Simplified column boundary check by removing unnecessary `saturating_add(1)`
+- [x] Replaced hardcoded 12 with named constant CELL_TEXT_RESERVE
+- [x] Added comment explaining the constant's purpose
 
 ## In Progress
-- [x] Ongoing refactoring of file manager state handling
+- [ ] None
 
 ## Blockers
-- None identified in this change
+- None
 
 ## Next Steps
-1. Review other file manager components for similar refactoring opportunities
-2. Verify no regression in column sorting behavior after the change
+1. Verify the constant value (12) is correct for all cases
+2. Check if other similar magic numbers exist in the file list rendering code
