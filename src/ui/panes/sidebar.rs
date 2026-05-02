@@ -959,10 +959,10 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
             };
 
             if matches_filter {
-                items.push((p.clone(), depth));
+                items.push((p.clone(), depth, is_dir));
             }
 
-            if p.is_dir() && app.tree_expanded_folders.contains(&p) {
+            if is_dir && app.tree_expanded_folders.contains(&p) {
                 collect_tree_items(&p, depth + 1, app, items);
             }
         }
