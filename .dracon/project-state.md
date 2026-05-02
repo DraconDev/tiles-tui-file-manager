@@ -1,21 +1,23 @@
 # Project State
 
 ## Current Focus
-Added tree item collection for sidebar navigation
+Refactored settings index handling in modal event handling to accommodate new sidebar section options.
 
 ## Context
-This change implements the core functionality for building the sidebar's folder tree structure, which was previously missing. It enables the sidebar to display hierarchical file system navigation.
+The change increases the maximum index for the General settings section from 12 to 13, adds a visual separator at index 7, and implements proper handling for new sidebar section toggles (folders, favorites, recent, storage, remotes).
 
 ## Completed
-- [x] Added `collect_tree_items` call to populate sidebar tree data
-- [x] Enabled hierarchical folder display in sidebar
+- [x] Increased settings index maximum from 12 to 13
+- [x] Added visual separator handling at index 7
+- [x] Implemented proper toggle handling for new sidebar sections
+- [x] Maintained conditional state saving (excluding separator and confirmation dialog indices)
 
 ## In Progress
-- [ ] Testing and visual verification of tree rendering
+- [x] Refactored settings index handling to support new UI elements
 
 ## Blockers
-- Need to verify tree rendering matches expected behavior
+- None identified in this change
 
 ## Next Steps
-1. Test sidebar tree rendering with various directory structures
-2. Implement visual indicators for current folder selection
+1. Verify all new sidebar section toggles function correctly
+2. Test state persistence for new settings options

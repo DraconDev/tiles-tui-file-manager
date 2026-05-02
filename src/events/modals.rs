@@ -1570,7 +1570,7 @@ pub fn handle_modal_mouse(
 
                     match app.settings_section {
                         SettingsSection::General => {
-                            if rel_y < 8 {
+                            if rel_y < 14 {
                                 app.settings_index = rel_y as usize;
                                 match app.settings_index {
                                     0 => app.default_show_hidden = !app.default_show_hidden,
@@ -1589,13 +1589,19 @@ pub fn handle_modal_mouse(
                                             IconMode::ASCII => IconMode::Nerd,
                                         }
                                     }
-                                    7 => {
+                                    7 => {} // separator, do nothing
+                                    8 => app.sidebar_folders = !app.sidebar_folders,
+                                    9 => app.sidebar_favorites = !app.sidebar_favorites,
+                                    10 => app.sidebar_recent = !app.sidebar_recent,
+                                    11 => app.sidebar_storage = !app.sidebar_storage,
+                                    12 => app.sidebar_remotes = !app.sidebar_remotes,
+                                    13 => {
                                         app.mode = AppMode::ResetSettingsConfirm;
                                         app.input.clear();
                                     }
                                     _ => {}
                                 }
-                                if app.settings_index != 7 {
+                                if app.settings_index != 7 && app.settings_index != 13 {
                                     crate::config::save_state_quiet(app);
                                 }
                             }
