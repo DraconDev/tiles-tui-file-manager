@@ -87,7 +87,7 @@ fn execute_undo(
         format!("Undo failed ({})", action_name)
     }));
     for pane_idx in 0..app.panes.len() {
-        let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
     }
     Some(action_name)
 }
@@ -136,7 +136,7 @@ fn execute_redo(
         format!("Redo failed ({})", action_name)
     }));
     for pane_idx in 0..app.panes.len() {
-        let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
     }
     Some(action_name)
 }
@@ -163,7 +163,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         app.default_show_hidden = fs.show_hidden;
                     }
                     crate::config::save_state_quiet(app);
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(idx));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
                     return true;
                 }
                 KeyCode::Backspace if has_control => {
@@ -172,7 +172,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         app.default_show_hidden = fs.show_hidden;
                     }
                     crate::config::save_state_quiet(app);
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(idx));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
                     return true;
                 }
                 KeyCode::Char('g') | KeyCode::Char('G') if has_control => {
@@ -221,7 +221,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             if pane.active_tab_index >= pane.tabs.len() {
                                 pane.active_tab_index = pane.tabs.len() - 1;
                             }
-                            let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                             let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
                                 "Closed: {}",
                                 removed.current_path.file_name()
@@ -253,8 +253,8 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         app.resize_sidebar(-2);
                     } else {
                         app.move_to_other_pane();
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(0));
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(1));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
                     }
                     return true;
                 }
@@ -263,8 +263,8 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         app.resize_sidebar(2);
                     } else {
                         app.move_to_other_pane();
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(0));
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(1));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
                     }
                     return true;
                 }
@@ -291,7 +291,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     if !fs.search_filter.is_empty() {
                         fs.search_filter.clear();
                         fs.search_generation += 1;
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                 }
                 return true;
@@ -354,7 +354,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             if !fs.search_filter.is_empty() {
                                 fs.search_filter.clear();
                                 fs.search_generation += 1;
-                                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         }
                     }
@@ -434,7 +434,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                         app.starred.swap(starred_idx, starred_idx - 1);
                                         app.sidebar_index = app.sidebar_index.saturating_sub(1);
                                         crate::config::save_state_quiet(app);
-                                        let _ = event_tx.try_send(AppEvent::RefreshFiles(
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                                             app.focused_pane_index,
                                         ));
                                     }
@@ -468,7 +468,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                         app.starred.swap(starred_idx, starred_idx + 1);
                                         app.sidebar_index += 1;
                                         crate::config::save_state_quiet(app);
-                                        let _ = event_tx.try_send(AppEvent::RefreshFiles(
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                                             app.focused_pane_index,
                                         ));
                                     }
@@ -775,7 +775,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         app.sidebar_index = 0;
                     }
                     if needs_refresh {
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     return true;
                 }
@@ -799,10 +799,10 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     }
 
                     if handled_search {
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     } else {
                         crate::event_helpers::navigate_up(app);
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     return true;
                 }
@@ -822,7 +822,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     if is_sidebar {
                         app.sidebar_index = 0;
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     return true;
                 }
                 KeyCode::Char('w') if has_control => {
@@ -838,7 +838,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     if is_sidebar {
                         app.sidebar_index = 0;
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     return true;
                 }
                 KeyCode::Char('u') if has_control => {
@@ -852,7 +852,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         } else {
                             app.sidebar_index = 0;
                         }
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     return true;
                 }
@@ -945,7 +945,7 @@ pub fn handle_file_mouse(
                         fs.search_filter.clear();
                         *fs.table_state.offset_mut() = 0;
                         crate::event_helpers::push_history(fs, target_path);
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         app.sidebar_focus = false;
                         return true;
                     }
@@ -986,7 +986,7 @@ pub fn handle_file_mouse(
                                         fs.sort_column = *col;
                                         fs.sort_ascending = true;
                                     }
-                                    let _ = event_tx.try_send(AppEvent::RefreshFiles(cp));
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(cp));
                                     return true;
                                 }
                             }
@@ -1040,7 +1040,7 @@ pub fn handle_file_mouse(
                                 } else {
                                     app.expanded_folders.insert(folder_path.clone());
                                 }
-                                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 return true;
                             }
                         }
@@ -1120,7 +1120,7 @@ pub fn handle_file_mouse(
                         fs.search_filter.push_str(&sanitized);
                         fs.search_generation += 1;
                         fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                 }
             }
@@ -1318,7 +1318,7 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     } else {
                         app.expanded_folders.insert(path.clone());
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 } else {
                     let target_pane = app
                         .focused_pane_index
@@ -1356,7 +1356,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         fs.selection.anchor = Some(0);
                         fs.selection.clear_multi();
                         crate::event_helpers::push_history(fs, path.clone());
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         app.sidebar_focus = false;
                     }
                 }
@@ -1430,7 +1430,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             crate::event_helpers::push_history(fs, p);
             // Clear expanded folders when entering a new directory — start fresh
             app.expanded_folders.clear();
-            let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
         }
     }
 }

@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Added event channel utility for safe event dispatch with failure logging
+Standardized event dispatch mechanism across file manager operations
 
 ## Context
-The codebase needs reliable event dispatching between components, especially when channels might be full. This change provides a utility function to handle channel send failures gracefully.
+The code was refactoring event dispatch to use a centralized utility function (`try_send_event`) instead of direct `try_send` calls, improving consistency and error handling.
 
 ## Completed
-- [x] Added `try_send_event` function to safely send events with failure logging
-- [x] Implemented non-blocking channel send with error handling
+- [x] Replaced all direct `event_tx.try_send()` calls with `crate::app::try_send_event()` in file manager event handlers
+- [x] Maintained all existing functionality while improving code organization
 
 ## In Progress
-- [ ] None (this is a complete feature addition)
+- [ ] No active work in progress
 
 ## Blockers
-- None (this is a standalone utility)
+- None identified
 
 ## Next Steps
-1. Integrate this utility across components that dispatch events
-2. Review performance impact of channel operations
+1. Verify no regression in event handling behavior
+2. Consider adding more comprehensive error logging for event dispatch failures
