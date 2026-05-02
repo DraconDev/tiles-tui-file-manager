@@ -151,14 +151,6 @@ pub enum SettingsTarget {
     SplitMode,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Default)]
-pub enum SidebarScope {
-    #[default]
-    All,
-    Favorites,
-    Remotes,
-}
-
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub enum AppMode {
     Normal,

@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed unused `sidebar_scope` field from persistent state and simplified folder expansion documentation.
+Removed unused `SidebarScope` enum from persistent state to simplify codebase.
 
 ## Context
-The `sidebar_scope` field was identified as unused and removed to simplify the codebase. Additionally, the documentation for `expanded_folders` was clarified to focus on its primary purpose in the file listing view.
+The `SidebarScope` enum was previously used to track sidebar filtering options but was never fully implemented or utilized in the application. This cleanup removes dead code to reduce complexity and potential maintenance overhead.
 
 ## Completed
-- [x] Removed unused `sidebar_scope` field from persistent state
-- [x] Simplified documentation for `expanded_folders` to focus on file listing view
+- [x] Removed `SidebarScope` enum definition
+- [x] Removed all related imports and references
 
 ## In Progress
-- [ ] No active work in progress
+- [x] None - this is a complete cleanup operation
 
 ## Blockers
-- None identified
+- None - this was a straightforward removal of unused code
 
 ## Next Steps
-1. Review other unused fields in the codebase for potential removal
-2. Continue refactoring sidebar-related functionality to improve maintainability
+1. Verify no remaining references to `SidebarScope` exist in the codebase
+2. Continue with other planned refactoring of sidebar-related functionality
