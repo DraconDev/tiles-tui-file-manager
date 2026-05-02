@@ -737,7 +737,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             *fs.table_state.offset_mut() = 0;
                             crate::event_helpers::push_history(fs, home);
                             let _ =
-                                event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             return true;
                         }
                     }
