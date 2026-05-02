@@ -4,17 +4,17 @@
 Removed unused `SidebarScope` import from events module
 
 ## Context
-The `SidebarScope` enum was imported but not used in the events module, which is a common code smell indicating dead code. This cleanup follows recent refactoring efforts to simplify sidebar navigation behavior.
+The `SidebarScope` enum was previously imported but not used in the events module, which is a code smell that should be cleaned up.
 
 ## Completed
-- [x] Removed unused `SidebarScope` import to reduce module clutter
+- [x] Removed unused `SidebarScope` import from `app.rs`
 
 ## In Progress
-- [x] No active work in progress related to this change
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Verify no other modules depend on the removed `SidebarScope` enum
-2. Continue sidebar navigation refactoring efforts
+1. Verify no other unused imports remain in the events module
+2. Continue refactoring sidebar-related code to improve maintainability
