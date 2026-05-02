@@ -745,6 +745,7 @@ mod tests {
             y: 5,
             index: 0,
             target: SidebarTarget::Project(test_path.clone()),
+            ..Default::default()
         });
 
         let handled = handle_sidebar_mouse(
@@ -808,6 +809,7 @@ mod tests {
             y: 4,
             index: 0,
             target: SidebarTarget::Project(project_dir.clone()),
+            ..Default::default()
         });
 
         let handled = handle_sidebar_mouse(
