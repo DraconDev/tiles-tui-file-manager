@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed unused `SidebarScope` enum from persistent state to simplify codebase.
+Refactored sidebar selection background color to use a dedicated theme function
 
 ## Context
-The `SidebarScope` enum was previously used to track sidebar filtering options but was never fully implemented or utilized in the application. This cleanup removes dead code to reduce complexity and potential maintenance overhead.
+This change improves theme consistency by replacing a hardcoded accent color with a dedicated `selection_bg` function from the theme module.
 
 ## Completed
-- [x] Removed `SidebarScope` enum definition
-- [x] Removed all related imports and references
+- [x] Replaced hardcoded accent color with theme function call
+- [x] Maintained same visual appearance while improving maintainability
 
 ## In Progress
-- [x] None - this is a complete cleanup operation
+- [x] Sidebar theme consistency improvements
 
 ## Blockers
-- None - this was a straightforward removal of unused code
+- None identified
 
 ## Next Steps
-1. Verify no remaining references to `SidebarScope` exist in the codebase
-2. Continue with other planned refactoring of sidebar-related functionality
+1. Verify visual consistency across all sidebar states
+2. Consider adding more theme functions for other sidebar elements

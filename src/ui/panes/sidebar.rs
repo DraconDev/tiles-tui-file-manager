@@ -15,7 +15,7 @@ use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::truncate_to_width;
 
 pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
-    let selection_bg = crate::ui::theme::accent_primary();
+    let selection_bg = crate::ui::theme::selection_bg();
     let inner = area.inner(ratatui::layout::Margin {
         vertical: 1,
         horizontal: 1,
