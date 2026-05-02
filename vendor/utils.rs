@@ -5,6 +5,7 @@ use ratatui::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::io::Read;
 use std::time::SystemTime;
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
@@ -1001,9 +1002,22 @@ pub fn check_file_suitability(path: &std::path::Path, max_bytes: u64) -> (bool, 
             return (false, true, size / (1024 * 1024));
         }
 
-        if let Ok(content) = std::fs::read(path) {
-            return (is_binary_content(&content), false, size / (1024 * 1024));
-        }
+        // Read only the first 8KB to check for null bytes — avoids
+        // allocating the entire file into memory just for binary detection.
+        let is_binary = {
+            let mut buf = vec![0u8; 8192];
+            match std::fs::File::open(path) {
+                Ok(mut file) => match file.read(&mut buf) {
+                    Ok(n) => {
+                        buf.truncate(n);
+                        is_binary_content(&buf)
+                    }
+                    Err(_) => false,
+                },
+                Err(_) => false,
+            }
+        };
+        return (is_binary, false, size / (1024 * 1024));
     }
     (false, false, 0)
 }

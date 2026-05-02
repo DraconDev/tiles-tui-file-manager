@@ -1,25 +1,22 @@
 # Project State
 
 ## Current Focus
-Enhanced installation script with process management and multi-path binary installation
+Optimized file binary detection to reduce memory usage during suitability checks
 
 ## Context
-The installation script now ensures clean installation by:
-1. Terminating any running instances of the application
-2. Installing the binary to both standard and Cargo paths
-3. Maintaining consistent permissions
+The original implementation read entire files into memory for binary detection, which could be inefficient for large files. This change reduces memory usage by only reading the first 8KB of each file.
 
 ## Completed
-- [x] Added process termination for running instances
-- [x] Expanded binary installation to include Cargo path
-- [x] Standardized permission handling
+- [x] Replaced full file read with 8KB partial read for binary detection
+- [x] Added error handling for file read operations
+- [x] Maintained same functionality while improving performance
 
 ## In Progress
-- [ ] None (changes are complete)
+- [ ] No active work in progress
 
 ## Blockers
-- None (installation improvements are complete)
+- Dependency resolution for `dracon-files` manifest loading
 
 ## Next Steps
-1. Verify installation works across different environments
-2. Document the new installation paths in user documentation
+1. Address the `dracon-files` dependency issue
+2. Verify performance impact with large files
