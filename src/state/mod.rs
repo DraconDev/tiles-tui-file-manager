@@ -213,13 +213,23 @@ pub enum DropTarget {
     ReorderFavorite(usize),
 }
 
-#[derive(Clone, Debug, PartialEq, Default)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SidebarBounds {
     pub y: u16,
     pub index: usize,
     pub target: SidebarTarget,
-    #[allow(dead_code)]
     pub arrow_end_x: u16,
+}
+
+impl Default for SidebarBounds {
+    fn default() -> Self {
+        Self {
+            y: 0,
+            index: 0,
+            target: SidebarTarget::Header(String::new()),
+            arrow_end_x: 0,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
