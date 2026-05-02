@@ -436,16 +436,18 @@ fn handle_general_mouse(
             }
         }
     }
+    // Sidebar Resizing check (MUST BE LEFT CLICK ONLY)
+    // Check this BEFORE routing to sidebar mouse, so clicks on the sidebar's right border start resize
+    if let MouseEventKind::Down(MouseButton::Left) = me.kind {
+        if column >= sw.saturating_sub(1) && column <= sw {
+            app.is_resizing_sidebar = true;
+            return true;
+        }
+    }
+
     if column < sw {
         handle_sidebar_mouse(me, app, event_tx)
     } else {
-        // Sidebar Resizing check (MUST BE LEFT CLICK ONLY)
-        if let MouseEventKind::Down(MouseButton::Left) = me.kind {
-            if column >= sw.saturating_sub(1) && column <= sw {
-                app.is_resizing_sidebar = true;
-                return true;
-            }
-        }
 
         let is_editor_mode = matches!(
             app.mode,
