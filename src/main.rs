@@ -1434,7 +1434,6 @@ fn setup_app(
         app.default_show_hidden = state.default_show_hidden;
         app.auto_save = state.auto_save;
         app.preview_max_mb = state.preview_max_mb.max(1);
-        app.sidebar_scope = state.sidebar_scope;
         app.expanded_folders = state.expanded_folders.into_iter().collect();
         app.sidebar_width_percent = state.sidebar_width_percent;
         app.recent_folders = state.recent_folders;

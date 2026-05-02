@@ -79,8 +79,8 @@ pub struct App {
     pub header_icon_bounds: Vec<(ratatui::layout::Rect, String)>,
     pub tab_bounds: Vec<(ratatui::layout::Rect, usize, usize)>,
     pub hovered_header_icon: Option<String>,
-    /// Folders expanded in the main file pane view (sidebar_scope = All/Favorites/Remotes).
-    /// Controls expand/collapse in the file listing and the non-tree sidebar PROJECT section.
+    /// Folders expanded in the main file pane view.
+    /// Controls expand/collapse in the file listing.
     pub expanded_folders: HashSet<PathBuf>,
     /// Folders expanded in the sidebar Tree view.
 /// Independent of `expanded_folders` — Tree scope maintains its own expansion state.

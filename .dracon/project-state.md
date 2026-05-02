@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed unused `sidebar_scope` field from persistent state to simplify configuration management.
+Removed unused `sidebar_scope` field from persistent state and simplified folder expansion documentation.
 
 ## Context
-The `sidebar_scope` field was identified as unused during a series of refactoring efforts to simplify the sidebar behavior. This change aligns with ongoing efforts to reduce complexity in the application state management.
+The `sidebar_scope` field was identified as unused and removed to simplify the codebase. Additionally, the documentation for `expanded_folders` was clarified to focus on its primary purpose in the file listing view.
 
 ## Completed
-- [x] Removed `sidebar_scope` from the serialized state configuration
-- [x] Cleaned up related imports and struct fields in previous commits
+- [x] Removed unused `sidebar_scope` field from persistent state
+- [x] Simplified documentation for `expanded_folders` to focus on file listing view
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [ ] No active work in progress
 
 ## Blockers
-- None identified for this specific change
+- None identified
 
 ## Next Steps
-1. Verify no regression in sidebar behavior after this change
-2. Continue with other ongoing refactoring efforts in the sidebar system
+1. Review other unused fields in the codebase for potential removal
+2. Continue refactoring sidebar-related functionality to improve maintainability
