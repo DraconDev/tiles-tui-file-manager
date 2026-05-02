@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Removed the `MAX_TABS` constant from configuration imports and removed the `MAX_LOG_FILES` constant from the codebase.
+Added Git cache invalidation mechanism to prevent stale Git status data
 
 ## Context
-This change is part of a broader refactoring effort to centralize configuration constants and remove redundant definitions. The `MAX_TABS` constant was previously imported but not used, and the `MAX_LOG_FILES` constant was removed as part of the debug logging refactoring.
+To improve performance and accuracy of Git status display in the editor, we need to implement a caching mechanism with automatic invalidation. The previous implementation lacked a way to refresh Git status data when it might have changed.
 
 ## Completed
-- [x] Removed unused `MAX_TABS` constant from configuration imports
-- [x] Removed `MAX_LOG_FILES` constant from the codebase
+- [x] Added `git_cache_until` field to `FileState` to track when cached Git data should be refreshed
+- [x] Imported necessary time-related types (`Duration`, `Instant`) for cache management
 
 ## In Progress
-- [ ] None
+- [ ] Implement actual cache invalidation logic (not yet in this commit)
 
 ## Blockers
-- None
+- Need to implement the actual cache invalidation logic that checks `git_cache_until` against current time
 
 ## Next Steps
-1. Verify that all configuration constants are properly centralized
-2. Ensure debug logging functionality remains consistent after the changes
+1. Implement cache invalidation logic in Git status update methods
+2. Add configuration option for cache duration
+3. Add tests for cache behavior

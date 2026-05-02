@@ -1,4 +1,5 @@
 use crate::config::MAX_TABS;
+use std::time::{Duration, Instant};
 use dracon_terminal_engine::contracts::UiEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -344,6 +345,8 @@ pub struct FileState {
     #[serde(skip)]
     pub git_stashes: Vec<String>,
     #[serde(skip)]
+    pub git_cache_until: Option<Instant>,
+    #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
     pub tree_file_depths: Vec<u16>,
 }
@@ -389,6 +392,7 @@ impl FileState {
             git_summary: None,
             git_remotes: Vec::new(),
             git_stashes: Vec::new(),
+            git_cache_until: None,
             search_debounce_until: None,
             tree_file_depths: Vec::new(),
         }
