@@ -755,8 +755,25 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
-    collect_tree_items(&base_path, 0, app, &mut tree_items);
+    // Compute cache key for editor sidebar
+    use std::hash::{Hash, Hasher};
+    let mut cache_key: u64 = 0;
+    {
+        let mut hasher = DefaultHasher::new();
+        base_path.hash(&mut hasher);
+        app.tree_expanded_folders.hash(&mut hasher);
+        cache_key = hasher.finish();
+    }
+
+    let tree_items: Vec<(PathBuf, u16)> = if app.editor_sidebar_cache_key == cache_key {
+        app.editor_sidebar_cache.clone().unwrap_or_default()
+    } else {
+        let mut items = Vec::new();
+        collect_tree_items(&base_path, 0, app, &mut items);
+        app.editor_sidebar_cache = Some(items.clone());
+        app.editor_sidebar_cache_key = cache_key;
+        items
+    };
 
     let open_files: HashSet<PathBuf> = app
         .panes
