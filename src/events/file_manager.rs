@@ -327,7 +327,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             );
                             match op {
                                 crate::app::ClipboardOp::Copy => {
-                                    let _ = event_tx.try_send(AppEvent::Copy(src, dest));
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
                                 }
                                 crate::app::ClipboardOp::Cut => {
                                     let result = event_tx.try_send(AppEvent::Rename(src, dest));
@@ -1538,7 +1538,7 @@ fn handle_quick_copy(app: &mut App, event_tx: &mpsc::Sender<AppEvent>, _to_left:
                     p.file_name()
                         .unwrap_or_else(|| std::ffi::OsStr::new("root")),
                 );
-                let _ = event_tx.try_send(AppEvent::Copy(p, dest));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(p, dest));
             }
         }
     }

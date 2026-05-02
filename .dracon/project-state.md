@@ -4,18 +4,18 @@
 Standardized event dispatch mechanism across file manager operations
 
 ## Context
-The code was refactoring event dispatch to use a centralized utility function (`try_send_event`) instead of direct `try_send` calls, improving consistency and error handling.
+The code changes standardize how events are dispatched in the file manager, ensuring consistent error handling and logging across all operations.
 
 ## Completed
-- [x] Replaced all direct `event_tx.try_send()` calls with `crate::app::try_send_event()` in file manager event handlers
-- [x] Maintained all existing functionality while improving code organization
+- [x] Replaced direct `try_send` calls with centralized `try_send_event` utility
+- [x] Maintained same functionality while improving error handling consistency
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Verify no regression in event handling behavior
-2. Consider adding more comprehensive error logging for event dispatch failures
+1. Verify no regression in event handling across file operations
+2. Review other event dispatch points for standardization opportunities
