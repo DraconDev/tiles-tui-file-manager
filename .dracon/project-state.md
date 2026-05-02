@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Added independent folder expansion state tracking for Tree view in the sidebar
+Dependency version resolution in Cargo.lock
 
 ## Context
-The sidebar now supports multiple scopes (All/Favorites/Remotes/Tree) with different expansion behaviors. The Tree view needed its own expansion state to maintain independent collapse/expand states from the main file pane.
+The change updates Cargo.lock to resolve dependency versions after recent refactoring work. This is part of the ongoing dependency management process.
 
 ## Completed
-- [x] Added `expanded_folders` for main file pane view (All/Favorites/Remotes scopes)
-- [x] Added `tree_expanded_folders` for Tree view scope with independent state
+- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## In Progress
-- [x] Folder expansion logic now properly handles both scopes
+- [ ] None (dependency resolution is complete)
 
 ## Blockers
-- None identified for this change
+- None (dependency resolution is complete)
 
 ## Next Steps
-1. Update UI rendering to use the correct expansion state based on current sidebar scope
-2. Add integration tests for mixed scope expansion scenarios
+1. Verify that all dependencies are properly resolved
+2. Continue with the planned synth-1774826981 slice
+```
