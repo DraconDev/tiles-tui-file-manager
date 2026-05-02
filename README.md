@@ -27,7 +27,8 @@ A high-performance terminal file manager built in Rust. Modular pane system, int
 | `h/j/k/l` or arrows | Navigate |
 | `Enter` | Open file / enter directory |
 | `Backspace` | Go to parent directory |
-| `Tab` | Switch panes |
+| `Tab` | Switch panes / focus sidebar |
+| `Ctrl+H` | Toggle hidden files |
 | `:` | Command palette |
 
 ### Sidebar

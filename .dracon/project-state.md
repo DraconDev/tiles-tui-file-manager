@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added comprehensive sidebar keyboard and mouse interaction documentation to README.md
+Added keyboard shortcut for toggling hidden files in the sidebar.
 
 ## Context
-To improve user onboarding and consistency with Dolphin-style file manager behavior, we're documenting all sidebar interactions in one place.
+The sidebar now needs a way to toggle hidden files visibility, which was previously only accessible via the pane-switching shortcut.
 
 ## Completed
-- [x] Added keyboard shortcuts for sidebar navigation and folder operations
-- [x] Documented mouse interactions for folder expansion and navigation
-- [x] Included all sidebar-specific keybindings in a dedicated section
+- [x] Added `Ctrl+H` shortcut to toggle hidden files in sidebar
+- [x] Updated `Tab` shortcut documentation to clarify sidebar focus
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None (documentation-only change)
 
 ## Blockers
-- None identified
+- None (documentation update only)
 
 ## Next Steps
-1. Verify documentation accuracy with actual implementation
-2. Consider adding visual examples of sidebar interactions
+1. Verify sidebar hidden file behavior works as expected
+2. Consider adding mouse interaction for hidden file toggle
