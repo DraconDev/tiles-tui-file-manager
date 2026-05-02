@@ -82,7 +82,7 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
             app.input.clear();
         }
         CommandAction::ConnectToRemote(idx) => {
-            let _ = event_tx.try_send(AppEvent::ConnectToRemote(app.focused_pane_index, idx));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(app.focused_pane_index, idx));
         }
         CommandAction::CommandPalette => {
             app.mode = AppMode::CommandPalette;
@@ -303,7 +303,7 @@ pub fn handle_context_menu_action(
                                 event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                     } else {
-                        let _ = event_tx.try_send(AppEvent::PreviewRequested(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
                             app.focused_pane_index,
                             path.clone(),
                         ));
@@ -321,7 +321,7 @@ pub fn handle_context_menu_action(
                         app.starred.push(path);
                         crate::config::save_state_quiet(app);
                         // Refresh to update sidebar
-                        let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                 }
             }
@@ -349,7 +349,7 @@ pub fn handle_context_menu_action(
             }
             if removed {
                 crate::config::save_state_quiet(app);
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
         }
         ContextMenuAction::Rename => {
@@ -373,9 +373,9 @@ pub fn handle_context_menu_action(
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if matches!(target, ContextMenuTarget::File(_)) {
-                        let _ = event_tx.try_send(AppEvent::TrashFile(path.clone()));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::TrashFile(path.clone()));
                     } else {
-                        let _ = event_tx.try_send(AppEvent::Delete(path.clone()));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(path.clone()));
                     }
                 }
             }
@@ -389,7 +389,7 @@ pub fn handle_context_menu_action(
                         } else {
                             "path"
                         };
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Copied {} to clipboard",
                             label
                         )));
@@ -400,19 +400,19 @@ pub fn handle_context_menu_action(
                     }
                 },
                 Err(err) => {
-                    let _ = event_tx.try_send(AppEvent::StatusMsg(err));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(err));
                 }
             }
         }
         ContextMenuAction::Refresh => {
-            let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
         }
         ContextMenuAction::ToggleHidden => {
             if let Some(fs) = app.current_file_state_mut() {
                 fs.show_hidden = !fs.show_hidden;
                 app.default_show_hidden = fs.show_hidden;
                 crate::config::save_state_quiet(app);
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
         }
         ContextMenuAction::TerminalTab | ContextMenuAction::TerminalWindow => {
@@ -442,7 +442,7 @@ pub fn handle_context_menu_action(
             }
 
             if let Some(path) = path_to_open {
-                let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                     path,
                     new_tab,
                     remote,
@@ -551,7 +551,7 @@ pub fn handle_context_menu_action(
                     );
                     match op {
                         crate::app::ClipboardOp::Copy => {
-                            let _ = event_tx.try_send(AppEvent::Copy(src, dest));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
                         }
                         crate::app::ClipboardOp::Cut => {
                             let result = event_tx.try_send(AppEvent::Rename(src, dest));
@@ -575,11 +575,11 @@ pub fn handle_context_menu_action(
                     let dest = path.parent()
                         .map(|p| p.join(format!("{}.zip", name)));
                     if let Some(dest_path) = dest {
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Compressing {}...",
                             path.display()
                         )));
-                        let _ = event_tx.try_send(AppEvent::Copy(path.clone(), dest_path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(path.clone(), dest_path));
                     }
                 }
             }
@@ -610,17 +610,17 @@ pub fn handle_context_menu_action(
                             _ => None,
                         };
                         if let Some((cmd_name, args)) = cmd {
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Extracting {} to {}...",
                                 path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default(),
                                 dest_dir.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
                             )));
-                            let _ = event_tx.try_send(AppEvent::SpawnDetached {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnDetached {
                                 cmd: cmd_name,
                                 args
                             });
                         } else {
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Unsupported archive format: .{}",
                                 ext
                             )));
@@ -656,13 +656,13 @@ pub fn handle_context_menu_action(
                             .unwrap_or_default();
                         let new_name = format!("{}_copy{}", stem, ext);
                         let dest = parent.join(new_name);
-                        let _ = event_tx.try_send(AppEvent::Copy(path, dest));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(path, dest));
                     }
                 }
             }
         }
         ContextMenuAction::SystemMonitor => {
-            let _ = event_tx.try_send(AppEvent::SystemMonitor);
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::SystemMonitor);
         }
         ContextMenuAction::Run | ContextMenuAction::RunTerminal => {
             match target {
@@ -680,19 +680,19 @@ pub fn handle_context_menu_action(
                         if let Some((work_dir, program, args)) =
                             crate::modules::files::get_run_command(&path)
                         {
-                            let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                 path: work_dir,
                                 new_tab: true,
                                 remote,
                                 command: Some(format!("{} {}", program, args.join(" "))),
                             });
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Running: {} {}",
                                 program,
                                 args.join(" ")
                             )));
                         } else {
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "No run command for: {}",
                                 path.extension()
                                     .and_then(|e| e.to_str())
@@ -708,13 +708,13 @@ pub fn handle_context_menu_action(
                             crate::modules::files::get_run_command(&path)
                         {
                             let remote = app.current_file_state().and_then(|fs| fs.remote_session.clone());
-                            let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                 path: work_dir,
                                 new_tab: true,
                                 remote,
                                 command: Some(format!("{} {}", program, args.join(" "))),
                             });
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Running: {} {}",
                                 program,
                                 args.join(" ")
@@ -797,7 +797,7 @@ pub fn handle_context_menu_action(
                 }
             };
             if let (Some(path), Some(content)) = (path, content) {
-                let _ = event_tx.try_send(AppEvent::SaveFile(path, content));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path, content));
                 if let Some(editor) = get_active_editor_mut(app) {
                     editor.modified = false;
                 }
@@ -912,7 +912,7 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
     *fs.table_state.offset_mut() = 0;
     push_history(fs, target);
 
-    let _ = event_tx.try_send(AppEvent::RefreshFiles(focused));
+    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
     crate::app::log_debug(&format!("submit_path_input: {:?}", t0.elapsed()));
     Ok(())
 }

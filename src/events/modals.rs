@@ -276,7 +276,7 @@ fn handle_modal_keys(
                 }
                 KeyCode::Enter => {
                     if !app.input.value.is_empty() {
-                        let _ = event_tx.try_send(AppEvent::SpawnDetached {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnDetached {
                             cmd: app.input.value.clone(),
                             args: vec![path.to_string_lossy().to_string()],
                         });
@@ -308,7 +308,7 @@ fn handle_search_keys(
             if let Some(fs) = app.current_file_state_mut() {
                 fs.search_filter.clear();
                 fs.search_generation += 1;
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
             app.mode = AppMode::Normal;
             app.input.clear();
@@ -321,7 +321,7 @@ fn handle_search_keys(
                     fs.search_filter = query;
                     fs.search_generation += 1;
                 }
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
             app.mode = AppMode::Normal;
             app.input.clear();
@@ -337,7 +337,7 @@ fn handle_search_keys(
                 if let Some(fs) = app.current_file_state_mut() {
                     fs.search_filter = filter;
                 }
-                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
             handled
         }
@@ -450,7 +450,7 @@ fn handle_save_as_keys(
                             preview.path = target.clone();
                         }
                     }
-                    let _ = event_tx.try_send(AppEvent::SaveFile(target.clone(), content));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(target.clone(), content));
                     app.last_action_msg = Some((
                         format!("Saved as: {}", target.file_name().unwrap_or_default().to_string_lossy()),
                         std::time::Instant::now(),
@@ -582,7 +582,7 @@ fn handle_drag_drop_keys(
                         .file_name()
                         .unwrap_or_else(|| std::ffi::OsStr::new("root")),
                 );
-                let _ = event_tx.try_send(AppEvent::Copy(source.clone(), dest));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(source.clone(), dest));
             }
             app.mode = AppMode::Normal;
             true
@@ -594,7 +594,7 @@ fn handle_drag_drop_keys(
                         .file_name()
                         .unwrap_or_else(|| std::ffi::OsStr::new("root")),
                 );
-                let _ = event_tx.try_send(AppEvent::Rename(source.clone(), dest));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(source.clone(), dest));
             }
             if let Some(fs) = app.current_file_state_mut() {
                 fs.selection.clear_multi();
@@ -610,7 +610,7 @@ fn handle_drag_drop_keys(
                         .file_name()
                         .unwrap_or_else(|| std::ffi::OsStr::new("root")),
                 );
-                let _ = event_tx.try_send(AppEvent::Symlink(source.clone(), dest));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::Symlink(source.clone(), dest));
             }
             app.mode = AppMode::Normal;
             true
@@ -640,7 +640,7 @@ fn handle_editor_replace_keys(
             if app.replace_buffer.is_empty() {
                 app.replace_buffer = app.input.value.clone();
                 app.input.clear();
-                let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                     "Replace '{}' with: (Enter: next, ^Enter: all)",
                     app.replace_buffer
                 )));
@@ -654,7 +654,7 @@ fn handle_editor_replace_keys(
                         editor.push_history();
                         if is_all {
                             editor.replace_all(&find_term, &replace_term);
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Replaced all '{}' with '{}'",
                                 find_term, replace_term
                             )));
@@ -1084,7 +1084,7 @@ fn handle_input_modals_keys(
             let input = app.input.value.clone();
             if let AppMode::DeleteFile(ref path) = app.mode {
                 if input.trim().to_lowercase() == "y" || !app.confirm_delete {
-                    let _ = event_tx.try_send(AppEvent::Delete(path.clone()));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(path.clone()));
                     app.mode = AppMode::Normal;
                 } else {
                     app.mode = AppMode::Normal;
@@ -1099,26 +1099,26 @@ fn handle_input_modals_keys(
                     AppMode::NewFile => {
                         let pane_idx = app.focused_pane_index;
                         let path_clone = path.clone();
-                        let _ = event_tx.try_send(AppEvent::CreateFile(path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFile(path));
                         app.current_view = CurrentView::Editor;
                         app.mode = AppMode::Normal;
                         app.input.clear();
-                        let _ = event_tx.try_send(AppEvent::PreviewRequested(pane_idx, path_clone));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(pane_idx, path_clone));
                         return true;
                     }
                     AppMode::NewFolder => {
-                        let _ = event_tx.try_send(AppEvent::CreateFolder(path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFolder(path));
                     }
                     AppMode::Rename => {
                         if let Some(idx) = fs.selection.selected {
                             if let Some(old) = fs.files.get(idx) {
                                 if let Some(parent) = old.parent() {
-                                    let _ = event_tx.try_send(AppEvent::Rename(
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(
                                         old.clone(),
                                         parent.join(&input),
                                     ));
                                 } else {
-                                    let _ = event_tx.try_send(AppEvent::StatusMsg(
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                                         "Cannot rename root path".to_string(),
                                     ));
                                 }
@@ -1142,11 +1142,11 @@ fn handle_input_modals_keys(
                             }
                             if mode == "trash" {
                                 for p in paths {
-                                    let _ = event_tx.try_send(AppEvent::TrashFile(p));
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::TrashFile(p));
                                 }
                             } else {
                                 for p in paths {
-                                    let _ = event_tx.try_send(AppEvent::Delete(p));
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(p));
                                 }
                             }
                         }
@@ -1160,15 +1160,15 @@ fn handle_input_modals_keys(
                                         let old_name = f.file_name().unwrap_or_default().to_string_lossy();
                                         let new_name = re.replace_all(&old_name, replacement.as_str()).to_string();
                                         if new_name != old_name {
-                                            let _ = event_tx.try_send(AppEvent::Rename(f.clone(), parent.join(&new_name)));
+                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(f.clone(), parent.join(&new_name)));
                                         }
                                     }
                                 }
-                                let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Bulk renamed {} files", files.len()
                                 )));
                             } else {
-                                let _ = event_tx.try_send(AppEvent::StatusMsg(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                                     "Invalid regex pattern".to_string()
                                 ));
                             }
@@ -1307,7 +1307,7 @@ fn handle_settings_keys(
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.show_hidden = new_val;
                             }
-                            let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                         1 => app.confirm_delete = !app.confirm_delete,
                         2 => app.smart_date = !app.smart_date,
@@ -1701,7 +1701,7 @@ pub fn handle_modal_mouse(
                             }
                         }
                         for p in paths {
-                            let _ = event_tx.try_send(AppEvent::Delete(p));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(p));
                         }
                     }
                     app.mode = AppMode::Normal;
@@ -1754,7 +1754,7 @@ pub fn handle_modal_mouse(
                 if is_hit(0, 10) {
                     for src in &sources {
                         let dest = target.join(src.file_name().unwrap_or_default());
-                        let _ = event_tx.try_send(AppEvent::Copy(src.clone(), dest));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src.clone(), dest));
                     }
                     app.mode = AppMode::Normal;
                     return true;
@@ -1762,7 +1762,7 @@ pub fn handle_modal_mouse(
                 if is_hit(12, 10) {
                     for src in &sources {
                         let dest = target.join(src.file_name().unwrap_or_default());
-                        let _ = event_tx.try_send(AppEvent::Rename(src.clone(), dest));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(src.clone(), dest));
                     }
                     app.mode = AppMode::Normal;
                     return true;
@@ -1770,7 +1770,7 @@ pub fn handle_modal_mouse(
                 if is_hit(24, 10) {
                     for src in &sources {
                         let dest = target.join(src.file_name().unwrap_or_default());
-                        let _ = event_tx.try_send(AppEvent::Symlink(src.clone(), dest));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Symlink(src.clone(), dest));
                     }
                     app.mode = AppMode::Normal;
                     return true;
