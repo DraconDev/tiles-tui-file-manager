@@ -1,20 +1,24 @@
 # Project State
 
 ## Current Focus
-Removed `MAX_HISTORY` constant from configuration imports
+Added tab closing functionality and search reset in file manager
 
 ## Context
-This change continues the refactoring of configuration constants by removing the redundant `MAX_HISTORY` constant that was previously used in the application.
+The changes enhance file management by allowing users to close tabs and reset search filters, improving workflow efficiency.
 
 ## Completed
-- [x] Removed unused `MAX_HISTORY` constant from imports in `app.rs`
+- [x] Added Ctrl+W shortcut to close file tabs in the Files view
+- [x] Implemented tab index adjustment when closing tabs
+- [x] Added status messages for tab closing operations
+- [x] Added '/' key to reset search filters and clear selection
+- [x] Updated Cargo.lock for dependency resolution
 
 ## In Progress
-- [x] Ongoing refactoring of configuration constants
+- [ ] No active work in progress
 
 ## Blockers
-- None identified in this change
+- None identified
 
 ## Next Steps
-1. Verify no remaining references to `MAX_HISTORY` exist
-2. Continue centralized configuration constant refactoring
+1. Verify tab closing behavior with multiple tabs open
+2. Test search reset functionality across different file views

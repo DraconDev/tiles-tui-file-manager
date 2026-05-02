@@ -212,6 +212,27 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     }
                     return true;
                 }
+                KeyCode::Char('w') if has_control && app.current_view == CurrentView::Files => {
+                    let pane_idx = app.focused_pane_index;
+                    if let Some(pane) = app.panes.get_mut(pane_idx) {
+                        if pane.tabs.len() > 1 {
+                            let removed = pane.tabs.remove(pane.active_tab_index);
+                            if pane.active_tab_index >= pane.tabs.len() {
+                                pane.active_tab_index = pane.tabs.len() - 1;
+                            }
+                            let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
+                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                "Closed: {}",
+                                removed.current_path.file_name()
+                                    .map(|n| n.to_string_lossy().to_string())
+                                    .unwrap_or_default()
+                            )));
+                        } else {
+                            let _ = event_tx.try_send(AppEvent::StatusMsg("Cannot close last tab".to_string()));
+                        }
+                    }
+                    return true;
+                }
                 KeyCode::Left if has_alt => {
                     app.resize_sidebar(-2);
                     return true;
@@ -381,8 +402,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     return true;
                 }
                 KeyCode::Char('C') if app.sidebar_focus => {
-                    // Collapse all folders in the sidebar tree (VSCode-style)
                     app.tree_expanded_folders.clear();
+                    return true;
+                }
+                KeyCode::Char('/') => {
+                    if let Some(fs) = app.current_file_state_mut() {
+                        fs.search_filter.clear();
+                        fs.selection.selected = Some(0);
+                        *fs.table_state.offset_mut() = 0;
+                    }
+                    app.sidebar_focus = false;
+                    app.mode = AppMode::Normal;
                     return true;
                 }
                 KeyCode::Up => {
