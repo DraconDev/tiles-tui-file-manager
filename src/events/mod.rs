@@ -688,6 +688,18 @@ fn handle_sidebar_mouse(
             }
             false
         }
+        MouseEventKind::ScrollUp => {
+            if app.sidebar_scroll_offset > 0 {
+                app.sidebar_scroll_offset -= 1;
+                return true;
+            }
+            false
+        }
+        MouseEventKind::ScrollDown => {
+            // Allow scrolling even beyond current bounds; draw_sidebar will clamp
+            app.sidebar_scroll_offset += 1;
+            true
+        }
         MouseEventKind::Moved => false,
         _ => false,
     }

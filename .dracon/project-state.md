@@ -1,23 +1,22 @@
 # Project State
 
 ## Current Focus
-Added scroll offset tracking for sidebar navigation to maintain visible position of selected items
+Added scroll offset tracking for sidebar navigation to maintain position during scrolling.
 
 ## Context
-The sidebar was displaying all items at once, making navigation difficult for long lists. This change implements a scroll offset system to keep the selected item visible while navigating.
+The sidebar navigation needed improved handling of scroll position to maintain visibility of the current folder when scrolling through long lists of items.
 
 ## Completed
-- [x] Added scroll offset tracking for sidebar items
-- [x] Implemented auto-scroll to keep selected item in view
-- [x] Adjusted bounds calculation for visible items only
-- [x] Limited scroll offset to prevent empty space at bottom
+- [x] Added scroll up/down handling with offset tracking
+- [x] Implemented scroll clamping in the draw function (implied by comment)
+- [x] Maintained existing mouse event handling behavior
 
 ## In Progress
-- [ ] None (this change is complete)
+- [x] Scroll offset tracking implementation
 
 ## Blockers
-- None (dependency `dracon-files` failed to load, but this change is independent)
+- None identified in this change
 
 ## Next Steps
-1. Test scroll behavior with different list lengths
-2. Verify performance impact with very large item lists
+1. Verify scroll behavior in UI tests
+2. Optimize performance for large sidebar trees
