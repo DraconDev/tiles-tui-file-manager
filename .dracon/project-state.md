@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored configuration constants to centralized locations for better maintainability.
+Added `MAX_HISTORY` constant usage in event handling for consistent history management.
 
 ## Context
-This change moves hardcoded constants (like `MAX_RECENT_FOLDERS`, `PREVIEW_MAX_MB`, and `MAX_TABS`) to a centralized configuration module, making them easier to manage and modify across the application.
+This change centralizes the history limit configuration by using the existing `MAX_HISTORY` constant from the config module, aligning with recent refactoring efforts to standardize configuration constants.
 
 ## Completed
-- [x] Moved `MAX_RECENT_FOLDERS` and `PREVIEW_MAX_MB` from `app.rs` to centralized config
-- [x] Moved `MAX_TABS` from `state/mod.rs` to centralized config
-- [x] Updated all references to use the centralized constants
+- [x] Added `MAX_HISTORY` constant import for consistent history management
+- [x] Maintained existing event handling functionality while improving configuration consistency
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] No active work in progress beyond this change
 
 ## Blockers
-- None identified
+- None identified for this specific change
 
 ## Next Steps
-1. Verify all references to these constants are properly updated
-2. Consider adding validation for these configuration values
+1. Verify no runtime issues with the new constant usage
+2. Ensure all history-related operations respect the centralized `MAX_HISTORY` value

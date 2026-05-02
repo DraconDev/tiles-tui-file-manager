@@ -2,6 +2,7 @@ use crate::app::{
     App, AppEvent, AppMode, CommandAction, CommandItem, ContextMenuAction, ContextMenuTarget,
     CurrentView, FileState,
 };
+use crate::config::MAX_HISTORY;
 use base64::Engine;
 use dracon_terminal_engine::input::mapping::{to_runtime_event, Event as InputEvent, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use std::ffi::OsStr;
