@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Added `MAX_HISTORY` constant usage in event handling for consistent history management.
+Refactored history management by removing the `MAX_HISTORY` constant from `event_helpers.rs`
 
 ## Context
-This change centralizes the history limit configuration by using the existing `MAX_HISTORY` constant from the config module, aligning with recent refactoring efforts to standardize configuration constants.
+The change was part of a broader effort to centralize configuration constants for better maintainability. The constant was moved to a centralized location to avoid duplication and improve consistency in history management.
 
 ## Completed
-- [x] Added `MAX_HISTORY` constant import for consistent history management
-- [x] Maintained existing event handling functionality while improving configuration consistency
+- [x] Removed `MAX_HISTORY` constant from `event_helpers.rs` to consolidate configuration constants
 
 ## In Progress
-- [ ] No active work in progress beyond this change
+- [ ] (none)
 
 ## Blockers
-- None identified for this specific change
+- The `MAX_HISTORY` constant is now defined elsewhere, but the refactoring is complete
 
 ## Next Steps
-1. Verify no runtime issues with the new constant usage
-2. Ensure all history-related operations respect the centralized `MAX_HISTORY` value
+1. Verify that the centralized constant is properly used in history management
+2. Ensure no other instances of `MAX_HISTORY` exist in the codebase
