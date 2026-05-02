@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Added empty sidebar state handling to display a message when no sections are visible.
+Increased the maximum index for the General settings section from 12 to 13.
 
 ## Context
-The sidebar now needs to handle cases where all sections are hidden by user settings, providing feedback to users rather than showing an empty pane.
+This change was made to accommodate an additional setting option in the General settings section of the application.
 
 ## Completed
-- [x] Added conditional rendering for empty sidebar state
-- [x] Included a styled message indicating all sections are hidden
-- [x] Message appears when `sidebar_items.is_empty()`
+- [x] Updated the maximum index for General settings from 12 to 13
 
 ## In Progress
-- [ ] None
+- [x] None - this is a focused, complete change
 
 ## Blockers
-- None
+- None - this is a simple configuration adjustment
 
 ## Next Steps
-1. Verify the message styling matches the UI theme
-2. Add unit tests for the empty state handling
+1. Verify that the new setting option works as expected
+2. Ensure the UI properly handles the increased index range
