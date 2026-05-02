@@ -4,17 +4,18 @@
 Added debug logging for directory tree marker hit detection in file manager
 
 ## Context
-This change was prompted by ongoing work to improve directory tree marker hit detection in the file manager. The logging will help track which markers are being hit and their positions during development.
+This change improves debugging capabilities for the file manager's directory tree marker hit detection system. The new logging helps track when directory markers are being hit during mouse interactions.
 
 ## Completed
-- [x] Added debug logging to track directory tree marker hits with column, row, and kind information
+- [x] Added debug logging to `/tmp/tiles_hit.txt` when directory markers are hit
+- [x] Logs include depth, name position, marker position, and column information
 
 ## In Progress
-- [x] Debug logging implementation for marker hit detection
+- [x] Debug logging implementation
 
 ## Blockers
-- No blockers identified for this specific change
+- None identified
 
 ## Next Steps
-1. Verify the debug output provides useful information during development
-2. Continue refining the marker hit detection logic based on the logged data
+1. Verify the debug output provides useful information during testing
+2. Consider adding more detailed logging for edge cases if needed

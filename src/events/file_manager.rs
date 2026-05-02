@@ -1000,6 +1000,7 @@ pub fn handle_file_mouse(
                             let log_line2 = format!("  name_x={} marker_x={} hit={}\n", name_rect.x, marker_x, hit);
                             let _ = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/click.log").and_then(|mut f| std::io::Write::write_all(&mut f, log_line2.as_bytes()));
                             if is_dir && hit {
+                                let _ = std::fs::write("/tmp/tiles_hit.txt", format!("depth={} name_x={} marker_x={} col={}\n", depth, name_rect.x, marker_x, column));
                                 let folder_path = p;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
                                 if was_expanded {
