@@ -547,6 +547,13 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 );
             }
 
+            if sidebar_items.is_empty() {
+                sidebar_items.push(
+                    ListItem::new("(All sections hidden. Enable in Settings.)")
+                        .style(Style::default().fg(Color::DarkGray)),
+                );
+            }
+
             let title_text = app.current_file_state()
                 .map(|fs| fs.current_path.to_string_lossy().to_string())
                 .unwrap_or_else(|| "Files".to_string());

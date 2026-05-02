@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Removed the tree-based sidebar view in favor of a simpler project sidebar
+Added empty sidebar state handling to display a message when no sections are visible.
 
 ## Context
-The tree-based sidebar was complex and had multiple features (expansion, favorites, remotes) that weren't being fully utilized. This change simplifies the UI by focusing on the core project view.
+The sidebar now needs to handle cases where all sections are hidden by user settings, providing feedback to users rather than showing an empty pane.
 
 ## Completed
-- [x] Removed the `draw_tree_sidebar` function and all its associated logic
-- [x] Kept only the basic `draw_project_sidebar` function
-- [x] Updated Cargo.lock to reflect dependency changes
+- [x] Added conditional rendering for empty sidebar state
+- [x] Included a styled message indicating all sections are hidden
+- [x] Message appears when `sidebar_items.is_empty()`
 
 ## In Progress
-- [ ] Evaluating whether to reintroduce simplified tree view features incrementally
+- [ ] None
 
 ## Blockers
-- Need to determine if users miss the tree view features before reintroducing them
+- None
 
 ## Next Steps
-1. Test the simplified sidebar with core users
-2. Decide whether to reintroduce tree view features in a more focused way
+1. Verify the message styling matches the UI theme
+2. Add unit tests for the empty state handling
