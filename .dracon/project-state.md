@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored error handling in code highlighting to prevent panics on syntax errors
+Added graceful shutdown handling for system module and tick loop in the TTY runtime.
 
 ## Context
-The code highlighting function previously panicked when syntax highlighting failed. This change ensures graceful fallback to default styling when highlighting fails.
+The previous implementation lacked proper shutdown handling, which could lead to resource leaks or unexpected behavior during application termination. This change ensures both the system module and tick loop respect the shutdown signal.
 
 ## Completed
-- [x] Changed `unwrap()` to `unwrap_or_default()` in `highlight_code` to handle syntax errors gracefully
+- [x] Added shutdown check in system module loop
+- [x] Added shutdown check in tick loop
+- [x] Properly cloned shutdown signal for each task
 
 ## In Progress
-- [ ] None
+- [ ] None (changes are complete)
 
 ## Blockers
-- None
+- None (implementation is complete)
 
 ## Next Steps
-1. Verify no visual regressions in code display
-2. Add unit tests for error cases in syntax highlighting
+1. Verify shutdown behavior in integration tests
+2. Document shutdown sequence in architecture docs

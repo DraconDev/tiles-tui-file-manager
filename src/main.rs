@@ -197,9 +197,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     //    without burning CPU when the user is in Files/Editor/Git.
     {
         let tx = event_tx.clone();
+        let shutdown_stats = shutdown.clone();
         tokio::spawn(async move {
             let mut sys_mod = crate::modules::system::SystemModule::new();
             loop {
+                if shutdown_stats.load(Ordering::Relaxed) {
+                    break;
+                }
                 if let Ok(data) = sys_mod.get_data() {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
@@ -211,8 +215,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     // 3. Tick Loop (Tokio)
     {
         let tx = event_tx.clone();
+        let shutdown_tick = shutdown.clone();
         tokio::spawn(async move {
             loop {
+                if shutdown_tick.load(Ordering::Relaxed) {
+                    break;
+                }
                 let _ = tx.send(AppEvent::Tick).await;
                 tokio::time::sleep(Duration::from_millis(250)).await;
             }
