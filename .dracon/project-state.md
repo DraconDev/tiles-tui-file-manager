@@ -1,23 +1,20 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Removed the "Tree" scope label from the sidebar UI.
 
 ## Context
-The change was triggered by recent refactoring of the sidebar components and dependency management. The Cargo.lock file was modified to ensure consistent dependency resolution after structural changes in the project.
+This change aligns with the ongoing refactoring of sidebar scope handling and the removal of conditional tree rendering in favor of a unified folder view.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
-- [x] Ensured consistent dependency resolution after refactoring
+- [x] Removed the "Tree" scope label from the sidebar UI to simplify the scope indicators
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [x] Unified folder expansion handling across all sidebar views
 
 ## Blockers
-- The project is currently in planning phase with execution disabled
-- The slice `synth-1774826981` is blocked due to failed manifest loading for dependency `dracon-files`
+- Dependency resolution for `dracon-files` manifest loading
 
 ## Next Steps
-1. Resolve the blocked slice `synth-1774826981` by addressing the dependency manifest issue
-2. Continue with the planning phase once dependencies are resolved
-```
+1. Complete the unified folder expansion implementation
+2. Verify the sidebar behavior with the remaining scope indicators

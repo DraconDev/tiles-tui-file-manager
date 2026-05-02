@@ -785,7 +785,6 @@ pub fn draw_tree_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         SidebarScope::All => "[All]",
         SidebarScope::Favorites => "[Favorites]",
         SidebarScope::Remotes => "[Remotes]",
-        SidebarScope::Tree => "[Tree]",
     };
     let full_title = format!("{} {} ", title_text, scope_label);
 
