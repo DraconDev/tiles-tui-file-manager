@@ -2455,7 +2455,6 @@ fn draw_file_view(
         .and_then(|p| p.current_state_mut())
     {
         file_state.view_height = area.height as usize;
-        file_state.pane_area_x = area.x;
 
         let mut render_state = TableState::default();
 
