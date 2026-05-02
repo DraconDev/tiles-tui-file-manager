@@ -1,21 +1,25 @@
 # Project State
 
 ## Current Focus
-Consistently enable sidebar visibility across all view preferences
+Enhanced installation script with process management and multi-path binary installation
 
 ## Context
-The sidebar visibility was previously inconsistently set between file and editor views. This change ensures both views show the sidebar by default, maintaining a unified user experience.
+The installation script now ensures clean installation by:
+1. Terminating any running instances of the application
+2. Installing the binary to both standard and Cargo paths
+3. Maintaining consistent permissions
 
 ## Completed
-- [x] Set `show_sidebar: true` for both file and editor view preferences
-- [x] Updated default settings reset to maintain consistent sidebar visibility
+- [x] Added process termination for running instances
+- [x] Expanded binary installation to include Cargo path
+- [x] Standardized permission handling
 
 ## In Progress
-- [x] Sidebar visibility consistency across all view modes
+- [ ] None (changes are complete)
 
 ## Blockers
-- None identified for this specific change
+- None (installation improvements are complete)
 
 ## Next Steps
-1. Verify sidebar behavior remains consistent across all application states
-2. Consider adding user-configurable sidebar visibility preferences
+1. Verify installation works across different environments
+2. Document the new installation paths in user documentation
