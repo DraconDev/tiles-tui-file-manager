@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Alignment, Rect},
+    layout::Rect,
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem, Paragraph},
@@ -592,7 +592,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                         .unwrap_or_default(),
                     SidebarTarget::Header(name) => name.clone(),
                 };
-                if !hint.is_empty() && list_inner.height > 0 {
+                if !hint.is_empty() && hint != title_text && list_inner.height > 0 {
                     let text =
                         truncate_to_width(&hint, list_inner.width.saturating_sub(1) as usize, "..");
                     f.render_widget(
