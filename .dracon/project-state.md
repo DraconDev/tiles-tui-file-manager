@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Removed sidebar folder path tracking and current folder indicator logic
 
 ## Context
-This change was triggered by dependency version conflicts that arose during recent refactoring work. The Cargo.lock file was updated to ensure all dependencies are properly resolved and version conflicts are eliminated.
+The sidebar was previously tracking the current folder path to show an indicator (◄) for the active folder, but this functionality was removed to simplify the codebase. The change maintains the Dolphin-style sidebar but removes the visual indicator for the current folder.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
-- [x] Ensured all dependencies are properly versioned
+- [x] Removed current folder path tracking logic
+- [x] Removed the indicator (◄) for the active folder
+- [x] Simplified sidebar rendering by removing redundant path comparison
 
 ## In Progress
-- [x] Dependency resolution process
+- [ ] None (this is a cleanup change)
 
 ## Blockers
-- The runtime progress shows a failed manifest load for dependency `dracon-files`, which may require additional investigation
+- None (this is a refactoring to reduce complexity)
 
 ## Next Steps
-1. Verify that all dependencies are properly resolved
-2. Investigate the failed manifest load for `dracon-files` if it affects functionality
+1. Verify sidebar rendering remains consistent without the indicator
+2. Ensure folder expansion/collapse behavior is unaffected

@@ -118,14 +118,6 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 // Tree is always rooted at home (Dolphin-style) regardless of current pane path
                 let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
 
-                // Track current path for the ◄ indicator, but DO NOT auto-expand
-                // All folders stay collapsed by default to keep sidebar compact
-                let current_folder_path = app.current_file_state().map(|fs| fs.current_path.clone());
-
-                let is_current_folder = |path: &PathBuf| {
-                    current_folder_path.as_ref().map(|c| c == path).unwrap_or(false)
-                };
-
                 // Compute cache key: hash of expanded folders + show_hidden state
                 let show_hidden = app.panes
                     .get(app.focused_pane_index)
