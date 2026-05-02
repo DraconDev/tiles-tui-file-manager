@@ -27,6 +27,7 @@ pub const SAVE_DEBOUNCE_MS: u64 = 350;
 /// Maximum preview file size (megabytes)
 pub const PREVIEW_MAX_MB: u16 = 20;
 pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
+pub const GIT_CACHE_TTL_SECONDS: u64 = 30;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExternalTool {

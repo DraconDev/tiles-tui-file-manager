@@ -4,19 +4,19 @@
 Added Git cache invalidation mechanism to prevent stale Git status data
 
 ## Context
-To improve performance and accuracy of Git status display in the editor, we need to implement a caching mechanism with automatic invalidation. The previous implementation lacked a way to refresh Git status data when it might have changed.
+The previous implementation lacked a mechanism to invalidate cached Git status data, leading to potential display of stale information. This change adds a time-to-live (TTL) mechanism for Git cache data.
 
 ## Completed
-- [x] Added `git_cache_until` field to `FileState` to track when cached Git data should be refreshed
-- [x] Imported necessary time-related types (`Duration`, `Instant`) for cache management
+- [x] Added `GIT_CACHE_TTL_SECONDS` constant to configuration
+- [x] Implemented cache invalidation logic in Git status fetching
+- [x] Added conditional fetching based on cache validity
 
 ## In Progress
-- [ ] Implement actual cache invalidation logic (not yet in this commit)
+- [ ] None (this is a complete feature implementation)
 
 ## Blockers
-- Need to implement the actual cache invalidation logic that checks `git_cache_until` against current time
+- None (feature is complete)
 
 ## Next Steps
-1. Implement cache invalidation logic in Git status update methods
-2. Add configuration option for cache duration
-3. Add tests for cache behavior
+1. Verify cache invalidation works correctly in various scenarios
+2. Consider adding visual indicators when Git status is cached

@@ -1261,6 +1261,23 @@ paired = new_paired;
                     let git_remote = remote.clone();
                     let app_for_git = app_clone.clone();
                     let tx_for_git = tx.clone();
+                    let git_cache_ttl = Duration::from_secs(GIT_CACHE_TTL_SECONDS);
+                    let should_fetch = {
+                        let app_guard = app_for_git.lock();
+                        app_guard
+                            .panes
+                            .get(pane_idx)
+                            .and_then(|pane| pane.current_state())
+                            .map(|fs| {
+                                fs.git_cache_until
+                                    .map(|until| Instant::now() >= until)
+                                    .unwrap_or(true)
+                            })
+                            .unwrap_or(false)
+                    };
+                    if !should_fetch {
+                        return;
+                    }
                     tokio::spawn(async move {
                     let git_fetch_path = git_path.clone();
                     let git_data = tokio::task::spawn_blocking(move || {
