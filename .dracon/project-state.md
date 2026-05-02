@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored file list row calculation to use a named constant for the file list start position.
+Refactored file list column boundary calculation to simplify sorting logic
 
 ## Context
-This change improves code maintainability by replacing the magic number `3` with a named constant `FILE_LIST_START_ROW`. The value represents the starting row for the file list in the UI, accounting for header icons and breadcrumbs.
+The change was prompted by ongoing refactoring of the file manager's state handling. The previous implementation had redundant boundary calculations that were simplified for consistency.
 
 ## Completed
-- [x] Replaced magic number `3` with named constant `FILE_LIST_START_ROW`
-- [x] Updated row calculation to use the new constant
+- [x] Removed redundant boundary calculation in column sorting logic
+- [x] Simplified column boundary check by removing unnecessary `saturating_add(1)`
 
 ## In Progress
-- [ ] None (this is a complete refactoring)
+- [x] Ongoing refactoring of file manager state handling
 
 ## Blockers
-- None (this is a simple refactoring with no dependencies)
+- None identified in this change
 
 ## Next Steps
-1. Review other instances of similar magic numbers in the codebase
-2. Consider adding documentation for the new constant
+1. Review other file manager components for similar refactoring opportunities
+2. Verify no regression in column sorting behavior after the change

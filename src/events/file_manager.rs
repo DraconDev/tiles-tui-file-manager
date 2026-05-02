@@ -931,9 +931,7 @@ pub fn handle_file_mouse(
                         if let Some(fs) = app.panes.get_mut(cp).and_then(|p| p.current_state_mut())
                         {
                             for (r, col) in &fs.column_bounds {
-                                if column >= r.x
-                                    && column < r.x.saturating_add(r.width).saturating_add(1)
-                                {
+                                if column >= r.x && column < r.x.saturating_add(r.width) {
                                     if fs.sort_column == *col {
                                         fs.sort_ascending = !fs.sort_ascending;
                                     } else {
