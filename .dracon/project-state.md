@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed the "Tree" scope label from the sidebar UI.
+Refactored sidebar favorites display to include recent folders conditionally
 
 ## Context
-This change aligns with the ongoing refactoring of sidebar scope handling and the removal of conditional tree rendering in favor of a unified folder view.
+The change improves sidebar configuration by making recent folders display optional, allowing users to toggle favorites and recent folders independently.
 
 ## Completed
-- [x] Removed the "Tree" scope label from the sidebar UI to simplify the scope indicators
+- [x] Removed `SidebarScope` dependency from file manager events
+- [x] Added conditional display for recent folders in sidebar
 
 ## In Progress
-- [x] Unified folder expansion handling across all sidebar views
+- [ ] None
 
 ## Blockers
-- Dependency resolution for `dracon-files` manifest loading
+- None
 
 ## Next Steps
-1. Complete the unified folder expansion implementation
-2. Verify the sidebar behavior with the remaining scope indicators
+1. Verify sidebar configuration options work as expected
+2. Test with different combinations of enabled/disabled sections

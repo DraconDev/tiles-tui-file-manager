@@ -227,7 +227,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 }
             }
 
-            if show_favorites && !app.recent_folders.is_empty() {
+            if show_favorites && show_recent && !app.recent_folders.is_empty() {
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let idx = sidebar_items.len();

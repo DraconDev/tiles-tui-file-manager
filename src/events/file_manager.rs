@@ -10,7 +10,7 @@ use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, FileColumn, SidebarTarget, UndoAction,
 };
 use crate::events::input::delete_word_backwards;
-use crate::state::{DropTarget, SidebarScope};
+use crate::state::{DropTarget};
 
 const DOUBLE_CLICK_MS: u64 = 500;
 const SEARCH_DEBOUNCE_MS: u64 = 300;
