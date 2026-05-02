@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added folder expand/collapse functionality in Dolphin-style sidebar when Space key is pressed
+Refactored space key handler to properly propagate events in the sidebar
 
 ## Context
-This change enables users to toggle folder expansion in the sidebar by pressing Space, improving navigation in the Dolphin-style file manager interface.
+The change was prompted by the need to ensure proper event propagation when handling space key presses in the sidebar. The previous implementation had an unused parameter that needed to be properly utilized.
 
 ## Completed
-- [x] Added Space key handler for sidebar folder expansion
-- [x] Implemented folder expand/collapse toggle logic
-- [x] Added check for sidebar focus before handling Space key
+- [x] Refactored `handle_space_key` to use the `event_tx` parameter for proper event propagation
+- [x] Updated Cargo.lock to resolve dependency versions after the change
 
 ## In Progress
-- [x] Folder expansion state management
+- [x] No active work in progress beyond this commit
 
 ## Blockers
-- Dependency resolution issue with `dracon-files` manifest
+- None identified for this specific change
 
 ## Next Steps
-1. Resolve dependency issue with `dracon-files`
-2. Test folder expansion behavior with various file structures
+1. Verify the sidebar's folder expand/collapse functionality works as expected
+2. Continue with other sidebar-related improvements

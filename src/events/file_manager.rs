@@ -1254,7 +1254,7 @@ pub fn handle_file_mouse(
     }
 }
 
-fn handle_space_key(app: &mut App, _event_tx: &mpsc::Sender<AppEvent>) {
+fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     // If sidebar is focused and selected item is a folder, toggle expand/collapse
     if app.sidebar_focus {
         if let Some(bound) = app
