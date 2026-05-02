@@ -4,20 +4,19 @@
 Persist sidebar hidden file visibility setting across sessions
 
 ## Context
-The sidebar's hidden file visibility setting was previously only applied to the current pane and not saved between sessions. This change ensures the setting persists by saving it to the application's default state and configuration.
+The sidebar's hidden file visibility state was not being saved between sessions, causing inconsistency when toggling hidden files. This change ensures the setting matches the currently focused pane's state and persists it to the configuration.
 
 ## Completed
-- [x] Added persistence of hidden file visibility setting
-- [x] Updated default_show_hidden in App state when toggled
-- [x] Added automatic configuration save on toggle
+- [x] Save hidden file visibility state when toggling with Ctrl+Backspace
+- [x] Update default_show_hidden to match focused pane's state
+- [x] Persist the setting to configuration
 
 ## In Progress
-- [ ] No active work in progress
+- [x] Implementation complete
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Verify persistence works across application restarts
-2. Consider adding UI feedback when hidden files are toggled
-```
+1. Verify persistence works across sessions
+2. Consider adding UI feedback for the setting change

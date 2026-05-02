@@ -167,6 +167,10 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Backspace if has_control => {
                     let idx = app.toggle_hidden();
+                    if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
+                        app.default_show_hidden = fs.show_hidden;
+                    }
+                    crate::config::save_state_quiet(app);
                     let _ = event_tx.try_send(AppEvent::RefreshFiles(idx));
                     return true;
                 }
