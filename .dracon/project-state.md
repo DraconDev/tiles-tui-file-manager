@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Added caching for sidebar tree items to avoid re-reading directories on each render
+Optimized sidebar tree rendering with caching to avoid redundant directory scans
 
 ## Context
-The sidebar was previously re-reading directory contents on every render, which was inefficient. This change adds a cache system that stores tree items and only recomputes when the expanded folders or hidden file visibility settings change.
+The sidebar was previously rescanning directories on every render, causing performance issues. This change implements a caching mechanism to reuse directory tree data when possible.
 
 ## Completed
-- [x] Implemented cache system using a hash of expanded folders and show_hidden state
-- [x] Added cache key comparison to determine when to recompute tree items
-- [x] Maintained cache invalidation when settings change
+- [x] Added conditional caching of directory tree items
+- [x] Implemented cache key comparison to determine when to reuse cached data
+- [x] Properly cloned cached items to avoid ownership issues
 
 ## In Progress
-- [x] Cache implementation and integration with sidebar rendering
+- [x] Cache validation and refresh logic
 
 ## Blockers
 - None identified in this change
 
 ## Next Steps
-1. Verify cache performance with large directory structures
-2. Consider adding cache size limits if memory usage becomes an issue
+1. Verify cache invalidation works correctly when directory contents change
+2. Measure performance impact with large directory structures
