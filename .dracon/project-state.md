@@ -4,19 +4,19 @@
 Standardized event dispatch mechanism across file manager operations
 
 ## Context
-The code was refactored to use a centralized event dispatch utility (`try_send_event`) to ensure consistent error handling and logging across all event dispatches in the file manager operations.
+The code was refactored to use a centralized event dispatch utility (`try_send_event`) instead of direct channel operations. This improves consistency and error handling across file operations.
 
 ## Completed
-- [x] Replaced direct `try_send` calls with standardized `try_send_event` utility
-- [x] Improved error handling for failed event dispatches
+- [x] Refactored rename operation to use standardized event dispatch
+- [x] Refactored symlink operation to use standardized event dispatch
+- [x] Updated error handling to use the new utility function
 
 ## In Progress
 - [ ] No active work in progress
 
 ## Blockers
-- None
+- None identified
 
 ## Next Steps
-1. Verify no regressions in event handling across file operations
-2. Expand standardized event handling to other modules if needed
-```
+1. Verify all file operations now use the standardized event mechanism
+2. Update documentation for the new event dispatch utility

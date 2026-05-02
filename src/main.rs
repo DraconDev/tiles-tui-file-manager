@@ -710,12 +710,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 .undo_stack
                                 .push(crate::app::UndoAction::Move(new.clone(), old.clone()));
                             app_guard.redo_stack.clear();
-                            let _ = event_tx
-                                .try_send(AppEvent::RefreshFiles(app_guard.focused_pane_index));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app_guard.focused_pane_index));
                         }
                         Err(e) => {
-                            let _ = event_tx
-                                .try_send(AppEvent::StatusMsg(format!("Rename failed: {}", e)));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Rename failed: {}", e)));
                         }
                     }
                 }
@@ -876,8 +874,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             )));
                         }
                         Err(e) => {
-                            let _ = event_tx
-                                .try_send(AppEvent::StatusMsg(format!("Symlink failed: {}", e)));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Symlink failed: {}", e)));
                         }
                     }
                 }
