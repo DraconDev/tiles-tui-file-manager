@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Removed redundant MPSC channel capacity constant from configuration
+Removed `MAX_HISTORY` constant from configuration imports
 
 ## Context
-The change was part of ongoing refactoring to centralize configuration constants, eliminating duplication and improving maintainability.
+This change continues the refactoring of configuration constants by removing the redundant `MAX_HISTORY` constant that was previously used in the application.
 
 ## Completed
-- [x] Removed duplicate `MPSC_CHANNEL_CAPACITY` constant definition
-- [x] Removed duplicate `SAVE_DEBOUNCE_MS` constant definition
-- [x] Updated Cargo.lock for dependency resolution
+- [x] Removed unused `MAX_HISTORY` constant from imports in `app.rs`
 
 ## In Progress
-- [ ] No active work in progress
+- [x] Ongoing refactoring of configuration constants
 
 ## Blockers
-- None identified
+- None identified in this change
 
 ## Next Steps
-1. Verify no runtime impact from constant removal
-2. Continue configuration constant consolidation
+1. Verify no remaining references to `MAX_HISTORY` exist
+2. Continue centralized configuration constant refactoring
