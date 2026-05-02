@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed Dolphin-style auto-expansion from sidebar tree navigation
+Added VSCode-style folder collapse functionality in the sidebar tree
 
 ## Context
-The sidebar tree was previously automatically expanding to show the current folder path, which made the sidebar less compact. This change removes the auto-expansion behavior while maintaining the visual indicator for the current folder.
+This change implements a common UX pattern where users can collapse all folders in the sidebar with a keyboard shortcut (Ctrl+C when sidebar is focused). This aligns with VSCode's behavior and improves navigation efficiency.
 
 ## Completed
-- [x] Removed auto-expansion logic that would expand parent folders when navigating
-- [x] Kept visual indicator for current folder (◄) to maintain navigation context
-- [x] Maintained compact sidebar design by keeping folders collapsed by default
+- [x] Added keybinding (Ctrl+C) to collapse all folders in sidebar
+- [x] Implemented folder collapse by clearing expanded state tracking
 
 ## In Progress
-- [ ] None
+- [x] Keyboard shortcut implementation
 
 ## Blockers
-- None
+- None identified
 
 ## Next Steps
-1. Verify sidebar remains usable without auto-expansion
-2. Consider adding manual expansion controls if needed
+1. Add visual feedback when folders collapse
+2. Consider adding a toggle to expand/collapse all folders

@@ -370,6 +370,11 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     handle_space_key(app, event_tx);
                     return true;
                 }
+                KeyCode::Char('C') if app.sidebar_focus => {
+                    // Collapse all folders in the sidebar tree (VSCode-style)
+                    app.tree_expanded_folders.clear();
+                    return true;
+                }
                 KeyCode::Up => {
                     let shift = key.modifiers.contains(KeyModifiers::SHIFT);
                     if has_alt && app.sidebar_focus {
