@@ -520,3 +520,15 @@ pub fn debug_logging_enabled() -> bool {
             .unwrap_or(false)
     })
 }
+
+use mpsc::Sender;
+use crate::AppEvent;
+
+pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
+    if tx.try_send(evt).is_err() {
+        log_debug("Channel send failed — event dropped");
+        false
+    } else {
+        true
+    }
+}
