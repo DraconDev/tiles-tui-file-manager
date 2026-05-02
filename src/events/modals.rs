@@ -1225,7 +1225,7 @@ fn handle_header_keys(
 fn handle_settings_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
-    _event_tx: &mpsc::Sender<AppEvent>,
+    event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
     match key.code {
         KeyCode::Esc => {

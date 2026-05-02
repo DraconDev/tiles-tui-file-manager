@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved sidebar hidden file visibility synchronization across panes
+Refactored event handling in modal dialogs to properly propagate events.
 
 ## Context
-The change ensures that when the global "show hidden files" setting is toggled, the focused pane's visibility state is updated to match, and the file list is refreshed to reflect this change.
+The change was prompted by a need to ensure proper event propagation in modal dialog handling. The previous implementation was silently discarding events by using an unused parameter.
 
 ## Completed
-- [x] Synchronized focused pane's `show_hidden` state with global setting
-- [x] Added file list refresh after visibility toggle
-- [x] Maintained consistent behavior across all panes
+- [x] Refactored `handle_settings_keys` to properly use the `event_tx` parameter for event propagation
+- [x] Updated Cargo.lock to reflect dependency changes from the refactoring
 
 ## In Progress
-- [ ] No active work in progress
+- [x] No active work in progress beyond this change
 
 ## Blockers
-- None identified
+- None identified from this change
 
 ## Next Steps
-1. Verify synchronization works across multiple panes
-2. Test edge cases with hidden files in different directories
+1. Verify event propagation works correctly in modal dialogs
+2. Test edge cases for event handling in modal scenarios
