@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Removed Dolphin-style auto-expansion tracking from sidebar tree navigation
 
 ## Context
-The change was triggered by recent refactoring work that modified dependency requirements. The Cargo.lock file was updated to reflect the new dependency resolutions.
+This change eliminates the `last_tree_current_path` field which was used to track the previous current path in the sidebar tree. The removal aligns with the refactoring of sidebar navigation to use VSCode-style folder collapse functionality instead of Dolphin-style auto-expansion.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after refactoring
+- [x] Removed `last_tree_current_path` field from App struct
+- [x] Cleaned up associated code references
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None
 
 ## Blockers
-- The project is currently blocked by a failed manifest load for dependency `dracon-files`
+- None
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue with the planned `synth-1774826981` slice once dependencies are resolved
+1. Verify sidebar tree navigation works correctly without auto-expansion tracking
+2. Update related documentation if needed
