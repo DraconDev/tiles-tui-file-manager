@@ -108,8 +108,7 @@ pub fn handle_event(
                             app.sidebar_scope = match app.sidebar_scope {
                                 SidebarScope::All => SidebarScope::Favorites,
                                 SidebarScope::Favorites => SidebarScope::Remotes,
-                                SidebarScope::Remotes => SidebarScope::Tree,
-                                SidebarScope::Tree => SidebarScope::All,
+                                SidebarScope::Remotes => SidebarScope::All,
                             };
                             app.save_current_view_prefs();
                         } else {
@@ -506,12 +505,7 @@ fn handle_sidebar_mouse(
                         SidebarTarget::Project(path) => {
                             if path.is_dir() {
                                 let path_ref = path.clone();
-                                let is_tree_mode = matches!(app.sidebar_scope, SidebarScope::Tree);
-                                let expanded_set = if is_tree_mode {
-                                    &app.tree_expanded_folders
-                                } else {
-                                    &app.expanded_folders
-                                };
+                                let expanded_set = &app.tree_expanded_folders;
                                 let was_expanded = expanded_set.contains(&path_ref);
                                 if was_expanded {
                                     if is_tree_mode {

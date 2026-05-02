@@ -1,24 +1,23 @@
 # Project State
 
 ## Current Focus
-Added configurable sidebar sections to enable/disable individual components.
+Refactored sidebar scope handling and default scope configuration
 
 ## Context
-This change implements a feature request to allow users to customize which sidebar sections are visible. The sidebar now supports enabling/disabling folders, favorites, recent files, storage locations, and remote connections independently.
+This change simplifies the sidebar scope cycling logic and updates the default scope to `All` instead of `Tree`. It also removes redundant folder expansion state checks in the sidebar mouse handler.
 
 ## Completed
-- [x] Added `sidebar_folders` configuration option
-- [x] Added `sidebar_favorites` configuration option
-- [x] Added `sidebar_recent` configuration option
-- [x] Added `sidebar_storage` configuration option
-- [x] Added `sidebar_remotes` configuration option
+- [x] Simplified sidebar scope cycling by removing the `Tree` scope from the cycle
+- [x] Changed default sidebar scope from `Tree` to `All` in app initialization
+- [x] Removed redundant folder expansion state checks in sidebar mouse handler
 
 ## In Progress
-- [ ] Testing and validation of sidebar configuration persistence
+- [ ] No active work in progress
 
 ## Blockers
-- User interface for configuring these options needs to be implemented
+- None identified
 
 ## Next Steps
-1. Implement UI controls for toggling sidebar sections
-2. Add validation to ensure at least one section remains visible
+1. Verify UI behavior with the new default scope
+2. Test sidebar scope cycling functionality
+3. Update documentation to reflect the new default scope behavior
