@@ -168,6 +168,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                         y: current_y,
                         index: current_idx,
                         target: SidebarTarget::Project(path.clone()),
+                        ..Default::default()
                     });
                     current_y += 1;
                 }
