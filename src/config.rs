@@ -35,6 +35,16 @@ pub struct PersistentState {
     pub semantic_coloring: bool,
     #[serde(default = "default_true")]
     pub show_sidebar: bool,
+    #[serde(default = "default_true")]
+    pub sidebar_folders: bool,
+    #[serde(default = "default_true")]
+    pub sidebar_favorites: bool,
+    #[serde(default = "default_true")]
+    pub sidebar_recent: bool,
+    #[serde(default = "default_true")]
+    pub sidebar_storage: bool,
+    #[serde(default = "default_true")]
+    pub sidebar_remotes: bool,
     #[serde(default)]
     pub show_side_panel: bool,
     #[serde(default = "default_true")]
