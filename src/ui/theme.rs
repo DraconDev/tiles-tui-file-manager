@@ -1,6 +1,7 @@
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
-use std::sync::{LazyLock, RwLock};
+use std::sync::LazyLock;
+use parking_lot::RwLock;
 
 #[allow(dead_code)]
 pub struct DraconTheme {
@@ -161,16 +162,16 @@ static ACTIVE_THEME: LazyLock<RwLock<DraconTheme>> = LazyLock::new(|| {
 });
 
 pub fn style_settings() -> ThemeStyle {
-    ACTIVE_STYLE.read().unwrap().clone()
+    ACTIVE_STYLE.read().clone()
 }
 
 pub fn set_style_settings(style: ThemeStyle) {
     {
-        let mut active_style = ACTIVE_STYLE.write().unwrap();
+        let mut active_style = ACTIVE_STYLE.write();
         *active_style = style.clone();
     }
     {
-        let mut active_theme = ACTIVE_THEME.write().unwrap();
+        let mut active_theme = ACTIVE_THEME.write();
         let mut theme = DraconTheme::cyberpunk();
         style.apply_to_theme(&mut theme);
         *active_theme = theme;
@@ -178,25 +179,25 @@ pub fn set_style_settings(style: ThemeStyle) {
 }
 
 pub fn accent_primary() -> Color {
-    ACTIVE_THEME.read().unwrap().accent_primary
+    ACTIVE_THEME.read().accent_primary
 }
 
 pub fn accent_secondary() -> Color {
-    ACTIVE_THEME.read().unwrap().accent_secondary
+    ACTIVE_THEME.read().accent_secondary
 }
 
 pub fn selection_bg() -> Color {
-    ACTIVE_THEME.read().unwrap().selection_bg
+    ACTIVE_THEME.read().selection_bg
 }
 
 pub fn border_active() -> Color {
-    ACTIVE_THEME.read().unwrap().border_active
+    ACTIVE_THEME.read().border_active
 }
 
 pub fn border_inactive() -> Color {
-    ACTIVE_THEME.read().unwrap().border_inactive
+    ACTIVE_THEME.read().border_inactive
 }
 
 pub fn header_fg() -> Color {
-    ACTIVE_THEME.read().unwrap().header_fg
+    ACTIVE_THEME.read().header_fg
 }

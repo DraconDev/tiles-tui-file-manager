@@ -1152,11 +1152,16 @@ let list_path_for_filter = path.clone();
                     let mut app_guard = app_clone.lock();
                     crate::app::log_debug(&format!("apply lock took {:?}", t_apply.elapsed()));
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
-                        if let Some(fs) = pane.current_state_mut() {
-                            // RACE CONDITION CHECK:
-                            if fs.search_filter != current_filter {
-                                return;
-                            }
+                            if let Some(fs) = pane.current_state_mut() {
+                                // RACE CONDITION CHECK:
+                                // If filter changed while we were reading, discard stale results
+                                if fs.search_filter != current_filter {
+                                    crate::app::log_debug(&format!(
+                                        "RefreshFiles: filter changed during read (pane={}), dropping stale results",
+                                        pane_idx
+                                    ));
+                                    return;
+                                }
 
                             // tree_files is Vec<(PathBuf, u16)> — keep pairs intact through filter/sort
                             let mut paired: Vec<(PathBuf, u16)> = tree_files.into_iter().filter(|(p, _)| {
