@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Added tracking for the last current path in the sidebar tree to enable auto-expansion of ancestors.
+Added tracking for the last current path in the sidebar tree to enable persistent navigation state.
 
 ## Context
-The sidebar tree view now needs to detect navigation changes to automatically expand folders leading to the current file. This matches Dolphin-style behavior where the tree is always rooted at the home directory.
+This change supports maintaining the user's navigation position in the sidebar tree between sessions or state changes, improving the user experience by preserving context.
 
 ## Completed
-- [x] Added `last_tree_current_path` field to track the most recent path in the tree view
-- [x] Maintained separation between tree expansion state and other sidebar scopes
-- [x] Prepared for future auto-expansion logic based on path changes
+- [x] Added `last_tree_current_path` field to `App` struct to store the most recently viewed path in the sidebar tree
 
 ## In Progress
-- [ ] Implement auto-expansion of ancestor folders when the current path changes
+- [x] Implementation of path persistence logic (not yet shown in this diff)
 
 ## Blockers
-- Need to implement the actual auto-expansion logic based on path comparison
+- Missing implementation of the actual path persistence mechanism (storage and retrieval)
 
 ## Next Steps
-1. Implement path comparison logic to detect changes
-2. Add auto-expansion of ancestor folders when the path changes
+1. Implement logic to save and restore the path from persistent storage
+2. Add tests for path tracking behavior

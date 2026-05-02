@@ -244,6 +244,7 @@ impl App {
             hovered_header_icon: None,
             expanded_folders: HashSet::new(),
             tree_expanded_folders: HashSet::new(),
+            last_tree_current_path: None,
             mouse_last_click: std::time::Instant::now(),
             mouse_click_pos: (0, 0),
             mouse_click_count: 0,
