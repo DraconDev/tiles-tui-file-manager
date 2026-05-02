@@ -4213,6 +4213,56 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             bool_state: None,
         },
         GeneralOption {
+            label: "Sidebar Folders",
+            status: if app.sidebar_folders {
+                "ENABLED ".to_string()
+            } else {
+                "DISABLED".to_string()
+            },
+            key: "f",
+            bool_state: Some(app.sidebar_folders),
+        },
+        GeneralOption {
+            label: "Sidebar Favorites",
+            status: if app.sidebar_favorites {
+                "ENABLED ".to_string()
+            } else {
+                "DISABLED".to_string()
+            },
+            key: "v",
+            bool_state: Some(app.sidebar_favorites),
+        },
+        GeneralOption {
+            label: "Sidebar Recent",
+            status: if app.sidebar_recent {
+                "ENABLED ".to_string()
+            } else {
+                "DISABLED".to_string()
+            },
+            key: "c",
+            bool_state: Some(app.sidebar_recent),
+        },
+        GeneralOption {
+            label: "Sidebar Storage",
+            status: if app.sidebar_storage {
+                "ENABLED ".to_string()
+            } else {
+                "DISABLED".to_string()
+            },
+            key: "g",
+            bool_state: Some(app.sidebar_storage),
+        },
+        GeneralOption {
+            label: "Sidebar Remotes",
+            status: if app.sidebar_remotes {
+                "ENABLED ".to_string()
+            } else {
+                "DISABLED".to_string()
+            },
+            key: "m",
+            bool_state: Some(app.sidebar_remotes),
+        },
+        GeneralOption {
             label: "Reset All Settings",
             status: "CONFIRM".to_string(),
             key: "!",
