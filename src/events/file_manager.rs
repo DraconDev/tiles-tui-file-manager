@@ -1107,6 +1107,7 @@ pub fn handle_file_mouse(
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.current_path = path.clone();
                                 fs.selection.clear();
+                                fs.git_cache_until = None;
                                 crate::event_helpers::push_history(fs, path);
                                 let _ = event_tx
                                     .try_send(AppEvent::RefreshFiles(app.focused_pane_index));

@@ -859,11 +859,11 @@ pub fn get_open_with_suggestions(_app: &App, ext: &str) -> Vec<String> {
 pub fn navigate_up(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
         if let Some(parent) = fs.current_path.parent() {
-            // Store the folder we're leaving so we can select it after refresh
             let old_folder = fs.current_path.clone();
             let parent = parent.to_path_buf();
             fs.current_path = parent.clone();
             fs.pending_select_path = Some(old_folder);
+            fs.git_cache_until = None;
             push_history(fs, parent);
         }
     }
@@ -907,6 +907,7 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
     fs.pending_select_path = None;
     fs.selection.clear();
     fs.search_filter.clear();
+    fs.git_cache_until = None;
     *fs.table_state.offset_mut() = 0;
     push_history(fs, target);
 

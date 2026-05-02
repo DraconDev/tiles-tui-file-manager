@@ -2,7 +2,7 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex as StdMutex};
 use parking_lot::Mutex as PLMutex;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
 use dracon_terminal_engine::contracts::InputEvent as Event;
@@ -14,7 +14,7 @@ use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBacken
 use ratatui::Terminal;
 
 use crate::app::{App, AppEvent, CurrentView, PreviewState};
-use crate::config::{FILE_WATCH_DEBOUNCE_MS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
+use crate::config::{FILE_WATCH_DEBOUNCE_MS, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use image::GenericImageView;
 mod app;
 mod config;
@@ -934,6 +934,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.git_summary = summary;
                             fs.git_remotes = remotes;
                             fs.git_stashes = stashes;
+                            fs.git_cache_until = Some(Instant::now() + Duration::from_secs(GIT_CACHE_TTL_SECONDS));
                         }
                     }
                     needs_draw = true;

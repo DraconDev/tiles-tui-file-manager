@@ -4,19 +4,20 @@
 Added Git cache invalidation mechanism to prevent stale Git status data
 
 ## Context
-The previous implementation lacked a mechanism to invalidate cached Git status data, leading to potential display of stale information. This change adds a time-to-live (TTL) mechanism for Git cache data.
+The system was showing outdated Git status information due to cached data not being properly invalidated. This change ensures fresh Git status data by implementing a time-based cache invalidation mechanism.
 
 ## Completed
-- [x] Added `GIT_CACHE_TTL_SECONDS` constant to configuration
-- [x] Implemented cache invalidation logic in Git status fetching
-- [x] Added conditional fetching based on cache validity
+- [x] Added `git_cache_until` field to track cache validity
+- [x] Implemented cache invalidation on path navigation
+- [x] Added cache expiration with configurable TTL
+- [x] Updated Git status refresh logic to respect cache
 
 ## In Progress
-- [ ] None (this is a complete feature implementation)
+- [ ] Testing cache behavior with various file operations
 
 ## Blockers
-- None (feature is complete)
+- Need to verify cache behavior with concurrent file operations
 
 ## Next Steps
-1. Verify cache invalidation works correctly in various scenarios
-2. Consider adding visual indicators when Git status is cached
+1. Verify cache invalidation works correctly with file operations
+2. Optimize Git status refresh frequency based on testing results
