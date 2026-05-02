@@ -171,7 +171,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         );
         let footer_area = Rect::new(
             inner_area.x,
-            inner_area.y + inner_area.height - footer_height,
+            inner_area.y + inner_area.height.saturating_sub(footer_height),
             inner_area.width,
             footer_height,
         );
