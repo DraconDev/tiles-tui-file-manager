@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use unicode_width::UnicodeWidthStr;
 
-use crate::app::{App, CurrentView, DropTarget, SidebarBounds, SidebarTarget, SidebarScope};
+use crate::app::{App, CurrentView, DropTarget, SidebarBounds, SidebarTarget};
 use crate::icons::Icon;
 use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::truncate_to_width;
