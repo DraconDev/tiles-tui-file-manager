@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored file list column boundary calculation to use a named constant for text reserve space.
+Added independent folder expansion state tracking for Tree view in the sidebar
 
 ## Context
-This change improves maintainability by replacing a magic number (12) with a named constant (CELL_TEXT_RESERVE) that clearly documents its purpose: accounting for leading space, minimal trailing padding, and room for "[*]" suffix.
+The sidebar now supports multiple scopes (All/Favorites/Remotes/Tree) with different expansion behaviors. The Tree view needed its own expansion state to maintain independent collapse/expand states from the main file pane.
 
 ## Completed
-- [x] Replaced hardcoded 12 with named constant CELL_TEXT_RESERVE
-- [x] Added comment explaining the constant's purpose
+- [x] Added `expanded_folders` for main file pane view (All/Favorites/Remotes scopes)
+- [x] Added `tree_expanded_folders` for Tree view scope with independent state
 
 ## In Progress
-- [ ] None
+- [x] Folder expansion logic now properly handles both scopes
 
 ## Blockers
-- None
+- None identified for this change
 
 ## Next Steps
-1. Verify the constant value (12) is correct for all cases
-2. Check if other similar magic numbers exist in the file list rendering code
+1. Update UI rendering to use the correct expansion state based on current sidebar scope
+2. Add integration tests for mixed scope expansion scenarios
