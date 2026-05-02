@@ -899,36 +899,56 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     if new_tab {
                         // Check if we're running inside Konsole
                         if std::env::var("KONSOLE_VERSION").is_ok() {
-                            // Use D-Bus to create a tab in the current Konsole window
                             if let Ok(konsole_service) = std::env::var("KONSOLE_DBUS_SERVICE") {
                                 if let Ok(konsole_window) = std::env::var("KONSOLE_DBUS_WINDOW") {
-                                    // Create a new session (tab) in the current window
-                                    let session_result = std::process::Command::new("qdbus")
+                                    // Get default profile
+                                    let profile_result = std::process::Command::new("qdbus")
                                         .arg(&konsole_service)
                                         .arg(&konsole_window)
-                                        .arg("org.kde.konsole.Window.newSession")
+                                        .arg("org.kde.konsole.Window.defaultProfile")
                                         .output();
                                     
-                                    if let Ok(output) = session_result {
-                                        let session_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                                        if !session_path.is_empty() {
-                                            // Change to the target directory
-                                            let _ = std::process::Command::new("qdbus")
+                                    if let Ok(profile_output) = profile_result {
+                                        let profile = String::from_utf8_lossy(&profile_output.stdout).trim().to_string();
+                                        if !profile.is_empty() {
+                                            // Create new session with profile and directory
+                                            let session_result = std::process::Command::new("qdbus")
                                                 .arg(&konsole_service)
-                                                .arg(&session_path)
-                                                .arg("org.kde.konsole.Session.sendText")
-                                                .arg(format!("cd {}\n", path.display()))
-                                                .spawn();
+                                                .arg(&konsole_window)
+                                                .arg("org.kde.konsole.Window.newSession")
+                                                .arg(&profile)
+                                                .arg(path.to_string_lossy().as_ref())
+                                                .output();
                                             
-                                            // Run the command if provided
-                                            if let Some(cmd_to_run) = cmd_str {
-                                                let _ = std::process::Command::new("qdbus")
-                                                    .arg(&konsole_service)
-                                                    .arg(&session_path)
-                                                    .arg("org.kde.konsole.Session.sendText")
-                                                    .arg(format!("{}\n", cmd_to_run))
-                                                    .spawn();
+                                            if let Ok(session_output) = session_result {
+                                                let session_id = String::from_utf8_lossy(&session_output.stdout).trim().parse::<i32>().unwrap_or(-1);
+                                                if session_id >= 0 {
+                                                    let session_path = format!("/Sessions/{}", session_id);
+                                                    
+                                                    // Run the command if provided
+                                                    if let Some(cmd_to_run) = cmd_str {
+                                                        let _ = std::process::Command::new("qdbus")
+                                                            .arg(&konsole_service)
+                                                            .arg(&session_path)
+                                                            .arg("org.kde.konsole.Session.runCommand")
+                                                            .arg(cmd_to_run)
+                                                            .spawn();
+                                                    }
+                                                    
+                                                    handled = true;
+                                                }
                                             }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if !handled {
+                        dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
+                    }
+                }
                                             
                                             handled = true;
                                         }
