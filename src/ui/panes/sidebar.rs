@@ -143,20 +143,17 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     hasher.finish()
                 };
 
-                let tree_items: Vec<(PathBuf, u16)> = if app.sidebar_tree_cache_key == cache_key {
-                    // Cache hit: reuse cached items
-                    app.sidebar_tree_cache.clone().unwrap_or_default()
-                } else {
-                    // Cache miss: collect fresh and store for next frame
-                    let mut items = Vec::new();
-                    collect_tree_items(&base_path, 0, app, &mut items);
-                    app.sidebar_tree_cache = Some(items.clone());
-                    app.sidebar_tree_cache_key = cache_key;
-                    items
-                };
+let tree_items: Vec<(PathBuf, u16, bool)> = if app.sidebar_tree_cache_key == cache_key {
+            app.sidebar_tree_cache.clone().unwrap_or_default()
+        } else {
+            let mut items = Vec::new();
+            collect_tree_items(&base_path, 0, app, &mut items);
+            app.sidebar_tree_cache = Some(items.clone());
+            app.sidebar_tree_cache_key = cache_key;
+            items
+        };
 
-                for (path, depth) in tree_items {
-                    let is_dir = path.is_dir();
+        for (path, depth, is_dir) in tree_items {
                     let name = path
                         .file_name()
                         .map(|n| n.to_string_lossy().to_string())
