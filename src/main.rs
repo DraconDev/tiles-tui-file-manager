@@ -897,20 +897,55 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     // Try Konsole tab support when new_tab is requested
                     let mut handled = false;
                     if new_tab {
-                        let konsole_available = std::process::Command::new("which")
-                            .arg("konsole")
-                            .output()
-                            .map(|output| output.status.success())
-                            .unwrap_or(false);
-                        
-                        if konsole_available {
-                            let mut cmd = std::process::Command::new("konsole");
-                            cmd.arg("--new-tab").arg("--workdir").arg(&path);
-                            if let Some(cmd_to_run) = cmd_str {
-                                cmd.arg("-e").arg("sh").arg("-c").arg(cmd_to_run);
+                        // Check if we're running inside Konsole
+                        if std::env::var("KONSOLE_VERSION").is_ok() {
+                            // Use D-Bus to create a tab in the current Konsole window
+                            if let Ok(konsole_service) = std::env::var("KONSOLE_DBUS_SERVICE") {
+                                if let Ok(konsole_window) = std::env::var("KONSOLE_DBUS_WINDOW") {
+                                    // Create a new session (tab) in the current window
+                                    let session_result = std::process::Command::new("qdbus")
+                                        .arg(&konsole_service)
+                                        .arg(&konsole_window)
+                                        .arg("org.kde.konsole.Window.newSession")
+                                        .output();
+                                    
+                                    if let Ok(output) = session_result {
+                                        let session_path = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                                        if !session_path.is_empty() {
+                                            // Change to the target directory
+                                            let _ = std::process::Command::new("qdbus")
+                                                .arg(&konsole_service)
+                                                .arg(&session_path)
+                                                .arg("org.kde.konsole.Session.sendText")
+                                                .arg(format!("cd {}\n", path.display()))
+                                                .spawn();
+                                            
+                                            // Run the command if provided
+                                            if let Some(cmd_to_run) = cmd_str {
+                                                let _ = std::process::Command::new("qdbus")
+                                                    .arg(&konsole_service)
+                                                    .arg(&session_path)
+                                                    .arg("org.kde.konsole.Session.sendText")
+                                                    .arg(format!("{}\n", cmd_to_run))
+                                                    .spawn();
+                                            }
+                                            
+                                            handled = true;
+                                        }
+                                    }
+                                }
                             }
-                            let _ = cmd.spawn();
-                            handled = true;
+                            
+                            // Fallback: try konsole --new-tab (works if D-Bus session is accessible)
+                            if !handled {
+                                let mut cmd = std::process::Command::new("konsole");
+                                cmd.arg("--new-tab").arg("--workdir").arg(&path);
+                                if let Some(cmd_to_run) = cmd_str {
+                                    cmd.arg("-e").arg("sh").arg("-c").arg(cmd_to_run);
+                                }
+                                let _ = cmd.spawn();
+                                handled = true;
+                            }
                         }
                     }
                     
