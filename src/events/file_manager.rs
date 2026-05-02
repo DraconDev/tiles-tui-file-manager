@@ -988,27 +988,20 @@ pub fn handle_file_mouse(
                         is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                         sp = Some(p.clone());
 
-                        // Check if click was on expand/collapse marker
-                        // Use explicit FileColumn::Name lookup and 2-column buffer to catch rendering offset
-                        let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
-                        let log_line = format!("CLICK col={} row={} idx={} depth={} cb_len={}\n", column, row, idx, depth, fs.column_bounds.len());
-                        let _ = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/click.log").and_then(|mut f| std::io::Write::write_all(&mut f, log_line.as_bytes()));
-                        if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
-                            let marker_x = name_rect.x + depth as u16 * 2;
-                            let hit = column >= marker_x.saturating_sub(2) && column < name_rect.x + name_rect.width;
-                            let log_line2 = format!("  name_x={} marker_x={} hit={}\n", name_rect.x, marker_x, hit);
-                            let _ = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/click.log").and_then(|mut f| std::io::Write::write_all(&mut f, log_line2.as_bytes()));
-                            if is_dir && hit {
-                                let _ = std::fs::write("/tmp/tiles_hit.txt", format!("depth={} name_x={} marker_x={} col={}\n", depth, name_rect.x, marker_x, column));
-                                let folder_path = p;
-                                let was_expanded = app.expanded_folders.contains(&folder_path);
-                                if was_expanded {
-                                    app.expanded_folders.remove(&folder_path);
-                                } else {
-                                    app.expanded_folders.insert(folder_path.clone());
+                        // Entire Name column is clickable for folders (arrow through name)
+                        if is_dir {
+                            if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
+                                if column >= name_rect.x && column < name_rect.x + name_rect.width {
+                                    let folder_path = p;
+                                    let was_expanded = app.expanded_folders.contains(&folder_path);
+                                    if was_expanded {
+                                        app.expanded_folders.remove(&folder_path);
+                                    } else {
+                                        app.expanded_folders.insert(folder_path.clone());
+                                    }
+                                    let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                    return true;
                                 }
-                                let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
-                                return true;
                             }
                         }
                     } else if button == MouseButton::Left && !has_mods {
