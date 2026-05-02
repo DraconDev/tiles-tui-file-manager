@@ -136,7 +136,11 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     use std::collections::hash_map::DefaultHasher;
                     use std::hash::{Hash, Hasher};
                     let mut hasher = DefaultHasher::new();
-                    app.tree_expanded_folders.hash(&mut hasher);
+                    let mut paths: Vec<_> = app.tree_expanded_folders.iter().collect();
+                    paths.sort();
+                    for path in paths {
+                        path.hash(&mut hasher);
+                    }
                     show_hidden.hash(&mut hasher);
                     hasher.finish()
                 };

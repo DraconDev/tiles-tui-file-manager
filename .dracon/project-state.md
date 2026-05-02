@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Optimized sidebar tree rendering with caching to avoid redundant directory scans
+Improved sidebar folder expansion state hashing for consistent rendering
 
 ## Context
-The sidebar was previously rescanning directories on every render, causing performance issues. This change implements a caching mechanism to reuse directory tree data when possible.
+The sidebar's folder expansion state was previously hashed without sorting, causing inconsistent rendering. This change ensures stable hashing by sorting paths before hashing.
 
 ## Completed
-- [x] Added conditional caching of directory tree items
-- [x] Implemented cache key comparison to determine when to reuse cached data
-- [x] Properly cloned cached items to avoid ownership issues
+- [x] Refactored folder expansion state hashing to sort paths before hashing
+- [x] Maintained backward compatibility with existing hidden file visibility logic
 
 ## In Progress
-- [x] Cache validation and refresh logic
+- [ ] None (change is complete)
 
 ## Blockers
-- None identified in this change
+- None (change is complete)
 
 ## Next Steps
-1. Verify cache invalidation works correctly when directory contents change
-2. Measure performance impact with large directory structures
+1. Verify no visual regressions in sidebar rendering
+2. Consider adding performance benchmarks for the new hashing approach
+```
