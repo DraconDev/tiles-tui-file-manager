@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Added keyboard shortcut for toggling hidden files in the sidebar.
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The sidebar now needs a way to toggle hidden files visibility, which was previously only accessible via the pane-switching shortcut.
+The change was triggered by dependency version conflicts during recent refactoring work on the sidebar component. The Cargo.lock file was updated to maintain consistent dependency resolution.
 
 ## Completed
-- [x] Added `Ctrl+H` shortcut to toggle hidden files in sidebar
-- [x] Updated `Tab` shortcut documentation to clarify sidebar focus
+- [x] Updated Cargo.lock to resolve dependency versions
+- [x] Maintained consistent dependency resolution
 
 ## In Progress
-- [ ] None (documentation-only change)
+- [x] Dependency resolution verification
 
 ## Blockers
-- None (documentation update only)
+- None identified in this change
 
 ## Next Steps
-1. Verify sidebar hidden file behavior works as expected
-2. Consider adding mouse interaction for hidden file toggle
+1. Verify dependency resolution stability
+2. Continue with sidebar component refactoring
