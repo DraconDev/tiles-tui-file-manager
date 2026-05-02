@@ -991,10 +991,11 @@ pub fn handle_file_mouse(
                         // Check if click was on expand/collapse marker
                         // Use explicit FileColumn::Name lookup and 2-column buffer to catch rendering offset
                         let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as usize;
+                        eprintln!("CLICK col={} row={} idx={} depth={} cb_len={}", column, row, idx, depth, fs.column_bounds.len());
                         if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
                             let marker_x = name_rect.x + depth as u16 * 2;
                             let hit = column >= marker_x.saturating_sub(2) && column < name_rect.x + name_rect.width;
-                            eprintln!("CLICK col={} row={} idx={} depth={} name_x={} marker_x={} hit={}", column, row, idx, depth, name_rect.x, marker_x, hit);
+                            eprintln!("  name_x={} marker_x={} hit={}", name_rect.x, marker_x, hit);
                             if is_dir && hit {
                                 let folder_path = p;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
