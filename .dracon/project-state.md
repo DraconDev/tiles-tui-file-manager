@@ -1,20 +1,27 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Fix sidebar folder tree rendering and interaction to match Dolphin-style behavior
 
 ## Context
-This change was triggered by recent refactoring work in the sidebar components, which required dependency version updates to maintain compatibility.
+The new sidebar folder tree implementation introduced three issues:
+1. Invisible FAVORITES header
+2. Hardcoded "FAVORITES" sidebar title
+3. Single-click behavior that both expands and navigates
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after sidebar refactoring
+- [x] Added `arrow_end_x` field to `SidebarBounds` struct
+- [x] Fixed sidebar title to show current directory path
+- [x] Made FAVORITES header visible in the correct position
+- [x] Implemented click zone tracking for tree items
 
 ## In Progress
-- [x] No active work in progress - this is a dependency resolution update
+- [ ] Split click handler to distinguish between arrow and name clicks
 
 ## Blockers
-- The project is currently blocked by a failed manifest load for dependency `dracon-files`
+- Need to verify Playwright/tmux QA scenarios for click behavior
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue with the planned `synth-1774826981` slice once dependencies are stable
+1. Complete click handler implementation
+2. Verify all acceptance criteria are met
+```
