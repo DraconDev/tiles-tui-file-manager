@@ -213,11 +213,12 @@ pub enum DropTarget {
     ReorderFavorite(usize),
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Default)]
 pub struct SidebarBounds {
     pub y: u16,
     pub index: usize,
     pub target: SidebarTarget,
+    pub arrow_end_x: u16,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
