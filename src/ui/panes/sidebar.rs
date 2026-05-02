@@ -843,7 +843,31 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         }
     }
 
-    f.render_widget(List::new(sidebar_items), inner);
+    // Apply scroll offset for Editor view sidebar (same as Files view)
+    let visible_height = inner.height as usize;
+    let total_items = sidebar_items.len();
+
+    if app.sidebar_index < app.sidebar_scroll_offset {
+        app.sidebar_scroll_offset = app.sidebar_index;
+    } else if app.sidebar_index >= app.sidebar_scroll_offset + visible_height {
+        app.sidebar_scroll_offset = app.sidebar_index.saturating_sub(visible_height - 1);
+    }
+
+    let max_scroll = total_items.saturating_sub(visible_height);
+    app.sidebar_scroll_offset = app.sidebar_scroll_offset.min(max_scroll);
+
+    let start = app.sidebar_scroll_offset;
+    let visible_items: Vec<_> = sidebar_items.into_iter().skip(start).take(visible_height).collect();
+
+    for b in app.sidebar_bounds.iter_mut() {
+        if b.index >= start && b.index < start + visible_height {
+            b.y = inner.y + (b.index - start) as u16;
+        } else {
+            b.y = u16::MAX;
+        }
+    }
+
+    f.render_widget(List::new(visible_items), inner);
 }
 
 fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(PathBuf, u16)>) {

@@ -1,21 +1,24 @@
 # Project State
 
 ## Current Focus
-Refactored folder expansion tracking in the sidebar to use `tree_expanded_folders` for consistency
+Added scroll offset tracking for sidebar navigation to maintain visibility of selected items
 
 ## Context
-This change aligns the folder expansion tracking with the project's tree structure management, ensuring consistent behavior across the sidebar UI.
+The sidebar was previously rendering all items at once without handling scrolling, which could cause selected items to be off-screen. This change implements proper scroll offset tracking to ensure the selected item remains visible.
 
 ## Completed
-- [x] Updated folder expansion marker logic to use `tree_expanded_folders` instead of `expanded_folders`
-- [x] Improved code consistency by using the same tracking mechanism for folder states
+- [x] Added scroll offset tracking for sidebar items
+- [x] Implemented bounds adjustment for visible items
+- [x] Added scroll position validation to prevent out-of-bounds access
+- [x] Updated rendering to only show visible items within the viewport
 
 ## In Progress
-- [ ] None (this is a completed refactoring)
+- [x] Scroll offset implementation is complete
 
 ## Blockers
-- None (this is a completed refactoring)
+- None identified
 
 ## Next Steps
-1. Verify UI behavior remains consistent with other tree operations
-2. Ensure no regressions in folder expansion/collapse functionality
+1. Verify scroll behavior with large directory structures
+2. Add smooth scrolling animations if needed
+3. Test with different terminal sizes to ensure consistent behavior
