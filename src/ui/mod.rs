@@ -177,9 +177,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         );
 
         if let Some(preview) = &app.editor_state {
-            if preview.image_data.is_some() {
-                // Image preview
-                let (rgba, w, h) = preview.image_data.as_ref().unwrap();
+            if let Some((rgba, w, h)) = preview.image_data.as_ref() {
                 let max_w = inner_area.width as usize;
                 let max_h = (inner_area.height.saturating_sub(footer_height + 3)) as usize;
                 let w_val = *w as usize;

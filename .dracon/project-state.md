@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved UI layout calculation with bounds checking
+Refactored image preview rendering in UI module
 
 ## Context
-The UI footer positioning was previously vulnerable to negative values when the container height was smaller than the footer height. This could cause rendering issues or panics.
+Improved UI layout calculation with bounds checking, particularly for image previews. This change was prompted by the need for more robust handling of image dimensions and display constraints.
 
 ## Completed
-- [x] Replaced direct subtraction with `saturating_sub` to prevent negative values
-- [x] Maintained same visual behavior for normal cases
+- [x] Refactored image preview rendering to use pattern matching instead of manual unwrapping
+- [x] Improved code clarity by eliminating nested if statements
 
 ## In Progress
-- [x] No active work in progress
+- [x] No active work in progress for this change
 
 ## Blockers
-- None identified
+- None identified for this specific change
 
 ## Next Steps
-1. Verify no visual regressions in edge cases
-2. Consider adding unit tests for UI layout calculations
+1. Verify the refactored code maintains the same visual output
+2. Ensure the bounds checking logic properly handles edge cases in image dimensions
