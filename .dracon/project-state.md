@@ -4,19 +4,18 @@
 Removed sidebar folder path tracking and current folder indicator logic
 
 ## Context
-The sidebar was previously tracking the current folder path to show an indicator (◄) for the active folder, but this functionality was removed to simplify the codebase. The change maintains the Dolphin-style sidebar but removes the visual indicator for the current folder.
+This change simplifies the sidebar rendering by eliminating the visual indicator for the current folder, which was previously shown with an arrow marker. The change was motivated by reducing visual clutter and focusing on the core navigation functionality.
 
 ## Completed
-- [x] Removed current folder path tracking logic
-- [x] Removed the indicator (◄) for the active folder
-- [x] Simplified sidebar rendering by removing redundant path comparison
+- [x] Removed the current folder indicator (◄) from sidebar items
+- [x] Simplified the sidebar item rendering logic
 
 ## In Progress
-- [ ] None (this is a cleanup change)
+- [ ] None (this was a focused refactoring)
 
 ## Blockers
-- None (this is a refactoring to reduce complexity)
+- None (this was a straightforward cleanup)
 
 ## Next Steps
-1. Verify sidebar rendering remains consistent without the indicator
-2. Ensure folder expansion/collapse behavior is unaffected
+1. Verify the sidebar still functions correctly without the visual indicator
+2. Consider whether other visual indicators might be needed for navigation clarity
