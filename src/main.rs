@@ -1200,9 +1200,13 @@ let list_path_for_filter = path.clone();
                                 for (p, _) in &paired {
                                     let name = p.file_name()
                                         .and_then(|n| n.to_str())
-                                        .unwrap_or("")
-                                        .to_lowercase();
-                                    if name.contains(&filter_lower) {
+                                        .unwrap_or("");
+                                    let matches = if FUZZY_SEARCH {
+                                        fuzzy_contains(name, &fs.search_filter)
+                                    } else {
+                                        name.to_lowercase().contains(&filter_lower)
+                                    };
+                                    if matches {
                                         keep.insert(p.clone());
                                     }
                                 }

@@ -11,6 +11,7 @@ use std::path::PathBuf;
 use unicode_width::UnicodeWidthStr;
 
 use crate::app::{App, CurrentView, DropTarget, SidebarBounds, SidebarTarget};
+use crate::config::{fuzzy_contains, FUZZY_SEARCH};
 use crate::icons::Icon;
 use crate::state::FileCategoryExt;
 use crate::ui::theme::THEME;
@@ -77,7 +78,11 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 if !app.sidebar_focus || search_filter.is_empty() {
                     return true;
                 }
-                name.to_lowercase().contains(&search_filter.to_lowercase())
+                if FUZZY_SEARCH {
+                    fuzzy_contains(name, &search_filter)
+                } else {
+                    name.to_lowercase().contains(&search_filter.to_lowercase())
+                }
             };
 
             let show_folders = app.sidebar_folders;
@@ -953,8 +958,11 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
                 .and_then(|p| p.current_state())
             {
                 if !fs.search_filter.is_empty() && app.sidebar_focus {
-                    name.to_lowercase()
-                        .contains(&fs.search_filter.to_lowercase())
+                    if FUZZY_SEARCH {
+                        fuzzy_contains(name, &fs.search_filter)
+                    } else {
+                        name.to_lowercase().contains(&fs.search_filter.to_lowercase())
+                    }
                 } else {
                     true
                 }
