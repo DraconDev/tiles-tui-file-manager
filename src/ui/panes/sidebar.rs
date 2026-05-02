@@ -629,7 +629,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
 
         // Show expansion marker for folders
         let marker = if is_dir {
-            if app.tree_expanded_folders.contains(&path) {
+            if app.expanded_folders.contains(&path) {
                 "▾ "
             } else {
                 "▸ "

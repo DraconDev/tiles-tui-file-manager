@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Refactored folder expansion state tracking in the sidebar to use `tree_expanded_folders` instead of `expanded_folders`
+Refactored folder expansion state tracking in the sidebar to use a more consistent naming convention.
 
 ## Context
-This change improves the separation of concerns between different UI components by renaming the folder expansion state variable to be more specific to the tree view implementation.
+The previous code used `tree_expanded_folders` to track expanded folders, but this was inconsistent with the rest of the application which uses `expanded_folders`. This change aligns the naming convention for better maintainability.
 
 ## Completed
-- [x] Renamed `expanded_folders` to `tree_expanded_folders` in the sidebar tree drawing function
-- [x] Maintained the same functionality while making the code more explicit about its purpose
+- [x] Renamed `tree_expanded_folders` to `expanded_folders` in the sidebar drawing function
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Verify the change doesn't affect other parts of the application that might rely on the old variable name
-2. Consider if similar refactoring is needed in other UI components that might use folder expansion state
+1. Verify the sidebar rendering still works correctly with the new naming
+2. Check for any other instances of inconsistent naming that might need similar updates
