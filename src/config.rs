@@ -56,8 +56,6 @@ pub struct PersistentState {
     #[serde(default)]
     pub theme_style: Option<crate::ui::theme::ThemeStyle>,
     #[serde(default)]
-    pub sidebar_scope: crate::state::SidebarScope,
-    #[serde(default)]
     pub expanded_folders: Vec<PathBuf>,
     #[serde(default)]
     pub sidebar_width_percent: u16,

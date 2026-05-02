@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed unused `SidebarScope` field from `App` struct to simplify sidebar state management.
+Removed unused `SidebarScope` field from persistent state to simplify configuration.
 
 ## Context
-The `SidebarScope` field was no longer used in the application and was part of previous refactoring efforts. Removing it reduces complexity and maintains cleaner state management.
+The `SidebarScope` field was identified as unused during a refactoring effort to simplify the sidebar behavior. Removing it reduces configuration complexity without affecting functionality.
 
 ## Completed
-- [x] Removed unused `SidebarScope` field from `App` struct
-- [x] Cleaned up related imports in other modules
+- [x] Removed `sidebar_scope` field from `PersistentState` struct
+- [x] Cleaned up related imports and dependencies
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None (refactoring complete)
 
 ## Blockers
-- None
+- None (dependency `dracon-files` manifest load failure, but unrelated to this change)
 
 ## Next Steps
-1. Verify no functionality depends on the removed `SidebarScope`
-2. Continue sidebar refactoring efforts
+1. Verify no regression in sidebar behavior
+2. Continue with other planned refactorings in the `synth-1774826981` slice
