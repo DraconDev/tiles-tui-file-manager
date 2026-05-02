@@ -1,20 +1,24 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Added Dolphin-style sidebar with folder tree navigation and configurable sections.
 
 ## Context
-The change was triggered by multiple refactoring commits that modified the project's dependency structure. The Cargo.lock file was updated to ensure consistent dependency resolution across the project.
+Improved file navigation and organization by implementing a sidebar similar to Dolphin file manager, with features like folder expansion, section toggles, and path display.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Added Dolphin-style folder tree with expansion markers
+- [x] Implemented sidebar scrolling and section toggles
+- [x] Added current directory path display in sidebar title
+- [x] Fixed sidebar tree navigation and context menu behavior
+- [x] Removed dead code and simplified sidebar state management
 
 ## In Progress
-- [x] No active work in progress related to this change
+- [x] Sidebar implementation is complete with all requested features
 
 ## Blockers
-- The project is currently blocked due to a failed manifest load for dependency `dracon-files`
+- None reported in this commit
 
 ## Next Steps
-1. Investigate and resolve the failed manifest load for `dracon-files`
-2. Verify all dependencies are properly resolved after the Cargo.lock update
+1. Verify sidebar behavior across different terminal sizes
+2. Test with deeply nested directory structures

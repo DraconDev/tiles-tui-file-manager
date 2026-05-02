@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## [8.41.0] - Dolphin-Style Sidebar
+
+### Added
+- **Sidebar Folder Tree** — Dolphin-style tree rooted at home directory
+  - Folders show `▸`/`▾` expansion markers
+  - Click **arrow** to expand/collapse only
+  - Click **name** to navigate + auto-expand
+  - **`Shift+C`** collapses all folders (VSCode-style)
+  - **`◄`** indicator shows current folder matching file pane
+- **Sidebar Scrolling** — Mouse wheel + keyboard navigation scrolls long sidebars
+- **Sidebar Section Toggles** — Settings → General → Sidebar Sections:
+  - FOLDERS, FAVORITES, RECENT, STORAGE, REMOTES
+  - Each independently show/hide
+- **Empty Sidebar Message** — Shows "(All sections hidden. Enable in Settings.)" when all toggled off
+
+### Changed
+- **Sidebar title** now shows current directory path (not "FAVORITES")
+- **Non-folder items** indented to align with folder icons (consistent sidebar + file pane)
+- **Esc key** exits sidebar focus first (standard TUI behavior)
+- **Script execution** (Ctrl+R, Ctrl+Enter, context menu) always opens in new tab
+- **Hidden files toggle** syncs between sidebar tree and file pane automatically
+
+### Fixed
+- Sidebar tree no longer follows file pane navigation (stays rooted at home)
+- Settings UI mouse click handler supports all 14 rows
+- Settings separator row is non-interactive
+- Context menu "Run" opens in new tab (was: new window)
+- Editor view sidebar uses same expansion state as Files view
+- Removed dead code (`draw_tree_sidebar`, unused `SidebarScope` enum)
+
 ## [4.10.0] - Editor Enhancements
 
 ### Added
