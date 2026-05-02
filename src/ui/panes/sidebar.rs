@@ -907,13 +907,13 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(List::new(visible_items), inner);
 }
 
-fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(PathBuf, u16)>) {
+fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(PathBuf, u16, bool)>) {
     if let Ok(entries) = std::fs::read_dir(path) {
         let mut sorted_entries: Vec<_> = entries.filter_map(|e| e.ok()).collect();
 
         sorted_entries.sort_by(|a, b| {
-            let a_is_dir = a.path().is_dir();
-            let b_is_dir = b.path().is_dir();
+            let a_is_dir = a.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
+            let b_is_dir = b.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
             if a_is_dir && !b_is_dir {
                 std::cmp::Ordering::Less
             } else if !a_is_dir && b_is_dir {
@@ -925,6 +925,7 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
 
         for entry in sorted_entries {
             let p = entry.path();
+            let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
             let name = p.file_name().unwrap_or_default().to_string_lossy();
 
             // Use focused pane's show_hidden state so sidebar matches file pane

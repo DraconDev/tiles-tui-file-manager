@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Modified sidebar tree cache structure to include file type information.
+Improved sidebar tree cache structure to include file type information for better directory sorting and display.
 
 ## Context
-The change was prompted by the need to track file types in the editor sidebar cache for more accurate rendering and operations.
+The sidebar tree display was previously sorting directories and files inconsistently. This change ensures proper directory-first sorting while maintaining the existing hidden file filtering behavior.
 
 ## Completed
-- [x] Updated `editor_sidebar_cache` to include a boolean flag for file type information
-- [x] Maintained backward compatibility with existing cache key mechanism
+- [x] Modified `collect_tree_items` to include file type information in the cached items
+- [x] Updated directory sorting to properly prioritize directories over files
+- [x] Maintained existing hidden file filtering logic
 
 ## In Progress
-- [x] Testing the impact on sidebar rendering performance
+- [ ] No active work in progress
 
 ## Blockers
-- No blockers identified for this specific change
+- None identified
 
 ## Next Steps
-1. Verify the new cache structure doesn't introduce performance regressions
-2. Update related UI components to utilize the new file type information
+1. Verify the new sorting behavior in the UI
+2. Ensure hidden file filtering continues to work as expected
