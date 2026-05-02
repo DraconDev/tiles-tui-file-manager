@@ -821,7 +821,6 @@ pub fn handle_file_mouse(
     event_tx: &mpsc::Sender<AppEvent>,
     _panes_needing_refresh: &mut HashSet<usize>,
 ) -> bool {
-    let _ = std::fs::write("/tmp/tiles_called.txt", format!("col={} row={} kind={:?}\n", me.column, me.row, me.kind));
     let column = me.column;
     let row = me.row;
     let (w, _h) = app.terminal_size;
