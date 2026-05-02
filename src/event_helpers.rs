@@ -300,7 +300,7 @@ pub fn handle_context_menu_action(
                         if let Some(fs_mut) = app.current_file_state_mut() {
                             fs_mut.current_path = path_clone;
                             let _ =
-                                event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                     } else {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
@@ -462,7 +462,7 @@ pub fn handle_context_menu_action(
                             crate::event_helpers::push_history(&mut new_fs, current_path_clone);
                             pane.open_tab(new_fs);
                             let _ =
-                                event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                     }
                 }
