@@ -679,7 +679,7 @@ pub fn handle_context_menu_action(
                         {
                             let _ = event_tx.try_send(AppEvent::SpawnTerminal {
                                 path: work_dir,
-                                new_tab: matches!(action, ContextMenuAction::RunTerminal),
+                                new_tab: true,
                                 remote,
                                 command: Some(format!("{} {}", program, args.join(" "))),
                             });

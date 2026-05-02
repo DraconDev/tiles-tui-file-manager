@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Refactored terminal spawning behavior to always open in a new tab
 
 ## Context
-The Cargo.lock file was modified to update dependency versions after several refactoring changes that affected the project's dependencies. This ensures the project uses the correct versions of dependencies after the recent structural changes.
+The change was prompted by a need to standardize terminal spawning behavior in the context menu. Previously, terminals were only opened in new tabs when explicitly requested via `ContextMenuAction::RunTerminal`, but this was changed to always open in new tabs for consistency.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Modified terminal spawning logic to always create new tabs (`new_tab: true`)
 
 ## In Progress
-- [ ] None (dependency resolution is complete)
+- [x] Behavior change is complete
 
 ## Blockers
-- The project is currently in the planning phase with execution disabled due to a failed manifest load for dependency `dracon-files`
+- None identified
 
 ## Next Steps
-1. Investigate and resolve the failed manifest load for dependency `dracon-files`
-2. Enable execution once dependencies are properly resolved
+1. Verify terminal behavior across different context menu actions
+2. Consider adding configuration options for terminal spawning behavior
