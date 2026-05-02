@@ -126,8 +126,30 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     current_folder_path.as_ref().map(|c| c == path).unwrap_or(false)
                 };
 
-                let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
-                collect_tree_items(&base_path, 0, app, &mut tree_items);
+                // Compute cache key: hash of expanded folders + show_hidden state
+                let show_hidden = app.panes
+                    .get(app.focused_pane_index)
+                    .and_then(|p| p.current_state())
+                    .map(|fs| fs.show_hidden)
+                    .unwrap_or(app.default_show_hidden);
+                let cache_key = {
+                    use std::collections::hash_map::DefaultHasher;
+                    use std::hash::{Hash, Hasher};
+                    let mut hasher = DefaultHasher::new();
+                    app.tree_expanded_folders.hash(&mut hasher);
+                    show_hidden.hash(&mut hasher);
+                    hasher.finish()
+                };
+
+                let tree_items = if app.sidebar_tree_cache.is_some() && app.sidebar_tree_cache_key == cache_key {
+                    app.sidebar_tree_cache.take().unwrap_or_default()
+                } else {
+                    let mut items = Vec::new();
+                    collect_tree_items(&base_path, 0, app, &mut items);
+                    items
+                };
+                app.sidebar_tree_cache = None; // Will refill after filtering if needed, but simpler to always clear
+                app.sidebar_tree_cache_key = cache_key;
 
                 for (path, depth) in tree_items {
                     let is_dir = path.is_dir();

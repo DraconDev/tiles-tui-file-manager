@@ -1,23 +1,22 @@
 # Project State
 
 ## Current Focus
-Added caching for sidebar tree items to avoid re-reading directories
+Added caching for sidebar tree items to avoid re-reading directories on each render
 
 ## Context
-This change implements a performance optimization for the Dolphin-style sidebar by adding caching mechanisms to store and reuse directory tree data, reducing unnecessary filesystem reads.
+The sidebar was previously re-reading directory contents on every render, which was inefficient. This change adds a cache system that stores tree items and only recomputes when the expanded folders or hidden file visibility settings change.
 
 ## Completed
-- [x] Added `sidebar_tree_cache` field to store directory tree data
-- [x] Added `sidebar_tree_cache_key` field to track cache validity
+- [x] Implemented cache system using a hash of expanded folders and show_hidden state
+- [x] Added cache key comparison to determine when to recompute tree items
+- [x] Maintained cache invalidation when settings change
 
 ## In Progress
-- [x] Cache implementation is complete but not yet integrated with the tree rendering logic
+- [x] Cache implementation and integration with sidebar rendering
 
 ## Blockers
-- Need to implement cache invalidation when filesystem changes occur
-- Need to integrate cache with the actual tree rendering code
+- None identified in this change
 
 ## Next Steps
-1. Implement cache invalidation mechanism
-2. Connect the cache to the tree rendering logic
-3. Add performance metrics to verify the caching benefits
+1. Verify cache performance with large directory structures
+2. Consider adding cache size limits if memory usage becomes an issue
