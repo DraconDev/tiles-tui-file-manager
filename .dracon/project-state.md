@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar toggle behavior to simplify keyboard shortcut handling
+Removed unused `SidebarScope` import from events module
 
 ## Context
-The previous implementation had complex logic for toggling between different sidebar scopes (All/Favorites/Remotes) when holding Ctrl+key. This was simplified to just toggle the sidebar visibility with Ctrl+key, removing the scope-switching functionality.
+The `SidebarScope` enum was imported but not used in the events module, which is a common code smell indicating dead code. This cleanup follows recent refactoring efforts to simplify sidebar navigation behavior.
 
 ## Completed
-- [x] Removed complex scope-switching logic when toggling sidebar
-- [x] Simplified sidebar toggle to just show/hide with Ctrl+key
-- [x] Maintained view preference saving for consistent state
+- [x] Removed unused `SidebarScope` import to reduce module clutter
 
 ## In Progress
-- [ ] No active work in progress
+- [x] No active work in progress related to this change
 
 ## Blockers
 - None identified
 
 ## Next Steps
-1. Verify the simplified behavior meets user expectations
-2. Consider adding a dedicated keybinding for scope switching if needed
+1. Verify no other modules depend on the removed `SidebarScope` enum
+2. Continue sidebar navigation refactoring efforts

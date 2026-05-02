@@ -1,7 +1,6 @@
 use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, DropTarget, SidebarTarget,
 };
-use crate::state::SidebarScope;
 use dracon_terminal_engine::contracts::{
     InputEvent as Event, KeyCode, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
