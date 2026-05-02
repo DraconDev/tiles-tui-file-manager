@@ -91,7 +91,7 @@ pub struct App {
     /// Cache key for invalidation (hash of tree_expanded_folders + show_hidden).
     pub sidebar_tree_cache_key: u64,
     /// Cached editor sidebar tree items.
-    pub editor_sidebar_cache: Option<Vec<(PathBuf, u16)>>,
+    pub editor_sidebar_cache: Option<Vec<(PathBuf, u16, bool)>>,
     /// Cache key for editor sidebar (includes base_path hash).
     pub editor_sidebar_cache_key: u64,
     pub mouse_last_click: std::time::Instant,
