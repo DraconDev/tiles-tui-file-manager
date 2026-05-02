@@ -518,16 +518,14 @@ app.sidebar_bounds.push(SidebarBounds {
                 );
             }
 
+            let title_text = app.current_file_state()
+                .map(|fs| fs.current_path.to_string_lossy().to_string())
+                .unwrap_or_else(|| "Files".to_string());
+
             let block = Block::default()
                 .borders(Borders::ALL)
                 .border_type(BorderType::Rounded)
-                .title_top(Line::from(vec![Span::styled(
-                    format!(" {} FAVORITES ", Icon::Star.get(app.icon_mode)),
-                    Style::default()
-                        .fg(crate::ui::theme::accent_primary())
-                        .add_modifier(Modifier::BOLD),
-                )]))
-                .title_alignment(Alignment::Center)
+                .title(format!(" {} ", title_text))
                 .border_style(if app.sidebar_focus {
                     Style::default().fg(crate::ui::theme::border_active())
                 } else {
