@@ -121,7 +121,6 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 // Track current path for the ◄ indicator, but DO NOT auto-expand
                 // All folders stay collapsed by default to keep sidebar compact
                 let current_folder_path = app.current_file_state().map(|fs| fs.current_path.clone());
-                app.last_tree_current_path = current_folder_path.clone();
 
                 let is_current_folder = |path: &PathBuf| {
                     current_folder_path.as_ref().map(|c| c == path).unwrap_or(false)
