@@ -177,7 +177,7 @@ fn reset_all_settings_to_defaults(app: &mut App) {
     app.split_columns = vec![crate::app::FileColumn::Name, crate::app::FileColumn::Size];
     app.view_prefs.files.show_sidebar = true;
     app.view_prefs.files.is_split_mode = false;
-    app.view_prefs.editor.show_sidebar = false;
+    app.view_prefs.editor.show_sidebar = true;
     app.view_prefs.editor.is_split_mode = false;
     app.settings_section = SettingsSection::General;
     app.settings_index = 0;

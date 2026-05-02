@@ -272,10 +272,10 @@ impl App {
                     show_sidebar: true,
                     is_split_mode: false,
                 },
-                editor: ViewPreferences {
-                    show_sidebar: false,
-                    is_split_mode: false,
-                },
+editor: ViewPreferences {
+        show_sidebar: true,
+        is_split_mode: false,
+    },
             },
             settings_index: 0,
             settings_section: SettingsSection::General,
