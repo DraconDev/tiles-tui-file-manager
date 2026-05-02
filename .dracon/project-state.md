@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar to always display folder tree rooted at home directory
+Added tracking for the last current path in the sidebar tree to enable auto-expansion of ancestors.
 
 ## Context
-The sidebar was previously showing the folder tree relative to the current file's path, which could be confusing for users. This change aligns with Dolphin-style behavior where the sidebar always shows the complete filesystem hierarchy from the home directory.
+The sidebar tree view now needs to detect navigation changes to automatically expand folders leading to the current file. This matches Dolphin-style behavior where the tree is always rooted at the home directory.
 
 ## Completed
-- [x] Changed sidebar folder tree to always root at home directory
-- [x] Removed conditional path logic that previously used current file path or fallback
+- [x] Added `last_tree_current_path` field to track the most recent path in the tree view
+- [x] Maintained separation between tree expansion state and other sidebar scopes
+- [x] Prepared for future auto-expansion logic based on path changes
 
 ## In Progress
-- [ ] Verify visual consistency with other file manager panes
+- [ ] Implement auto-expansion of ancestor folders when the current path changes
 
 ## Blockers
-- None identified
+- Need to implement the actual auto-expansion logic based on path comparison
 
 ## Next Steps
-1. Test sidebar behavior with various file paths
-2. Document the new navigation paradigm in user documentation
+1. Implement path comparison logic to detect changes
+2. Add auto-expansion of ancestor folders when the path changes

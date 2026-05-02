@@ -82,9 +82,12 @@ pub struct App {
     /// Folders expanded in the main file pane view (sidebar_scope = All/Favorites/Remotes).
     /// Controls expand/collapse in the file listing and the non-tree sidebar PROJECT section.
     pub expanded_folders: HashSet<PathBuf>,
-    /// Folders expanded in the sidebar Tree view (sidebar_scope = Tree).
-    /// Independent of `expanded_folders` — Tree scope maintains its own expansion state.
+    /// Folders expanded in the sidebar Tree view.
+/// Independent of `expanded_folders` — Tree scope maintains its own expansion state.
     pub tree_expanded_folders: HashSet<PathBuf>,
+    /// Last `current_path` seen by the sidebar tree (Dolphin-style: tree rooted at home).
+    /// Used to detect navigation changes and auto-expand ancestors of the current folder.
+    pub last_tree_current_path: Option<PathBuf>,
     pub mouse_last_click: std::time::Instant,
     pub mouse_click_pos: (u16, u16),
     pub mouse_click_count: usize,
