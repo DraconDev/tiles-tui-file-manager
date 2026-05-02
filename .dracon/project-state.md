@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Refactored file view indentation in the UI to standardize spacing for non-directory items.
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The change standardizes the indentation for non-directory items in the file view, ensuring consistent spacing across the UI.
+The change was triggered by multiple refactoring commits that modified the project's dependency structure. The Cargo.lock file was updated to ensure consistent dependency resolution across the project.
 
 ## Completed
-- [x] Changed empty string marker for non-directory items to two spaces ("  ") for consistent indentation
+- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## In Progress
-- [x] UI indentation consistency for file view items
+- [x] No active work in progress related to this change
 
 ## Blockers
-- No blockers identified for this change
+- The project is currently blocked due to a failed manifest load for dependency `dracon-files`
 
 ## Next Steps
-1. Verify visual consistency across different file types in the UI
-2. Ensure this change doesn't affect directory expansion indicators
+1. Investigate and resolve the failed manifest load for `dracon-files`
+2. Verify all dependencies are properly resolved after the Cargo.lock update
