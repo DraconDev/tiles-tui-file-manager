@@ -210,6 +210,7 @@ impl App {
             show_main_stage: true,
             sidebar_width_percent: 15,
             sidebar_bounds: Vec::new(),
+            sidebar_scroll_offset: 0,
             drag_start_pos: None,
             drag_source: None,
             is_dragging: false,

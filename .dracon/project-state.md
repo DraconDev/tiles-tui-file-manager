@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added scroll offset tracking for sidebar navigation
+Added scroll offset tracking for sidebar navigation to maintain position during updates.
 
 ## Context
-This change enables persistent scroll position tracking in the sidebar, which is necessary for maintaining visual context when navigating large directory structures.
+This change enables persistent scroll position in the sidebar when navigating between folders or updating the tree structure. It addresses usability issues where users lose their scroll position during common operations.
 
 ## Completed
 - [x] Added `sidebar_scroll_offset` field to track scroll position
-- [x] Prepared infrastructure for scroll position persistence
+- [x] Prepared infrastructure for scroll position restoration
 
 ## In Progress
-- [ ] Implement actual scroll position restoration logic
+- [ ] Implementation of actual scroll position restoration logic
 
 ## Blockers
-- Need to determine how scroll position should be restored (e.g., on folder change or app restart)
+- Need to implement scroll position restoration when rebuilding the tree
 
 ## Next Steps
-1. Implement scroll position restoration logic
-2. Add tests for scroll position persistence
-```
+1. Implement scroll position restoration when rebuilding the tree
+2. Add tests for scroll position persistence during navigation
