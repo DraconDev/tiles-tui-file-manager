@@ -764,7 +764,7 @@ pub fn draw_tree_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         };
 
         let marker = if is_dir {
-            if app.expanded_folders.contains(&path) {
+            if app.tree_expanded_folders.contains(&path) {
                 "▾ "
             } else {
                 "▸ "
