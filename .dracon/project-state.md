@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar hint display to avoid redundant rendering when hint matches title
+Removed the tree-based sidebar view in favor of a simpler project sidebar
 
 ## Context
-The sidebar was rendering hint text even when it matched the title, creating visual redundancy. This change prevents unnecessary rendering when the hint and title are identical.
+The tree-based sidebar was complex and had multiple features (expansion, favorites, remotes) that weren't being fully utilized. This change simplifies the UI by focusing on the core project view.
 
 ## Completed
-- [x] Modified sidebar rendering logic to skip hint display when it matches the title text
+- [x] Removed the `draw_tree_sidebar` function and all its associated logic
+- [x] Kept only the basic `draw_project_sidebar` function
+- [x] Updated Cargo.lock to reflect dependency changes
 
 ## In Progress
-- [ ] None
+- [ ] Evaluating whether to reintroduce simplified tree view features incrementally
 
 ## Blockers
-- None
+- Need to determine if users miss the tree view features before reintroducing them
 
 ## Next Steps
-1. Verify visual consistency across different sidebar states
-2. Test with various content lengths to ensure proper truncation
+1. Test the simplified sidebar with core users
+2. Decide whether to reintroduce tree view features in a more focused way
