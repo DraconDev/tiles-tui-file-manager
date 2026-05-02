@@ -149,6 +149,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             let fd = stdin.as_raw_fd();
             let mut buffer = [0; 1024];
             while !shutdown_input.load(Ordering::Relaxed) {
+                // SAFETY: poll_input takes a borrowed file descriptor ( BorrowedFd) and only
+                // checks for input availability (returns bool). The fd is valid for the duration
+                // of this loop since stdin lives at least as long as the process. We hold the
+                // only reference to stdin here, so there are no aliasing issues.
                 let polled = unsafe {
                     dracon_terminal_engine::backend::tty::poll_input(std::os::fd::BorrowedFd::borrow_raw(fd), 20)
                 };
