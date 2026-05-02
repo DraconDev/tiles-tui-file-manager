@@ -1,21 +1,26 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar icon width calculation to use a more precise width measurement method.
+Improved sidebar folder navigation behavior with distinct arrow and name click handling
 
 ## Context
-The sidebar rendering was using a manual character-by-character width calculation for icons, which could lead to incorrect positioning. This change switches to a more reliable width measurement method to ensure consistent visual alignment.
+The sidebar folder tree needed clearer interaction semantics where:
+- Arrow clicks toggle expand/collapse without navigation
+- Name clicks navigate to the folder (and expand if collapsed)
+This prevents accidental navigation when users intend to just expand/collapse
 
 ## Completed
-- [x] Replaced manual icon width calculation with `icon.width()` method
-- [x] Maintained consistent arrow positioning logic
+- [x] Separated arrow click detection from name click handling
+- [x] Added explicit arrow click region check
+- [x] Maintained navigation behavior for name clicks
+- [x] Preserved folder expansion state management
 
 ## In Progress
-- [x] No active work in progress
+- [ ] No active work in progress
 
 ## Blockers
 - None identified
 
 ## Next Steps
-1. Verify visual consistency across different icon types
-2. Test with various file types to ensure proper alignment
+1. Verify visual feedback for expanded/collapsed states
+2. Test edge cases with deeply nested folder structures

@@ -505,24 +505,30 @@ fn handle_sidebar_mouse(
                         SidebarTarget::Project(path) => {
                             if path.is_dir() {
                                 let path_ref = path.clone();
-                                let expanded_set = &app.tree_expanded_folders;
-                                let was_expanded = expanded_set.contains(&path_ref);
-                                if was_expanded {
-                                    app.tree_expanded_folders.remove(&path_ref);
+                                let clicked_arrow = b.arrow_end_x > 0 && column < b.arrow_end_x;
+                                let was_expanded = app.tree_expanded_folders.contains(&path_ref);
+
+                                if clicked_arrow {
+                                    // Arrow click: toggle expand/collapse only
+                                    if was_expanded {
+                                        app.tree_expanded_folders.remove(&path_ref);
+                                    } else {
+                                        app.tree_expanded_folders.insert(path_ref.clone());
+                                    }
                                 } else {
-                                    app.tree_expanded_folders.insert(path.clone());
-                                }
-                                // Always navigate to folder when expanding
-                                if !was_expanded {
+                                    // Name click: navigate to folder (and expand if collapsed)
                                     if let Some(fs) = app.current_file_state_mut() {
-                                        fs.current_path = path.clone();
+                                        fs.current_path = path_ref.clone();
                                         fs.selection.selected = Some(0);
                                         fs.selection.anchor = Some(0);
                                         fs.selection.clear_multi();
-                                        crate::event_helpers::push_history(fs, path.clone());
+                                        crate::event_helpers::push_history(fs, path_ref.clone());
                                         let _ = event_tx.try_send(AppEvent::RefreshFiles(
                                             app.focused_pane_index,
                                         ));
+                                    }
+                                    if !was_expanded {
+                                        app.tree_expanded_folders.insert(path_ref.clone());
                                     }
                                 }
                                 app.sidebar_focus = false;
