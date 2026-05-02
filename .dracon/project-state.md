@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored empty current folder marker in sidebar to use `Span::raw("")` instead of `Span::empty()`
+Improved sidebar tree navigation by optimizing path tracking and folder expansion logic.
 
 ## Context
-The change was part of a larger effort to improve visual distinction in the sidebar tree. The original implementation used `Span::empty()` for non-current folders, which may have had subtle rendering differences across terminals.
+The sidebar tree now more efficiently tracks the current folder path and ensures proper expansion of ancestor folders when navigating, maintaining Dolphin-style behavior while reducing redundant operations.
 
 ## Completed
-- [x] Replaced `Span::empty()` with `Span::raw("")` for consistent empty marker rendering
+- [x] Optimized path tracking by moving current path retrieval before mutable borrow
+- [x] Simplified tree item collection by removing redundant path checks
+- [x] Maintained Dolphin-style auto-expansion while improving performance
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [ ] No active work in progress
 
 ## Blockers
-- None identified for this specific change
+- None identified
 
 ## Next Steps
-1. Verify terminal consistency across different platforms
-2. Continue sidebar visual distinction improvements
+1. Verify visual consistency with current folder highlighting
+2. Test performance impact with large directory structures

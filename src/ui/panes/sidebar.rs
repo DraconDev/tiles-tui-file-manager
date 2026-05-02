@@ -118,12 +118,15 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 // Tree is always rooted at home (Dolphin-style) regardless of current pane path
                 let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
 
+                // Get current path BEFORE borrowing app for tree_expanded_folders mutation
+                let current_folder_path = app.current_file_state().map(|fs| fs.current_path.clone());
+
                 // Dolphin-style auto-expand: when current_path changes, expand ancestors
                 // so the current folder is visible in the tree (respects manual collapse)
-                if let Some(fs) = app.current_file_state() {
-                    if app.last_tree_current_path.as_ref() != Some(&fs.current_path) {
-                        app.last_tree_current_path = Some(fs.current_path.clone());
-                        let mut current = Some(fs.current_path.clone());
+                if let Some(ref current_path) = current_folder_path {
+                    if app.last_tree_current_path.as_ref() != Some(current_path) {
+                        app.last_tree_current_path = Some(current_path.clone());
+                        let mut current = Some(current_path.clone());
                         while let Some(path) = current {
                             if path != base_path {
                                 app.tree_expanded_folders.insert(path.clone());
@@ -133,13 +136,11 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     }
                 }
 
-                let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
-                collect_tree_items(&base_path, 0, app, &mut tree_items);
-
-                let current_folder_path = app.current_file_state().map(|fs| fs.current_path.clone());
                 let is_current_folder = |path: &PathBuf| {
                     current_folder_path.as_ref().map(|c| c == path).unwrap_or(false)
                 };
+
+                let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
 
                 for (path, depth) in tree_items {
                     let is_dir = path.is_dir();
