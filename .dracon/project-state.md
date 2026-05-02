@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Removed Konsole tab spawning fallback logic in favor of unified terminal spawning
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-This change simplifies the terminal spawning logic by removing the conditional fallback to Konsole-specific DBus calls, which were previously used when the `new_tab` flag was set. The new implementation now directly uses the unified `spawn_terminal_at` function from the terminal engine.
+This change was triggered by dependency version conflicts that arose during the Konsole tab refactoring work. The Cargo.lock file was updated to ensure all dependencies are properly resolved.
 
 ## Completed
-- [x] Removed Konsole-specific DBus interaction code
-- [x] Simplified terminal spawning to use unified `spawn_terminal_at` function
-- [x] Fixed argument passing in `SpawnDetached` event handler
+- [x] Updated Cargo.lock to resolve dependency versions
 
 ## In Progress
-- [ ] None
+- [x] No active work in progress
 
 ## Blockers
-- None
+- The project is currently blocked by a failed attempt to load the manifest for dependency `dracon-files`
 
 ## Next Steps
-1. Verify terminal spawning behavior across different environments
-2. Test edge cases for terminal spawning with and without commands
+1. Investigate and resolve the `dracon-files` dependency manifest loading failure
+2. Continue with the Konsole tab refactoring once dependencies are properly resolved
