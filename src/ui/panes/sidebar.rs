@@ -959,7 +959,7 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
             {
                 if !fs.search_filter.is_empty() && app.sidebar_focus {
                     if FUZZY_SEARCH {
-                        fuzzy_contains(name, &fs.search_filter)
+                        fuzzy_contains(&name, &fs.search_filter)
                     } else {
                         name.to_lowercase().contains(&fs.search_filter.to_lowercase())
                     }

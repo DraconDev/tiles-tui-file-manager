@@ -1,23 +1,20 @@
 # Project State
 
 ## Current Focus
-Added fuzzy search functionality for file filtering in the file manager
+Fixed a reference issue in the fuzzy search filter for sidebar file filtering.
 
 ## Context
-The change implements a configurable fuzzy search option for file filtering in the sidebar, replacing the previous exact string matching. This improves user experience when searching for files with similar but not identical names.
+The fuzzy search functionality in the sidebar was incorrectly passing a string slice rather than a reference to the filename. This was causing a compilation error.
 
 ## Completed
-- [x] Added fuzzy search implementation with `fuzzy_contains` function
-- [x] Made search mode configurable via `FUZZY_SEARCH` constant
-- [x] Updated all file filtering locations to support both fuzzy and exact search
-- [x] Maintained backward compatibility with existing exact search functionality
+- [x] Fixed string reference in fuzzy search filter to properly pass `&name` instead of `name`
 
 ## In Progress
-- [x] Implementation of fuzzy search across all file filtering operations
+- [x] No active work in progress beyond this fix
 
 ## Blockers
-- None identified
+- None identified for this specific change
 
 ## Next Steps
-1. Add user interface controls to toggle between fuzzy and exact search modes
-2. Add documentation for the new fuzzy search feature
+1. Verify the fix doesn't introduce new runtime issues
+2. Consider adding unit tests for the fuzzy search functionality
