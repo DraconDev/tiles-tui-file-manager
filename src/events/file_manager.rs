@@ -994,6 +994,7 @@ pub fn handle_file_mouse(
                         if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
                             let marker_x = name_rect.x + depth as u16 * 2;
                             let hit = column >= marker_x.saturating_sub(2) && column < name_rect.x + name_rect.width;
+                            eprintln!("CLICK col={} row={} idx={} depth={} name_x={} marker_x={} hit={}", column, row, idx, depth, name_rect.x, marker_x, hit);
                             if is_dir && hit {
                                 let folder_path = p;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
