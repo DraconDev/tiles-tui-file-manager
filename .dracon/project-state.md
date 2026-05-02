@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Adjust sidebar resizing detection boundary to be more precise
 
 ## Context
-The Cargo.lock file was modified to update dependency versions, likely in response to recent refactoring work in the file manager's directory tree marker hit detection.
+The sidebar resizing detection was previously allowing clicks slightly beyond the sidebar boundary. This change tightens the detection to only allow resizing when the mouse is within the exact sidebar width range.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
+- [x] Fixed sidebar resizing detection boundary to be more precise
 
 ## In Progress
-- [x] Dependency resolution for `dracon-files` package
+- [x] No active work in progress
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files`
+- None identified
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Verify all dependencies are properly resolved after the update
+1. Verify the change doesn't affect other UI interactions
+2. Consider adding visual feedback during sidebar resizing

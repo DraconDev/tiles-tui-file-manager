@@ -441,7 +441,7 @@ fn handle_general_mouse(
     } else {
         // Sidebar Resizing check (MUST BE LEFT CLICK ONLY)
         if let MouseEventKind::Down(MouseButton::Left) = me.kind {
-            if column >= sw.saturating_sub(1) && column <= sw + 1 {
+            if column >= sw.saturating_sub(1) && column <= sw {
                 app.is_resizing_sidebar = true;
                 return true;
             }
