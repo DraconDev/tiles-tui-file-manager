@@ -2735,10 +2735,15 @@ fn draw_file_view(
 
                                     let truncated_name =
                                         truncate_to_width(&display_name, available_width, "..");
-                                    let cell_text = if depth_indent.is_empty() {
-                                        format!(" {} {}{}", icon_str, truncated_name, suffix)
+                                    let category_label = if app.semantic_coloring && !is_dir {
+                                        cat.label()
                                     } else {
-                                        format!("{}{} {}{}", depth_indent, icon_str, truncated_name, suffix)
+                                        ""
+                                    };
+                                    let cell_text = if depth_indent.is_empty() {
+                                        format!(" {} {}{}{}", icon_str, category_label, truncated_name, suffix)
+                                    } else {
+                                        format!("{}{} {}{}{}", depth_indent, icon_str, category_label, truncated_name, suffix)
                                     };
 
                                     cell_text
