@@ -13,7 +13,7 @@ A high-performance terminal file manager built in Rust. Modular pane system, int
 - **Git Integration** — Commit history viewer, staged/unstaged diffs, branch info, ahead/behind tracking
 - **Remote SSH** — Browse remote filesystems via SSH, SFTP-style file operations
 - **System Monitor** — CPU, memory, disk, network stats, process list
-- **Sidebar** — Favorites, project directories, expandable folder tree
+- **Sidebar** — Dolphin-style folder tree rooted at home, Favorites, Recent folders, Storage devices, SSH remotes. Toggle sections in Settings.
 - **Path Input** — Click the breadcrumb bar to edit the path directly, copy on click
 - **Keyboard-first** — Vim-style navigation, command palette (`:`), context menus
 

@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Updated sidebar documentation to reflect Dolphin-style folder tree implementation.
 
 ## Context
-The change was triggered by recent refactoring work that modified dependency configurations. The Cargo.lock file was updated to reflect the correct dependency versions after these changes.
+The recent Dolphin-style sidebar implementation (feat(dolphin-style sidebar)) required documentation updates to clarify its new features and configuration options.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Updated README.md to describe the new Dolphin-style sidebar with folder tree, Favorites, Recent folders, and Storage devices sections
+- [x] Added documentation for toggleable sidebar sections via Settings
 
 ## In Progress
-- [x] No active work in progress related to this change
+- [ ] No active work in progress related to this change
 
 ## Blockers
-- The project is currently blocked by the failure to load manifest for dependency `dracon-files`
+- None identified for this documentation update
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue with the planned `synth-1774826981` slice once dependencies are properly resolved
+1. Verify sidebar implementation matches documented features
+2. Consider adding visual documentation or screenshots if needed
