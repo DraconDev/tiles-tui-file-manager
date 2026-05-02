@@ -1,26 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved Konsole tab support for terminal spawning in Linux environments
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The previous implementation used direct environment variable checks and `qdbus` commands, which had limitations. This update replaces it with a more robust DBus approach that:
-1. Dynamically discovers the Konsole service name
-2. Properly parses DBus responses for profile and session IDs
-3. Handles command execution more reliably
+The Cargo.lock file was modified to accommodate dependency version changes resulting from recent refactoring work, particularly in the Konsole tab support and sidebar functionality.
 
 ## Completed
-- [x] Replaced direct environment variable checks with dynamic DBus service discovery
-- [x] Improved DBus response parsing for profile and session IDs
-- [x] Enhanced command execution with proper string formatting
-- [x] Maintained backward compatibility with existing terminal spawning logic
+- [x] Updated Cargo.lock to resolve dependency versions after refactoring
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] No active work in progress related to this change
 
 ## Blockers
-- None identified
+- The project is currently blocked due to a failed manifest load for dependency `dracon-files`
 
 ## Next Steps
-1. Verify cross-platform compatibility with different Konsole versions
-2. Add error handling for cases where DBus commands fail
+1. Investigate and resolve the failed manifest load for `dracon-files`
+2. Continue with the planning phase once dependencies are resolved
