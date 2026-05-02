@@ -1073,8 +1073,7 @@ pub fn handle_file_mouse(
                                     nfs.selection.clear();
                                     crate::event_helpers::push_history(&mut nfs, path);
                                     p.open_tab(nfs);
-                                    let _ = event_tx
-                                        .try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 }
                             }
                         } else {

@@ -395,8 +395,7 @@ pub fn handle_context_menu_action(
                         )));
                     }
                     Err(err) => {
-                        let _ = event_tx
-                            .try_send(AppEvent::StatusMsg(format!("Clipboard failed: {}", err)));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Clipboard failed: {}", err)));
                     }
                 },
                 Err(err) => {
