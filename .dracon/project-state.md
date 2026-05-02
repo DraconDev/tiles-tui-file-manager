@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Changed default sidebar scope from `All` to `Tree` in the application state.
+Added sidebar scope indicators to the UI to visually distinguish between different view modes.
 
 ## Context
-This change modifies the default view when the sidebar is initialized, focusing on the tree view instead of showing all files.
+The sidebar now needs to clearly show which scope is active (All, Favorites, Remotes, or Tree) to improve user understanding of the current view context.
 
 ## Completed
-- [x] Updated default sidebar scope from `All` to `Tree` in app initialization
+- [x] Added scope label display in sidebar title
+- [x] Implemented visual distinction between different sidebar scopes
 
 ## In Progress
-- [x] No active work in progress related to this change
+- [ ] None
 
 ## Blockers
-- None identified for this specific change
+- None
 
 ## Next Steps
-1. Verify the impact on user experience with the new default view
-2. Consider adding configuration options for the sidebar scope
+1. Verify scope indicators are visible and clear in all themes
+2. Consider adding scope-specific styling to further differentiate views

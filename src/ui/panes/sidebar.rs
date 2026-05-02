@@ -695,11 +695,18 @@ pub fn draw_tree_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         .map(|fs| fs.current_path.clone());
 
     let title_text = base_path.to_string_lossy().to_string();
+    let scope_label = match app.sidebar_scope {
+        SidebarScope::All => "[All]",
+        SidebarScope::Favorites => "[Favorites]",
+        SidebarScope::Remotes => "[Remotes]",
+        SidebarScope::Tree => "[Tree]",
+    };
+    let full_title = format!("{} {} ", title_text, scope_label);
 
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .title(format!(" {} ", title_text))
+        .title(format!(" {}", full_title))
         .border_style(if app.sidebar_focus {
             Style::default().fg(crate::ui::theme::border_active())
         } else {
