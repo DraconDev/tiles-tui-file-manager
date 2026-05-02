@@ -896,7 +896,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
-                    dracon_terminal_engine::utils::spawn_detached(&cmd, &args);
+                    dracon_terminal_engine::utils::spawn_detached(&cmd, args);
                 }
                 AppEvent::KillProcess(pid) => {
                     let _ = crate::modules::system::SystemModule::kill_process(pid);
