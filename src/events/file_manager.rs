@@ -247,6 +247,12 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
 
             // Standard Navigation
             if key.code == KeyCode::Esc {
+                if app.sidebar_focus {
+                    // Exit sidebar focus first (standard TUI behavior)
+                    app.sidebar_focus = false;
+                    return true;
+                }
+
                 for pane in &mut app.panes {
                     for fs in &mut pane.tabs {
                         fs.preview = None;

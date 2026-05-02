@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Added sidebar focus exit behavior when pressing Esc
 
 ## Context
-This change was triggered by the removal of unused SidebarScope-related code in the sidebar module. The refactoring simplified the sidebar's state management, which required Cargo to resolve new dependency versions.
+The change improves keyboard navigation by ensuring users can exit sidebar focus first before triggering other actions, maintaining consistent TUI behavior.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect resolved dependency versions after refactoring
+- [x] Added Esc key handling to exit sidebar focus first
+- [x] Maintained existing preview clearing functionality
 
 ## In Progress
-- [x] Dependency resolution process
+- [x] Sidebar focus management implementation
 
 ## Blockers
-- The project is currently in planning phase with execution disabled
-- The slice `synth-1774826981` is blocked due to failed manifest loading for `dracon-files`
+- None identified
 
 ## Next Steps
-1. Resolve the manifest loading issue for `dracon-files`
-2. Enable project execution once dependencies are properly resolved
+1. Test Esc key behavior across different focus states
+2. Verify no regressions in standard navigation flows
