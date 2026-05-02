@@ -1,29 +1,22 @@
 # Project State
 
 ## Current Focus
-Added Git branch status display in editor view tabs with visual indicators for changes
+Added editor sidebar caching to optimize file tree rendering performance
 
 ## Context
-Improving UI visibility of Git state by showing branch information and change status directly in the editor tabs
+The application's sidebar tree rendering was being recalculated unnecessarily during editor operations. This change adds dedicated caching for the editor sidebar to reduce redundant computations.
 
 ## Completed
-- [x] Added Git branch display in editor tabs
-- [x] Implemented color-coded status indicators:
-  - Red for pending changes
-  - Yellow for commits ahead/behind
-  - Green for clean branches
-- [x] Added visual indicators for:
-  - Pending changes (+X)
-  - Commits ahead (↑X)
-  - Commits behind (↓X)
-- [x] Maintained visual consistency with active tab styling
+- [x] Added `editor_sidebar_cache` field to store pre-rendered tree items
+- [x] Added `editor_sidebar_cache_key` for cache invalidation
+- [x] Initialized new fields in App struct initialization
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Implement cache invalidation logic based on file system changes
 
 ## Blockers
-- None identified
+- Need to determine appropriate cache invalidation triggers (file changes, path changes)
 
 ## Next Steps
-1. Verify visual consistency across different terminal themes
-2. Add unit tests for Git status rendering logic
+1. Implement cache invalidation when file system changes occur
+2. Add performance metrics to verify cache effectiveness

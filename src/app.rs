@@ -89,6 +89,10 @@ pub struct App {
     pub sidebar_tree_cache: Option<Vec<(PathBuf, u16)>>,
     /// Cache key for invalidation (hash of tree_expanded_folders + show_hidden).
     pub sidebar_tree_cache_key: u64,
+    /// Cached editor sidebar tree items.
+    pub editor_sidebar_cache: Option<Vec<(PathBuf, u16)>>,
+    /// Cache key for editor sidebar (includes base_path hash).
+    pub editor_sidebar_cache_key: u64,
     pub mouse_last_click: std::time::Instant,
     pub mouse_click_pos: (u16, u16),
     pub mouse_click_count: usize,
@@ -247,6 +251,8 @@ impl App {
             tree_expanded_folders: HashSet::new(),
             sidebar_tree_cache: None,
             sidebar_tree_cache_key: 0,
+            editor_sidebar_cache: None,
+            editor_sidebar_cache_key: 0,
             mouse_last_click: std::time::Instant::now(),
             mouse_click_pos: (0, 0),
             mouse_click_count: 0,
