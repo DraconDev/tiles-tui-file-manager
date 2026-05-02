@@ -1,24 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved Konsole tab support for terminal spawning in Linux environments
+Removed Konsole tab spawning fallback logic in favor of unified terminal spawning
 
 ## Context
-The previous implementation of Konsole tab support had limitations in profile handling and command execution. This change enhances the integration by properly setting the default profile and using the correct D-Bus method for command execution.
+The previous implementation had redundant terminal spawning logic for Konsole, which was being handled by a fallback mechanism. This change consolidates the terminal spawning logic to use the unified `dracon_terminal_engine` utility.
 
 ## Completed
-- [x] Added proper profile handling for new Konsole sessions
-- [x] Implemented correct D-Bus method for command execution (`runCommand` instead of `sendText`)
-- [x] Added fallback to default terminal spawning when Konsole isn't available
-- [x] Improved session management with proper session ID handling
+- [x] Removed redundant Konsole tab spawning fallback code
+- [x] Simplified terminal spawning logic to use unified `dracon_terminal_engine` utility
 
 ## In Progress
-- [ ] None (this change is complete)
+- [ ] None
 
 ## Blockers
-- None (this feature is now fully implemented)
+- None
 
 ## Next Steps
-1. Test the new Konsole tab functionality across different Linux distributions
-2. Verify fallback behavior when Konsole isn't available
-3. Document the new terminal spawning behavior in user documentation
+1. Verify terminal spawning behavior across different Linux environments
+2. Update documentation to reflect the simplified terminal spawning approach
+```

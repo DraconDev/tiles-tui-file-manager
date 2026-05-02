@@ -949,30 +949,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
                     }
                 }
-                                            
-                                            handled = true;
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // Fallback: try konsole --new-tab (works if D-Bus session is accessible)
-                            if !handled {
-                                let mut cmd = std::process::Command::new("konsole");
-                                cmd.arg("--new-tab").arg("--workdir").arg(&path);
-                                if let Some(cmd_to_run) = cmd_str {
-                                    cmd.arg("-e").arg("sh").arg("-c").arg(cmd_to_run);
-                                }
-                                let _ = cmd.spawn();
-                                handled = true;
-                            }
-                        }
-                    }
-                    
-                    if !handled {
-                        dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
-                    }
-                }
                 AppEvent::SpawnDetached { cmd, args } => {
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);
                 }
