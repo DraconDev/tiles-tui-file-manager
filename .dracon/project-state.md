@@ -4,11 +4,11 @@
 Removed pane area tracking from file state and UI rendering
 
 ## Context
-This change removes the `pane_area_x` field from `FileState` and its usage in UI rendering. The field was previously used to track the horizontal position of the file pane, but this tracking is no longer needed as the UI now handles this differently.
+This change eliminates redundant pane area calculations that were previously used for mouse event handling in the file manager. The calculations were determining which pane a mouse click occurred in, but this information wasn't being used in the final implementation.
 
 ## Completed
-- [x] Removed `pane_area_x` field from `FileState`
-- [x] Removed usage of `pane_area_x` in UI rendering
+- [x] Removed unused pane area calculation code
+- [x] Simplified mouse event handling logic
 
 ## In Progress
 - [ ] None
@@ -17,5 +17,5 @@ This change removes the `pane_area_x` field from `FileState` and its usage in UI
 - None
 
 ## Next Steps
-1. Verify UI rendering still works correctly without the pane area tracking
-2. Check if any other components rely on the removed functionality
+1. Verify no regression in file manager mouse interactions
+2. Consider if any other unused code can be removed from the file manager
