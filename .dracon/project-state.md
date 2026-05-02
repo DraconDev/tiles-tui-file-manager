@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Added a visual separator in the general settings UI to group sidebar-related options.
+Refactored settings index handling in modal event handling to accommodate new settings option
 
 ## Context
-This change improves the organization of the general settings UI by visually separating sidebar-related options from other settings. The separator helps users quickly identify which settings control the sidebar behavior.
+The change increases the maximum index for the General settings section from 12 to 13, which was previously documented. This adjustment was needed to properly handle the new "Reset Settings Confirm" option in the settings modal.
 
 ## Completed
-- [x] Added a visual separator labeled "─── Sidebar Sections ───" in the general settings UI
+- [x] Updated settings index handling to account for the new option at position 13
+- [x] Maintained consistent state saving behavior while excluding the confirmation state from automatic saves
 
 ## In Progress
-- [x] None - this is a complete, standalone change
+- [x] Implementation of the new settings reset confirmation flow
 
 ## Blockers
-- None - this change is complete and doesn't depend on other work
+- None identified in this change
 
 ## Next Steps
-1. Verify the visual separator appears correctly in the UI
-2. Ensure the separator doesn't interfere with existing functionality
+1. Complete implementation of the settings reset confirmation flow
+2. Verify all settings options are properly indexed and handled
