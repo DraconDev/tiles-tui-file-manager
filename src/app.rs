@@ -245,6 +245,8 @@ impl App {
             hovered_header_icon: None,
             expanded_folders: HashSet::new(),
             tree_expanded_folders: HashSet::new(),
+            sidebar_tree_cache: None,
+            sidebar_tree_cache_key: 0,
             mouse_last_click: std::time::Instant::now(),
             mouse_click_pos: (0, 0),
             mouse_click_count: 0,
