@@ -762,6 +762,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             y: current_y,
             index: current_idx,
             target: SidebarTarget::Project(path.clone()),
+            ..Default::default()
         });
         current_y += 1;
 
@@ -920,6 +921,7 @@ pub fn draw_tree_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             y: current_y,
             index: current_idx,
             target: SidebarTarget::Project(path.clone()),
+            ..Default::default()
         });
         current_y += 1;
 
