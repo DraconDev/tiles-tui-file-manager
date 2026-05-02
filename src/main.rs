@@ -1262,7 +1262,7 @@ paired = new_paired;
                     let git_remote = remote.clone();
                     let app_for_git = app_clone.clone();
                     let tx_for_git = tx.clone();
-                    let git_cache_ttl = Duration::from_secs(GIT_CACHE_TTL_SECONDS);
+                    let _git_cache_ttl = Duration::from_secs(GIT_CACHE_TTL_SECONDS);
                     let should_fetch = {
                         let app_guard = app_for_git.lock();
                         app_guard

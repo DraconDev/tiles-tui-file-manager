@@ -1,5 +1,5 @@
 use crate::config::MAX_TABS;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use dracon_terminal_engine::contracts::UiEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
