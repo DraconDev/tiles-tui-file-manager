@@ -179,9 +179,16 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     let marker_w = if is_dir { 2 } else { 0 };
                     let icon_w = icon.width();
                     let arrow_end_x = inner.x + 1 + (depth as u16 * 2) + marker_w as u16 + icon_w as u16;
+                    let current_marker = if is_current_folder(&path) {
+                        Span::styled(" ◄", Style::default().fg(crate::ui::theme::accent_primary()))
+                    } else {
+                        Span::empty()
+                    };
                     let line = Line::from(vec![
                         Span::raw(format!("{}{}", indent_str, marker)),
-                        Span::raw(format!("{}{}", icon, name)),
+                        Span::raw(format!("{}", icon)),
+                        current_marker,
+                        Span::raw(name),
                     ]);
                     sidebar_items.push(ListItem::new(line).style(style));
                     app.sidebar_bounds.push(SidebarBounds {
