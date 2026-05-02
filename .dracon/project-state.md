@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Added sidebar focus exit behavior when pressing Esc
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The change improves keyboard navigation by ensuring users can exit sidebar focus first before triggering other actions, maintaining consistent TUI behavior.
+The Cargo.lock file was modified to update dependency versions after several refactoring changes that affected the project's dependencies. This ensures the project uses the correct versions of dependencies after the recent structural changes.
 
 ## Completed
-- [x] Added Esc key handling to exit sidebar focus first
-- [x] Maintained existing preview clearing functionality
+- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## In Progress
-- [x] Sidebar focus management implementation
+- [ ] None (dependency resolution is complete)
 
 ## Blockers
-- None identified
+- The project is currently in the planning phase with execution disabled due to a failed manifest load for dependency `dracon-files`
 
 ## Next Steps
-1. Test Esc key behavior across different focus states
-2. Verify no regressions in standard navigation flows
+1. Investigate and resolve the failed manifest load for dependency `dracon-files`
+2. Enable execution once dependencies are properly resolved
