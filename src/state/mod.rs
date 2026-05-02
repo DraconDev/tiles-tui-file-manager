@@ -218,7 +218,7 @@ pub struct SidebarBounds {
     pub y: u16,
     pub index: usize,
     pub target: SidebarTarget,
-    #[serde(skip)]
+    #[allow(dead_code)]
     pub arrow_end_x: u16,
 }
 
