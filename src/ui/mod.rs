@@ -2645,7 +2645,7 @@ fn draw_file_view(
                                     let marker = if is_dir {
                                         if is_expanded { "▾ " } else { "▸ " }
                                     } else {
-                                        ""
+                                        "  "
                                     };
                                     let (depth_indent, expand_marker) = (
                                         format!("{}{}", indent, marker),
