@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Added consistent default values to `SidebarBounds` initialization in test cases
+Added constructor method for `SidebarBounds` with consistent initialization
 
 ## Context
-To ensure consistent behavior in sidebar mouse handling tests, the code now explicitly sets default values for all fields when initializing `SidebarBounds` structs.
+The change removes the `Default` derive from `SidebarBounds` and adds a new constructor method to ensure consistent initialization of the struct fields.
 
 ## Completed
-- [x] Added `..Default::default()` to two test cases in `events/mod.rs` to ensure all fields are properly initialized
+- [x] Removed `Default` derive from `SidebarBounds`
+- [x] Added `new()` constructor method for `SidebarBounds`
+- [x] Maintained all existing fields in the constructor
 
 ## In Progress
-- [x] Testing the impact of these changes on sidebar rendering behavior
+- [ ] None
 
 ## Blockers
-- Need to verify if these default values affect any existing test expectations
+- None
 
 ## Next Steps
-1. Run test suite to confirm no regressions
-2. Document the pattern for consistent initialization across the codebase
+1. Update any code that previously used `Default::default()` for `SidebarBounds` to use the new constructor
+2. Verify all tests pass with the new initialization pattern
