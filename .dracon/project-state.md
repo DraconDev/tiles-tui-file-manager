@@ -1,23 +1,20 @@
 # Project State
 
 ## Current Focus
-Added visual distinction for the current folder in the sidebar tree
+Refactored empty current folder marker in sidebar to use `Span::raw("")` instead of `Span::empty()`
 
 ## Context
-This change improves navigation clarity by highlighting the currently selected folder in the sidebar tree view. It addresses user feedback about needing better visual feedback for the current working directory.
+The change was part of a larger effort to improve visual distinction in the sidebar tree. The original implementation used `Span::empty()` for non-current folders, which may have had subtle rendering differences across terminals.
 
 ## Completed
-- [x] Added visual marker (◄) for current folder with accent color styling
-- [x] Positioned marker after folder icon but before folder name
-- [x] Maintained consistent indentation and styling with other sidebar items
+- [x] Replaced `Span::empty()` with `Span::raw("")` for consistent empty marker rendering
 
 ## In Progress
-- [x] Visual distinction implementation for current folder
+- [ ] No active work in progress related to this change
 
 ## Blockers
 - None identified for this specific change
 
 ## Next Steps
-1. Verify visual consistency across different folder depths
-2. Test with various folder name lengths to ensure proper alignment
-3. Consider adding similar visual cues for other sidebar states (e.g., selected files)
+1. Verify terminal consistency across different platforms
+2. Continue sidebar visual distinction improvements

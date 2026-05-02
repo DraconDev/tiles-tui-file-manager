@@ -182,7 +182,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     let current_marker = if is_current_folder(&path) {
                         Span::styled(" ◄", Style::default().fg(crate::ui::theme::accent_primary()))
                     } else {
-                        Span::empty()
+                        Span::raw("")
                     };
                     let line = Line::from(vec![
                         Span::raw(format!("{}{}", indent_str, marker)),
