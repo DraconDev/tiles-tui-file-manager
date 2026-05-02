@@ -1,15 +1,15 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar scope handling and default scope configuration
+Refactored folder expansion handling in the sidebar to unify tree and non-tree modes
 
 ## Context
-This change simplifies the sidebar scope cycling logic and updates the default scope to `All` instead of `Tree`. It also removes redundant folder expansion state checks in the sidebar mouse handler.
+The previous implementation had separate logic paths for tree and non-tree sidebar modes, leading to code duplication. This change consolidates the folder expansion behavior into a single path while maintaining the same functionality.
 
 ## Completed
-- [x] Simplified sidebar scope cycling by removing the `Tree` scope from the cycle
-- [x] Changed default sidebar scope from `Tree` to `All` in app initialization
-- [x] Removed redundant folder expansion state checks in sidebar mouse handler
+- [x] Unified folder expansion state tracking for both tree and non-tree modes
+- [x] Simplified the sidebar mouse handling logic
+- [x] Maintained consistent behavior for folder navigation
 
 ## In Progress
 - [ ] No active work in progress
@@ -18,6 +18,5 @@ This change simplifies the sidebar scope cycling logic and updates the default s
 - None identified
 
 ## Next Steps
-1. Verify UI behavior with the new default scope
-2. Test sidebar scope cycling functionality
-3. Update documentation to reflect the new default scope behavior
+1. Verify the unified behavior matches expectations in both tree and non-tree modes
+2. Update related documentation if needed
