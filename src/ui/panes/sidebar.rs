@@ -258,6 +258,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     y: current_y,
                     index: idx,
                     target: SidebarTarget::Header("RECENT".to_string()),
+                    ..Default::default()
                 });
                 current_y += 1;
 
@@ -321,6 +322,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     y: current_y,
                     index: current_storage_header_idx,
                     target: SidebarTarget::Header("STORAGES".to_string()),
+                    ..Default::default()
                 });
                 current_y += 1;
             }
