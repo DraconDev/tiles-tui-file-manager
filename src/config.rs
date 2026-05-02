@@ -28,6 +28,25 @@ pub const SAVE_DEBOUNCE_MS: u64 = 350;
 pub const PREVIEW_MAX_MB: u16 = 20;
 pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
 pub const GIT_CACHE_TTL_SECONDS: u64 = 30;
+pub const FUZZY_SEARCH: bool = false;
+
+pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
+    if pattern.is_empty() {
+        return true;
+    }
+    let text_lower = text.to_lowercase();
+    let pattern_lower = pattern.to_lowercase();
+    let mut pattern_chars = pattern_lower.chars().peekable();
+    for c in text_lower.chars() {
+        if Some(&c) == pattern_chars.peek() {
+            pattern_chars.next();
+            if pattern_chars.peek().is_none() {
+                return true;
+            }
+        }
+    }
+    false
+}
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ExternalTool {

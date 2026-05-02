@@ -14,7 +14,7 @@ use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBacken
 use ratatui::Terminal;
 
 use crate::app::{App, AppEvent, CurrentView, PreviewState};
-use crate::config::{FILE_WATCH_DEBOUNCE_MS, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
+use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use image::GenericImageView;
 mod app;
 mod config;
@@ -1178,9 +1178,13 @@ let list_path_for_filter = path.clone();
                                     let name = p
                                         .file_name()
                                         .and_then(|n| n.to_str())
-                                        .unwrap_or("")
-                                        .to_lowercase();
-                                    if !name.contains(&fs.search_filter.to_lowercase()) {
+                                        .unwrap_or("");
+                                    let matches = if FUZZY_SEARCH {
+                                        fuzzy_contains(name, &fs.search_filter)
+                                    } else {
+                                        name.to_lowercase().contains(&fs.search_filter.to_lowercase())
+                                    };
+                                    if !matches {
                                         return false;
                                     }
                                 }
