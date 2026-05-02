@@ -30,6 +30,18 @@ A high-performance terminal file manager built in Rust. Modular pane system, int
 | `Tab` | Switch panes |
 | `:` | Command palette |
 
+### Sidebar
+| Key | Action |
+|-----|--------|
+| `Tab` | Focus sidebar / return to file pane |
+| `↑/↓` | Navigate sidebar items |
+| `Enter` | Navigate to folder (expand if collapsed) |
+| `Space` | Toggle expand/collapse folder |
+| `Shift+C` | Collapse all folders |
+| `Esc` | Exit sidebar focus |
+| `Mouse click` | Click arrow to expand/collapse, click name to navigate |
+| `Mouse wheel` | Scroll sidebar |
+
 ### Editor
 | Key | Action |
 |-----|--------|

@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Updated sidebar documentation to reflect Dolphin-style folder tree implementation.
+Added comprehensive sidebar keyboard and mouse interaction documentation to README.md
 
 ## Context
-The recent Dolphin-style sidebar implementation (feat(dolphin-style sidebar)) required documentation updates to clarify its new features and configuration options.
+To improve user onboarding and consistency with Dolphin-style file manager behavior, we're documenting all sidebar interactions in one place.
 
 ## Completed
-- [x] Updated README.md to describe the new Dolphin-style sidebar with folder tree, Favorites, Recent folders, and Storage devices sections
-- [x] Added documentation for toggleable sidebar sections via Settings
+- [x] Added keyboard shortcuts for sidebar navigation and folder operations
+- [x] Documented mouse interactions for folder expansion and navigation
+- [x] Included all sidebar-specific keybindings in a dedicated section
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [ ] No active work in progress
 
 ## Blockers
-- None identified for this documentation update
+- None identified
 
 ## Next Steps
-1. Verify sidebar implementation matches documented features
-2. Consider adding visual documentation or screenshots if needed
+1. Verify documentation accuracy with actual implementation
+2. Consider adding visual examples of sidebar interactions
