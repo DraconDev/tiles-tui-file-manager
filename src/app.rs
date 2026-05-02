@@ -2,7 +2,7 @@ use ratatui::widgets::TableState;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
-use crate::config::{MAX_RECENT_FOLDERS, MAX_TABS, PREVIEW_MAX_MB};
+use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
 use dracon_terminal_engine::compositor::engine::TilePlacement;
 use dracon_terminal_engine::widgets::TextInput;
 
@@ -479,7 +479,6 @@ impl App {
 }
 
 const MAX_LOG_SIZE_BYTES: u64 = 5 * 1024 * 1024;
-const MAX_LOG_FILES: usize = 3;
 
 pub fn log_debug(msg: &str) {
     if !debug_logging_enabled() {
