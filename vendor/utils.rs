@@ -205,19 +205,6 @@ impl FileCategory {
             FileCategory::Other => Color::Rgb(255, 255, 255), // Pure White
         }
     }
-
-    pub fn label(&self) -> &'static str {
-        match self {
-            FileCategory::Archive => "[ARCH]",
-            FileCategory::Image => "[IMG]",
-            FileCategory::Script => "[SCRIPT]",
-            FileCategory::Text => "[TEXT]",
-            FileCategory::Document => "[DOC]",
-            FileCategory::Audio => "[AUDIO]",
-            FileCategory::Video => "[VIDEO]",
-            FileCategory::Other => "",
-        }
-    }
 }
 
 pub fn get_file_category(path: &std::path::Path) -> FileCategory {

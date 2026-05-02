@@ -841,6 +841,12 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
         let indent_str = "  ".repeat(depth as usize);
 
+        let category_label = if app.semantic_coloring && !is_dir {
+            cat.label()
+        } else {
+            ""
+        };
+
         let open_indicator = if !is_dir && open_files.contains(&path) {
             Some(Span::styled(
                 " ●",
@@ -857,6 +863,12 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             ];
             if let Some(ind) = open_indicator {
                 spans.push(ind);
+            }
+            if !category_label.is_empty() {
+                spans.push(Span::styled(
+                    category_label,
+                    Style::default().fg(cat.cyber_color()),
+                ));
             }
             spans.push(Span::raw(name));
             spans

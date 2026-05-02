@@ -9,6 +9,25 @@ use dracon_terminal_engine::widgets::TextEditor;
 pub use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
 pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, SelectionState};
 
+pub trait FileCategoryExt {
+    fn label(&self) -> &'static str;
+}
+
+impl FileCategoryExt for FileCategory {
+    fn label(&self) -> &'static str {
+        match self {
+            FileCategory::Archive => "[ARCH]",
+            FileCategory::Image => "[IMG]",
+            FileCategory::Script => "[SCRIPT]",
+            FileCategory::Text => "[TEXT]",
+            FileCategory::Document => "[DOC]",
+            FileCategory::Audio => "[AUDIO]",
+            FileCategory::Video => "[VIDEO]",
+            FileCategory::Other => "",
+        }
+    }
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum AppEvent {
