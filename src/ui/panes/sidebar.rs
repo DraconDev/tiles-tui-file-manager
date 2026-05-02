@@ -136,6 +136,11 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
                 collect_tree_items(&base_path, 0, app, &mut tree_items);
 
+                let current_folder_path = app.current_file_state().map(|fs| fs.current_path.clone());
+                let is_current_folder = |path: &PathBuf| {
+                    current_folder_path.as_ref().map(|c| c == path).unwrap_or(false)
+                };
+
                 for (path, depth) in tree_items {
                     let is_dir = path.is_dir();
                     let name = path

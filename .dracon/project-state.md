@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added Dolphin-style auto-expansion for sidebar tree to ensure current folder visibility
+Added visual distinction for the current folder in the sidebar tree.
 
 ## Context
-To improve navigation in the sidebar, we need to ensure the current folder is always visible in the tree view. This matches Dolphin's behavior where the tree automatically expands to show the current path.
+To improve user orientation, the sidebar now highlights the currently selected folder in the tree view.
 
 ## Completed
-- [x] Added tracking for last current path to detect changes
-- [x] Implemented auto-expansion of ancestor folders when current path changes
-- [x] Preserved manual collapse state by only expanding folders not already collapsed
+- [x] Added current folder tracking by comparing paths with the active file state
+- [x] Implemented visual distinction for the current folder in the tree view
 
 ## In Progress
-- [ ] Testing edge cases with different path structures
+- [x] Folder highlighting logic is now active
 
 ## Blockers
-- None identified
+- None identified in this change
 
 ## Next Steps
-1. Verify behavior with deeply nested paths
-2. Add visual indicators for expanded/collapsed states
+1. Verify visual consistency with other UI elements
+2. Test with nested folder structures to ensure proper highlighting
