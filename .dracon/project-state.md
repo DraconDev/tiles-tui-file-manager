@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Refactored image preview rendering in UI module
+Refactored error handling in code highlighting to prevent panics on syntax errors
 
 ## Context
-Improved UI layout calculation with bounds checking, particularly for image previews. This change was prompted by the need for more robust handling of image dimensions and display constraints.
+The code highlighting function previously panicked when syntax highlighting failed. This change ensures graceful fallback to default styling when highlighting fails.
 
 ## Completed
-- [x] Refactored image preview rendering to use pattern matching instead of manual unwrapping
-- [x] Improved code clarity by eliminating nested if statements
+- [x] Changed `unwrap()` to `unwrap_or_default()` in `highlight_code` to handle syntax errors gracefully
 
 ## In Progress
-- [x] No active work in progress for this change
+- [ ] None
 
 ## Blockers
-- None identified for this specific change
+- None
 
 ## Next Steps
-1. Verify the refactored code maintains the same visual output
-2. Ensure the bounds checking logic properly handles edge cases in image dimensions
+1. Verify no visual regressions in code display
+2. Add unit tests for error cases in syntax highlighting
