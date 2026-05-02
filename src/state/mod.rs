@@ -1,3 +1,4 @@
+use crate::config::MAX_TABS;
 use dracon_terminal_engine::contracts::UiEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -468,7 +469,6 @@ impl Pane {
         self.tabs.get_mut(self.active_tab_index)
     }
     pub fn open_tab(&mut self, fs: FileState) {
-        const MAX_TABS: usize = 8;
         if self.tabs.len() >= MAX_TABS {
             return;
         }

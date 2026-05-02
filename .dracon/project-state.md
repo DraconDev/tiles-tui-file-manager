@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored file tree depth configuration to use a centralized constant.
+Refactored configuration constants to centralized locations for better maintainability.
 
 ## Context
-The change replaces a hardcoded maximum depth value (10) with a configurable constant (`MAX_TREE_DEPTH`). This improves maintainability by centralizing configuration values that may need adjustment across the codebase.
+This change moves hardcoded constants (like `MAX_RECENT_FOLDERS`, `PREVIEW_MAX_MB`, and `MAX_TABS`) to a centralized configuration module, making them easier to manage and modify across the application.
 
 ## Completed
-- [x] Replaced hardcoded depth value with `MAX_TREE_DEPTH` constant
+- [x] Moved `MAX_RECENT_FOLDERS` and `PREVIEW_MAX_MB` from `app.rs` to centralized config
+- [x] Moved `MAX_TABS` from `state/mod.rs` to centralized config
+- [x] Updated all references to use the centralized constants
 
 ## In Progress
-- [x] None (single-line change)
+- [ ] No active work in progress
 
 ## Blockers
-- None (configuration constant is already defined elsewhere)
+- None identified
 
 ## Next Steps
-1. Verify no other hardcoded depth values exist that should be updated
-2. Ensure `MAX_TREE_DEPTH` is properly documented in configuration constants
+1. Verify all references to these constants are properly updated
+2. Consider adding validation for these configuration values

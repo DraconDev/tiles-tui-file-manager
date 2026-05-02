@@ -2,6 +2,7 @@ use ratatui::widgets::TableState;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
+use crate::config::{MAX_HISTORY, MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
 use dracon_terminal_engine::compositor::engine::TilePlacement;
 use dracon_terminal_engine::widgets::TextInput;
 
@@ -226,7 +227,7 @@ impl App {
             semantic_coloring: true,
             auto_save: true,
             default_show_hidden: false,
-            preview_max_mb: 20,
+            preview_max_mb: PREVIEW_MAX_MB,
             single_columns: vec![
                 FileColumn::Name,
                 FileColumn::Size,
@@ -293,9 +294,8 @@ impl App {
         // Trust that paths coming from navigation are valid directories.
         self.recent_folders.retain(|p| p != &path);
         self.recent_folders.insert(0, path);
-        const MAX_RECENT: usize = 10;
-        if self.recent_folders.len() > MAX_RECENT {
-            self.recent_folders.truncate(MAX_RECENT);
+        if self.recent_folders.len() > MAX_RECENT_FOLDERS {
+            self.recent_folders.truncate(MAX_RECENT_FOLDERS);
         }
     }
 
