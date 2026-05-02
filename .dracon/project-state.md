@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Added sidebar scope indicators to the UI to visually distinguish between different view modes.
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-The sidebar now needs to clearly show which scope is active (All, Favorites, Remotes, or Tree) to improve user understanding of the current view context.
+The Cargo.lock file was modified to update dependency versions, likely triggered by recent refactoring work in the project. This is part of the ongoing dependency management process.
 
 ## Completed
-- [x] Added scope label display in sidebar title
-- [x] Implemented visual distinction between different sidebar scopes
+- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## In Progress
-- [ ] None
+- [ ] Dependency resolution for `dracon-files` package (blocked by failed manifest load)
 
 ## Blockers
-- None
+- Failed to load manifest for dependency `dracon-files`
 
 ## Next Steps
-1. Verify scope indicators are visible and clear in all themes
-2. Consider adding scope-specific styling to further differentiate views
+1. Investigate and resolve the manifest loading failure for `dracon-files`
+2. Verify all dependencies are properly resolved in Cargo.lock
