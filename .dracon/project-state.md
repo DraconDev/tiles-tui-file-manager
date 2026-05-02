@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed pane area tracking from file state and UI rendering
+Refactored file list row calculation to use a named constant for the file list start position.
 
 ## Context
-This change eliminates redundant pane area calculations that were previously used for mouse event handling in the file manager. The calculations were determining which pane a mouse click occurred in, but this information wasn't being used in the final implementation.
+This change improves code maintainability by replacing the magic number `3` with a named constant `FILE_LIST_START_ROW`. The value represents the starting row for the file list in the UI, accounting for header icons and breadcrumbs.
 
 ## Completed
-- [x] Removed unused pane area calculation code
-- [x] Simplified mouse event handling logic
+- [x] Replaced magic number `3` with named constant `FILE_LIST_START_ROW`
+- [x] Updated row calculation to use the new constant
 
 ## In Progress
-- [ ] None
+- [ ] None (this is a complete refactoring)
 
 ## Blockers
-- None
+- None (this is a simple refactoring with no dependencies)
 
 ## Next Steps
-1. Verify no regression in file manager mouse interactions
-2. Consider if any other unused code can be removed from the file manager
+1. Review other instances of similar magic numbers in the codebase
+2. Consider adding documentation for the new constant
