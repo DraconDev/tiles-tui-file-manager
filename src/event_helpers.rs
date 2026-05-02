@@ -554,8 +554,8 @@ pub fn handle_context_menu_action(
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
                         }
                         crate::app::ClipboardOp::Cut => {
-                            let result = event_tx.try_send(AppEvent::Rename(src, dest));
-                            if result.is_ok() {
+                            let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
+                            if result {
                                 app.clipboard = None;
                             }
                         }

@@ -69,12 +69,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 Ok(events) => {
                     for event in events {
                         crate::app::log_debug(&format!("File watch event: {:?}", event));
-                        let _ = tx_clone.try_send(AppEvent::FilesChangedOnDisk(event.path));
+                        let _ = crate::app::try_send_event(&tx_clone, AppEvent::FilesChangedOnDisk(event.path));
                     }
                 }
                 Err(e) => {
                     crate::app::log_debug(&format!("File watch error: {:?}", e));
-                    let _ = tx_clone.try_send(AppEvent::StatusMsg(format!(
+                    let _ = crate::app::try_send_event(&tx_clone, AppEvent::StatusMsg(format!(
                         "File watch error: {}",
                         e
                     )));
@@ -283,7 +283,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     if let Some(remote) = remote_opt {
                         let tx = event_tx.clone();
                         let p_idx = pane_idx;
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Connecting to {} ({})...",
                             remote.name, remote.host
                         )));
@@ -319,7 +319,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
                             fs.current_path = PathBuf::from("/");
-                            let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                         }
                     }
                     needs_draw = true;
@@ -408,7 +408,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
                     drop(app_guard);
                     for (p_idx, p_path) in needs_reload {
-                        let _ = event_tx.try_send(AppEvent::PreviewRequested(p_idx, p_path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(p_idx, p_path));
                     }
                     needs_draw = true;
                 }
@@ -671,8 +671,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let _ = std::fs::File::create(&path);
                     }
                     let focused_pane = app.lock().focused_pane_index;
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(focused_pane));
-                    let _ = event_tx.try_send(AppEvent::PreviewRequested(focused_pane, path));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused_pane));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(focused_pane, path));
                 }
                 AppEvent::CreateFolder(path) => {
                     let remote = {
@@ -686,7 +686,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     } else {
                         let _ = std::fs::create_dir_all(&path);
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                         app.lock().focused_pane_index,
                     ));
                 }
@@ -735,13 +735,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     };
                     let focused = app.lock().focused_pane_index;
                     if let Err(e) = result {
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Delete failed: {} - {}",
                             path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
                             e
                         )));
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(focused));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
                 }
                 AppEvent::TrashFile(path) => {
                     let remote = {
@@ -753,19 +753,19 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let focused = app.lock().focused_pane_index;
                     if remote.is_some() {
                         // Remote files: fall back to permanent delete since trash doesn't work remotely
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                             "Remote files cannot be trashed. Use Delete for permanent removal.".to_string()
                         ));
                     } else {
                         match trash::delete(&path) {
                             Ok(_) => {
-                                let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Trashed: {}",
                                     path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
                                 )));
                             }
                             Err(e) => {
-                                let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Trash failed: {} - {}",
                                     path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
                                     e
@@ -773,7 +773,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
                         }
                     }
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(focused));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
                 }
                 AppEvent::Copy(src, dest) => {
                     let tx = event_tx.clone();
@@ -782,7 +782,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let task_id = uuid::Uuid::new_v4();
 
                     // Announce start
-                    let _ = event_tx.try_send(AppEvent::TaskProgress(task_id, 0.0, format!("Copying {}...", src_name)));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::TaskProgress(task_id, 0.0, format!("Copying {}...", src_name)));
 
                     tokio::spawn(async move {
                         let remote = {
@@ -837,7 +837,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     if remote.is_some() {
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                             "Symlink is not supported for remote panes".to_string(),
                         ));
                         continue;
@@ -869,7 +869,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                     }
                                 }
                             }
-                            let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Linked {} -> {}",
                                 dest.display(),
                                 src.display()
@@ -981,7 +981,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let pane_idx = app_guard.focused_pane_index;
                     needs_draw = true;
                     drop(app_guard);
-                    let _ = event_tx.try_send(AppEvent::RefreshFiles(pane_idx));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                 }
                 AppEvent::Editor => {
                     let mut app_guard = app.lock();
@@ -998,7 +998,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     needs_draw = true;
                     drop(app_guard);
                     if let Some(path) = dir_path {
-                        let _ = event_tx.try_send(AppEvent::PreviewRequested(pane_idx, path));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(pane_idx, path));
                     }
                 }
                 AppEvent::StatusMsg(msg) => {
@@ -1017,7 +1017,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_else(|| path.display().to_string());
-                        let _ = event_tx.try_send(AppEvent::StatusMsg(format!(
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Added to favorites: {}",
                             display_name
                         )));
