@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Added configurable sidebar sections with toggleable visibility options
+Updated Cargo.lock to resolve dependency versions after recent refactoring
 
 ## Context
-This change enhances the sidebar functionality by allowing users to enable/disable individual sections (folders, favorites, recent, storage, remotes) through keyboard navigation in settings.
+This change was triggered by recent refactoring work in the sidebar components, which required dependency version updates to maintain compatibility.
 
 ## Completed
-- [x] Added toggle functionality for all sidebar sections (7-12)
-- [x] Updated settings index check to handle new section count
-- [x] Maintained state persistence for all sidebar configurations
+- [x] Updated Cargo.lock to resolve dependency versions after sidebar refactoring
 
 ## In Progress
-- [x] Configurable sidebar sections implementation
+- [x] No active work in progress - this is a dependency resolution update
 
 ## Blockers
-- None identified in this change
+- The project is currently blocked by a failed manifest load for dependency `dracon-files`
 
 ## Next Steps
-1. Verify all sidebar sections toggle correctly in UI
-2. Test state persistence across application restarts
+1. Investigate and resolve the manifest loading failure for `dracon-files`
+2. Continue with the planned `synth-1774826981` slice once dependencies are stable
