@@ -521,7 +521,7 @@ pub fn debug_logging_enabled() -> bool {
     })
 }
 
-use mpsc::Sender;
+use tokio::sync::mpsc::Sender;
 
 pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
     if tx.try_send(evt).is_err() {
