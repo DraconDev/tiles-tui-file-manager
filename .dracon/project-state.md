@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Added graceful shutdown handling for system module and tick loop in the TTY runtime.
+Updated Cargo.lock with a minor binary change (101925 → 101926 bytes)
 
 ## Context
-The previous implementation lacked proper shutdown handling, which could lead to resource leaks or unexpected behavior during application termination. This change ensures both the system module and tick loop respect the shutdown signal.
+This change was triggered by the ongoing event dispatch standardization work, which required dependency resolution updates. The small change in Cargo.lock indicates a version bump in one of the project's dependencies.
 
 ## Completed
-- [x] Added shutdown check in system module loop
-- [x] Added shutdown check in tick loop
-- [x] Properly cloned shutdown signal for each task
+- [x] Updated Cargo.lock to reflect dependency resolution changes
 
 ## In Progress
-- [ ] None (changes are complete)
+- [ ] Resolving the blocked slice `synth-1774826981` (failed to load manifest for `dracon-files`)
 
 ## Blockers
-- None (implementation is complete)
+- Missing manifest for dependency `dracon-files` in slice `synth-1774826981`
 
 ## Next Steps
-1. Verify shutdown behavior in integration tests
-2. Document shutdown sequence in architecture docs
+1. Investigate and resolve the missing manifest for `dracon-files`
+2. Complete the event dispatch standardization across all modules
