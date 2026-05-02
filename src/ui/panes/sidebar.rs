@@ -178,6 +178,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 y: area.y,
                 index: usize::MAX - 2,
                 target: SidebarTarget::Header("FAVORITES".to_string()),
+                ..Default::default()
             });
 
             // Render Starred Folders (Favorites - NO markers as requested)
@@ -224,6 +225,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                         y: current_y,
                         index: current_idx,
                         target: SidebarTarget::Favorite(path.clone()),
+                        ..Default::default()
                     });
                     current_y += 1;
                 }
@@ -285,6 +287,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                         y: current_y,
                         index: current_idx,
                         target: SidebarTarget::Favorite(path.clone()),
+                        ..Default::default()
                     });
                     current_y += 1;
                 }
