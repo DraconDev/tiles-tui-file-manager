@@ -1,21 +1,23 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar hidden file visibility to match focused pane's settings
+Persist sidebar hidden file visibility setting across sessions
 
 ## Context
-The sidebar previously used the global `default_show_hidden` setting, which didn't match the file pane's visibility state. This change ensures consistent behavior between panes.
+The sidebar's hidden file visibility setting was previously only applied to the current pane and not saved between sessions. This change ensures the setting persists by saving it to the application's default state and configuration.
 
 ## Completed
-- [x] Modified hidden file filtering to use focused pane's `show_hidden` state
-- [x] Added fallback to `default_show_hidden` when pane state isn't available
+- [x] Added persistence of hidden file visibility setting
+- [x] Updated default_show_hidden in App state when toggled
+- [x] Added automatic configuration save on toggle
 
 ## In Progress
-- [ ] None (change is complete)
+- [ ] No active work in progress
 
 ## Blockers
-- None (dependency `dracon-files` failed to load, but this change is independent)
+- None identified
 
 ## Next Steps
-1. Verify sidebar visibility matches file pane in all cases
-2. Consider adding a sidebar-specific visibility toggle if needed
+1. Verify persistence works across application restarts
+2. Consider adding UI feedback when hidden files are toggled
+```

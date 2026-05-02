@@ -409,6 +409,8 @@ pub fn handle_context_menu_action(
         ContextMenuAction::ToggleHidden => {
             if let Some(fs) = app.current_file_state_mut() {
                 fs.show_hidden = !fs.show_hidden;
+                app.default_show_hidden = fs.show_hidden;
+                crate::config::save_state_quiet(app);
                 let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
             }
         }

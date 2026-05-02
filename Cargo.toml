@@ -1,6 +1,6 @@
 [package]
 name = "tiles"
-version = "8.40.2"
+version = "8.41.0"
 edition = "2021"
 license-file = "LICENSE"
 
