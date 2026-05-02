@@ -182,7 +182,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Char('n') | KeyCode::Char('N') if has_control => {
                     if let Some(fs) = app.current_file_state() {
-                        let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                             path: fs.current_path.clone(),
                             new_tab: true,
                             remote: fs.remote_session.clone(),
@@ -193,7 +193,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Char('k') | KeyCode::Char('K') if has_control => {
                     if let Some(fs) = app.current_file_state() {
-                        let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                             path: fs.current_path.clone(),
                             new_tab: false,
                             remote: fs.remote_session.clone(),
@@ -208,7 +208,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             let new_fs = fs.clone();
                             pane.open_tab(new_fs);
                             let _ =
-                                event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                     }
                     return true;
@@ -330,7 +330,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
                                 }
                                 crate::app::ClipboardOp::Cut => {
-                                    let result = event_tx.try_send(AppEvent::Rename(src, dest));
+                                    let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
                                     if result.is_ok() {
                                         app.clipboard = None;
                                     }
@@ -605,7 +605,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                     if let Some((work_dir, program, args)) =
                                         crate::modules::files::get_run_command(path)
                                     {
-                                        let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                             path: work_dir,
                                             new_tab: true,
                                             remote: fs.remote_session.clone(),
@@ -643,7 +643,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                         if let Some((work_dir, program, args)) =
                                             crate::modules::files::get_run_command(path)
                                         {
-                                            let _ = event_tx.try_send(AppEvent::SpawnTerminal {
+                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                                 path: work_dir,
                                                 new_tab: true,
                                                 remote: fs.remote_session.clone(),
@@ -1078,7 +1078,7 @@ pub fn handle_file_mouse(
                                 }
                             }
                         } else {
-                            let _ = event_tx.try_send(AppEvent::PreviewRequested(
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
                                 if app.focused_pane_index == 0 { 1 } else { 0 },
                                 path,
                             ));
@@ -1323,7 +1323,7 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     let target_pane = app
                         .focused_pane_index
                         .min(app.panes.len().saturating_sub(1));
-                    let _ = event_tx.try_send(AppEvent::PreviewRequested(target_pane, path));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(target_pane, path));
                     app.save_current_view_prefs();
                     app.current_view = CurrentView::Editor;
                     app.load_view_prefs(CurrentView::Editor);
@@ -1362,7 +1362,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 }
                 SidebarTarget::Remote(idx) => {
                     let _ =
-                        event_tx.try_send(AppEvent::ConnectToRemote(app.focused_pane_index, idx));
+                        crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(app.focused_pane_index, idx));
                 }
                 SidebarTarget::Project(path) => {
                     if path.is_dir() {
@@ -1478,7 +1478,7 @@ fn handle_trash_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     }
                 }
                 for p in paths {
-                    let _ = event_tx.try_send(AppEvent::TrashFile(p));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::TrashFile(p));
                 }
             }
         }
@@ -1504,7 +1504,7 @@ fn handle_permanent_delete_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>)
                     }
                 }
                 for p in paths {
-                    let _ = event_tx.try_send(AppEvent::Delete(p));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(p));
                 }
             }
         }
