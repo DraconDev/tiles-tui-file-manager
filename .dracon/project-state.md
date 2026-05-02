@@ -1,15 +1,15 @@
 # Project State
 
 ## Current Focus
-Optimized file tree rendering performance in the editor sidebar by implementing caching with proper hash computation.
+Centralized configuration constants for editor behavior tuning
 
 ## Context
-The previous implementation had a race condition in the file filtering logic and inefficient hash computation for the editor sidebar cache key. This change addresses both issues to improve performance.
+To improve maintainability and consistency, we're moving all hardcoded constants from `main.rs` to a dedicated `config.rs` module. This change was prompted by the need to standardize configuration values across the application.
 
 ## Completed
-- [x] Refactored sidebar cache key computation to use a more efficient approach with proper hashing of expanded folders
-- [x] Fixed race condition in file filtering logic
-- [x] Improved performance of file tree rendering by implementing proper caching
+- [x] Moved all configuration constants to `config.rs`
+- [x] Added comprehensive documentation for each constant
+- [x] Removed duplicate constants from `main.rs`
 
 ## In Progress
 - [ ] No active work in progress
@@ -18,5 +18,5 @@ The previous implementation had a race condition in the file filtering logic and
 - None identified
 
 ## Next Steps
-1. Verify performance improvements in the editor sidebar
-2. Test edge cases for file filtering and caching
+1. Verify all references to configuration constants now use the centralized values
+2. Consider adding runtime configuration options for these constants

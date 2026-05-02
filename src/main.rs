@@ -13,10 +13,8 @@ use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBacken
 // Ratatui Imports
 use ratatui::Terminal;
 
-const FILE_WATCH_DEBOUNCE_MS: u64 = 200;
-const MPSC_CHANNEL_CAPACITY: usize = 1000;
-
 use crate::app::{App, AppEvent, CurrentView, PreviewState};
+use crate::config::{FILE_WATCH_DEBOUNCE_MS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use image::GenericImageView;
 mod app;
 mod config;

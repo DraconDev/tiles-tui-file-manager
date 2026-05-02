@@ -8,6 +8,27 @@ use parking_lot::Mutex;
 use std::time::{Duration, Instant};
 
 static LAST_SAVE: LazyLock<Mutex<Option<(Instant, String)>>> = LazyLock::new(|| Mutex::new(None));
+
+// === Tiles Configuration Constants ===
+// User-adjustable settings for behavior tuning
+
+/// Maximum number of tabs per pane
+pub const MAX_TABS: usize = 8;
+/// Maximum depth for tree expansion (sidebar and file pane)
+pub const MAX_TREE_DEPTH: u16 = 10;
+/// Maximum number of recent folders to remember
+pub const MAX_RECENT_FOLDERS: usize = 10;
+/// Maximum navigation history per tab
+pub const MAX_HISTORY: usize = 50;
+/// Debounce interval for file watch events (milliseconds)
+pub const FILE_WATCH_DEBOUNCE_MS: u64 = 200;
+/// Debounce interval for auto-save (milliseconds)
+pub const SAVE_DEBOUNCE_MS: u64 = 350;
+/// Maximum preview file size (megabytes)
+pub const PREVIEW_MAX_MB: u16 = 20;
+/// MPSC channel capacity for event queue
+pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
+
 const SAVE_DEBOUNCE_MS: u64 = 350;
 
 #[derive(Serialize, Deserialize, Clone)]
