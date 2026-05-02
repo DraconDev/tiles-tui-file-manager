@@ -1,24 +1,22 @@
 # Project State
 
 ## Current Focus
-Added Dolphin-style sidebar with folder tree navigation and configurable sections.
+Added folder expand/collapse functionality in Dolphin-style sidebar when Space key is pressed
 
 ## Context
-Improved file navigation and organization by implementing a sidebar similar to Dolphin file manager, with features like folder expansion, section toggles, and path display.
+This change enables users to toggle folder expansion in the sidebar by pressing Space, improving navigation in the Dolphin-style file manager interface.
 
 ## Completed
-- [x] Added Dolphin-style folder tree with expansion markers
-- [x] Implemented sidebar scrolling and section toggles
-- [x] Added current directory path display in sidebar title
-- [x] Fixed sidebar tree navigation and context menu behavior
-- [x] Removed dead code and simplified sidebar state management
+- [x] Added Space key handler for sidebar folder expansion
+- [x] Implemented folder expand/collapse toggle logic
+- [x] Added check for sidebar focus before handling Space key
 
 ## In Progress
-- [x] Sidebar implementation is complete with all requested features
+- [x] Folder expansion state management
 
 ## Blockers
-- None reported in this commit
+- Dependency resolution issue with `dracon-files` manifest
 
 ## Next Steps
-1. Verify sidebar behavior across different terminal sizes
-2. Test with deeply nested directory structures
+1. Resolve dependency issue with `dracon-files`
+2. Test folder expansion behavior with various file structures

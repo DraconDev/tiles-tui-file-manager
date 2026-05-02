@@ -1254,7 +1254,27 @@ pub fn handle_file_mouse(
     }
 }
 
-fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
+fn handle_space_key(app: &mut App, _event_tx: &mpsc::Sender<AppEvent>) {
+    // If sidebar is focused and selected item is a folder, toggle expand/collapse
+    if app.sidebar_focus {
+        if let Some(bound) = app
+            .sidebar_bounds
+            .iter()
+            .find(|b| b.index == app.sidebar_index)
+        {
+            if let SidebarTarget::Project(path) = &bound.target {
+                if path.is_dir() {
+                    if app.tree_expanded_folders.contains(path) {
+                        app.tree_expanded_folders.remove(path);
+                    } else {
+                        app.tree_expanded_folders.insert(path.clone());
+                    }
+                    return;
+                }
+            }
+        }
+    }
+
     if let Some(fs) = app.current_file_state_mut() {
         if fs.selection.selected.is_none() && !fs.files.is_empty() {
             fs.selection.selected = Some(0);
