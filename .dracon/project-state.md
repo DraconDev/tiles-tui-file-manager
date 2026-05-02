@@ -1,17 +1,15 @@
 # Project State
 
 ## Current Focus
-Added tab closing functionality and search reset in file manager
+Added debug logging rotation with size-based file management
 
 ## Context
-The changes enhance file management by allowing users to close tabs and reset search filters, improving workflow efficiency.
+The debug logging system needed improvement to prevent unbounded log file growth. The previous implementation could create very large log files, which could impact system performance and storage.
 
 ## Completed
-- [x] Added Ctrl+W shortcut to close file tabs in the Files view
-- [x] Implemented tab index adjustment when closing tabs
-- [x] Added status messages for tab closing operations
-- [x] Added '/' key to reset search filters and clear selection
-- [x] Updated Cargo.lock for dependency resolution
+- [x] Added log rotation when files exceed 5MB
+- [x] Implemented simple rotation scheme (debug.log → debug.log.1 → debug.log.2)
+- [x] Added constants for log size limits (5MB max size, 3 max files)
 
 ## In Progress
 - [ ] No active work in progress
@@ -20,5 +18,5 @@ The changes enhance file management by allowing users to close tabs and reset se
 - None identified
 
 ## Next Steps
-1. Verify tab closing behavior with multiple tabs open
-2. Test search reset functionality across different file views
+1. Verify log rotation works correctly in production
+2. Consider adding timestamp-based rotation for longer-term retention

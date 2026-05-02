@@ -2,7 +2,7 @@ use ratatui::widgets::TableState;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
-use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
+use crate::config::{MAX_RECENT_FOLDERS, MAX_TABS, PREVIEW_MAX_MB};
 use dracon_terminal_engine::compositor::engine::TilePlacement;
 use dracon_terminal_engine::widgets::TextInput;
 
@@ -478,6 +478,9 @@ impl App {
     }
 }
 
+const MAX_LOG_SIZE_BYTES: u64 = 5 * 1024 * 1024;
+const MAX_LOG_FILES: usize = 3;
+
 pub fn log_debug(msg: &str) {
     if !debug_logging_enabled() {
         return;
@@ -487,10 +490,18 @@ pub fn log_debug(msg: &str) {
     static LOG_FILE: std::sync::LazyLock<
         parking_lot::Mutex<Option<std::io::BufWriter<std::fs::File>>>,
     > = std::sync::LazyLock::new(|| {
+        let path = "debug.log";
+        if let Ok(meta) = std::fs::metadata(path) {
+            if meta.len() > MAX_LOG_SIZE_BYTES {
+                let _ = std::fs::rename(path, format!("debug.log.1"));
+                let _ = std::fs::remove_file("debug.log.2");
+                let _ = std::fs::rename("debug.log.1", "debug.log.2");
+            }
+        }
         let file = std::fs::OpenOptions::new()
             .append(true)
             .create(true)
-            .open("debug.log")
+            .open(path)
             .ok();
         parking_lot::Mutex::new(file.map(std::io::BufWriter::new))
     });
