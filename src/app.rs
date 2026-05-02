@@ -171,7 +171,6 @@ impl App {
             system_state,
             sidebar_focus: false,
             sidebar_index: 0,
-            sidebar_scope: SidebarScope::All,
             starred: vec![
                 dirs::home_dir(),
                 dirs::desktop_dir(),
