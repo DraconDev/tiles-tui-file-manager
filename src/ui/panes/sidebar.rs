@@ -115,11 +115,8 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 current_y += 1;
 
                 // Collect and render folder tree
-                let base_path = if let Some(fs) = app.current_file_state() {
-                    fs.current_path.clone()
-                } else {
-                    dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"))
-                };
+                // Tree is always rooted at home (Dolphin-style) regardless of current pane path
+                let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
 
                 let mut tree_items: Vec<(PathBuf, u16)> = Vec::new();
                 collect_tree_items(&base_path, 0, app, &mut tree_items);
