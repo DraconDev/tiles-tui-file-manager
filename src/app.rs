@@ -51,6 +51,7 @@ pub struct App {
     pub show_main_stage: bool,
     pub sidebar_width_percent: u16,
     pub sidebar_bounds: Vec<SidebarBounds>,
+    pub sidebar_scroll_offset: usize,
     pub drag_start_pos: Option<(u16, u16)>,
     pub drag_source: Option<PathBuf>,
     pub is_dragging: bool,

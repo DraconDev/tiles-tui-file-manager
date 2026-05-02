@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Updated Cargo.lock to resolve dependency versions after recent refactoring
+Added scroll offset tracking for sidebar navigation
 
 ## Context
-This change was triggered by the refactoring of sidebar imports and the tree-based sidebar view, which required dependency resolution updates.
+This change enables persistent scroll position tracking in the sidebar, which is necessary for maintaining visual context when navigating large directory structures.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions after recent refactoring
+- [x] Added `sidebar_scroll_offset` field to track scroll position
+- [x] Prepared infrastructure for scroll position persistence
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Implement actual scroll position restoration logic
 
 ## Blockers
-- The project is currently in planning phase with execution disabled
-- The slice `synth-1774826981` is blocked due to failed manifest loading for dependency `dracon-files`
+- Need to determine how scroll position should be restored (e.g., on folder change or app restart)
 
 ## Next Steps
-1. Resolve the dependency issue for `dracon-files`
-2. Enable execution once dependencies are resolved
+1. Implement scroll position restoration logic
+2. Add tests for scroll position persistence
+```
