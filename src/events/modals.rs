@@ -1305,7 +1305,14 @@ fn handle_settings_keys(
             match app.settings_section {
                 SettingsSection::General => {
                     match app.settings_index {
-                        0 => app.default_show_hidden = !app.default_show_hidden,
+                        0 => {
+                            app.default_show_hidden = !app.default_show_hidden;
+                            // Sync focused tab's show_hidden to match global setting
+                            if let Some(fs) = app.current_file_state_mut() {
+                                fs.show_hidden = app.default_show_hidden;
+                            }
+                            let _ = event_tx.try_send(AppEvent::RefreshFiles(app.focused_pane_index));
+                        }
                         1 => app.confirm_delete = !app.confirm_delete,
                         2 => app.smart_date = !app.smart_date,
                         3 => app.semantic_coloring = !app.semantic_coloring,

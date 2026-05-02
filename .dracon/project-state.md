@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Persist sidebar hidden file visibility setting across sessions
+Improved sidebar hidden file visibility synchronization across panes
 
 ## Context
-The sidebar's hidden file visibility state was not being saved between sessions, causing inconsistency when toggling hidden files. This change ensures the setting matches the currently focused pane's state and persists it to the configuration.
+The change ensures that when the global "show hidden files" setting is toggled, the focused pane's visibility state is updated to match, and the file list is refreshed to reflect this change.
 
 ## Completed
-- [x] Save hidden file visibility state when toggling with Ctrl+Backspace
-- [x] Update default_show_hidden to match focused pane's state
-- [x] Persist the setting to configuration
+- [x] Synchronized focused pane's `show_hidden` state with global setting
+- [x] Added file list refresh after visibility toggle
+- [x] Maintained consistent behavior across all panes
 
 ## In Progress
-- [x] Implementation complete
+- [ ] No active work in progress
 
 ## Blockers
-- None
+- None identified
 
 ## Next Steps
-1. Verify persistence works across sessions
-2. Consider adding UI feedback for the setting change
+1. Verify synchronization works across multiple panes
+2. Test edge cases with hidden files in different directories
