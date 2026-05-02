@@ -159,17 +159,20 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
 
                     let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.icon_mode);
                     let indent_str = "  ".repeat(depth as usize);
+                    let marker_w = if is_dir { 2 } else { 0 };
+                    let icon_w: usize = icon.chars().map(get_visual_width).sum();
+                    let arrow_end_x = inner.x + 1 + (depth as u16 * 2) + marker_w as u16 + icon_w as u16;
                     let line = Line::from(vec![
                         Span::raw(format!("{}{}", indent_str, marker)),
                         Span::raw(format!("{}{}", icon, name)),
                     ]);
                     sidebar_items.push(ListItem::new(line).style(style));
-app.sidebar_bounds.push(SidebarBounds {
-            y: current_y,
-            index: current_idx,
-            target: SidebarTarget::Project(path.clone()),
-            ..Default::default()
-        });
+                    app.sidebar_bounds.push(SidebarBounds {
+                        y: current_y,
+                        index: current_idx,
+                        target: SidebarTarget::Project(path.clone()),
+                        arrow_end_x,
+                    });
                     current_y += 1;
                 }
             }

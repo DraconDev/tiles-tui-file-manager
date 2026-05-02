@@ -1,22 +1,24 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar title display to show current file path or default to "Files"
+Improved sidebar folder tree rendering with precise arrow positioning for better visual hierarchy
 
 ## Context
-The sidebar was previously hardcoded to display "FAVORITES" in its title. This change makes the title dynamic, showing the current file path when available, improving user context.
+The sidebar rendering needed to accurately calculate the end position of folder arrows to match Dolphin-style navigation indicators. This required precise measurement of indentation, markers, and icons to ensure proper alignment.
 
 ## Completed
-- [x] Removed hardcoded "FAVORITES" title
-- [x] Added dynamic title that shows current file path or defaults to "Files"
-- [x] Simplified title styling by removing alignment and icon formatting
+- [x] Added precise arrow positioning calculation with `arrow_end_x` field
+- [x] Improved folder tree rendering accuracy by accounting for:
+  - Directory markers (2 characters)
+  - Icon widths (variable character widths)
+  - Indentation depth
 
 ## In Progress
-- [ ] None
+- [ ] Testing visual consistency across different file types and depths
 
 ## Blockers
-- None
+- Visual verification needed for edge cases (very deep nesting, long filenames)
 
 ## Next Steps
-1. Verify dynamic title updates correctly when files are opened/closed
-2. Test edge cases (empty path, very long paths)
+1. Verify visual consistency with various file structures
+2. Add configuration option for arrow visibility
