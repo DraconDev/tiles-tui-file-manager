@@ -859,21 +859,27 @@ pub fn get_open_with_suggestions(_app: &App, ext: &str) -> Vec<String> {
 }
 
 pub fn navigate_up(app: &mut App) {
+    let (old_folder, old_idx, old_scroll, new_path) = {
+        let fs = match app.current_file_state_mut() {
+            Some(fs) => fs,
+            None => return,
+        };
+        let parent = match fs.current_path.parent() {
+            Some(p) => p,
+            None => return,
+        };
+        let old_folder = fs.current_path.clone();
+        let old_idx = fs.selection.selected.unwrap_or(0);
+        let old_scroll = fs.table_state.offset();
+        let new_path = parent.to_path_buf();
+        (old_folder, old_idx, old_scroll, new_path)
+    };
+    app.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
     if let Some(fs) = app.current_file_state_mut() {
-        if let Some(parent) = fs.current_path.parent() {
-            let old_folder = fs.current_path.clone();
-            let old_idx = fs.selection.selected.unwrap_or(0);
-            let old_scroll = fs.table_state.offset();
-            let new_path = parent.to_path_buf();
-            drop(fs);
-            app.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
-            if let Some(fs) = app.current_file_state_mut() {
-                fs.current_path = new_path.clone();
-                fs.pending_select_path = Some(old_folder);
-                fs.git_cache_until = None;
-                push_history(fs, new_path);
-            }
-        }
+        fs.current_path = new_path.clone();
+        fs.pending_select_path = Some(old_folder);
+        fs.git_cache_until = None;
+        push_history(fs, new_path);
     }
 }
 

@@ -1,20 +1,23 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101925 bytes)
+Improved folder navigation state persistence by refactoring path handling and selection tracking
 
 ## Context
-This change was triggered by the ongoing folder navigation state persistence improvements and refactoring work. The Cargo.lock file was updated as part of the dependency management process during these changes.
+The changes address inconsistent handling of folder navigation state during directory traversal, particularly around path cloning and selection preservation.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect current dependency versions
+- [x] Refactored `navigate_up` to extract path-related state before modifying it
+- [x] Improved path handling by cloning paths before modification
+- [x] Enhanced selection tracking by storing both index and scroll position
+- [x] Simplified state management by removing redundant file state checks
 
 ## In Progress
-- [x] Folder navigation state persistence improvements
+- [x] Refactoring of folder navigation state persistence
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in slice `synth-1774826981`
+- None identified in this change
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue with folder navigation state persistence improvements
+1. Verify consistent state preservation during directory navigation
+2. Test edge cases with deeply nested directory structures
