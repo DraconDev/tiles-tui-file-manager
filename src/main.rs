@@ -209,7 +209,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 let data = tokio::task::spawn_blocking(|| sys_mod.get_data())
                     .await
                     .ok()
-                    .flatten();
+                    .and_then(|r| r.ok());
                 if let Ok(data) = data {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
