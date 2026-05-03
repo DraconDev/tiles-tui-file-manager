@@ -98,5 +98,5 @@ pub fn handle_git_mouse(
             }
         }
     }
-    true // Trap clicks
+    false // Don't trap - event not handled
 }
