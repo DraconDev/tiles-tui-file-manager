@@ -1112,7 +1112,7 @@ pub fn handle_file_mouse(
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         } else {
-                            let _ = open_file_or_navigate(path);
+                            let _ = open_file_or_navigate(&path);
                         }
                     }
                     app.mouse_last_click = std::time::Instant::now();
