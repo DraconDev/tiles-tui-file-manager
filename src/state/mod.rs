@@ -538,6 +538,80 @@ pub enum MonitorSubview {
     Applications,
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clamped_scroll_returns_zero_for_empty_files() {
+        let mut fs = FileState::new(
+            PathBuf::from("/test"),
+            None,
+            false,
+            vec![FileColumn::Name],
+            FileColumn::Name,
+            true,
+        );
+        fs.files = vec![];
+        fs.view_height = 20;
+
+        assert_eq!(fs.clamped_scroll(0), 0);
+        assert_eq!(fs.clamped_scroll(100), 0);
+    }
+
+    #[test]
+    fn clamped_scroll_returns_min_of_scroll_and_max() {
+        let mut fs = FileState::new(
+            PathBuf::from("/test"),
+            None,
+            false,
+            vec![FileColumn::Name],
+            FileColumn::Name,
+            true,
+        );
+        fs.files = vec![PathBuf::from("a"), PathBuf::from("b"), PathBuf::from("c")];
+        fs.view_height = 10;
+
+        assert_eq!(fs.clamped_scroll(0), 0);
+        assert_eq!(fs.clamped_scroll(1), 0);
+    }
+
+    #[test]
+    fn clamped_scroll_handles_view_height_larger_than_files() {
+        let mut fs = FileState::new(
+            PathBuf::from("/test"),
+            None,
+            false,
+            vec![FileColumn::Name],
+            FileColumn::Name,
+            true,
+        );
+        fs.files = vec![PathBuf::from("a"), PathBuf::from("b")];
+        fs.view_height = 100;
+
+        assert_eq!(fs.clamped_scroll(0), 0);
+        assert_eq!(fs.clamped_scroll(50), 0);
+    }
+
+    #[test]
+    fn clamped_scroll_clamps_large_scroll_values() {
+        let mut fs = FileState::new(
+            PathBuf::from("/test"),
+            None,
+            false,
+            vec![FileColumn::Name],
+            FileColumn::Name,
+            true,
+        );
+        fs.files = vec![PathBuf::from("a"); 20];
+        fs.view_height = 10;
+
+        let max = fs.files.len().saturating_sub(fs.view_height.saturating_sub(3));
+        assert_eq!(fs.clamped_scroll(100), max);
+        assert_eq!(fs.clamped_scroll(max), max);
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum ProcessColumn {
     Pid,

@@ -1,15 +1,16 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by renaming and refactoring folder selection tracking
+Added comprehensive test coverage for scroll position validation in file navigation
 
 ## Context
-The code was refactoring folder navigation state management to better track and restore both selection and scroll positions when navigating between folders.
+The changes address potential out-of-bounds scroll positions in file navigation, which could cause display issues or crashes when navigating directories with varying numbers of files.
 
 ## Completed
-- [x] Renamed `folder_selections` to `folder_memory` in App struct to better reflect its purpose
-- [x] Updated all references to the renamed field
-- [x] Maintained consistent behavior for tracking and restoring folder state
+- [x] Added test for empty files case
+- [x] Added test for scroll clamping with small file counts
+- [x] Added test for view height larger than file count
+- [x] Added test for clamping large scroll values
 
 ## In Progress
 - [ ] No active work in progress
@@ -18,5 +19,5 @@ The code was refactoring folder navigation state management to better track and 
 - None identified
 
 ## Next Steps
-1. Verify no regression in folder navigation behavior
-2. Consider adding more comprehensive state persistence if needed
+1. Verify test coverage with additional edge cases
+2. Consider adding integration tests for scroll behavior
