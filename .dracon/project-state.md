@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101926 bytes)
+Improved folder navigation state persistence by cloning the path before insertion
 
 ## Context
-This is a routine dependency update triggered by the project's build system. The change reflects a small adjustment in the dependency resolution process, likely due to version pinning or metadata updates in the dependency graph.
+The change was made to prevent potential ownership issues when storing folder navigation state. The original code passed a reference to `old_folder` directly into the `folder_selections` map, which could lead to dangling references if the path was modified elsewhere.
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency resolution
+- [x] Fixed potential ownership issue by cloning the path before insertion
 
 ## In Progress
-- [ ] None (this is a maintenance update)
+- [x] No active work in progress
 
 ## Blockers
-- None (this is a non-functional change)
+- None identified
 
 ## Next Steps
-1. Verify build passes with updated dependencies
-2. Continue with current development focus (synth-1774826981)
+1. Verify no regression in folder navigation behavior
+2. Consider additional state persistence improvements if needed
