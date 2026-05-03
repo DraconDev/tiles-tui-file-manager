@@ -518,8 +518,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                     format!("<Binary file: {} MB>", size_mb)
                                 }
                             } else {
-                                std::fs::read_to_string(&path)
-                                    .unwrap_or_else(|e| format!("Error reading file: {}", e))
+                                std::fs::read_to_string(&path).unwrap_or_else(|e| format!("<Error reading file: {}>", e))
                             }
                         };
 
@@ -613,7 +612,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let save_res = if let Some(remote) = &remote_for_save {
                         crate::modules::remote::write_string(remote, &path, &content)
                     } else {
-                        std::fs::write(&path, &content)
+                        let tmp_path = path.with_extension(format!("{}.tmp", std::process::id()));
+                        let res = std::fs::write(&tmp_path, &content).and_then(|_| std::fs::rename(&tmp_path, &path));
+                        if res.is_err() {
+                            let _ = std::fs::remove_file(&tmp_path);
+                        }
+                        res
                     };
 
                     match save_res {
