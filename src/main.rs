@@ -363,15 +363,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::FilesChangedOnDisk(path) => {
                     crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
                     
-                    // Check if this was a self-save by comparing file mtime
-                    if let Some(&saved_mtime) = last_self_save.get(&path) {
+                    // Check if this was a self-save by comparing file mtime and size
+                    if let Some((saved_mtime, saved_size)) = last_self_save.get(&path) {
                         if let Ok(meta) = std::fs::metadata(&path) {
-                            if let Ok(mtime) = meta.modified() {
-                                if mtime == saved_mtime {
+                            if let (Ok(mtime), Ok(size)) = (meta.modified(), meta.len().try_into()) {
+                                if mtime == *saved_mtime && size == *saved_size {
                                     last_self_save.remove(&path);
                                     continue; // Skip refreshing/reloading for our own saves
                                 }
-                                // Mtime mismatch means external modification - KEEP tracking
+                                // Mtime or size mismatch means external modification - KEEP tracking
                                 // so we can detect subsequent saves
                             }
                         }
@@ -620,11 +620,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         Ok(_) => {
                             if remote_for_save.is_none() {
                                 if let Ok(meta) = std::fs::metadata(&path) {
-                                    if let Ok(mtime) = meta.modified() {
+                                    if let (Ok(mtime), Ok(size)) = (meta.modified(), meta.len().try_into()) {
                                         if last_self_save.len() > 100 {
                                             last_self_save.clear();
                                         }
-                                        last_self_save.insert(path.clone(), mtime);
+                                        last_self_save.insert(path.clone(), (mtime, size));
                                     }
                                 }
                             }
