@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by tracking both selection path and scroll position
+Improved folder navigation state persistence by tracking both selection and scroll position
 
 ## Context
-This change enhances the folder navigation system by preserving both the selected path and scroll position during navigation, ensuring a smoother user experience when moving between directories.
+This change addresses a Rust borrow conflict that occurred when trying to restore scroll position during folder navigation. The previous implementation couldn't maintain both mutable and immutable borrows simultaneously.
 
 ## Completed
-- [x] Updated `FileState` to store both path and scroll position in `pending_select_path`
-- [x] Modified navigation logic to maintain scroll position during folder transitions
+- [x] Fixed borrow conflict by restructuring pending selection handling
+- [x] Added scroll position restoration alongside path selection
+- [x] Updated file_manager.rs to include scroll position in pending selection tuple
 
 ## In Progress
-- [ ] No active work in progress
+- [x] Verification of scroll position persistence across navigation operations
 
 ## Blockers
-- None identified
+- None identified in this change
 
 ## Next Steps
-1. Verify the new state persistence works correctly in UI tests
-2. Consider adding integration tests for complex navigation scenarios
+1. Verify scroll position restoration works correctly in UI
+2. Test edge cases like rapid navigation or large directory listings
