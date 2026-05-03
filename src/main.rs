@@ -1280,7 +1280,8 @@ paired = new_paired;
                                 {
                                     fs.selection.selected = Some(idx);
                                     fs.table_state.select(Some(idx));
-                                    *fs.table_state.offset_mut() = pending_scroll;
+                                    let max_scroll = fs.files.len().saturating_sub(fs.view_height.saturating_sub(3));
+                                    *fs.table_state.offset_mut() = pending_scroll.min(max_scroll);
                                 }
                             }
                         }
