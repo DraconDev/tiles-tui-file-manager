@@ -609,7 +609,6 @@ fn handle_text_editor_mouse(
     // Auto-save on modification
     if auto_save && editor.modified {
         let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
-        editor.modified = false;
     }
 
     true
@@ -724,7 +723,6 @@ fn handle_generic_editor_shortcuts(
             if auto_save {
                 let _ =
                     crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
-                editor.modified = false;
             }
         }
         return true;
