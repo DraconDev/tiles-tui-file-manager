@@ -1380,11 +1380,11 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         horizontal: 1,
         vertical: 0,
     });
-    let rx = app.system_state.net_in_history.last().cloned().unwrap_or(0);
+    let rx = app.system_state.net_in_history.back().cloned().unwrap_or(0);
     let tx = app
         .system_state
         .net_out_history
-        .last()
+        .back()
         .cloned()
         .unwrap_or(0);
 

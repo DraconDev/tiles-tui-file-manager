@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Added `VecDeque` import for system monitoring history storage refactoring
+Refactored network monitoring history access to use `VecDeque::back()` for consistent API
 
 ## Context
-This change prepares for refactoring system monitoring history storage to use a bounded collection (likely `VecDeque`) as part of ongoing work to improve system monitoring functionality.
+The change aligns with recent work to standardize system monitoring history storage using bounded collections. The `VecDeque` type was introduced in previous commits to replace `Vec` for better performance characteristics.
 
 ## Completed
-- [x] Added `VecDeque` import for future bounded collection usage
+- [x] Replaced `last()` with `back()` for network input/output history access
+- [x] Maintained same functionality while using more idiomatic `VecDeque` API
 
 ## In Progress
-- [ ] Refactoring system monitoring history storage to use bounded collection
+- [ ] No active work in progress
 
 ## Blockers
-- Current runtime progress shows dependency `dracon-files` manifest loading failure
+- None identified
 
 ## Next Steps
-1. Complete system monitoring history storage refactoring using `VecDeque`
-2. Address `dracon-files` dependency issue to enable runtime execution
+1. Verify no runtime behavior changes occurred
+2. Continue monitoring history storage refactoring efforts
