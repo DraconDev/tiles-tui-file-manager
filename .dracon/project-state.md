@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101925 bytes)
+Improved scroll position validation in file navigation to prevent out-of-bounds restoration
 
 ## Context
-This is an automated dependency update triggered by the project's build system. The change maintains the same file size, indicating a version bump without significant content changes.
+The previous scroll position restoration could set an offset beyond the valid range when files changed, causing display issues. This change centralizes the scroll clamping logic to ensure consistent behavior.
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency versions
+- [x] Added `clamped_scroll` method to `FileState` to validate scroll positions
+- [x] Replaced manual scroll clamping in `file_manager.rs` with the new method
+- [x] Replaced manual scroll clamping in `main.rs` with the new method
 
 ## In Progress
-- [ ] None (automated update)
+- [ ] No active work in progress
 
 ## Blockers
-- None (automated process)
+- None identified
 
 ## Next Steps
-1. Verify build passes with updated dependencies
-2. Continue with planned work on folder navigation improvements
-```
+1. Verify scroll behavior in edge cases (empty directories, single file)
+2. Consider adding scroll position persistence across sessions

@@ -355,6 +355,13 @@ pub struct FileState {
 }
 
 impl FileState {
+    /// Clamps a scroll offset to the valid range for the current file list.
+    /// Prevents restoring a scroll position that's beyond the end of the list.
+    pub fn clamped_scroll(&self, scroll: usize) -> usize {
+        let max = self.files.len().saturating_sub(self.view_height.saturating_sub(3));
+        scroll.min(max)
+    }
+
     pub fn new(
         path: PathBuf,
         remote: Option<RemoteSession>,

@@ -1427,8 +1427,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             if let Some((restore_sel, restore_scroll)) = restore {
                 fs.selection.selected = Some(restore_sel);
                 fs.selection.anchor = Some(restore_sel);
-                let max_scroll = fs.files.len().saturating_sub(fs.view_height.saturating_sub(3));
-                *fs.table_state.offset_mut() = restore_scroll.min(max_scroll);
+                *fs.table_state.offset_mut() = fs.clamped_scroll(restore_scroll);
             } else {
                 fs.selection.selected = Some(0);
                 fs.selection.anchor = Some(0);
