@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by updating scroll position restoration logic
+Minor dependency update in Cargo.lock (101925 → 101926 bytes)
 
 ## Context
-This change addresses a regression in folder navigation where scroll positions weren't being properly restored during navigation. The previous implementation referenced the wrong variable (`app` instead of `app_guard`).
+This change is part of ongoing work to improve folder navigation state persistence in the project. The updates to Cargo.lock are likely part of the dependency resolution process during the build system's operation.
 
 ## Completed
-- [x] Fixed scroll position restoration during folder navigation
-- [x] Updated variable reference from `app` to `app_guard` to maintain correct state
+- [x] Updated Cargo.lock with a minor dependency version change
 
 ## In Progress
-- [ ] No active work in progress
+- [x] Ongoing work on folder navigation state persistence improvements
 
 ## Blockers
-- None identified
+- The project is currently blocked by a failed attempt to load the manifest for dependency `dracon-files`
 
 ## Next Steps
-1. Verify scroll position restoration works across different navigation scenarios
-2. Consider adding unit tests for folder navigation state persistence
+1. Investigate and resolve the manifest loading failure for `dracon-files`
+2. Continue implementing folder navigation state persistence improvements
