@@ -366,13 +366,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     // Check if this was a self-save by comparing file mtime and size
                     if let Some((saved_mtime, saved_size)) = last_self_save.get(&path) {
                         if let Ok(meta) = std::fs::metadata(&path) {
-let size: u64 = meta.len();
-                                    if mtime == *saved_mtime && size == *saved_size {
+                            if let Ok(mtime) = meta.modified() {
+                                let size: u64 = meta.len();
+                                if mtime == *saved_mtime && size == *saved_size {
                                     last_self_save.remove(&path);
                                     continue; // Skip refreshing/reloading for our own saves
                                 }
-                                // Mtime or size mismatch means external modification - KEEP tracking
-                                // so we can detect subsequent saves
                             }
                         }
                     }

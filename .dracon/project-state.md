@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved file change detection by adding file size comparison to modification time checks
+Improved file change detection by adding file size comparison to modification time check
 
 ## Context
-The previous implementation only checked modification times for self-saves, which could miss cases where files were modified but remained the same size. This change adds size comparison to ensure accurate detection of actual content changes.
+The previous implementation only checked modification time to detect external file changes, which could miss cases where a file's content changed but its modification time remained the same. This change adds file size comparison to make the detection more reliable.
 
 ## Completed
-- [x] Added file size tracking to self-save detection
-- [x] Improved accuracy of file change detection
-- [x] Maintained existing modification time checks
+- [x] Added file size comparison alongside modification time check
+- [x] Improved accuracy of external file change detection
+- [x] Maintained existing self-save detection logic
 
 ## In Progress
-- [ ] None (change is complete)
+- [ ] No active work in progress
 
 ## Blockers
-- None (change is complete)
+- None identified
 
 ## Next Steps
-1. Verify the change doesn't introduce false negatives
-2. Monitor for any performance impact from additional file metadata checks
+1. Verify the new detection logic works correctly in edge cases
+2. Consider adding additional file attributes (like checksums) for even more robust detection
