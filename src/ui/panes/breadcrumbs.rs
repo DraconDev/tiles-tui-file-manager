@@ -14,10 +14,13 @@ use dracon_terminal_engine::utils::{get_visual_width, squarify, truncate_to_widt
 pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx: usize) {
     let _is_focused = pane_idx == app.focused_pane_index && !app.sidebar_focus;
 
-    let active_tab_idx = app.panes[pane_idx].active_tab_index;
+    let active_tab_idx = app.panes.get(pane_idx).map(|p| p.active_tab_index).unwrap_or(0);
     let (mut path, mut search_filter) = {
-        let tab = &app.panes[pane_idx].tabs[active_tab_idx];
-        (tab.current_path.clone(), tab.search_filter.clone())
+        let tab = app.panes.get(pane_idx).and_then(|p| p.tabs.get(active_tab_idx));
+        match tab {
+            Some(t) => (t.current_path.clone(), t.search_filter.clone()),
+            None => (PathBuf::new(), String::new()),
+        }
     };
 
     if app.current_view == CurrentView::Editor {
