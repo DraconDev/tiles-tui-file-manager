@@ -476,7 +476,20 @@ editor: ViewPreferences {
     }
 
     pub fn apply_process_sort(&mut self) {
-        // Implementation in modules/system.rs handles the actual sorting of the vector
+        use crate::state::ProcessColumn;
+        let col = self.process_sort_col;
+        let asc = self.process_sort_asc;
+        self.system_state.processes.sort_by(|a, b| {
+            let ord = match col {
+                ProcessColumn::Pid => a.pid.cmp(&b.pid),
+                ProcessColumn::Name => a.name.to_lowercase().cmp(&b.name.to_lowercase()),
+                ProcessColumn::Cpu => a.cpu.partial_cmp(&b.cpu).unwrap_or(std::cmp::Ordering::Equal),
+                ProcessColumn::Mem => a.mem.partial_cmp(&b.mem).unwrap_or(std::cmp::Ordering::Equal),
+                ProcessColumn::User => a.user.to_lowercase().cmp(&b.user.to_lowercase()),
+                ProcessColumn::Status => a.status.cmp(&b.status),
+            };
+            if asc { ord } else { ord.reverse() }
+        });
     }
 }
 

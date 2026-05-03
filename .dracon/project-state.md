@@ -1,22 +1,25 @@
 # Project State
 
 ## Current Focus
-Refactored system data retrieval to use blocking task spawning for better resource management
+Improved process sorting functionality with column-specific ordering and direction control
 
 ## Context
-The change was prompted by a need to improve resource handling in the TTY polling loop. The original synchronous `get_data()` call could potentially block the async runtime, leading to degraded performance.
+The previous implementation relied on an external module to handle process sorting. This change consolidates the sorting logic directly in the `apply_process_sort` method to provide more control over sorting behavior.
 
 ## Completed
-- [x] Replaced synchronous `get_data()` call with async `spawn_blocking`
-- [x] Added proper error handling for task spawning
-- [x] Maintained same functionality while improving concurrency
+- [x] Implemented in-place sorting of processes based on selected column
+- [x] Added support for ascending/descending order
+- [x] Included case-insensitive comparison for string fields
+- [x] Added proper handling for floating-point CPU/memory values
+- [x] Maintained existing column sorting capabilities (PID, Name, CPU, Mem, User, Status)
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress
 
 ## Blockers
-- None identified
+- The `dracon-files` dependency manifest loading failure (blocking slice `synth-1774826981`)
 
 ## Next Steps
-1. Verify no performance regressions in the TTY polling loop
-2. Consider adding metrics to track blocking task execution times
+1. Address the `dracon-files` dependency issue to unblock the blocked slice
+2. Consider adding unit tests for the new sorting functionality
+3. Review if additional sorting columns should be supported in the future
