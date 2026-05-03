@@ -947,7 +947,7 @@ pub fn handle_file_mouse(
                             if let Ok(prefix) = current_path.strip_prefix(&target_path) {
                                 if let Some(component) = prefix.components().next() {
                                     let child_name = component.as_os_str();
-                                    fs.pending_select_path = Some(target_path.join(child_name));
+                                    fs.pending_select_path = Some((target_path.join(child_name), 0));
                                 }
                             }
                         }

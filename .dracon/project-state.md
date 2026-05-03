@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by tracking both selection path and scroll position
+Improved folder navigation state persistence by tracking both selection and scroll position.
 
 ## Context
-This change enhances the folder navigation system by preserving both the selected path and scroll position during navigation, ensuring a smoother user experience when moving between directories.
+This change addresses a need to maintain user interface state when navigating between folders, ensuring both the selected item and scroll position are preserved when returning to a previously visited folder.
 
 ## Completed
-- [x] Updated `FileState` to store both path and scroll position in `pending_select_path`
-- [x] Modified navigation logic to maintain scroll position during folder transitions
+- [x] Added `folder_selections` field to store (selected_index, scroll_offset) pairs per folder path
+- [x] Documented the purpose of the new field with a doc comment
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Implementation of actual state restoration logic (not yet in this commit)
 
 ## Blockers
-- None identified
+- Need to implement the actual state restoration logic in folder navigation code
 
 ## Next Steps
-1. Verify the new state persistence works correctly in UI tests
-2. Consider adding integration tests for complex navigation scenarios
+1. Implement state restoration in folder navigation code
+2. Add unit tests for the new state persistence behavior
