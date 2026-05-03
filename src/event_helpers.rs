@@ -864,14 +864,14 @@ pub fn navigate_up(app: &mut App) {
             let old_folder = fs.current_path.clone();
             let old_idx = fs.selection.selected.unwrap_or(0);
             let old_scroll = fs.table_state.offset();
+            let new_path = parent.to_path_buf();
             drop(fs);
             app.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
-            let parent = parent.to_path_buf();
             if let Some(fs) = app.current_file_state_mut() {
-                fs.current_path = parent.clone();
+                fs.current_path = new_path;
                 fs.pending_select_path = Some(old_folder);
                 fs.git_cache_until = None;
-                push_history(fs, parent);
+                push_history(fs, new_path);
             }
         }
     }
