@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by tracking both selection index and scroll position.
+Minor dependency update in Cargo.lock (101925 → 101926 bytes)
 
 ## Context
-This change addresses inconsistent navigation behavior when moving up directories by preserving the user's previous selection and scroll position.
+This is a routine dependency update triggered by the project's build system. The change reflects a small adjustment in the dependency resolution process, likely due to version pinning or metadata updates in the dependency graph.
 
 ## Completed
-- [x] Added tracking of selection index and scroll position when navigating up directories
-- [x] Stored folder state in `app.folder_selections` hashmap for restoration
+- [x] Updated Cargo.lock with new dependency resolution
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None (this is a maintenance update)
 
 ## Blockers
-- Dependency `dracon-files` manifest loading failure (blocking slice `synth-1774826981`)
+- None (this is a non-functional change)
 
 ## Next Steps
-1. Resolve dependency issue with `dracon-files`
-2. Test folder navigation state restoration with complex directory structures
+1. Verify build passes with updated dependencies
+2. Continue with current development focus (synth-1774826981)
