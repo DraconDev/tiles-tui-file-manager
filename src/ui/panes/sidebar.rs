@@ -154,7 +154,7 @@ let tree_items: std::rc::Rc<Vec<(PathBuf, u16, bool)>> = if app.sidebar_tree_cac
             rc
         };
 
-        for (path, depth, is_dir) in tree_items.iter() {
+        for &(ref path, depth, is_dir) in tree_items.iter() {
                     let name = path
                         .file_name()
                         .map(|n| n.to_string_lossy().to_string())
@@ -794,7 +794,7 @@ let tree_items: std::rc::Rc<Vec<(PathBuf, u16, bool)>> = if app.editor_sidebar_c
     app.sidebar_bounds.clear();
     let mut current_y = inner.y;
 
-for (path, depth, is_dir) in tree_items.iter() {
+for &(ref path, depth, is_dir) in tree_items.iter() {
         let name = path
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
