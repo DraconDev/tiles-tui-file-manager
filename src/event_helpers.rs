@@ -8,6 +8,8 @@ use dracon_terminal_engine::input::mapping::{to_runtime_event, Event as InputEve
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
+use parking_lot::Mutex;
+use std::sync::Arc;
 use tokio::sync::mpsc;
 
 pub fn update_commands(app: &mut App) {
@@ -1187,7 +1189,7 @@ mod tests {
 
     #[test]
     fn push_recent_folder_adds_to_front() {
-        let mut app = crate::app::App::new(std::sync::Arc::new(std::sync::Mutex::new(Vec::new())));
+        let mut app = crate::app::App::new(Arc::new(Mutex::new(Vec::new())));
         app.push_recent_folder(PathBuf::from("/home/user"));
         app.push_recent_folder(PathBuf::from("/etc"));
         assert_eq!(app.recent_folders[0], PathBuf::from("/etc"));
@@ -1196,7 +1198,7 @@ mod tests {
 
     #[test]
     fn push_recent_folder_deduplicates() {
-        let mut app = crate::app::App::new(std::sync::Arc::new(std::sync::Mutex::new(Vec::new())));
+        let mut app = crate::app::App::new(Arc::new(Mutex::new(Vec::new())));
         app.push_recent_folder(PathBuf::from("/home"));
         app.push_recent_folder(PathBuf::from("/etc"));
         app.push_recent_folder(PathBuf::from("/home")); // Move to front
@@ -1206,7 +1208,7 @@ mod tests {
 
     #[test]
     fn push_recent_folder_caps_at_10() {
-        let mut app = crate::app::App::new(std::sync::Arc::new(std::sync::Mutex::new(Vec::new())));
+        let mut app = crate::app::App::new(Arc::new(Mutex::new(Vec::new())));
         for i in 0..15 {
             app.push_recent_folder(PathBuf::from(format!("/dir{}", i)));
         }
