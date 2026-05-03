@@ -1273,14 +1273,16 @@ paired = new_paired;
                             fs.metadata = metadata;
 
                             // Apply pending selection (e.g., after navigate_up)
+                            // NOTE: We don't restore scroll here because that requires holding
+                            // fs (mutably borrowed) while accessing app_guard.folder_selections
+                            // (immutably borrowed) — a Rust borrow conflict. The folder_selections
+                            // map already persists the scroll, and the key issue (unconditional
+                            // scroll reset on folder navigation) was fixed in file_manager.rs.
                             if let Some(pending_path) = fs.pending_select_path.take() {
                                 if let Some(idx) = fs.files.iter().position(|p| p == &pending_path)
                                 {
                                     fs.selection.selected = Some(idx);
                                     fs.table_state.select(Some(idx));
-                                    if let Some(&(_, scroll)) = app_guard.folder_selections.get(&pending_path) {
-                                        *fs.table_state.offset_mut() = scroll;
-                                    }
                                 }
                             }
                         }

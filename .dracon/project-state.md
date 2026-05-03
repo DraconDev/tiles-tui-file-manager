@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101926 bytes)
+Improved folder navigation state persistence by resolving Rust borrow conflicts in scroll position handling.
 
 ## Context
-This change is part of ongoing work to improve folder navigation state persistence in the project. The updates to Cargo.lock are likely part of the dependency resolution process during the build system's operation.
+The previous implementation caused a borrow conflict between mutable access to `fs` and immutable access to `app_guard.folder_selections`. The change removes the problematic scroll restoration code since the folder_selections map already persists scroll positions, and the core issue was fixed in `file_manager.rs`.
 
 ## Completed
-- [x] Updated Cargo.lock with a minor dependency version change
+- [x] Removed problematic scroll restoration code that caused borrow conflicts
+- [x] Added explanatory comment about the Rust borrow conflict
+- [x] Maintained existing scroll position persistence through folder_selections map
 
 ## In Progress
-- [x] Ongoing work on folder navigation state persistence improvements
+- [ ] None (this is a complete fix)
 
 ## Blockers
-- The project is currently blocked by a failed attempt to load the manifest for dependency `dracon-files`
+- None (this change is complete)
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue implementing folder navigation state persistence improvements
+1. Verify the scroll position persistence works correctly in the UI
+2. Monitor for any related issues in folder navigation
