@@ -210,7 +210,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     .await
                     .ok()
                     .and_then(|r| r.ok());
-                if let Ok(data) = data {
+                if let Some(data) = data {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
                 tokio::time::sleep(Duration::from_secs(3)).await;
