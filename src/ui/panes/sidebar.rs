@@ -151,7 +151,7 @@ if app.sidebar_tree_cache_key != cache_key {
         }
         let tree_items = app.sidebar_tree_cache.as_ref().map(|v| v.as_slice()).unwrap_or(&[]);
 
-        for (path, depth, is_dir) in tree_items.iter().cloned() {
+        for (path, depth, is_dir) in tree_items {
                     let name = path
                         .file_name()
                         .map(|n| n.to_string_lossy().to_string())
@@ -788,7 +788,7 @@ if app.editor_sidebar_cache_key != editor_cache_key {
     app.sidebar_bounds.clear();
     let mut current_y = inner.y;
 
-for (path, depth, is_dir) in tree_items.iter().cloned() {
+for (path, depth, is_dir) in tree_items {
         let name = path
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
