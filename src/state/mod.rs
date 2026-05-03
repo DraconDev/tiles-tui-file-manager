@@ -2,7 +2,7 @@ use crate::config::MAX_TABS;
 use std::time::Instant;
 use dracon_terminal_engine::contracts::UiEvent;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::path::PathBuf;
 use dracon_terminal_engine::widgets::TextEditor;
 
@@ -422,14 +422,14 @@ pub struct SystemState {
     pub total_mem: f32,
     pub swap_usage: f32,
     pub total_swap: f32,
-    pub cpu_history: Vec<u64>,
-    pub core_history: Vec<Vec<u64>>,
-    pub mem_history: Vec<u64>,
-    pub swap_history: Vec<u64>,
+    pub cpu_history: VecDeque<u64>,
+    pub core_history: Vec<VecDeque<u64>>,
+    pub mem_history: VecDeque<u64>,
+    pub swap_history: VecDeque<u64>,
     pub net_in: u64,
     pub net_out: u64,
-    pub net_in_history: Vec<u64>,
-    pub net_out_history: Vec<u64>,
+    pub net_in_history: VecDeque<u64>,
+    pub net_out_history: VecDeque<u64>,
     pub last_net_in: u64,
     pub last_net_out: u64,
     pub uptime: u64,

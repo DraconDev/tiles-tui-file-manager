@@ -1,25 +1,23 @@
 # Project State
 
 ## Current Focus
-Improved process sorting functionality with column-specific ordering and direction control
+Refactored system monitoring history storage to use bounded collections for memory efficiency
 
 ## Context
-The previous implementation relied on an external module to handle process sorting. This change consolidates the sorting logic directly in the `apply_process_sort` method to provide more control over sorting behavior.
+The system monitoring history was previously using unbounded Vec collections, which could grow indefinitely and consume excessive memory. This change switches to VecDeque for all history tracking to maintain a fixed-size history buffer.
 
 ## Completed
-- [x] Implemented in-place sorting of processes based on selected column
-- [x] Added support for ascending/descending order
-- [x] Included case-insensitive comparison for string fields
-- [x] Added proper handling for floating-point CPU/memory values
-- [x] Maintained existing column sorting capabilities (PID, Name, CPU, Mem, User, Status)
+- [x] Replaced all Vec history collections with VecDeque in SystemState
+- [x] Maintained same interface for history operations
+- [x] Preserved all existing functionality while improving memory characteristics
 
 ## In Progress
 - [ ] No active work in progress
 
 ## Blockers
-- The `dracon-files` dependency manifest loading failure (blocking slice `synth-1774826981`)
+- None identified
 
 ## Next Steps
-1. Address the `dracon-files` dependency issue to unblock the blocked slice
-2. Consider adding unit tests for the new sorting functionality
-3. Review if additional sorting columns should be supported in the future
+1. Verify no performance regressions in monitoring display
+2. Consider adding configuration for history buffer sizes
+3. Document the memory optimization benefits in architecture docs
