@@ -206,7 +206,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 if shutdown_stats.load(Ordering::Relaxed) {
                     break;
                 }
-                if let Ok(data) = sys_mod.get_data() {
+                let data = tokio::task::spawn_blocking(|| sys_mod.get_data())
+                    .await
+                    .unwrap_or_else(|_| Err("spawn failed".into()));
+                if let Ok(data) = data {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
                 tokio::time::sleep(Duration::from_secs(3)).await;

@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101926 bytes)
+Refactored system data retrieval to use blocking task spawning for better resource management
 
 ## Context
-This is an automated dependency update triggered by the project's build system. The change affects the lockfile but does not modify any source code or functionality.
+The change was prompted by a need to improve resource handling in the TTY polling loop. The original synchronous `get_data()` call could potentially block the async runtime, leading to degraded performance.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect dependency changes
+- [x] Replaced synchronous `get_data()` call with async `spawn_blocking`
+- [x] Added proper error handling for task spawning
+- [x] Maintained same functionality while improving concurrency
 
 ## In Progress
-- [ ] None (automated update)
+- [ ] None
 
 ## Blockers
-- None (automated process)
+- None identified
 
 ## Next Steps
-1. Verify build passes with updated dependencies
-2. Monitor for any potential compatibility issues
+1. Verify no performance regressions in the TTY polling loop
+2. Consider adding metrics to track blocking task execution times
