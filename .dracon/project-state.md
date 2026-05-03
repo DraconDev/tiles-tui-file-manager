@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by restoring scroll position when selecting a folder.
+Improved folder navigation state persistence by updating scroll position restoration logic
 
 ## Context
-This change addresses inconsistent folder navigation behavior where scroll positions weren't preserved when returning to previously visited folders. The previous implementation only tracked selection state but not scroll position.
+This change addresses a regression in folder navigation where scroll positions weren't being properly restored during navigation. The previous implementation referenced the wrong variable (`app` instead of `app_guard`).
 
 ## Completed
-- [x] Added scroll position restoration when selecting a folder
-- [x] Maintained existing selection state persistence
+- [x] Fixed scroll position restoration during folder navigation
+- [x] Updated variable reference from `app` to `app_guard` to maintain correct state
 
 ## In Progress
-- [x] Folder navigation state persistence implementation
+- [ ] No active work in progress
 
 ## Blockers
-- None identified in this change
+- None identified
 
 ## Next Steps
-1. Verify scroll position restoration works across different folder depths
-2. Consider adding visual feedback when scroll position is restored
+1. Verify scroll position restoration works across different navigation scenarios
+2. Consider adding unit tests for folder navigation state persistence

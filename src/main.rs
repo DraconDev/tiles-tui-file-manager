@@ -1278,7 +1278,7 @@ paired = new_paired;
                                 {
                                     fs.selection.selected = Some(idx);
                                     fs.table_state.select(Some(idx));
-                                    if let Some(&(_, scroll)) = app.folder_selections.get(&pending_path) {
+                                    if let Some(&(_, scroll)) = app_guard.folder_selections.get(&pending_path) {
                                         *fs.table_state.offset_mut() = scroll;
                                     }
                                 }
