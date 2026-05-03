@@ -8,8 +8,8 @@ use dracon_terminal_engine::input::mapping::{to_runtime_event, Event as InputEve
 use std::ffi::OsStr;
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
-use parking_lot::Mutex;
-use std::sync::Arc;
+
+
 use tokio::sync::mpsc;
 
 pub fn update_commands(app: &mut App) {
