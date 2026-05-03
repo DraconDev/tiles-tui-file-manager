@@ -87,7 +87,7 @@ pub struct App {
 /// Independent of `expanded_folders` — Tree scope maintains its own expansion state.
     pub tree_expanded_folders: HashSet<PathBuf>,
     /// Cached sidebar tree items to avoid re-reading directories every frame.
-    pub sidebar_tree_cache: Option<std::rc::Rc<Vec<(PathBuf, u16, bool)>>>,
+    pub sidebar_tree_cache: Option<Vec<(PathBuf, u16, bool)>>,
     /// Cache key for invalidation (hash of tree_expanded_folders + show_hidden).
     pub sidebar_tree_cache_key: u64,
     /// Cached editor sidebar tree items.
