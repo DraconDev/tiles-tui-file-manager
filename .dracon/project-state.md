@@ -1,15 +1,15 @@
 # Project State
 
 ## Current Focus
-Improved scroll position validation in file navigation to prevent out-of-bounds restoration
+Improved folder navigation state persistence by renaming and refactoring folder selection tracking
 
 ## Context
-The previous scroll position restoration could set an offset beyond the valid range when files changed, causing display issues. This change centralizes the scroll clamping logic to ensure consistent behavior.
+The code was refactoring folder navigation state management to better track and restore both selection and scroll positions when navigating between folders.
 
 ## Completed
-- [x] Added `clamped_scroll` method to `FileState` to validate scroll positions
-- [x] Replaced manual scroll clamping in `file_manager.rs` with the new method
-- [x] Replaced manual scroll clamping in `main.rs` with the new method
+- [x] Renamed `folder_selections` to `folder_memory` in App struct to better reflect its purpose
+- [x] Updated all references to the renamed field
+- [x] Maintained consistent behavior for tracking and restoring folder state
 
 ## In Progress
 - [ ] No active work in progress
@@ -18,5 +18,5 @@ The previous scroll position restoration could set an offset beyond the valid ra
 - None identified
 
 ## Next Steps
-1. Verify scroll behavior in edge cases (empty directories, single file)
-2. Consider adding scroll position persistence across sessions
+1. Verify no regression in folder navigation behavior
+2. Consider adding more comprehensive state persistence if needed

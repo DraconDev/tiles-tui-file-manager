@@ -1413,13 +1413,13 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
         }
     }
     if let Some(p) = navigate_to {
-        let restore = app.folder_selections.get(&p).copied();
+        let restore = app.folder_memory.get(&p).copied();
 
         if let Some(fs) = app.current_file_state() {
             let path = fs.current_path.clone();
             let idx = fs.selection.selected.unwrap_or(0);
             let scroll = fs.table_state.offset();
-            app.folder_selections.insert(path, (idx, scroll));
+            app.folder_memory.insert(path, (idx, scroll));
         }
 
         if let Some(fs) = app.current_file_state_mut() {

@@ -59,7 +59,7 @@ pub struct App {
     pub last_action_msg: Option<(String, std::time::Instant)>,
     /// Stores per-folder state: (selected_index, scroll_offset).
     /// When re-entering a folder, both selection and scroll are restored.
-    pub folder_selections: HashMap<PathBuf, (usize, usize)>,
+    pub folder_memory: HashMap<PathBuf, (usize, usize)>,
     pub path_colors: HashMap<PathBuf, u8>,
     pub confirm_delete: bool,
     pub smart_date: bool,
@@ -222,7 +222,7 @@ impl App {
             is_dragging: false,
             hovered_drop_target: None,
             last_action_msg: None,
-            folder_selections: HashMap::new(),
+            folder_memory: HashMap::new(),
             path_colors: HashMap::new(),
             confirm_delete: true,
             smart_date: true,
