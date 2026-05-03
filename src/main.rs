@@ -201,15 +201,17 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let tx = event_tx.clone();
         let shutdown_stats = shutdown.clone();
         tokio::spawn(async move {
-            let mut sys_mod = crate::modules::system::SystemModule::new();
             loop {
                 if shutdown_stats.load(Ordering::Relaxed) {
                     break;
                 }
-                let data = tokio::task::spawn_blocking(|| sys_mod.get_data())
-                    .await
-                    .ok()
-                    .and_then(|r| r.ok());
+                let data = tokio::task::spawn_blocking({
+                    let mut sys_mod = crate::modules::system::SystemModule::new();
+                    move || sys_mod.get_data()
+                })
+                .await
+                .ok()
+                .and_then(|r| r.ok());
                 if let Some(data) = data {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
