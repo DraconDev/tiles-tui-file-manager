@@ -1413,6 +1413,8 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
         }
     }
     if let Some(p) = navigate_to {
+        let restore = app.folder_selections.get(&p).copied();
+
         if let Some(fs) = app.current_file_state() {
             let path = fs.current_path.clone();
             let idx = fs.selection.selected.unwrap_or(0);
@@ -1422,7 +1424,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 
         if let Some(fs) = app.current_file_state_mut() {
             fs.current_path = p.clone();
-            if let Some((restore_sel, restore_scroll)) = app.folder_selections.get(&p).copied() {
+            if let Some((restore_sel, restore_scroll)) = restore {
                 fs.selection.selected = Some(restore_sel);
                 fs.selection.anchor = Some(restore_sel);
                 *fs.table_state.offset_mut() = restore_scroll;

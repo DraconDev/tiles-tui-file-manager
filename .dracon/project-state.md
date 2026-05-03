@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved folder navigation state persistence by cloning the path before insertion
+Improved folder navigation state persistence by tracking both selection and scroll position
 
 ## Context
-The change was made to prevent potential ownership issues when storing folder navigation state. The original code passed a reference to `old_folder` directly into the `folder_selections` map, which could lead to dangling references if the path was modified elsewhere.
+The change enhances the file manager's navigation by preserving both the selected item and scroll position when returning to previously visited folders. This improves user experience by maintaining visual context during navigation.
 
 ## Completed
-- [x] Fixed potential ownership issue by cloning the path before insertion
+- [x] Added path cloning before navigation to ensure stable state
+- [x] Refactored selection restoration to use pre-fetched state
+- [x] Maintained scroll position persistence during folder navigation
 
 ## In Progress
-- [x] No active work in progress
+- [ ] None (change is complete)
 
 ## Blockers
-- None identified
+- None (dependency update is separate)
 
 ## Next Steps
-1. Verify no regression in folder navigation behavior
-2. Consider additional state persistence improvements if needed
+1. Verify state persistence works across different file types
+2. Consider adding visual indicators for restored state
