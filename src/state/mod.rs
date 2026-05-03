@@ -326,7 +326,7 @@ pub struct FileState {
     #[serde(skip)]
     pub local_count: usize,
     #[serde(skip)]
-    pub pending_select_path: Option<PathBuf>,
+    pub pending_select_path: Option<(PathBuf, usize)>,
     #[serde(skip)]
     pub git_history: Vec<CommitInfo>,
     #[serde(skip)]

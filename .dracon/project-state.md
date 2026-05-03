@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored event handling dependencies in `event_helpers.rs`
+Improved folder navigation state persistence by tracking both selection path and scroll position
 
 ## Context
-The change removes unused synchronization primitives (`parking_lot::Mutex` and `std::sync::Arc`) from the event handling module, likely to simplify the codebase and reduce potential synchronization overhead.
+This change enhances the folder navigation system by preserving both the selected path and scroll position during navigation, ensuring a smoother user experience when moving between directories.
 
 ## Completed
-- [x] Removed unused `parking_lot::Mutex` import
-- [x] Removed unused `std::sync::Arc` import
+- [x] Updated `FileState` to store both path and scroll position in `pending_select_path`
+- [x] Modified navigation logic to maintain scroll position during folder transitions
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress
 
 ## Blockers
-- The `dracon-files` dependency manifest failure (synth-1774826981) may affect other modules
+- None identified
 
 ## Next Steps
-1. Verify no runtime issues after dependency removal
-2. Address the `dracon-files` dependency issue to unblock the project
+1. Verify the new state persistence works correctly in UI tests
+2. Consider adding integration tests for complex navigation scenarios
