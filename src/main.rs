@@ -562,7 +562,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let preview = PreviewState {
                                 path: path.clone(),
                                 content,
-                                scroll: 0,
                                 editor: Some(editor),
                                 last_saved: None,
                                 image_data,
