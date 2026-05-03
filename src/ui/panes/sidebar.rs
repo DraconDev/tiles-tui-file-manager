@@ -792,8 +792,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     app.sidebar_bounds.clear();
     let mut current_y = inner.y;
 
-    for (path, depth) in tree_items {
-        let is_dir = path.is_dir();
+for (path, depth, is_dir) in tree_items {
         let name = path
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
