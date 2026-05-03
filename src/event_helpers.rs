@@ -862,6 +862,9 @@ pub fn navigate_up(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
         if let Some(parent) = fs.current_path.parent() {
             let old_folder = fs.current_path.clone();
+            let old_idx = fs.selection.selected.unwrap_or(0);
+            let old_scroll = fs.table_state.offset();
+            app.folder_selections.insert(old_folder, (old_idx, old_scroll));
             let parent = parent.to_path_buf();
             fs.current_path = parent.clone();
             fs.pending_select_path = Some(old_folder);
