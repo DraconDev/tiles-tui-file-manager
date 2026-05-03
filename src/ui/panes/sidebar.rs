@@ -143,14 +143,15 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     hasher.finish()
                 };
 
-let tree_items: Vec<(PathBuf, u16, bool)> = if app.sidebar_tree_cache_key == cache_key {
+let tree_items: std::rc::Rc<Vec<(PathBuf, u16, bool)>> = if app.sidebar_tree_cache_key == cache_key {
             app.sidebar_tree_cache.clone().unwrap_or_default()
         } else {
             let mut items = Vec::new();
             collect_tree_items(&base_path, 0, app, &mut items);
-            app.sidebar_tree_cache = Some(items.clone());
+            let rc = std::rc::Rc::new(items);
+            app.sidebar_tree_cache = Some(rc.clone());
             app.sidebar_tree_cache_key = cache_key;
-            items
+            rc
         };
 
         for (path, depth, is_dir) in tree_items {
