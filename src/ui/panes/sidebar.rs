@@ -768,7 +768,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         h.finish()
     };
 
-    let tree_items: Vec<(PathBuf, u16)> = if app.editor_sidebar_cache_key == editor_cache_key {
+    let tree_items: Vec<(PathBuf, u16, bool)> = if app.editor_sidebar_cache_key == editor_cache_key {
         app.editor_sidebar_cache.clone().unwrap_or_default()
     } else {
         let mut items = Vec::new();
