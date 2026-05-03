@@ -194,7 +194,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
             let bread_rect = Rect::new(cur_x, breadcrumb_y, width, 1);
             f.render_widget(Paragraph::new(Span::styled(segment, style)), bread_rect);
 
-            if let Some(tab) = app.panes[pane_idx].tabs.get_mut(active_tab_idx) {
+if let Some(tab) = app.panes.get_mut(pane_idx).and_then(|p| p.tabs.get_mut(active_tab_idx)) {
                 tab.breadcrumb_bounds.push((bread_rect, s_path));
             }
 
