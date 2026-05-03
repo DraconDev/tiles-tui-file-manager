@@ -436,8 +436,6 @@ pub struct SystemState {
 pub struct PreviewState {
     pub path: PathBuf,
     pub content: String,
-    #[allow(dead_code)]
-    pub scroll: usize,
     pub editor: Option<TextEditor>,
     pub last_saved: Option<std::time::Instant>,
     #[allow(dead_code)]
