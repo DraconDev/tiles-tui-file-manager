@@ -3790,38 +3790,36 @@ fn draw_properties_modal(f: &mut Frame, app: &App) {
                 ),
                 Span::raw(format_permissions(meta.permissions)),
             ]));
-        } else if fs.remote_session.is_none() {
-            if let Ok(m) = std::fs::metadata(target_path) {
-                let is_dir = m.is_dir();
-                text.push(Line::from(vec![
-                    Span::styled(
-                        "Type: ",
-                        Style::default().fg(crate::ui::theme::accent_secondary()),
-                    ),
-                    Span::raw(if is_dir { "Folder" } else { "File" }),
-                ]));
-                text.push(Line::from(vec![
-                    Span::styled(
-                        "Size: ",
-                        Style::default().fg(crate::ui::theme::accent_secondary()),
-                    ),
-                    Span::raw(format_size(m.len())),
-                ]));
-                if let Ok(mod_time) = m.modified() {
+} else if fs.remote_session.is_none() {
+                if let Some(m) = fs.metadata.get(target_path) {
+                    let is_dir = m.is_dir;
+                    text.push(Line::from(vec![
+                        Span::styled(
+                            "Type: ",
+                            Style::default().fg(crate::ui::theme::accent_secondary()),
+                        ),
+                        Span::raw(if is_dir { "Folder" } else { "File" }),
+                    ]));
+                    text.push(Line::from(vec![
+                        Span::styled(
+                            "Size: ",
+                            Style::default().fg(crate::ui::theme::accent_secondary()),
+                        ),
+                        Span::raw(format_size(m.size)),
+                    ]));
                     text.push(Line::from(vec![
                         Span::styled(
                             "Modified: ",
                             Style::default().fg(crate::ui::theme::accent_secondary()),
                         ),
-                        Span::raw(format_time(mod_time)),
+                        Span::raw(format_time(m.modified)),
                     ]));
+                } else {
+                    text.push(Line::from(Span::styled(
+                        "No metadata available",
+                        Style::default().fg(Color::DarkGray),
+                    )));
                 }
-            } else {
-                text.push(Line::from(Span::styled(
-                    "No metadata available",
-                    Style::default().fg(Color::DarkGray),
-                )));
-            }
         } else {
             text.push(Line::from(Span::styled(
                 "No metadata available (Remote)",
