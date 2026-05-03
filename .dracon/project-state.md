@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101925 bytes)
+Improved folder navigation state persistence by tracking both selection and scroll position.
 
 ## Context
-This change was triggered by the ongoing work on folder navigation state persistence, which required dependency updates to resolve compilation issues.
+This change addresses a need to maintain user interface state when navigating between folders, ensuring both the selected item and scroll position are preserved when returning to a previously visited folder.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency resolution for `dracon-files`
+- [x] Added `folder_selections` field to store (selected_index, scroll_offset) pairs per folder path
+- [x] Documented the purpose of the new field with a doc comment
 
 ## In Progress
-- [ ] Resolving manifest loading failure for `dracon-files` dependency
+- [ ] Implementation of actual state restoration logic (not yet in this commit)
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files`
+- Need to implement the actual state restoration logic in folder navigation code
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue working on folder navigation state persistence features
-```
+1. Implement state restoration in folder navigation code
+2. Add unit tests for the new state persistence behavior
