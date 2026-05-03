@@ -249,7 +249,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     crate::app::log_debug("Entering main loop");
 
     let mut panes_needing_refresh = std::collections::HashSet::new();
-    let mut last_self_save: std::collections::HashMap<PathBuf, std::time::SystemTime> =
+    let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64)> =
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
     const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
@@ -366,8 +366,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     // Check if this was a self-save by comparing file mtime and size
                     if let Some((saved_mtime, saved_size)) = last_self_save.get(&path) {
                         if let Ok(meta) = std::fs::metadata(&path) {
-                            if let (Ok(mtime), Ok(size)) = (meta.modified(), meta.len().try_into()) {
-                                if mtime == *saved_mtime && size == *saved_size {
+let size: u64 = meta.len();
+                                    if mtime == *saved_mtime && size == *saved_size {
                                     last_self_save.remove(&path);
                                     continue; // Skip refreshing/reloading for our own saves
                                 }
@@ -620,7 +620,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         Ok(_) => {
                             if remote_for_save.is_none() {
                                 if let Ok(meta) = std::fs::metadata(&path) {
-                                    if let (Ok(mtime), Ok(size)) = (meta.modified(), meta.len().try_into()) {
+                                    if let (Ok(mtime), Ok(size)) = (meta.modified(), Ok::<u64, _>(meta.len())) {
                                         if last_self_save.len() > 100 {
                                             last_self_save.clear();
                                         }
