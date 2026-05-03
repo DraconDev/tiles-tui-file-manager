@@ -799,9 +799,6 @@ pub fn handle_context_menu_action(
             };
             if let (Some(path), Some(content)) = (path, content) {
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path, content));
-                if let Some(editor) = get_active_editor_mut(app) {
-                    editor.modified = false;
-                }
             }
         }
         _ => {}
