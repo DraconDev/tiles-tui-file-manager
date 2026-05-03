@@ -41,6 +41,18 @@ fn is_virtual_divider(path: &std::path::Path) -> bool {
     path.to_string_lossy() == "__DIVIDER__"
 }
 
+fn open_file_or_navigate(path: &std::path::Path) -> Option<std::path::PathBuf> {
+    if path.is_dir() {
+        Some(path.to_path_buf())
+    } else {
+        dracon_terminal_engine::utils::spawn_detached(
+            "xdg-open",
+            vec![path.to_string_lossy().to_string()],
+        );
+        None
+    }
+}
+
 fn execute_undo(
     app: &mut App,
     event_tx: &mpsc::Sender<AppEvent>,
@@ -1100,10 +1112,7 @@ pub fn handle_file_mouse(
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         } else {
-                            dracon_terminal_engine::utils::spawn_detached(
-                                "xdg-open",
-                                vec![path.to_string_lossy().to_string()],
-                            );
+                            let _ = open_file_or_navigate(path);
                         }
                     }
                     app.mouse_last_click = std::time::Instant::now();
@@ -1397,13 +1406,8 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 if is_virtual_divider(path) {
                     return;
                 }
-                if path.is_dir() {
-                    navigate_to = Some(path.clone());
-                } else {
-                    dracon_terminal_engine::utils::spawn_detached(
-                        "xdg-open",
-                        vec![path.to_string_lossy().to_string()],
-                    );
+                if let Some(nav) = open_file_or_navigate(path) {
+                    navigate_to = Some(nav);
                 }
             }
         }
