@@ -456,9 +456,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     tokio::spawn(async move {
                         let path_str = path.to_string_lossy();
                         let content = if let Some(hash) = path_str.strip_prefix("git://") {
-                            match crate::modules::files::show_commit_patch(&current_dir, hash) {
-                                Ok(c) => c,
-                                Err(e) => format!("Error fetching commit data: {}", e),
+                            match tokio::task::spawn_blocking(move || crate::modules::files::show_commit_patch(&current_dir, hash)).await {
+                                Ok(Ok(c)) => c,
+                                Ok(Err(e)) => format!("Error fetching commit data: {}", e),
+                                Err(_) => "<Internal error>".to_string(),
                             }
                         } else if let Some(file_path) = path_str.strip_prefix("git-diff://") {
                             if let Some(remote) = &remote_session {
@@ -471,10 +472,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                     Err(e) => format!("Error fetching diff data: {}", e),
                                 }
                             } else {
-                                match crate::modules::files::show_file_diff(&current_dir, file_path)
-                                {
-                                    Ok(content) => content,
-                                    Err(e) => format!("Error fetching diff data: {}", e),
+                                match tokio::task::spawn_blocking(move || crate::modules::files::show_file_diff(&current_dir, file_path)).await {
+                                    Ok(Ok(content)) => content,
+                                    Ok(Err(e)) => format!("Error fetching diff data: {}", e),
+                                    Err(_) => "<Internal error>".to_string(),
                                 }
                             }
                         } else if let Some(remote) = &remote_session {
