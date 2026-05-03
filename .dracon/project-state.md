@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored folder selection tracking to include additional selection state information.
+Improved folder navigation state persistence by tracking both selection and scroll position.
 
 ## Context
-The change was prompted by the need to track more detailed selection state for folders, which was previously only storing a single usize value. This modification supports more complex selection operations in the file manager.
+The file manager needed better state restoration when navigating between directories. Previous implementation only saved selection index but lost scroll position, leading to inconsistent user experience.
 
 ## Completed
-- [x] Changed `folder_selections` from `HashMap<PathBuf, usize>` to `HashMap<PathBuf, (usize, usize)>` to store additional selection state information
+- [x] Store both selection index and scroll position in folder_selections map
+- [x] Restore both selection and scroll position when returning to a directory
+- [x] Reset to default state (selection 0, scroll 0) for new directories
 
 ## In Progress
-- [ ] Verify that the new selection state is properly utilized throughout the application
+- [ ] None (this change is complete)
 
 ## Blockers
-- The new selection state needs to be properly integrated with the UI components that handle folder selections
+- None (this feature is fully implemented)
 
 ## Next Steps
-1. Update UI components to handle the new tuple-based selection state
-2. Add tests to verify the new selection behavior works as expected
+1. Verify state restoration works across different directory depths
+2. Add integration tests for folder navigation scenarios

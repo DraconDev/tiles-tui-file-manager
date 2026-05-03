@@ -1416,17 +1416,24 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
         if let Some(fs) = app.current_file_state() {
             let path = fs.current_path.clone();
             let idx = fs.selection.selected.unwrap_or(0);
-            app.folder_selections.insert(path, idx);
+            let scroll = fs.table_state.offset();
+            app.folder_selections.insert(path, (idx, scroll));
         }
 
         if let Some(fs) = app.current_file_state_mut() {
             fs.current_path = p.clone();
-            fs.selection.selected = Some(0);
-            fs.selection.anchor = Some(0);
+            if let Some((restore_sel, restore_scroll)) = app.folder_selections.get(&p).copied() {
+                fs.selection.selected = Some(restore_sel);
+                fs.selection.anchor = Some(restore_sel);
+                *fs.table_state.offset_mut() = restore_scroll;
+            } else {
+                fs.selection.selected = Some(0);
+                fs.selection.anchor = Some(0);
+                *fs.table_state.offset_mut() = 0;
+            }
             fs.selection.clear_multi();
             fs.search_filter.clear();
             fs.search_generation += 1;
-            *fs.table_state.offset_mut() = 0;
             crate::event_helpers::push_history(fs, p);
             // Clear expanded folders when entering a new directory — start fresh
             app.expanded_folders.clear();
