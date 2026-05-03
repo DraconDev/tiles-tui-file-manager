@@ -78,12 +78,11 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
         }
     }
 
-    if let Some(pane) = app.panes.get_mut(pane_idx) {
+if let Some(pane) = app.panes.get_mut(pane_idx) {
         if let Some(tab) = pane.tabs.get_mut(active_tab_idx) {
-        tab.breadcrumb_bounds.clear();
-        // Only the breadcrumb text row (not the full pane area).
-        // File rows start at area.y+3 and must NOT match this rect.
-        tab.breadcrumb_header_bounds = Some(Rect::new(area.x, area.y, area.width, 1));
+            tab.breadcrumb_bounds.clear();
+            tab.breadcrumb_header_bounds = Some(Rect::new(area.x, area.y, area.width, 1));
+        }
     }
 
     if _is_focused
