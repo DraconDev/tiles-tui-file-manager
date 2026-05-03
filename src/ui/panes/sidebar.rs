@@ -769,15 +769,16 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         h.finish()
     };
 
-    let tree_items: Vec<(PathBuf, u16, bool)> = if app.editor_sidebar_cache_key == editor_cache_key {
-        app.editor_sidebar_cache.clone().unwrap_or_default()
-    } else {
-        let mut items = Vec::new();
-        collect_tree_items(&base_path, 0, app, &mut items);
-        app.editor_sidebar_cache = Some(items.clone());
-        app.editor_sidebar_cache_key = editor_cache_key;
-        items
-    };
+let tree_items: std::rc::Rc<Vec<(PathBuf, u16, bool)>> = if app.editor_sidebar_cache_key == editor_cache_key {
+            app.editor_sidebar_cache.clone().unwrap_or_default()
+        } else {
+            let mut items = Vec::new();
+            collect_tree_items(&base_path, 0, app, &mut items);
+            let rc = std::rc::Rc::new(items);
+            app.editor_sidebar_cache = Some(rc.clone());
+            app.editor_sidebar_cache_key = editor_cache_key;
+            rc
+        };
 
     let open_files: HashSet<PathBuf> = app
         .panes
