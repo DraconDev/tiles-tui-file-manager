@@ -1,21 +1,23 @@
 # Project State
 
 ## Current Focus
-Improved error handling in `delete_word_backwards` utility function
+Improved error handling in TTY input polling by validating file descriptors and clarifying safety invariants
 
 ## Context
-The function previously used `unwrap()` which could panic if the string was empty. This change adds proper error handling to prevent panics and improve robustness.
+The TTY input polling mechanism needed more robust error handling to prevent undefined behavior when file descriptors become invalid. The previous implementation assumed the file descriptor was always valid, which could lead to undefined behavior if stdin was closed or redirected.
 
 ## Completed
-- [x] Added pattern matching to handle empty string case
-- [x] Improved safety by preventing panics on empty input
+- [x] Added explicit validation of file descriptor before unsafe poll operation
+- [x] Clarified safety invariants in comments about poll_input behavior
+- [x] Improved error handling path for obviously invalid file descriptors
+- [x] Maintained existing safety guarantees about poll_input's behavior
 
 ## In Progress
-- [x] Error handling implementation
+- [ ] No active work in progress
 
 ## Blockers
 - None identified
 
 ## Next Steps
-1. Verify no regressions in text editing functionality
-2. Consider adding similar safety checks to other string manipulation functions
+1. Verify the new error handling works in edge cases (closed stdin, redirected stdin)
+2. Consider adding more comprehensive error recovery for poll_input failures
