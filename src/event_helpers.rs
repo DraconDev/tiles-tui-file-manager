@@ -868,7 +868,7 @@ pub fn navigate_up(app: &mut App) {
             drop(fs);
             app.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
             if let Some(fs) = app.current_file_state_mut() {
-                fs.current_path = new_path;
+                fs.current_path = new_path.clone();
                 fs.pending_select_path = Some(old_folder);
                 fs.git_cache_until = None;
                 push_history(fs, new_path);
