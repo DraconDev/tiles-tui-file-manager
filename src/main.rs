@@ -408,7 +408,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             if let Some(ref preview) = fs.preview {
                                 if preview.path == path {
                                     if let Some(editor) = &preview.editor {
-                                        if !editor.modified {
+                                        let skip_because_active_editor = app_guard
+                                            .editor_state
+                                            .as_ref()
+                                            .map(|e| e.path == path)
+                                            .unwrap_or(false);
+                                        if !skip_because_active_editor && !editor.modified {
                                             needs_reload.push((i, path.clone()));
                                         }
                                     }

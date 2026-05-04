@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored editor state handling to prevent unnecessary reloads of unchanged files
+Prevent unnecessary reloads of active editor files by checking editor state before triggering reloads.
 
 ## Context
-The previous implementation checked if an editor was modified before scheduling a reload, which could lead to unnecessary reload operations. This change optimizes the process by skipping reloads for the currently focused pane.
+The previous implementation would reload preview files even when they were currently being edited, causing unnecessary UI updates. This change adds a check to skip reloads when the file is actively being edited in the editor.
 
 ## Completed
-- [x] Removed redundant modified state check for the focused editor
-- [x] Simplified reload logic by filtering out the focused pane from reload candidates
+- [x] Added check for active editor state before triggering reloads
+- [x] Only reload preview files when they're not currently being edited
 
 ## In Progress
-- [ ] Verify performance impact with multiple open editors
+- [x] Refactored editor state handling to prevent redundant reloads
 
 ## Blockers
-- Need to confirm if this change affects editor synchronization features
+- None identified in this change
 
 ## Next Steps
-1. Test with multiple editors open to verify no unintended side effects
-2. Document the optimization in the architecture decision records
+1. Verify the new behavior doesn't introduce any race conditions
+2. Add unit tests for the new editor state handling logic
