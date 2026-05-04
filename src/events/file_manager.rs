@@ -418,6 +418,13 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     app.tree_expanded_folders.clear();
                     return true;
                 }
+                KeyCode::Char('C') if !app.sidebar_focus => {
+                    if !app.expanded_folders.is_empty() {
+                        app.expanded_folders.clear();
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                    }
+                    return true;
+                }
                 KeyCode::Char('/') => {
                     if let Some(fs) = app.current_file_state_mut() {
                         fs.search_filter.clear();

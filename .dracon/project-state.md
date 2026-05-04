@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Prevent unnecessary reloads of active editor files by checking editor state before triggering reloads.
+Added keyboard shortcut to collapse all expanded folders in file manager
 
 ## Context
-The previous implementation would reload preview files even when they were currently being edited, causing unnecessary UI updates. This change adds a check to skip reloads when the file is actively being edited in the editor.
+This change improves file navigation by providing a quick way to collapse all expanded folders, which can be useful when working with deeply nested directory structures.
 
 ## Completed
-- [x] Added check for active editor state before triggering reloads
-- [x] Only reload preview files when they're not currently being edited
+- [x] Added 'C' key shortcut to collapse all expanded folders when sidebar is not focused
+- [x] Added folder refresh after collapsing to update UI state
 
 ## In Progress
-- [x] Refactored editor state handling to prevent redundant reloads
+- [x] Implementation of folder collapse functionality
 
 ## Blockers
-- None identified in this change
+- None identified
 
 ## Next Steps
-1. Verify the new behavior doesn't introduce any race conditions
-2. Add unit tests for the new editor state handling logic
+1. Test the new keyboard shortcut in various file navigation scenarios
+2. Consider adding visual feedback when folders are collapsed
