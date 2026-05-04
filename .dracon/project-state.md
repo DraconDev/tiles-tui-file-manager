@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101925 bytes)
+Added path cloning for preview functionality in the file manager
 
 ## Context
-This change was triggered by the ongoing dependency management process, where Cargo.lock was automatically updated to reflect a minor version bump in one of the project's dependencies.
+This change addresses a potential issue where the preview functionality might have been using a reference to the path that could become invalid after the event handling scope ends. The clone ensures the path remains valid during the async task execution.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect dependency version changes
+- [x] Added path cloning for preview functionality to prevent potential reference issues
 
 ## In Progress
-- [x] Dependency management process
+- [ ] None
 
 ## Blockers
-- The project is currently blocked by the failed manifest load for dependency `dracon-files` in the `synth-1774826981` slice
+- None
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue with the dependency management process once blockers are resolved
+1. Verify the preview functionality works correctly with the cloned path
+2. Consider if similar cloning is needed for other async operations in the file manager

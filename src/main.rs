@@ -436,6 +436,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::PreviewRequested(pane_idx, path) => {
                     let tx = event_tx.clone();
+                    let path_clone = path.clone();
                     let app_clone = app.clone();
                     let (current_dir, preview_limit_mb, remote_session) = {
                         let app_guard = app.lock();
@@ -455,6 +456,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     };
 
                     tokio::spawn(async move {
+                        let path = path_clone;
                         let path_str = path.to_string_lossy();
                         let content = if let Some(hash) = path_str.strip_prefix("git://") {
                             match tokio::task::spawn_blocking(move || crate::modules::files::show_commit_patch(&current_dir, hash)).await {
