@@ -459,23 +459,25 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let path = path_clone;
                         let path_str = path.to_string_lossy();
                         let content = if let Some(hash) = path_str.strip_prefix("git://") {
-                            match tokio::task::spawn_blocking(move || crate::modules::files::show_commit_patch(&current_dir, hash)).await {
+                            let hash_owned = hash.to_string();
+                            match tokio::task::spawn_blocking(move || crate::modules::files::show_commit_patch(&current_dir, &hash_owned)).await {
                                 Ok(Ok(c)) => c,
                                 Ok(Err(e)) => format!("Error fetching commit data: {}", e),
                                 Err(_) => "<Internal error>".to_string(),
                             }
                         } else if let Some(file_path) = path_str.strip_prefix("git-diff://") {
+                            let file_path_owned = file_path.to_string();
                             if let Some(remote) = &remote_session {
                                 match crate::modules::remote::show_file_diff(
                                     remote,
                                     &current_dir,
-                                    file_path,
+                                    &file_path_owned,
                                 ) {
                                     Ok(content) => content,
                                     Err(e) => format!("Error fetching diff data: {}", e),
                                 }
                             } else {
-                                match tokio::task::spawn_blocking(move || crate::modules::files::show_file_diff(&current_dir, file_path)).await {
+                                match tokio::task::spawn_blocking(move || crate::modules::files::show_file_diff(&current_dir, &file_path_owned)).await {
                                     Ok(Ok(content)) => content,
                                     Ok(Err(e)) => format!("Error fetching diff data: {}", e),
                                     Err(_) => "<Internal error>".to_string(),
