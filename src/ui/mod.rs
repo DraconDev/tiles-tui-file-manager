@@ -3323,6 +3323,9 @@ fn draw_context_menu(
             ContextMenuAction::SystemMonitor => {
                 format!(" {} System Monitor", Icon::Monitor.get(app.icon_mode))
             }
+            ContextMenuAction::CollapseAll => {
+                format!(" {} Collapse All", Icon::Folder.get(app.icon_mode))
+            }
             ContextMenuAction::Drag => {
                 format!(" {} Drag...", Icon::Remote.get(app.icon_mode))
             }
