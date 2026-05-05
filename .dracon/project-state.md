@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Added debug logging to double-click detection in file manager to track directory navigation and file opening behavior.
+Adjusted double-click detection thresholds in file manager for better user interaction
 
 ## Context
-This change improves observability of the file manager's double-click handling by adding debug logs that will help diagnose issues with directory navigation and file opening.
+The change improves the file manager's double-click detection by expanding the acceptable click proximity and time window, making it more forgiving for users who might not be perfectly precise with their mouse clicks.
 
 ## Completed
-- [x] Added debug logging for directory double-clicks (path and navigation action)
-- [x] Added debug logging for non-directory double-clicks (path and file opening)
-- [x] Updated Cargo.lock with dependency changes
+- [x] Increased horizontal click proximity threshold from 3 to 5 pixels
+- [x] Increased vertical click proximity threshold from 1 to 2 pixels
+- [x] Enhanced debug logging to track double-click detection parameters
 
 ## In Progress
-- [x] Debug logging implementation for file manager interactions
+- [ ] No active work in progress
 
 ## Blockers
-- No blockers identified for this change
+- No blockers identified
 
 ## Next Steps
-1. Verify debug logs provide sufficient information for troubleshooting
-2. Consider removing debug logs after verification if they're no longer needed
+1. Test the new thresholds with different user input patterns
+2. Consider adding configuration options for these thresholds
