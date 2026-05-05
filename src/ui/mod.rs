@@ -837,7 +837,9 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
                 ("Ctrl + E", "Toggle Editor View (IDE)"),
                 ("Ctrl + J", "Toggle Bottom Panel"),
                 ("Ctrl + Space", "Command Palette"),
-                ("Ctrl + N", "Open Terminal"),
+                ("Ctrl + N", "New Tab"),
+                ("Ctrl + T", "Open Terminal Tab"),
+                ("Ctrl + K", "Open Terminal Window"),
                 ("Backspace", "Go Up Directory"),
             ],
         ),
@@ -4113,8 +4115,8 @@ fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
         (
             "Terminal",
             vec![
-                ("Ctrl + n", "Open Terminal Tab"),
-                ("Ctrl + . / Ctrl + k", "New Terminal Window"),
+                ("Ctrl + t", "Open Terminal Tab"),
+                ("Ctrl + k", "New Terminal Window"),
             ],
         ),
     ];
