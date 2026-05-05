@@ -1081,13 +1081,23 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     }
 
     if app.monitor_subview != MonitorSubview::Overview {
-        let search_style = if app.process_search_filter.is_empty() {
+        let is_searching = matches!(app.mode, AppMode::ProcessSearch);
+        let search_style = if is_searching {
+            Style::default()
+                .fg(crate::ui::theme::accent_primary())
+                .add_modifier(Modifier::BOLD)
+        } else if app.process_search_filter.is_empty() {
             Style::default().fg(Color::Rgb(40, 45, 55))
         } else {
             Style::default().fg(crate::ui::theme::accent_primary())
         };
+        let cursor = if is_searching { "▌" } else { "" };
         f.render_widget(
-            Paragraph::new(format!(" 󰍉 {}", app.process_search_filter)).style(search_style),
+            Paragraph::new(format!(" 󰍉 {}{}{}", 
+                if is_searching { "> " } else { "" },
+                app.process_search_filter, 
+                cursor
+            )).style(search_style),
             nav_layout[1],
         );
     }
