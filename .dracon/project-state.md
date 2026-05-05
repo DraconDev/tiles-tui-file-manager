@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved process sorting to maintain selection state during sorting operations
+Minor dependency update in Cargo.lock
 
 ## Context
-When sorting processes in the UI, the previously selected process would lose its selection state. This change ensures the selection is preserved by tracking the PID before sorting and restoring it afterward.
+This change updates the dependency versions in the Cargo.lock file, which is a standard part of Rust package management. The update ensures the project uses the latest compatible versions of dependencies.
 
 ## Completed
-- [x] Added PID tracking before sorting
-- [x] Restored selection by PID after sorting
-- [x] Maintained table state selection
+- [x] Updated Cargo.lock with new dependency versions
 
 ## In Progress
-- [x] Selection state preservation during sorting
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Test selection preservation with various sorting scenarios
-2. Verify behavior with edge cases (empty process list, PID conflicts)
+1. Verify the updated dependencies don't introduce breaking changes
+2. Continue with the current planning phase for the project
