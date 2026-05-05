@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Refactored kill confirmation modal positioning logic into a reusable function.
 
 ## Context
-This change updates the dependency versions in the Cargo.lock file, which is a standard part of Rust package management. The update ensures the project uses the latest compatible versions of dependencies.
+The previous implementation had hard-coded modal positioning calculations that were duplicated in multiple places. This change extracts the positioning logic into a dedicated function to improve maintainability and avoid code duplication.
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency versions
+- [x] Extracted modal positioning calculations into `kill_modal_button_positions()`
+- [x] Simplified mouse event handling by removing redundant position calculations
+- [x] Added documentation for the new function
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress
 
 ## Blockers
-- None
+- None identified
 
 ## Next Steps
-1. Verify the updated dependencies don't introduce breaking changes
-2. Continue with the current planning phase for the project
+1. Update any other code that might need the new positioning function
+2. Verify the modal still displays correctly with the new implementation
