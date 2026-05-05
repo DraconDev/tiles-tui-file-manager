@@ -1,20 +1,29 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101926 bytes)
+Enhanced process management with keyboard and mouse interactions in the monitor view
 
 ## Context
-This is an automated dependency update triggered by the project's build system. The change reflects a version bump in one of the project's dependencies, which is a routine maintenance task.
+The changes improve process management in the monitor view by adding:
+- Confirmation dialogs for process killing
+- Mouse support for process selection and sorting
+- Better keyboard navigation with selection tracking
+- Scroll wheel support for process navigation
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency versions
+- [x] Added process kill confirmation dialog with 'y'/'n' keyboard shortcuts
+- [x] Implemented mouse click handling for process selection and sorting
+- [x] Added scroll wheel support for faster process navigation
+- [x] Improved keyboard navigation with proper selection tracking
+- [x] Added right-click context menu for process operations
 
 ## In Progress
-- [x] None - this is a maintenance update
+- [ ] None (all changes are complete)
 
 ## Blockers
-- The project is currently blocked due to a failed manifest load for dependency `dracon-files`
+- None (all functionality implemented)
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue with the planned `synth-1774826981` slice once dependencies are resolved
+1. Test the new process management features
+2. Verify mouse and keyboard interactions work as expected
+3. Document the new process management workflows
