@@ -1,20 +1,26 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added debug logging to double-click detection in file manager
 
 ## Context
-This change was triggered by a failed dependency resolution during the previous build attempt, specifically for the `dracon-files` package. The update ensures the project's dependency tree remains consistent.
+To improve debugging of the double-click detection mechanism in the file manager, we added detailed logging that tracks:
+- Last click position
+- Current click position
+- Time elapsed since last click
+- Whether positions are close enough
+- Final detection result
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency resolution failure for `dracon-files`
+- [x] Added debug logging to `is_double_click` function
+- [x] Logs position coordinates, time elapsed, and detection result
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress
 
 ## Blockers
-- The project is currently blocked by the inability to load the manifest for `dracon-files` dependency
+- None identified
 
 ## Next Steps
-1. Investigate and resolve the dependency resolution issue for `dracon-files`
-2. Verify the project's runtime progress can proceed once dependencies are resolved
+1. Verify debug output provides sufficient information for troubleshooting
+2. Consider adding similar logging to other click-related functions if needed

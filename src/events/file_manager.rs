@@ -34,7 +34,11 @@ fn is_double_click(
 ) -> bool {
     let (last_x, last_y) = last_click_pos;
     let close_enough = last_x.abs_diff(column) <= 3 && last_y.abs_diff(row) <= 1;
-    close_enough && last_click_time.elapsed() < Duration::from_millis(DOUBLE_CLICK_MS)
+    let elapsed = last_click_time.elapsed();
+    let result = close_enough && elapsed < Duration::from_millis(DOUBLE_CLICK_MS);
+    eprintln!("DEBUG is_double_click: last_pos=({},{}), current=({},{}), elapsed={:.3}s, close_enough={}, result={}",
+        last_x, last_y, column, row, elapsed.as_secs_f32(), close_enough, result);
+    result
 }
 
 fn is_virtual_divider(path: &std::path::Path) -> bool {
