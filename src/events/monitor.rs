@@ -184,13 +184,18 @@ pub fn handle_monitor_mouse(
     if matches!(app.mode, AppMode::KillProcessConfirm(_, _)) {
         if let MouseEventKind::Down(button) = me.kind {
             if button == MouseButton::Left {
-                // Check YES button (at x=5, width=9 relative to modal inner)
-                // Modal is centered, 50x12. Need to calculate actual positions.
-                let area = crate::ui::modals::centered_rect(50, 12, app.terminal_size.into());
-                let inner = area.inner(ratatui::layout::Margin { horizontal: 1, vertical: 1 });
-                let button_y = inner.y + inner.height.saturating_sub(2);
-                let yes_x = inner.x + 5;
-                let no_x = inner.x + 25;
+                // Calculate modal position (centered 50x12)
+                let (tw, th) = app.terminal_size;
+                let mw = (tw as f32 * 0.5) as u16;
+                let mh = 12_u16;
+                let mx = (tw - mw) / 2;
+                let my = (th - mh) / 2;
+                let inner_x = mx + 1;
+                let inner_y = my + 1;
+                let inner_h = mh - 2;
+                let button_y = inner_y + inner_h.saturating_sub(2);
+                let yes_x = inner_x + 5;
+                let no_x = inner_x + 25;
 
                 if column >= yes_x && column < yes_x + 9 && row == button_y {
                     if let AppMode::KillProcessConfirm(pid, _) = app.mode.clone() {
