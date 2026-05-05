@@ -1,24 +1,21 @@
 # Project State
 
 ## Current Focus
-Added arrow-click folder expansion/collapse in file manager
+Refactored file manager imports by removing unused `FileColumn` import
 
 ## Context
-Improved folder navigation by separating arrow-click expansion from name-click navigation. This makes the UI more intuitive by:
-- Using arrow clicks for expand/collapse (single action)
-- Reserving name clicks for navigation (double-click for navigation remains unchanged)
+The change was part of ongoing cleanup in the file manager module to reduce unnecessary dependencies and improve code organization.
 
 ## Completed
-- [x] Added arrow-click detection for folder expansion/collapse
-- [x] Implemented toggle behavior for expanded folders
-- [x] Maintained existing double-click navigation behavior
+- [x] Removed unused `FileColumn` import from file_manager.rs
+- [x] Updated Cargo.lock with dependency changes (101925 → 101925 bytes)
 
 ## In Progress
-- [ ] None (feature complete)
+- [ ] No active work in progress
 
 ## Blockers
-- None (feature implemented as designed)
+- None identified
 
 ## Next Steps
-1. Verify behavior with keyboard navigation users
-2. Consider adding visual feedback for expansion state
+1. Review other file manager modules for similar import cleanup opportunities
+2. Continue with planned folder navigation refactoring
