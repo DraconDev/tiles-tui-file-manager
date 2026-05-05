@@ -1017,6 +1017,17 @@ pub fn handle_file_mouse(
             // 3. File Row Interaction
             if row >= 3 {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
+                    // Clicked on empty space below files
+                    if button == MouseButton::Right {
+                        let actions = crate::event_helpers::get_context_menu_actions(&ContextMenuTarget::EmptySpace, app);
+                        app.mode = AppMode::ContextMenu {
+                            x: column,
+                            y: row,
+                            target: ContextMenuTarget::EmptySpace,
+                            actions,
+                            selected_index: None,
+                        };
+                    }
                     return true;
                 };
                 let mut sp = None;
