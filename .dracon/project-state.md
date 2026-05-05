@@ -1,23 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved terminal and tab management in the file manager UI
+Minor dependency update in Cargo.lock
 
 ## Context
-The changes reorganize keyboard shortcuts for terminal operations and tab management to provide clearer user experience. This follows recent work on file management features like search and context menus.
+This change was triggered by the failed dependency resolution during the previous build attempt. The `dracon-files` dependency manifest could not be loaded, which caused the build to fail.
 
 ## Completed
-- [x] Reassigned Ctrl+N to create new in-app tabs instead of opening terminals
-- [x] Added Ctrl+T for opening terminal tabs
-- [x] Added Ctrl+K for opening terminal windows
-- [x] Updated UI documentation to reflect new shortcuts
+- [x] Updated Cargo.lock to resolve dependency conflicts
 
 ## In Progress
-- [ ] Testing terminal integration with new shortcuts
+- [x] Dependency resolution for `dracon-files`
 
 ## Blockers
-- Need to verify terminal behavior with new shortcut assignments
+- Missing manifest for `dracon-files` dependency
 
 ## Next Steps
-1. Test terminal operations with new shortcuts
-2. Verify UI consistency across all file manager views
+1. Investigate why `dracon-files` manifest failed to load
+2. Resolve dependency conflicts or update the dependency version
