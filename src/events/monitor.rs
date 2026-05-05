@@ -9,6 +9,23 @@ fn set_process_selection(app: &mut App, idx: Option<usize>) {
     app.process_selected_idx = idx;
 }
 
+/// Calculate kill confirmation modal button positions.
+/// Returns (inner_x, button_y, yes_x, no_x) for hit testing.
+pub fn kill_modal_button_positions(term_size: (u16, u16)) -> (u16, u16, u16, u16) {
+    let (tw, th) = term_size;
+    let mw = (tw as f32 * 0.5) as u16;
+    let mh = 12_u16;
+    let mx = (tw - mw) / 2;
+    let my = (th - mh) / 2;
+    let inner_x = mx + 1;
+    let inner_y = my + 1;
+    let inner_h = mh - 2;
+    let button_y = inner_y + inner_h.saturating_sub(2);
+    let yes_x = inner_x + 5;
+    let no_x = inner_x + 25;
+    (inner_x, button_y, yes_x, no_x)
+}
+
 pub fn handle_monitor_events(
     evt: &Event,
     app: &mut App,
@@ -131,7 +148,17 @@ fn handle_process_search_input(evt: &Event, app: &mut App) -> bool {
                 return true;
             }
             KeyCode::Backspace => {
-                app.input.value.pop();
+                if key.modifiers.contains(dracon_terminal_engine::contracts::KeyModifiers::CONTROL) {
+                    // Ctrl+Backspace: delete last word
+                    let trimmed = app.input.value.trim_end();
+                    if let Some(last_space) = trimmed.rfind(' ') {
+                        app.input.value.truncate(last_space + 1);
+                    } else {
+                        app.input.value.clear();
+                    }
+                } else {
+                    app.input.value.pop();
+                }
                 app.process_search_filter = app.input.value.clone();
                 return true;
             }
@@ -177,22 +204,30 @@ pub fn handle_monitor_mouse(
     app: &mut App,
     _event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
-/// Calculate kill confirmation modal button positions.
-/// Returns (inner_x, button_y, yes_x, no_x) for hit testing.
-pub fn kill_modal_button_positions(term_size: (u16, u16)) -> (u16, u16, u16, u16) {
-    let (tw, th) = term_size;
-    let mw = (tw as f32 * 0.5) as u16;
-    let mh = 12_u16;
-    let mx = (tw - mw) / 2;
-    let my = (th - mh) / 2;
-    let inner_x = mx + 1;
-    let inner_y = my + 1;
-    let inner_h = mh - 2;
-    let button_y = inner_y + inner_h.saturating_sub(2);
-    let yes_x = inner_x + 5;
-    let no_x = inner_x + 25;
-    (inner_x, button_y, yes_x, no_x)
-}
+    let column = me.column;
+    let row = me.row;
+
+    // Handle kill confirmation modal mouse clicks
+    if matches!(app.mode, AppMode::KillProcessConfirm(_, _)) {
+        if let MouseEventKind::Down(button) = me.kind {
+            if button == MouseButton::Left {
+                let (_, button_y, yes_x, no_x) = kill_modal_button_positions(app.terminal_size);
+
+                if column >= yes_x && column < yes_x + 9 && row == button_y {
+                    if let AppMode::KillProcessConfirm(pid, _) = app.mode.clone() {
+                        let _ = crate::app::try_send_event(_event_tx, AppEvent::KillProcess(pid));
+                        app.mode = AppMode::Normal;
+                    }
+                    return true;
+                }
+                if column >= no_x && column < no_x + 8 && row == button_y {
+                    app.mode = AppMode::Normal;
+                    return true;
+                }
+            }
+        }
+        return true; // Block other mouse events while modal is open
+    }
 
     match me.kind {
         MouseEventKind::Down(button) => {

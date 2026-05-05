@@ -1676,6 +1676,21 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         }
     }).collect();
 
+    if filtered_procs.is_empty() {
+        let empty_message = if app.process_search_filter.is_empty() {
+            "No processes found".to_string()
+        } else {
+            format!("No processes match '{}'", app.process_search_filter)
+        };
+        f.render_widget(
+            Paragraph::new(empty_message)
+                .alignment(Alignment::Center)
+                .style(Style::default().fg(Color::Rgb(80, 85, 95))),
+            Rect::new(area.x, area.y + 3, area.width, 1),
+        );
+        return;
+    }
+
     let rows = filtered_procs.iter().map(|(i, p)| {
         let mut is_selected = false;
         let mut style = if *i % 2 == 0 {
