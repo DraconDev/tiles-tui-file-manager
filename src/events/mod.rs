@@ -353,6 +353,15 @@ fn handle_general_mouse(
                     "monitor" => {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::SystemMonitor);
                     }
+                    "search" => {
+                        if app.current_view == CurrentView::Files {
+                            if let Some(fs) = app.current_file_state_mut() {
+                                fs.search_filter.clear();
+                                fs.search_generation += 1;
+                            }
+                            app.mode = AppMode::Search;
+                        }
+                    }
                     "git" => {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
                     }
