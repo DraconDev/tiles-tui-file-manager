@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Improved terminal tab/window management for WezTerm emulator
 
 ## Context
-This change updates the dependency versions in the Cargo.lock file, which is a common practice to ensure compatibility and security with the project's dependencies.
+The change enhances terminal handling by adding support for both new tabs and new windows in WezTerm, which was previously only supporting new windows.
 
 ## Completed
-- [x] Updated dependency versions in Cargo.lock
+- [x] Added conditional logic to use `cli spawn` for new tabs and `start` for new windows in WezTerm
+- [x] Maintained existing behavior for other terminal emulators
 
 ## In Progress
-- [ ] None (dependency update is complete)
+- [ ] None
 
 ## Blockers
-- None (this is a routine maintenance task)
+- None
 
 ## Next Steps
-1. Verify that the updated dependencies do not introduce breaking changes
-2. Continue with the current planning phase for the project
+1. Test the new tab/window behavior in WezTerm
+2. Verify compatibility with other terminal emulators

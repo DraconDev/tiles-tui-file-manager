@@ -981,7 +981,12 @@ pub fn spawn_terminal_at(path: &std::path::Path, new_tab: bool, command: Option<
                 }
             }
             "wezterm" => {
-                args.push("start".to_string());
+                if new_tab {
+                    args.push("cli".to_string());
+                    args.push("spawn".to_string());
+                } else {
+                    args.push("start".to_string());
+                }
                 args.push("--cwd".to_string());
                 args.push(path.to_string_lossy().to_string());
                 if let Some(cmd) = command {
