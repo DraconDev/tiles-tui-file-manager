@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Adjust double-click detection threshold for file manager
+Minor dependency update in Cargo.lock
 
 ## Context
-The change improves the accuracy of double-click detection in the file manager by increasing the allowed horizontal distance between clicks from 1 to 3 pixels while maintaining the vertical threshold of 1 pixel.
+This change was triggered by a failed dependency resolution during the previous build attempt, specifically for the `dracon-files` package. The update ensures the project's dependency tree remains consistent.
 
 ## Completed
-- [x] Increased horizontal click tolerance from 1 to 3 pixels for double-click detection
+- [x] Updated Cargo.lock to resolve dependency resolution failure for `dracon-files`
 
 ## In Progress
-- [x] Testing the new double-click sensitivity
+- [ ] None
 
 ## Blockers
-- None identified
+- The project is currently blocked by the inability to load the manifest for `dracon-files` dependency
 
 ## Next Steps
-1. Verify the new threshold works well with different input devices
-2. Consider adding configuration options for click sensitivity
+1. Investigate and resolve the dependency resolution issue for `dracon-files`
+2. Verify the project's runtime progress can proceed once dependencies are resolved
