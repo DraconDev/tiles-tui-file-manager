@@ -110,7 +110,7 @@ pub fn handle_git_mouse(
     app: &mut App,
     event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
-    let column = me.column;
+    let _column = me.column;
     let row = me.row;
 
     if let MouseEventKind::Down(button) = me.kind {

@@ -1,25 +1,20 @@
 # Project State
 
 ## Current Focus
-Enhanced Git event handling with improved navigation and mouse interaction support
+Refactored Git event handling by renaming a variable to indicate it's intentionally unused.
 
 ## Context
-The Git event handler was refactored to improve navigation between pending changes and commit history, and to add mouse interaction support for both sections.
+The change was made to clarify that the `column` variable in the Git mouse event handler is intentionally unused, which improves code readability and maintainability.
 
 ## Completed
-- [x] Added keyboard navigation (Up/Down) for both pending changes and commit history
-- [x] Implemented Tab key switching between pending changes and history sections
-- [x] Added mouse click handling for both pending changes and commit history sections
-- [x] Improved selection state management between the two sections
-- [x] Maintained existing preview functionality for both pending changes and commits
+- [x] Renamed `column` to `_column` to indicate it's intentionally unused
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Verify mouse interaction works consistently across different terminal sizes
-2. Test keyboard navigation edge cases (empty lists, single item lists)
-3. Consider adding visual feedback for active selection section
+1. Review the change to ensure no functionality was accidentally altered
+2. Continue with other planned Git event handling improvements
