@@ -1123,7 +1123,9 @@ pub fn handle_file_mouse(
                         && is_double_click(app.mouse_click_pos, app.mouse_last_click, column, row)
                     {
                         if path.is_dir() {
+                            eprintln!("DEBUG double_click: is_dir=true, path={:?}", path);
                             if let Some(fs) = app.current_file_state_mut() {
+                                eprintln!("DEBUG double_click: navigating to {:?}", path);
                                 fs.current_path = path.clone();
                                 fs.selection.clear();
                                 fs.git_cache_until = None;
@@ -1131,6 +1133,7 @@ pub fn handle_file_mouse(
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         } else {
+                            eprintln!("DEBUG double_click: is_dir=false, path={:?}", path);
                             let _ = open_file_or_navigate(&path);
                         }
                     }
