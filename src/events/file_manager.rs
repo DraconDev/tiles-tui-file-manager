@@ -7,7 +7,7 @@ use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::app::{
-    App, AppEvent, AppMode, ContextMenuTarget, CurrentView, FileColumn, SidebarTarget, UndoAction,
+    App, AppEvent, AppMode, ContextMenuTarget, CurrentView, SidebarTarget, UndoAction,
 };
 use crate::events::input::delete_word_backwards;
 use crate::state::{DropTarget};
