@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved modal positioning calculations for process termination confirmation
+Added process search filtering functionality to the UI
 
 ## Context
-The previous modal positioning logic was using a centered_rect helper that didn't account for terminal size changes properly. This change replaces it with direct calculations for more precise control.
+The previous process listing showed all processes without filtering. This change implements a search feature that filters processes by name or PID, improving usability for users managing many processes.
 
 ## Completed
-- [x] Replaced centered_rect helper with direct terminal size calculations
-- [x] Improved modal positioning accuracy for confirmation dialogs
-- [x] Maintained same visual layout while fixing positional calculations
+- [x] Added process filtering based on search input
+- [x] Maintained alternating row colors for readability
+- [x] Preserved selection highlighting for the filtered list
 
 ## In Progress
-- [x] Modal positioning improvements for process termination flow
+- [x] Search functionality is now operational
 
 ## Blockers
-- None identified
+- No blockers identified for this change
 
 ## Next Steps
-1. Verify modal positioning works consistently across terminal sizes
-2. Test mouse interaction with the confirmation buttons
+1. Add visual feedback for when search results are empty
+2. Optimize the filtering algorithm for large process lists

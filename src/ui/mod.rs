@@ -1657,14 +1657,23 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                     .add_modifier(Modifier::BOLD),
             )
         });
-    let rows = app.system_state.processes.iter().enumerate().map(|(i, p)| {
+    let filtered_procs: Vec<_> = app.system_state.processes.iter().enumerate().filter(|(_, p)| {
+        if app.process_search_filter.is_empty() {
+            true
+        } else {
+            p.name.to_lowercase().contains(&app.process_search_filter.to_lowercase())
+                || p.pid.to_string().contains(&app.process_search_filter)
+        }
+    }).collect();
+
+    let rows = filtered_procs.iter().map(|(i, p)| {
         let mut is_selected = false;
-        let mut style = if i % 2 == 0 {
+        let mut style = if *i % 2 == 0 {
             Style::default().fg(Color::Rgb(180, 185, 190))
         } else {
             Style::default().fg(Color::Rgb(140, 145, 150))
         };
-        if app.process_selected_idx == Some(i) && app.monitor_subview == MonitorSubview::Processes {
+        if app.process_selected_idx == Some(*i) && app.monitor_subview == MonitorSubview::Processes {
             style = style
                 .bg(crate::ui::theme::accent_primary())
                 .fg(Color::Black)
