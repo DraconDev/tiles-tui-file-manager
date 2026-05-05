@@ -961,10 +961,23 @@ pub fn spawn_terminal_at(path: &std::path::Path, new_tab: bool, command: Option<
                 }
             }
             "kitty" => {
-                args.push("--directory".to_string());
-                args.push(path.to_string_lossy().to_string());
-                if let Some(cmd) = command {
-                    args.push(cmd.to_string());
+                if new_tab {
+                    // Open tab in existing kitty window
+                    args.push("@".to_string());
+                    args.push("launch".to_string());
+                    args.push("--type=tab".to_string());
+                    args.push("--cwd".to_string());
+                    args.push(path.to_string_lossy().to_string());
+                    if let Some(cmd) = command {
+                        args.push(cmd.to_string());
+                    }
+                } else {
+                    // Open new kitty window
+                    args.push("--directory".to_string());
+                    args.push(path.to_string_lossy().to_string());
+                    if let Some(cmd) = command {
+                        args.push(cmd.to_string());
+                    }
                 }
             }
             "wezterm" => {

@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Improved terminal tab/window management for kitty terminal emulator
 
 ## Context
-This is a routine dependency management update triggered by the project's build system. The change maintains compatibility with project dependencies while ensuring the lockfile is up-to-date.
+The change enhances terminal handling by distinguishing between opening new tabs in existing windows and creating new windows, which aligns with user expectations for terminal behavior.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect current dependency versions
+- [x] Added support for opening tabs in existing kitty windows
+- [x] Maintained backward compatibility for new window creation
+- [x] Improved command handling for both tab and window scenarios
 
 ## In Progress
-- [ ] None (this is a dependency maintenance commit)
+- [ ] Testing across different terminal configurations
 
 ## Blockers
-- None (this is a non-functional change)
+- Dependency `dracon-files` manifest loading failure (blocking runtime execution)
 
 ## Next Steps
-1. Continue with ongoing development work
-2. Monitor for any dependency conflicts that may arise from this update
+1. Verify terminal behavior across different configurations
+2. Address the dependency loading issue for runtime execution
