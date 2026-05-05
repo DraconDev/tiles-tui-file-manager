@@ -1,29 +1,22 @@
 # Project State
 
 ## Current Focus
-Enhanced process management with keyboard and mouse interactions in the monitor view
+Added process termination confirmation state variant to handle process killing operations.
 
 ## Context
-The changes improve process management in the monitor view by adding:
-- Confirmation dialogs for process killing
-- Mouse support for process selection and sorting
-- Better keyboard navigation with selection tracking
-- Scroll wheel support for process navigation
+This change introduces a new application state variant to support the process killing feature, which was previously missing from the state management system.
 
 ## Completed
-- [x] Added process kill confirmation dialog with 'y'/'n' keyboard shortcuts
-- [x] Implemented mouse click handling for process selection and sorting
-- [x] Added scroll wheel support for faster process navigation
-- [x] Improved keyboard navigation with proper selection tracking
-- [x] Added right-click context menu for process operations
+- [x] Added `KillProcessConfirm` variant to `AppMode` enum with process ID and name parameters
 
 ## In Progress
-- [ ] None (all changes are complete)
+- [x] Implementation of process killing functionality
 
 ## Blockers
-- None (all functionality implemented)
+- Missing implementation of the actual process killing logic
+- Need to define UI behavior for the confirmation dialog
 
 ## Next Steps
-1. Test the new process management features
-2. Verify mouse and keyboard interactions work as expected
-3. Document the new process management workflows
+1. Implement process killing logic in the appropriate system module
+2. Create UI components for the confirmation dialog
+3. Add error handling for process termination failures

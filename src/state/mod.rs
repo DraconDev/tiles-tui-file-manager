@@ -167,6 +167,7 @@ pub enum AppMode {
     NewFolder,
     Delete(String),
     DeleteFile(PathBuf),
+    KillProcessConfirm(u32, String),
     Search,
     PathInput,
     SaveAs(PathBuf),
