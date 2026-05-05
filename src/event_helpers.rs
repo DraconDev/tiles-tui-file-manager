@@ -49,6 +49,11 @@ pub fn update_commands(app: &mut App) {
             desc: "Add Remote".to_string(),
             action: CommandAction::AddRemote,
         },
+        CommandItem {
+            key: "c".to_string(),
+            desc: "Collapse Folders".to_string(),
+            action: CommandAction::CollapseFolders,
+        },
     ];
 
     for (i, bookmark) in app.remote_bookmarks.iter().enumerate() {
@@ -88,6 +93,12 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
         }
         CommandAction::CommandPalette => {
             app.mode = AppMode::CommandPalette;
+        }
+        CommandAction::CollapseFolders => {
+            if !app.expanded_folders.is_empty() {
+                app.expanded_folders.clear();
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            }
         }
     }
 }

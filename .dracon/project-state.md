@@ -1,21 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored Git event handling and added folder collapse functionality
+Added folder collapse functionality to the command palette
 
 ## Context
-The changes modify keyboard shortcuts and introduce a new state variant for folder management. This aligns with ongoing work on process management features.
+This change enhances user navigation by allowing quick collapse of all expanded folders through the command palette interface.
 
 ## Completed
-- [x] Changed Git history shortcut from 'L' to 'G'
-- [x] Added `CollapseFolders` command action variant
+- [x] Added "Collapse Folders" command to command palette
+- [x] Implemented folder collapse functionality that clears all expanded folders
+- [x] Added event trigger to refresh file view after collapsing folders
 
 ## In Progress
-- [ ] Integration of folder collapse functionality
+- [x] Folder collapse implementation is complete
 
 ## Blockers
-- Missing implementation for folder collapse behavior
+- No known blockers at this time
 
 ## Next Steps
-1. Implement folder collapse functionality
-2. Test keyboard shortcut changes for consistency
+1. Test folder collapse functionality with various folder structures
+2. Consider adding keyboard shortcut for quick folder collapse
