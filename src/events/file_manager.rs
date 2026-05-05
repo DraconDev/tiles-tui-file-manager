@@ -33,7 +33,7 @@ fn is_double_click(
     row: u16,
 ) -> bool {
     let (last_x, last_y) = last_click_pos;
-    let close_enough = last_x.abs_diff(column) <= 1 && last_y.abs_diff(row) <= 1;
+    let close_enough = last_x.abs_diff(column) <= 3 && last_y.abs_diff(row) <= 1;
     close_enough && last_click_time.elapsed() < Duration::from_millis(DOUBLE_CLICK_MS)
 }
 
