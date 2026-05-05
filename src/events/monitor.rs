@@ -131,16 +131,12 @@ fn handle_process_search_input(evt: &Event, app: &mut App) -> bool {
                 return true;
             }
             KeyCode::Backspace => {
-                app.input.handle_event(&crossterm::event::Event::Key(
-                    crossterm::event::KeyEvent::from(crossterm::event::KeyCode::Backspace),
-                ));
+                app.input.value.pop();
                 app.process_search_filter = app.input.value.clone();
                 return true;
             }
             KeyCode::Char(c) => {
-                app.input.handle_event(&crossterm::event::Event::Key(
-                    crossterm::event::KeyEvent::from(crossterm::event::KeyCode::Char(c)),
-                ));
+                app.input.value.push(c);
                 app.process_search_filter = app.input.value.clone();
                 return true;
             }

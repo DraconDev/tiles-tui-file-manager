@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Added a new `ProcessSearch` state variant to handle process search functionality.
+Refactored process search input handling to simplify direct string manipulation
 
 ## Context
-This change extends the application's state management to support a dedicated process search mode, likely to complement the existing process management features.
+The previous implementation used crossterm event handling for backspace and character input, which added unnecessary complexity. The new approach directly manipulates the input string, reducing dependencies and simplifying the code.
 
 ## Completed
-- [x] Added `ProcessSearch` variant to `AppMode` enum to support dedicated process search state
+- [x] Removed crossterm event handling for backspace and character input
+- [x] Directly modified input string with `pop()` and `push()` methods
+- [x] Maintained same functionality while reducing code complexity
 
 ## In Progress
-- [x] Implementation of process search functionality (not yet visible in this diff)
+- [ ] None
 
 ## Blockers
-- Implementation of the actual search UI and logic is not yet complete
+- None
 
 ## Next Steps
-1. Implement the process search UI components
-2. Add keyboard/mouse interactions for the search functionality
+1. Verify no regression in process search functionality
+2. Consider adding input validation for process search
