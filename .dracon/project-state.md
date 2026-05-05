@@ -1,16 +1,15 @@
 # Project State
 
 ## Current Focus
-Improved double-click detection in file manager with dedicated tracking state
+Improved double-click detection in file manager to prevent accidental drag operations
 
 ## Context
-The previous implementation shared mouse click state with other UI components, causing false double-click detections when clicking in headers, sidebars, or tabs. This change separates the file manager's double-click tracking to ensure accurate folder navigation and file opening.
+The previous implementation triggered drag operations when double-clicking, which was unintended behavior. This change adds explicit double-click detection to prevent drag operations during double-clicks.
 
 ## Completed
-- [x] Added dedicated `file_manager_last_click` and `file_manager_click_pos` fields to App struct
-- [x] Updated file manager to use its own click tracking state
-- [x] Removed debug logging from double-click detection
-- [x] Adjusted double-click detection thresholds
+- [x] Added double-click detection logic before setting drag source
+- [x] Modified drag initiation to only occur for single clicks
+- [x] Maintained existing double-click behavior for folder navigation
 
 ## In Progress
 - [ ] No active work in progress
@@ -19,5 +18,5 @@ The previous implementation shared mouse click state with other UI components, c
 - None identified
 
 ## Next Steps
-1. Verify double-click behavior in file manager
-2. Test edge cases for false double-click detections
+1. Verify double-click behavior in UI tests
+2. Consider adding visual feedback for double-click detection

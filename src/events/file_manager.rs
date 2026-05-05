@@ -1111,13 +1111,16 @@ pub fn handle_file_mouse(
                         }
                         return true;
                     }
-                    app.drag_source = Some(path.clone());
-                    app.drag_start_pos = Some((column, row));
+                    let is_double = button == MouseButton::Left
+                        && is_double_click(app.file_manager_click_pos, app.file_manager_last_click, column, row);
+
+                    if !is_double {
+                        app.drag_source = Some(path.clone());
+                        app.drag_start_pos = Some((column, row));
+                    }
 
                     // Double Click
-                    if button == MouseButton::Left
-                        && is_double_click(app.file_manager_click_pos, app.file_manager_last_click, column, row)
-                    {
+                    if is_double {
                         if path.is_dir() {
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.current_path = path.clone();
