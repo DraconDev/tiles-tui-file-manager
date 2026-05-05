@@ -1048,6 +1048,28 @@ pub fn handle_file_mouse(
                     is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                     sp = Some(p.clone());
 
+                    // Arrow-only click toggles expand/collapse (navigate via double-click instead)
+                    if button == MouseButton::Left {
+                        if let Some(name_col_rect) = fs.column_bounds.iter().find(|(_, col)| *col == FileColumn::Name).map(|(r, _)| *r) {
+                            let depth = fs.tree_file_depths.get(idx).copied().unwrap_or(0) as u16;
+                            let arrow_start = name_col_rect.x + (depth * 2);
+                            let arrow_end = arrow_start + 2;
+                            let clicked_on_arrow = is_dir && column >= arrow_start && column < arrow_end;
+                            if clicked_on_arrow {
+                                if is_dir {
+                                    let was_expanded = app.expanded_folders.contains(&p);
+                                    if was_expanded {
+                                        app.expanded_folders.remove(&p);
+                                    } else {
+                                        app.expanded_folders.insert(p.clone());
+                                    }
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                                }
+                                return true;
+                            }
+                        }
+                    }
+
                     // Single-click on folder name navigates into the folder
                     // (no toggle-expand on name click — use Space key for that)
                     }

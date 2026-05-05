@@ -1,20 +1,24 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock (101925 → 101925 bytes)
+Added arrow-click folder expansion/collapse in file manager
 
 ## Context
-This change was triggered by the ongoing dependency management process, which is part of the broader system monitoring and file management refactoring efforts.
+Improved folder navigation by separating arrow-click expansion from name-click navigation. This makes the UI more intuitive by:
+- Using arrow clicks for expand/collapse (single action)
+- Reserving name clicks for navigation (double-click for navigation remains unchanged)
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency versions
+- [x] Added arrow-click detection for folder expansion/collapse
+- [x] Implemented toggle behavior for expanded folders
+- [x] Maintained existing double-click navigation behavior
 
 ## In Progress
-- [ ] Dependency resolution for `dracon-files` manifest loading failure
+- [ ] None (feature complete)
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in slice `synth-1774826981`
+- None (feature implemented as designed)
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Complete the dependency update process once all manifests are properly loaded
+1. Verify behavior with keyboard navigation users
+2. Consider adding visual feedback for expansion state
