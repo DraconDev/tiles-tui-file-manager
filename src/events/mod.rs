@@ -113,7 +113,7 @@ pub fn handle_event(
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::Editor);
                         return true;
                     }
-                    KeyCode::Char('l') | KeyCode::Char('L') => {
+                    KeyCode::Char('g') | KeyCode::Char('G') => {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
                         return true;
                     }

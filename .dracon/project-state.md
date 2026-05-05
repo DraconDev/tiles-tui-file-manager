@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Refactored Git event handling and added folder collapse functionality
 
 ## Context
-This change updates the Cargo.lock file, which typically occurs when dependency versions are updated or resolved. The project is currently in the planning phase with no active execution.
+The changes modify keyboard shortcuts and introduce a new state variant for folder management. This aligns with ongoing work on process management features.
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency resolution
+- [x] Changed Git history shortcut from 'L' to 'G'
+- [x] Added `CollapseFolders` command action variant
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Integration of folder collapse functionality
 
 ## Blockers
-- Dependency resolution failure for `dracon-files` package
+- Missing implementation for folder collapse behavior
 
 ## Next Steps
-1. Investigate and resolve the failed dependency resolution for `dracon-files`
-2. Continue with the planned `synth-1774826981` slice once dependencies are resolved
+1. Implement folder collapse functionality
+2. Test keyboard shortcut changes for consistency
