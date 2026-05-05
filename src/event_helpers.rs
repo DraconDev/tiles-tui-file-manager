@@ -677,6 +677,12 @@ pub fn handle_context_menu_action(
         ContextMenuAction::SystemMonitor => {
             let _ = crate::app::try_send_event(&event_tx, AppEvent::SystemMonitor);
         }
+        ContextMenuAction::CollapseAll => {
+            if !app.expanded_folders.is_empty() {
+                app.expanded_folders.clear();
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            }
+        }
         ContextMenuAction::Run | ContextMenuAction::RunTerminal => {
             match target {
                 ContextMenuTarget::File(idx) => {
