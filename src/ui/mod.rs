@@ -3718,6 +3718,71 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
     );
 }
 
+fn draw_kill_process_modal(f: &mut Frame, app: &App) {
+    let area = centered_rect(50, 12, f.area());
+    f.render_widget(Clear, area);
+
+    let (pid, name) = match &app.mode {
+        AppMode::KillProcessConfirm(pid, name) => (*pid, name.clone()),
+        _ => return,
+    };
+
+    let block = Block::default()
+        .title(" Kill Process ")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Red));
+
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    // Message
+    let message = format!("Kill process '{}' (PID {})?", name, pid);
+    f.render_widget(
+        Paragraph::new(message).alignment(Alignment::Center),
+        Rect::new(inner.x, inner.y + 2, inner.width, 1),
+    );
+
+    f.render_widget(
+        Paragraph::new("Press [Y] to confirm or [N]/Esc to cancel").alignment(Alignment::Center),
+        Rect::new(inner.x, inner.y + 4, inner.width, 1),
+    );
+
+    // Buttons
+    let (mx, my) = app.mouse_pos;
+    let button_y = inner.y + inner.height.saturating_sub(2);
+
+    let is_hover = |bx: u16, len: u16| mx >= inner.x + bx && mx < inner.x + bx + len && my == button_y;
+
+    let yes_style = if is_hover(5, 9) {
+        Style::default()
+            .bg(Color::Red)
+            .fg(Color::Black)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+    };
+
+    let no_style = if is_hover(25, 8) {
+        Style::default()
+            .bg(Color::White)
+            .fg(Color::Black)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::White)
+    };
+
+    f.render_widget(
+        Paragraph::new(" [ YES ] ").style(yes_style),
+        Rect::new(inner.x + 5, button_y, 9, 1),
+    );
+
+    f.render_widget(
+        Paragraph::new(" [ NO ] ").style(no_style),
+        Rect::new(inner.x + 25, button_y, 8, 1),
+    );
+}
+
 fn draw_properties_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(50, 50, f.area());
     f.render_widget(Clear, area);
