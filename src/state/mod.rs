@@ -122,6 +122,7 @@ pub enum ContextMenuAction {
     GitInit,
     GitStatus,
     SystemMonitor,
+    CollapseAll,
     Drag,
     SetColor(Option<u8>),
     SortBy(FileColumn),

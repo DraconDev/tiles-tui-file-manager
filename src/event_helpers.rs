@@ -210,6 +210,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
             actions.extend(vec![
                 ContextMenuAction::Separator,
                 ContextMenuAction::ToggleHidden,
+                ContextMenuAction::CollapseAll,
                 ContextMenuAction::Separator,
                 ContextMenuAction::TerminalTab,
                 ContextMenuAction::TerminalWindow,

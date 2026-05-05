@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added folder collapse functionality to the context menu and state management.
 
 ## Context
-This change was triggered by the project's ongoing dependency management process. The Cargo.lock file was updated to reflect the latest dependency versions, which is a routine maintenance task.
+This change enhances the file explorer UI by allowing users to collapse all folders in the view. This was prompted by user feedback requesting better organization options for large directory structures.
 
 ## Completed
-- [x] Updated Cargo.lock to reflect current dependency versions
+- [x] Added `CollapseAll` action to context menu
+- [x] Added `CollapseAll` variant to `ContextMenuAction` enum
 
 ## In Progress
-- [ ] None
+- [ ] Implement the actual collapse functionality in the UI
 
 ## Blockers
-- None
+- UI implementation requires coordination with the file tree rendering system
 
 ## Next Steps
-1. Verify that the updated dependencies don't introduce breaking changes
-2. Continue with the planned `synth-1774826981` slice once the dependency manifest issue is resolved
+1. Implement the collapse behavior in the file tree component
+2. Add keyboard shortcut support for collapsing all folders
