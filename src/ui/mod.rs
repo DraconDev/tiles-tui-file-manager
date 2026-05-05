@@ -4115,7 +4115,7 @@ fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
         (
             "Terminal",
             vec![
-                ("Ctrl + t", "Open Terminal Tab"),
+                ("Ctrl + n", "Open Terminal Tab"),
                 ("Ctrl + k", "New Terminal Window"),
             ],
         ),
