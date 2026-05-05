@@ -34,11 +34,7 @@ fn is_double_click(
 ) -> bool {
     let (last_x, last_y) = last_click_pos;
     let close_enough = last_x.abs_diff(column) <= 5 && last_y.abs_diff(row) <= 2;
-    let elapsed = last_click_time.elapsed();
-    let result = close_enough && elapsed < Duration::from_millis(DOUBLE_CLICK_MS);
-    eprintln!("DEBUG is_double_click: last_pos=({},{}), current=({},{}), elapsed={:.3}s, close_enough={}, result={}",
-        last_x, last_y, column, row, elapsed.as_secs_f32(), close_enough, result);
-    result
+    close_enough && last_click_time.elapsed() < Duration::from_millis(DOUBLE_CLICK_MS)
 }
 
 fn is_virtual_divider(path: &std::path::Path) -> bool {
@@ -1120,12 +1116,10 @@ pub fn handle_file_mouse(
 
                     // Double Click
                     if button == MouseButton::Left
-                        && is_double_click(app.mouse_click_pos, app.mouse_last_click, column, row)
+                        && is_double_click(app.file_manager_click_pos, app.file_manager_last_click, column, row)
                     {
                         if path.is_dir() {
-                            eprintln!("DEBUG double_click: is_dir=true, path={:?}", path);
                             if let Some(fs) = app.current_file_state_mut() {
-                                eprintln!("DEBUG double_click: navigating to {:?}", path);
                                 fs.current_path = path.clone();
                                 fs.selection.clear();
                                 fs.git_cache_until = None;
@@ -1133,12 +1127,11 @@ pub fn handle_file_mouse(
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         } else {
-                            eprintln!("DEBUG double_click: is_dir=false, path={:?}", path);
                             let _ = open_file_or_navigate(&path);
                         }
                     }
-                    app.mouse_last_click = std::time::Instant::now();
-                    app.mouse_click_pos = (column, row);
+                    app.file_manager_last_click = std::time::Instant::now();
+                    app.file_manager_click_pos = (column, row);
                 }
             }
 
@@ -1588,7 +1581,7 @@ mod tests {
         let now = std::time::Instant::now();
         assert!(is_double_click((10, 10), now, 11, 10));
         assert!(is_double_click((10, 10), now, 9, 11));
-        assert!(!is_double_click((10, 10), now, 13, 10));
+        assert!(!is_double_click((10, 10), now, 16, 10));
         assert!(!is_double_click(
             (10, 10),
             now - Duration::from_millis(700),
