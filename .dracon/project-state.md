@@ -1,29 +1,20 @@
 # Project State
 
 ## Current Focus
-Enhanced process management with keyboard and mouse interactions in the monitor view
+Added a new `ProcessSearch` state variant to handle process search functionality.
 
 ## Context
-This change improves the process management UI by adding:
-- Process search functionality
-- PID copy to clipboard
-- Better kill confirmation handling
-- Consistent process selection management
+This change extends the application's state management to support a dedicated process search mode, likely to complement the existing process management features.
 
 ## Completed
-- [x] Added process search mode with `/` key binding
-- [x] Implemented PID copy to clipboard with `c` key
-- [x] Refactored process selection logic into helper function
-- [x] Enhanced kill confirmation with both keyboard and mouse support
-- [x] Added proper modal state management for process operations
+- [x] Added `ProcessSearch` variant to `AppMode` enum to support dedicated process search state
 
 ## In Progress
-- [ ] None (all features implemented)
+- [x] Implementation of process search functionality (not yet visible in this diff)
 
 ## Blockers
-- None (all dependencies resolved)
+- Implementation of the actual search UI and logic is not yet complete
 
 ## Next Steps
-1. Test process search functionality
-2. Verify clipboard operations work across platforms
-3. Add visual feedback for process operations
+1. Implement the process search UI components
+2. Add keyboard/mouse interactions for the search functionality
