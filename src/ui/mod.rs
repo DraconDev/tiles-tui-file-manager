@@ -355,6 +355,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if matches!(app.mode, AppMode::Delete(_) | AppMode::DeleteFile(_)) {
         draw_delete_modal(f, app);
     }
+    if matches!(app.mode, AppMode::KillProcessConfirm(_, _)) {
+        draw_kill_process_modal(f, app);
+    }
     if matches!(app.mode, AppMode::Properties) {
         draw_properties_modal(f, app);
     }

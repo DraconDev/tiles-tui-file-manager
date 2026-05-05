@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added process termination confirmation state variant to handle process killing operations.
+Added process termination confirmation modal to handle process killing workflows
 
 ## Context
-This change introduces a new application state variant to support the process killing feature, which was previously missing from the state management system.
+To provide a safer process termination experience, we need to confirm with the user before killing processes. This prevents accidental termination of critical system processes.
 
 ## Completed
-- [x] Added `KillProcessConfirm` variant to `AppMode` enum with process ID and name parameters
+- [x] Added new `KillProcessConfirm` app mode variant to handle process termination confirmation state
+- [x] Implemented modal drawing for process termination confirmation
 
 ## In Progress
-- [x] Implementation of process killing functionality
+- [ ] No active work in progress
 
 ## Blockers
-- Missing implementation of the actual process killing logic
-- Need to define UI behavior for the confirmation dialog
+- None identified
 
 ## Next Steps
-1. Implement process killing logic in the appropriate system module
-2. Create UI components for the confirmation dialog
-3. Add error handling for process termination failures
+1. Implement process termination logic when confirmation is accepted
+2. Add keyboard shortcuts for confirmation dialog
