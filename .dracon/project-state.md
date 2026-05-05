@@ -1,27 +1,22 @@
 # Project State
 
 ## Current Focus
-Enhanced process search UI with visual feedback for active search state
+Improved process sorting to maintain selection state during sorting operations
 
 ## Context
-Improved the process search filter UI to better indicate when a search is active, including:
-- Bold styling when searching
-- Cursor indicator during active search
-- Visual distinction between empty and populated search states
+When sorting processes in the UI, the previously selected process would lose its selection state. This change ensures the selection is preserved by tracking the PID before sorting and restoring it afterward.
 
 ## Completed
-- [x] Added visual feedback for active process search state
-- [x] Implemented cursor indicator during search
-- [x] Enhanced styling for search filter text
-- [x] Maintained existing empty state styling
+- [x] Added PID tracking before sorting
+- [x] Restored selection by PID after sorting
+- [x] Maintained table state selection
 
 ## In Progress
-- [ ] None (this is a complete feature implementation)
+- [x] Selection state preservation during sorting
 
 ## Blockers
-- None (feature is complete)
+- None identified
 
 ## Next Steps
-1. Verify visual feedback works with keyboard navigation
-2. Test with various search query lengths
-```
+1. Test selection preservation with various sorting scenarios
+2. Verify behavior with edge cases (empty process list, PID conflicts)

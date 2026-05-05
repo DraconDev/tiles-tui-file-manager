@@ -483,6 +483,12 @@ editor: ViewPreferences {
         use crate::state::ProcessColumn;
         let col = self.process_sort_col;
         let asc = self.process_sort_asc;
+        
+        // Remember selected PID before sorting
+        let selected_pid = self.process_selected_idx
+            .and_then(|idx| self.system_state.processes.get(idx))
+            .map(|p| p.pid);
+        
         self.system_state.processes.sort_by(|a, b| {
             let ord = match col {
                 ProcessColumn::Pid => a.pid.cmp(&b.pid),
@@ -494,6 +500,14 @@ editor: ViewPreferences {
             };
             if asc { ord } else { ord.reverse() }
         });
+        
+        // Restore selection by PID
+        if let Some(pid) = selected_pid {
+            if let Some(new_idx) = self.system_state.processes.iter().position(|p| p.pid == pid) {
+                self.process_selected_idx = Some(new_idx);
+                self.process_table_state.select(Some(new_idx));
+            }
+        }
     }
 }
 
