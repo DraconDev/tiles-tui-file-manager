@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved error handling and path ownership in file preview functionality
+Simplified folder navigation in file manager by removing toggle-expand behavior on name clicks
 
 ## Context
-The changes address ownership issues with path strings and improve error handling when fetching commit and diff data in the file manager.
+The previous implementation allowed folders to be expanded/collapsed by clicking anywhere in the name column, which was inconsistent with other file manager behaviors. This change makes folder navigation more predictable by requiring explicit actions (Space key) for expansion/collapsed.
 
 ## Completed
-- [x] Added explicit string ownership for git commit hashes and file paths
-- [x] Improved error handling for commit and diff data fetching
-- [x] Maintained consistent error message formatting across different data sources
+- [x] Removed click-to-toggle behavior for folder names
+- [x] Clarified that single-click navigates into folders
+- [x] Maintained right-click context menu functionality
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None (this is a complete change)
 
 ## Blockers
-- None identified
+- None (this is a complete change)
 
 ## Next Steps
-1. Verify the changes don't introduce new edge cases in file preview
-2. Consider adding more detailed error messages for specific failure scenarios
+1. Verify that keyboard navigation (Space key) works as expected for folder expansion
+2. Test that single-click navigation into folders maintains expected behavior

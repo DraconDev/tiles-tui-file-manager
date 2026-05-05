@@ -1048,23 +1048,9 @@ pub fn handle_file_mouse(
                     is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                     sp = Some(p.clone());
 
-                    // Entire Name column is clickable for folders (arrow through name)
-                    if is_dir {
-                        if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
-                            if column >= name_rect.x && column < name_rect.x + name_rect.width {
-                                let folder_path = p;
-                                let was_expanded = app.expanded_folders.contains(&folder_path);
-                                if was_expanded {
-                                    app.expanded_folders.remove(&folder_path);
-                                } else {
-                                    app.expanded_folders.insert(folder_path.clone());
-                                }
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
-                                return true;
-                            }
-                        }
+                    // Single-click on folder name navigates into the folder
+                    // (no toggle-expand on name click — use Space key for that)
                     }
-                }
 
                 if let Some(path) = sp {
                     if button == MouseButton::Right {
