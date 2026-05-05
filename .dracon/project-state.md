@@ -1,20 +1,29 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Enhanced process management with keyboard and mouse interactions in the monitor view
 
 ## Context
-This change was triggered by a dependency resolution process during development. The update maintains project dependencies without introducing new functionality or breaking changes.
+This change improves the process management UI by adding:
+- Process search functionality
+- PID copy to clipboard
+- Better kill confirmation handling
+- Consistent process selection management
 
 ## Completed
-- [x] Updated Cargo.lock to reflect current dependency versions
+- [x] Added process search mode with `/` key binding
+- [x] Implemented PID copy to clipboard with `c` key
+- [x] Refactored process selection logic into helper function
+- [x] Enhanced kill confirmation with both keyboard and mouse support
+- [x] Added proper modal state management for process operations
 
 ## In Progress
-- [ ] No active development work in progress
+- [ ] None (all features implemented)
 
 ## Blockers
-- No blockers identified
+- None (all dependencies resolved)
 
 ## Next Steps
-1. Continue monitoring dependency updates
-2. Verify project stability after dependency resolution
+1. Test process search functionality
+2. Verify clipboard operations work across platforms
+3. Add visual feedback for process operations
