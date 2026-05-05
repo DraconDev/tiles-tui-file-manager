@@ -193,19 +193,20 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     return true;
                 }
                 KeyCode::Char('n') | KeyCode::Char('N') if has_control => {
-                    // Ctrl+N: Open new in-app tab (not external terminal)
-                    if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
-                        if let Some(fs) = pane.current_state() {
-                            let new_fs = fs.clone();
-                            pane.open_tab(new_fs);
-                            let _ =
-                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
-                        }
+                    // Ctrl+N: Open terminal tab
+                    // FIXME: dracon_terminal_engine opens a window instead of a tab when new_tab=true
+                    if let Some(fs) = app.current_file_state() {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
+                            path: fs.current_path.clone(),
+                            new_tab: true,
+                            remote: fs.remote_session.clone(),
+                            command: None,
+                        });
                     }
                     return true;
                 }
                 KeyCode::Char('k') | KeyCode::Char('K') if has_control => {
-                    // Ctrl+K: Open external terminal window
+                    // Ctrl+K: Open terminal window
                     if let Some(fs) = app.current_file_state() {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                             path: fs.current_path.clone(),
@@ -217,14 +218,14 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     return true;
                 }
                 KeyCode::Char('t') | KeyCode::Char('T') if has_control => {
-                    // Ctrl+T: Open external terminal tab
-                    if let Some(fs) = app.current_file_state() {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
-                            path: fs.current_path.clone(),
-                            new_tab: true,
-                            remote: fs.remote_session.clone(),
-                            command: None,
-                        });
+                    // Ctrl+T: Open new in-app file tab
+                    if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
+                        if let Some(fs) = pane.current_state() {
+                            let new_fs = fs.clone();
+                            pane.open_tab(new_fs);
+                            let _ =
+                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                        }
                     }
                     return true;
                 }

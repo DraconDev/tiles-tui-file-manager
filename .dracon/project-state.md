@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Improved terminal and tab management in the file manager UI
 
 ## Context
-This change was triggered by the failed dependency resolution during the previous build attempt. The `dracon-files` dependency manifest could not be loaded, which caused the build to fail.
+The changes refactor the keyboard shortcuts for terminal and tab management to provide clearer user experience and fix an issue with the terminal engine.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency conflicts
+- [x] Reorganized keyboard shortcuts for terminal operations (Ctrl+N, Ctrl+K, Ctrl+T)
+- [x] Fixed terminal tab behavior (previously opened windows instead of tabs)
+- [x] Updated hotkey documentation to reflect new behavior
 
 ## In Progress
-- [x] Dependency resolution for `dracon-files`
+- [ ] No active work in progress
 
 ## Blockers
-- Missing manifest for `dracon-files` dependency
+- The `dracon_terminal_engine` dependency is failing to load its manifest (blocking further terminal integration work)
 
 ## Next Steps
-1. Investigate why `dracon-files` manifest failed to load
-2. Resolve dependency conflicts or update the dependency version
+1. Investigate and resolve the dependency issue with `dracon_terminal_engine`
+2. Verify terminal tab behavior works correctly with the new shortcut assignments
