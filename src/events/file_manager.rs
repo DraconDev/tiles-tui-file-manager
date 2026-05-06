@@ -166,8 +166,7 @@ pub fn handle_sidebar_keys(key: &dracon_terminal_engine::contracts::KeyEvent, ap
     match key.code {
         KeyCode::Char(' ') => {
             crate::app::log_debug("[SIDEBAR_KEYS] Space - toggling folder");
-            handle_space_key(app, event_tx);
-            true
+            handle_space_key(app, event_tx)
         }
         KeyCode::Char('C') => {
             crate::app::log_debug("[SIDEBAR_KEYS] C - collapsing all");
