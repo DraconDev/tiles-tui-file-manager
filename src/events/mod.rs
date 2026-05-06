@@ -124,6 +124,7 @@ pub fn handle_event(
             // When sidebar is focused, use file_manager handlers for keyboard navigation
             // regardless of current view (Editor, Files, etc.) - this makes Space/Enter/C/Up/Down work in sidebar
             if app.sidebar_focus {
+                crate::app::log_debug(&format!("[MOD] sidebar_focus=true, routing to file_manager, key={:?}", key.code));
                 if file_manager::handle_file_events(&evt, app, &event_tx) {
                     return true;
                 }
@@ -136,12 +137,12 @@ pub fn handle_event(
                     if !has_control && !has_alt {
                         match key.code {
                             KeyCode::Left => {
-                                // Focus sidebar when Left arrow pressed
+                                crate::app::log_debug("[MOD] Left arrow - focusing sidebar");
                                 app.sidebar_focus = true;
                                 return true;
                             }
                             KeyCode::Right if app.sidebar_focus => {
-                                // Unfocus sidebar when Right arrow pressed while focused
+                                crate::app::log_debug("[MOD] Right arrow - unfocusing sidebar");
                                 app.sidebar_focus = false;
                                 return true;
                             }
