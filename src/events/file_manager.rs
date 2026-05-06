@@ -1021,7 +1021,9 @@ pub fn handle_file_mouse(
             // 3. File Row Interaction
             if row >= 3 {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
-                    // Clicked on empty space below files
+                    // Clicked on empty space below files (past the last file in the list)
+                    // This provides a context menu for creating new files, pasting, etc.
+                    // NOTE: This is intentionally distinct from clicking on a file/folder.
                     if button == MouseButton::Right {
                         let actions = crate::event_helpers::get_context_menu_actions(&ContextMenuTarget::EmptySpace, app);
                         app.mode = AppMode::ContextMenu {
