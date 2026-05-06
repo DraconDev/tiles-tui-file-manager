@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.61.0] - Terminal & Context Menu Fixes
+
+### Fixed
+- **Terminal Tab Spawning** — Replaced `qdbus` with `busctl` for Konsole D-Bus calls
+  - `qdbus` crashes with SIGSEGV on Konsole 26.04.0+, causing "Qt Multimedia SymbolResolver" UI errors
+  - `busctl` (systemd) has no Qt dependency and works reliably
+  - Ctrl+N now correctly opens a tab instead of a new window
+- **Empty Space Context Menu** — Right-click below the last file now shows context menu
+  - Provides NewFile, NewFolder, Paste, ToggleHidden, CollapseAll, TerminalTab, TerminalWindow, SystemMonitor
+  - Previously only worked when clicking on actual files/folders
+
 ## [8.41.0] - Dolphin-Style Sidebar
 
 ### Added

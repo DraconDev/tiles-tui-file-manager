@@ -1,22 +1,26 @@
 # Project State
 
 ## Current Focus
-Improved context menu for empty space in file manager to support file creation and paste operations
+Fixed terminal tab spawning and improved empty space context menu functionality
 
 ## Context
-The change enhances the file manager's right-click behavior on empty space below files, making it distinct from file/folder interactions. This provides a more intuitive way to access file creation and paste operations.
+The changes address two critical UX issues:
+1. Terminal tab spawning reliability by replacing `qdbus` with `busctl`
+2. Empty space context menu functionality to match Dolphin's behavior
 
 ## Completed
-- [x] Added distinct handling for right-click on empty space below files
-- [x] Implemented context menu for empty space with file creation and paste options
-- [x] Maintained separation from file/folder interaction logic
+- [x] Replaced `qdbus` with `busctl` for Konsole D-Bus calls
+- [x] Fixed Ctrl+N to open tabs instead of new windows
+- [x] Added context menu for empty space with file operations
+- [x] Updated Cargo.lock with dependency changes
 
 ## In Progress
-- [ ] Testing context menu behavior across different file manager states
+- [ ] No active development work shown in diff
 
 ## Blockers
-- None identified
+- No immediate blockers identified
 
 ## Next Steps
-1. Verify context menu behavior with various file operations
-2. Document the new interaction pattern in user documentation
+1. Verify terminal spawning works across different Konsole versions
+2. Test empty space context menu with various file operations
+```
