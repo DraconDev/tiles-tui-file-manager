@@ -128,6 +128,28 @@ pub fn handle_event(
                     return true;
                 }
             } else {
+                // Handle Left/Right arrow for sidebar focus FIRST, before view routing
+                // This allows sidebar navigation in Editor view too
+                if let Event::Key(key) = evt {
+                    let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
+                    let has_alt = key.modifiers.contains(KeyModifiers::ALT);
+                    if !has_control && !has_alt {
+                        match key.code {
+                            KeyCode::Left => {
+                                // Focus sidebar when Left arrow pressed
+                                app.sidebar_focus = true;
+                                return true;
+                            }
+                            KeyCode::Right if app.sidebar_focus => {
+                                // Unfocus sidebar when Right arrow pressed while focused
+                                app.sidebar_focus = false;
+                                return true;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+
                 match app.current_view {
                     CurrentView::Editor => {
                         if editor::handle_editor_events(&evt, app, &event_tx) {
