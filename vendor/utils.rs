@@ -823,63 +823,43 @@ pub fn spawn_terminal_at(path: &std::path::Path, new_tab: bool, command: Option<
                 path.to_string_lossy().to_string(),
             ];
 
-            // Spawn with timeout to avoid hanging on NixOS/Qt crashes
-            match std::process::Command::new(dbus_cmd)
-                .args(&args)
-                .stdout(std::process::Stdio::piped())
-                .stderr(std::process::Stdio::piped())
-                .spawn() 
-            {
-                Ok(mut child) => {
-                    match child.wait_timeout(std::time::Duration::from_secs(2)) {
-                        Ok(Some(status)) => {
-                            if status.success() {
-                                if let Ok(output) = child.wait_with_output() {
-                                    let session_id = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                                    log(&format!("New session created, ID: {}", session_id));
-                                    if !session_id.is_empty() {
-                                        if let Some(cmd_str) = command {
-                                            let session_path = format!("/Sessions/{}", session_id);
-                                            let _ = std::process::Command::new(dbus_cmd)
-                                                .args([
-                                                    "--session",
-                                                    &service,
-                                                    &session_path,
-                                                    "org.kde.konsole.Session.runCommand",
-                                                    cmd_str,
-                                                ])
-                                                .spawn();
-                                        }
-                                    }
-
-                                    // Try to raise the window
-                                    let main_win = "/konsole/MainWindow_1";
-                                    let _ = std::process::Command::new(dbus_cmd)
-                                        .args([
-                                            "--session",
-                                            &service,
-                                            main_win,
-                                            "org.qtproject.Qt.QWidget.raise",
-                                        ])
-                                        .spawn();
-
-                                    return true;
-                                }
-                            } else {
-                                if let Ok(output) = child.wait_with_output() {
-                                    log(&format!(
-                                        "DBus command failed: {}",
-                                        String::from_utf8_lossy(&output.stderr)
-                                    ));
-                                }
+            match std::process::Command::new(dbus_cmd).args(&args).output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        let session_id = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        log(&format!("New session created, ID: {}", session_id));
+                        if !session_id.is_empty() {
+                            if let Some(cmd_str) = command {
+                                let session_path = format!("/Sessions/{}", session_id);
+                                let _ = std::process::Command::new("qdbus")
+                                    .args([
+                                        "--session",
+                                        &service,
+                                        &session_path,
+                                        "org.kde.konsole.Session.runCommand",
+                                        cmd_str,
+                                    ])
+                                    .spawn();
                             }
                         }
-                        Ok(None) => {
-                            log("DBus command timed out (2s), killing...");
-                            let _ = child.kill();
-                            let _ = child.wait();
-                        }
-                        Err(e) => log(&format!("Failed to wait on child: {}", e)),
+
+                        // Try to raise the window
+                        let main_win = "/konsole/MainWindow_1";
+                        let _ = std::process::Command::new(dbus_cmd)
+                            .args([
+                                "--session",
+                                &service,
+                                main_win,
+                                "org.qtproject.Qt.QWidget.raise",
+                            ])
+                            .spawn();
+
+                        return true;
+                    } else {
+                        log(&format!(
+                            "DBus command failed: {}",
+                            String::from_utf8_lossy(&output.stderr)
+                        ));
                     }
                 }
                 Err(e) => log(&format!("Failed to execute {}: {}", dbus_cmd, e)),
@@ -981,32 +961,14 @@ pub fn spawn_terminal_at(path: &std::path::Path, new_tab: bool, command: Option<
                 }
             }
             "kitty" => {
-                if new_tab {
-                    // Open tab in existing kitty window
-                    args.push("@".to_string());
-                    args.push("launch".to_string());
-                    args.push("--type=tab".to_string());
-                    args.push("--cwd".to_string());
-                    args.push(path.to_string_lossy().to_string());
-                    if let Some(cmd) = command {
-                        args.push(cmd.to_string());
-                    }
-                } else {
-                    // Open new kitty window
-                    args.push("--directory".to_string());
-                    args.push(path.to_string_lossy().to_string());
-                    if let Some(cmd) = command {
-                        args.push(cmd.to_string());
-                    }
+                args.push("--directory".to_string());
+                args.push(path.to_string_lossy().to_string());
+                if let Some(cmd) = command {
+                    args.push(cmd.to_string());
                 }
             }
             "wezterm" => {
-                if new_tab {
-                    args.push("cli".to_string());
-                    args.push("spawn".to_string());
-                } else {
-                    args.push("start".to_string());
-                }
+                args.push("start".to_string());
                 args.push("--cwd".to_string());
                 args.push(path.to_string_lossy().to_string());
                 if let Some(cmd) = command {

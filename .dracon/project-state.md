@@ -1,16 +1,16 @@
 # Project State
 
 ## Current Focus
-Improved terminal session management with timeout handling and window raising
+Improved terminal session management with simplified DBus command handling and window raising
 
 ## Context
-The previous implementation had reliability issues with DBus commands, particularly on NixOS systems where Qt/KDE components might crash. This change adds timeout handling and better error recovery while maintaining the core functionality of creating terminal sessions and raising windows.
+The previous implementation had complex timeout handling for DBus commands which could hang on NixOS/Qt crashes. This change simplifies the process by removing the timeout and directly using command output.
 
 ## Completed
-- [x] Added 2-second timeout for DBus commands to prevent hanging
-- [x] Improved error handling with proper logging of failures
-- [x] Added window raising functionality after session creation
-- [x] Enhanced process management with proper child process cleanup
+- [x] Simplified terminal session creation by removing timeout handling
+- [x] Improved error handling for DBus commands
+- [x] Maintained window raising functionality
+- [x] Updated Cargo.lock with dependency changes
 
 ## In Progress
 - [ ] No active work in progress
@@ -19,6 +19,5 @@ The previous implementation had reliability issues with DBus commands, particula
 - None identified
 
 ## Next Steps
-1. Test across different Linux distributions to verify reliability
-2. Add configuration options for timeout duration
-```
+1. Verify terminal session creation works reliably across different environments
+2. Test window raising functionality with various terminal emulators
