@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved sidebar keyboard navigation handling across all views
+Added visual distinction between open and closed files in the sidebar
 
 ## Context
-The change makes keyboard navigation in the sidebar work consistently regardless of the current view, which was previously limited to specific views. This improves user experience by maintaining uniform behavior.
+Improving the sidebar UI to better indicate which files are currently open in the editor, making it easier for users to track their workspace state.
 
 ## Completed
-- [x] Made file manager keyboard handlers active when sidebar is focused
-- [x] Refactored event handling to prioritize sidebar navigation
-- [x] Maintained existing view-specific handlers for non-sidebar events
+- [x] Added `is_open` flag to highlight files that are currently open in the editor
 
 ## In Progress
-- [ ] None (this is a complete feature change)
+- [x] Visual styling for open files (implementation pending)
 
 ## Blockers
-- None (this is a complete implementation)
+- Visual styling implementation needs to be completed
 
 ## Next Steps
-1. Verify sidebar navigation works in all views
-2. Test edge cases with multiple open tabs
+1. Implement visual styling for open files (e.g., different icon or color)
+2. Add keyboard shortcuts to toggle between open files

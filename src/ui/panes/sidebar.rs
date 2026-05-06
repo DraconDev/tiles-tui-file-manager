@@ -795,6 +795,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
             .unwrap_or("?".to_string());
         let current_idx = sidebar_items.len();
         let is_selected = app.sidebar_focus && app.sidebar_index == current_idx;
+        let is_open = !is_dir && open_files.contains(&path);
         let is_hovered_drop =
             matches!(&app.hovered_drop_target, Some(DropTarget::Folder(p)) if p == &path);
 
