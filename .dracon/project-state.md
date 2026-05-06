@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Added Linux binary release artifact for version 10.61.0
+Improved sidebar keyboard navigation handling across all views
 
 ## Context
-This change adds the compiled Linux binary for version 10.61.0 to the releases directory. The binary is required for distribution and deployment of the application on Linux systems.
+The change makes keyboard navigation in the sidebar work consistently regardless of the current view, which was previously limited to specific views. This improves user experience by maintaining uniform behavior.
 
 ## Completed
-- [x] Added Linux binary release artifact (tiles-v10.61.0-linux)
+- [x] Made file manager keyboard handlers active when sidebar is focused
+- [x] Refactored event handling to prioritize sidebar navigation
+- [x] Maintained existing view-specific handlers for non-sidebar events
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [ ] None (this is a complete feature change)
 
 ## Blockers
-- None identified for this specific change
+- None (this is a complete implementation)
 
 ## Next Steps
-1. Verify the binary works as expected in the target environment
-2. Update release documentation to include Linux binary instructions
+1. Verify sidebar navigation works in all views
+2. Test edge cases with multiple open tabs

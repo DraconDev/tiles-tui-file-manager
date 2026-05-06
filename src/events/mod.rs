@@ -121,33 +121,41 @@ pub fn handle_event(
                 }
             }
 
-            match app.current_view {
-                CurrentView::Editor => {
-                    if editor::handle_editor_events(&evt, app, &event_tx) {
-                        return true;
-                    }
-                }
-                CurrentView::Commit => {
-                    if editor::handle_editor_events(&evt, app, &event_tx) {
-                        return true;
-                    }
-                }
-                CurrentView::Processes => {
-                    if monitor::handle_monitor_events(&evt, app, &event_tx) {
-                        return true;
-                    }
-                }
-                CurrentView::Git => {
-                    if git::handle_git_events(&evt, app, &event_tx) {
-                        return true;
-                    }
-                }
-                CurrentView::Debug => {
+            // When sidebar is focused, use file_manager handlers for keyboard navigation
+            // regardless of current view (Editor, Files, etc.) - this makes Space/Enter/C/Up/Down work in sidebar
+            if app.sidebar_focus {
+                if file_manager::handle_file_events(&evt, app, &event_tx) {
                     return true;
                 }
-                CurrentView::Files => {
-                    if file_manager::handle_file_events(&evt, app, &event_tx) {
+            } else {
+                match app.current_view {
+                    CurrentView::Editor => {
+                        if editor::handle_editor_events(&evt, app, &event_tx) {
+                            return true;
+                        }
+                    }
+                    CurrentView::Commit => {
+                        if editor::handle_editor_events(&evt, app, &event_tx) {
+                            return true;
+                        }
+                    }
+                    CurrentView::Processes => {
+                        if monitor::handle_monitor_events(&evt, app, &event_tx) {
+                            return true;
+                        }
+                    }
+                    CurrentView::Git => {
+                        if git::handle_git_events(&evt, app, &event_tx) {
+                            return true;
+                        }
+                    }
+                    CurrentView::Debug => {
                         return true;
+                    }
+                    CurrentView::Files => {
+                        if file_manager::handle_file_events(&evt, app, &event_tx) {
+                            return true;
+                        }
                     }
                 }
             }
