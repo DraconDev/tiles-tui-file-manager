@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added D-Bus tool selection documentation for reliable terminal spawning
 
 ## Context
-This change updates the dependency versions in Cargo.lock, likely triggered by recent terminal spawning improvements and refactoring work.
+The change documents the decision to use `busctl` instead of `qdbus` for terminal spawning due to reliability issues with `qdbus` on Konsole 26.04.0+
 
 ## Completed
-- [x] Updated dependency versions in Cargo.lock
+- [x] Added documentation explaining the D-Bus tool selection rationale
+- [x] Documented the specific crash behavior with `qdbus`
+- [x] Added warning against reverting to `qdbus` without testing
 
 ## In Progress
-- [x] Terminal spawning improvements and diagnostics
+- [ ] No active work in progress
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in synth-1774826981 slice
+- None identified
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue terminal management functionality development
+1. Verify the documentation is sufficient for future maintenance
+2. Consider adding runtime checks for Konsole version compatibility

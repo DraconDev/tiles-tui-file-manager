@@ -3,6 +3,14 @@ use std::path::Path;
 /// Spawn a terminal at the given path.
 /// If `new_tab` is true, try to open a tab in the current terminal.
 /// Falls back to opening a new window.
+/// 
+/// # IMPORTANT: D-Bus Tool Selection
+/// We use `busctl` (systemd) instead of `qdbus` (Qt) because:
+/// - `qdbus` crashes with SIGSEGV (exit 139) on Konsole 26.04.0+
+/// - The crash triggers "Qt Multimedia SymbolResolver" errors in the UI
+/// - `busctl` has no Qt dependency and works reliably
+/// 
+/// DO NOT revert to `qdbus` without testing on the target Konsole version.
 pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> bool {
     let path_str = path.to_string_lossy().to_string();
     let timestamp = chrono::Local::now();
