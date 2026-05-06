@@ -1,27 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved sidebar UI and terminal spawning reliability
+Minor dependency update in Cargo.lock
 
 ## Context
-The changes address two key issues:
-1. Terminal tab spawning reliability on Konsole 26.04.0+
-2. Sidebar visual feedback improvements
+This change was triggered by ongoing work on terminal spawning reliability improvements, which required dependency updates to resolve potential compatibility issues.
 
 ## Completed
-- [x] Fixed terminal tab spawning by replacing `qdbus` with `busctl` (more reliable)
-- [x] Added empty space context menu for file operations
-- [x] Enhanced sidebar keyboard navigation (Space/Enter/C/Up/Down)
-- [x] Improved open file highlighting in sidebar
-- [x] Updated CHANGELOG with detailed terminal spawning fixes
+- [x] Updated Cargo.lock with minor dependency changes
 
 ## In Progress
-- [ ] No active development work shown in diff
+- [ ] Terminal spawning reliability improvements (blocked by dependency resolution)
 
 ## Blockers
-- Dependency manifest loading failure for `dracon-files` (blocking runtime progress)
+- Dependency resolution for `dracon-files` manifest loading
 
 ## Next Steps
-1. Resolve dependency manifest loading issue for `dracon-files`
-2. Verify terminal spawning works across different terminal emulators
-3. Test sidebar keyboard navigation in all view modes
+1. Resolve dependency issues for `dracon-files`
+2. Continue terminal spawning reliability improvements after dependencies are stable
