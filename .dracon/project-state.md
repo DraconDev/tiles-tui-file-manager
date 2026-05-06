@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added Linux binary release artifact for version 10.61.0
 
 ## Context
-This change was triggered by ongoing work on terminal spawning reliability improvements, which required dependency updates to resolve potential compatibility issues.
+This change adds the compiled Linux binary for version 10.61.0 to the releases directory. The binary is required for distribution and deployment of the application on Linux systems.
 
 ## Completed
-- [x] Updated Cargo.lock with latest dependency versions
+- [x] Added Linux binary release artifact (tiles-v10.61.0-linux)
 
 ## In Progress
-- [x] Terminal spawning reliability improvements
+- [ ] No active work in progress related to this change
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in slice `synth-1774826981`
+- None identified for this specific change
 
 ## Next Steps
-1. Resolve the dependency manifest loading issue for `dracon-files`
-2. Continue terminal spawning reliability improvements after dependencies are stable
+1. Verify the binary works as expected in the target environment
+2. Update release documentation to include Linux binary instructions
