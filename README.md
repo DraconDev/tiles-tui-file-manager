@@ -15,6 +15,7 @@ A high-performance terminal file manager built in Rust. Modular pane system, int
 - **System Monitor** — CPU, memory, disk, network stats, process list
 - **Sidebar** — Dolphin-style folder tree rooted at home, Favorites, Recent folders, Storage devices, SSH remotes. Toggle sections in Settings.
 - **Path Input** — Click the breadcrumb bar to edit the path directly, copy on click
+- **Context Menus** — Right-click on files, folders, or empty space to access file operations, terminal options, and more
 - **Keyboard-first** — Vim-style navigation, command palette (`:`), context menus
 
 ## Keyboard Shortcuts
@@ -30,6 +31,15 @@ A high-performance terminal file manager built in Rust. Modular pane system, int
 | `Tab` | Switch panes / focus sidebar |
 | `Ctrl+H` | Toggle hidden files |
 | `:` | Command palette |
+
+### Terminal Tabs
+| Key | Action |
+|-----|--------|
+| `Ctrl+N` | Open new terminal **tab** in current Konsole window |
+| `Ctrl+T` | Open new **file tab** in Tiles (in-app) |
+| `Ctrl+K` | Open new terminal **window** |
+
+> **Note:** Ctrl+N requires `busctl` (systemd) and "Run all Konsole windows in a single process" enabled in Konsole settings.
 
 ### Sidebar
 | Key | Action |
