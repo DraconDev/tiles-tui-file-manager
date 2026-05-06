@@ -21,21 +21,63 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
     log(&format!("spawn_terminal_at new_tab={} path={}", new_tab, path_str));
 
     if new_tab {
-        // Try konsole --new-tab first (most reliable method)
-        if command_exists("konsole") {
-            log("Trying konsole --new-tab");
-            let mut cmd = std::process::Command::new("konsole");
-            cmd.arg("--new-tab")
-               .arg("--workdir")
-               .arg(&path_str);
-            if let Some(cmd_str) = command {
-                cmd.arg("-e").arg(cmd_str);
+        // Try busctl D-Bus first (reliable, no Qt crash)
+        if let (Ok(service), Ok(window)) = (
+            std::env::var("KONSOLE_DBUS_SERVICE"),
+            std::env::var("KONSOLE_DBUS_WINDOW"),
+        ) {
+            if command_exists("busctl") {
+                log(&format!("Trying busctl D-Bus: service={}, window={}", service, window));
+
+                // Call newSession with profile and directory args
+                // Signature: newSession(s profile, s directory) -> i session_id
+                let args = vec![
+                    "--user".to_string(),
+                    "call".to_string(),
+                    service.clone(),
+                    window.clone(),
+                    "org.kde.konsole.Window".to_string(),
+                    "newSession".to_string(),
+                    "ss".to_string(),
+                    "".to_string(),
+                    path_str.clone(),
+                ];
+
+                match std::process::Command::new("busctl").args(&args).output() {
+                    Ok(output) => {
+                        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+                        log(&format!("busctl stdout: '{}'", stdout));
+                        if !stderr.is_empty() {
+                            log(&format!("busctl stderr: '{}'", stderr));
+                        }
+
+                        if output.status.success() && stdout.starts_with("i ") {
+                            if let Some(session_id) = stdout.split_whitespace().nth(1) {
+                                log(&format!("D-Bus newSession created session: {}", session_id));
+
+                                // Run command in new session if provided
+                                if let Some(cmd_str) = command {
+                                    let session_path = format!("/Sessions/{}", session_id);
+                                    let _ = std::process::Command::new("busctl")
+                                        .args([
+                                            "--user", "call", &service, &session_path,
+                                            "org.kde.konsole.Session", "runCommand", "s", cmd_str,
+                                        ])
+                                        .spawn();
+                                }
+                                return true;
+                            }
+                        }
+                        log("busctl call failed or returned unexpected output");
+                    }
+                    Err(e) => {
+                        log(&format!("busctl command failed: {:?}", e));
+                    }
+                }
+            } else {
+                log("busctl not found, skipping D-Bus");
             }
-            if cmd.spawn().is_ok() {
-                log("konsole --new-tab succeeded");
-                return true;
-            }
-            log("konsole --new-tab failed");
         }
 
         // Try Kitty tab
@@ -58,34 +100,21 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
             log("Kitty tab failed");
         }
 
-        // Try D-Bus for Konsole (only if KONSOLE_DBUS_SERVICE is set and konsole --new-tab didn't work)
-        if let Ok(service) = std::env::var("KONSOLE_DBUS_SERVICE") {
-            if let Ok(window) = std::env::var("KONSOLE_DBUS_WINDOW") {
-                log(&format!("Konsole D-Bus: service={}, window={}", service, window));
-                let dbus_cmd = if command_exists("qdbus6") { "qdbus6" } else { "qdbus" };
-                log(&format!("Using D-Bus cmd: {}", dbus_cmd));
-
-                // Try newSession with no args first (creates session with default profile/dir)
-                if let Ok(output) = std::process::Command::new(dbus_cmd)
-                    .args(["--session", &service, &window, "org.kde.konsole.Window.newSession"])
-                    .output()
-                {
-                    log(&format!("DBus stdout: {:?}", String::from_utf8_lossy(&output.stdout).trim()));
-                    log(&format!("DBus stderr: {:?}", String::from_utf8_lossy(&output.stderr).trim()));
-                    if output.status.success() {
-                        let session_id = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                        if !session_id.is_empty() {
-                            log(&format!("D-Bus newSession created session: {}", session_id));
-                            // Try to set the working directory
-                            let session_path = format!("/Sessions/{}", session_id);
-                            let _ = std::process::Command::new(dbus_cmd)
-                                .args(["--session", &service, &session_path, "org.kde.konsole.Session.setWorkingDirectory", &path_str])
-                                .spawn();
-                            return true;
-                        }
-                    }
-                }
+        // Try konsole --new-tab (requires single-process mode)
+        if command_exists("konsole") {
+            log("Trying konsole --new-tab");
+            let mut cmd = std::process::Command::new("konsole");
+            cmd.arg("--new-tab")
+               .arg("--workdir")
+               .arg(&path_str);
+            if let Some(cmd_str) = command {
+                cmd.arg("-e").arg(cmd_str);
             }
+            if cmd.spawn().is_ok() {
+                log("konsole --new-tab succeeded");
+                return true;
+            }
+            log("konsole --new-tab failed");
         }
 
         log("All new_tab methods failed, falling back to new window");
