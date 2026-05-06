@@ -121,15 +121,19 @@ pub fn handle_event(
                 }
             }
 
-            // When sidebar is focused, use file_manager handlers for keyboard navigation
-            // regardless of current view (Editor, Files, etc.) - this makes Space/Enter/C/Up/Down work in sidebar
+            // When sidebar is focused, use dedicated sidebar handler for keyboard navigation
+            // regardless of current view (Editor, Files, etc.) - bypasses mode checks
             if app.sidebar_focus {
-                crate::app::log_debug(&format!("[MOD] sidebar_focus=true, key={:?}, routing to file_manager", key.code));
-                let handled = file_manager::handle_file_events(&evt, app, &event_tx);
-                crate::app::log_debug(&format!("[MOD] file_manager returned {}", handled));
-                if handled {
-                    return true;
+                crate::app::log_debug(&format!(
+                    "[MOD] sidebar_focus=true, key={:?}, routing to handle_sidebar_keys",
+                    key.code
+                ));
+                if let Event::Key(key) = &evt {
+                    if file_manager::handle_sidebar_keys(key, app, &event_tx) {
+                        return true;
+                    }
                 }
+                crate::app::log_debug("[MOD] handle_sidebar_keys did not handle key");
             } else {
                 // Handle Left/Right arrow for sidebar focus FIRST, before view routing
                 // This allows sidebar navigation in Editor view too

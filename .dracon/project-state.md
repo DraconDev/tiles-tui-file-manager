@@ -1,26 +1,22 @@
 # Project State
 
 ## Current Focus
-Added comprehensive sidebar keyboard navigation handling with debug logging
+Improved sidebar keyboard navigation handling with dedicated key handling and debug logging
 
 ## Context
-This implements keyboard navigation for the sidebar component, allowing users to interact with the file manager using arrow keys, space, enter, and collapse commands. The addition of debug logging helps track user interactions and system state.
+The previous implementation routed sidebar keyboard events to the file manager handlers regardless of the current view, which could lead to inconsistent behavior. This change introduces a dedicated sidebar key handler to ensure consistent navigation across all views.
 
 ## Completed
-- [x] Added space key handler for toggling folder expansion
-- [x] Implemented collapse-all functionality with 'C' key
-- [x] Created up/down navigation with arrow keys
-- [x] Added enter key handler for activating items
-- [x] Included comprehensive debug logging for all sidebar interactions
-- [x] Added proper focus management for sidebar operations
+- [x] Added dedicated `handle_sidebar_keys` function for sidebar-specific keyboard navigation
+- [x] Improved debug logging for sidebar key events
+- [x] Bypassed mode checks when sidebar is focused for more predictable behavior
 
 ## In Progress
-- [x] Keyboard navigation implementation is complete
+- [ ] Testing edge cases for sidebar navigation across different views
 
 ## Blockers
-- None identified for this specific change
+- Need to verify consistent behavior across all view modes
 
 ## Next Steps
-1. Test keyboard navigation across different sidebar states
-2. Verify debug logging captures all expected interactions
-3. Consider adding more keyboard shortcuts for enhanced usability
+1. Test sidebar navigation in all view modes (Editor, Files, etc.)
+2. Document the new keyboard navigation behavior in user documentation
