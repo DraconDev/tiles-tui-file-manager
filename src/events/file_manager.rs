@@ -1368,7 +1368,7 @@ pub fn handle_file_mouse(
     }
 }
 
-fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
+fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     crate::app::log_debug(&format!(
         "[SPACE] called: sidebar_focus={}, sidebar_index={}, bounds_len={}",
         app.sidebar_focus, app.sidebar_index, app.sidebar_bounds.len()
@@ -1392,7 +1392,12 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         crate::app::log_debug("[SPACE] adding to expanded_folders");
                         app.tree_expanded_folders.insert(path.clone());
                     }
-                    return;
+                    // Force cache invalidation for both Files and Editor view sidebars
+                    app.sidebar_tree_cache_key = u64::MAX;
+                    app.editor_sidebar_cache_key = u64::MAX;
+                    crate::app::log_debug(&format!("[SPACE] toggled folder, tree_expanded count={}, sending Tick", app.tree_expanded_folders.len()));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Tick);
+                    return true;
                 } else {
                     crate::app::log_debug("[SPACE] path is NOT a dir");
                 }
@@ -1414,7 +1419,7 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
         if let Some(idx) = fs.selection.selected {
             if let Some(path) = fs.files.get(idx).cloned() {
                 if is_virtual_divider(&path) {
-                    return;
+                    return true;
                 }
                 if path.is_dir() {
                     let was_expanded = app.expanded_folders.contains(&path);
@@ -1440,9 +1445,11 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     }
                     app.sidebar_focus = false;
                 }
+                return true;
             }
         }
     }
+    false
 }
 
 fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
