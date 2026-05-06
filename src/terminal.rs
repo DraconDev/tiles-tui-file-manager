@@ -6,6 +6,17 @@ use std::path::Path;
 pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> bool {
     let path_str = path.to_string_lossy().to_string();
     
+    // Write to debug.log to confirm this code runs (not old engine)
+    let _ = std::fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open("debug.log")
+        .and_then(|mut f| {
+            use std::io::Write;
+            writeln!(f, "[{}] [LOCAL_TERM] spawn_terminal_at new_tab={} path={}", 
+                chrono::Local::now(), new_tab, path_str)
+        });
+    
     if new_tab {
         // Try D-Bus for Konsole
         if let (Ok(service), Ok(window)) = (
