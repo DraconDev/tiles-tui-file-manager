@@ -4,6 +4,8 @@ use std::path::Path;
 /// If `new_tab` is true, try to open a tab in the current terminal.
 /// Falls back to opening a new window.
 pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> bool {
+    let path_str = path.to_string_lossy().to_string();
+    
     if new_tab {
         // Try D-Bus for Konsole
         if let (Ok(service), Ok(window)) = (
@@ -18,7 +20,7 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
                 window,
                 "org.kde.konsole.Window.newSession".to_string(),
                 "".to_string(),
-                path.to_string_lossy().to_string(),
+                path_str.clone(),
             ];
 
             if let Ok(output) = std::process::Command::new(dbus_cmd).args(&args).output() {
@@ -43,11 +45,14 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
         // Kitty tab
         if std::env::var("KITTY_WINDOW_ID").is_ok() {
             let mut args = vec![
-                "@", "launch", "--type=tab", "--cwd",
-                &path.to_string_lossy(),
+                "@".to_string(), 
+                "launch".to_string(), 
+                "--type=tab".to_string(), 
+                "--cwd".to_string(),
+                path_str.clone(),
             ];
             if let Some(cmd) = command {
-                args.push(cmd);
+                args.push(cmd.to_string());
             }
             if std::process::Command::new("kitty").args(&args).spawn().is_ok() {
                 return true;
@@ -65,21 +70,21 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
         let mut cmd = std::process::Command::new(term);
         match term {
             "konsole" => {
-                cmd.args(["--workdir", &path.to_string_lossy()]);
+                cmd.args(["--workdir", &path_str]);
             }
             "gnome-terminal" => {
-                cmd.arg(format!("--working-directory={}", path.display()));
+                cmd.arg(format!("--working-directory={}", path_str));
             }
             "kitty" => {
-                cmd.args(["--directory", &path.to_string_lossy()]);
+                cmd.args(["--directory", &path_str]);
             }
             _ => {
-                cmd.args(["--working-directory", &path.to_string_lossy()]);
+                cmd.args(["--working-directory", &path_str]);
             }
         }
         
-        if command.is_some() {
-            cmd.arg(command.unwrap());
+        if let Some(cmd_str) = command {
+            cmd.arg(cmd_str);
         }
         
         if cmd.spawn().is_ok() {
