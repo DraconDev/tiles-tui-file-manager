@@ -809,9 +809,8 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
                 .add_modifier(Modifier::BOLD)
         } else if is_open {
             Style::default()
-                .bg(crate::ui::theme::accent_primary())
+                .bg(selection_bg)
                 .fg(Color::Black)
-                .add_modifier(Modifier::BOLD)
         } else if is_hovered_drop {
             Style::default()
                 .bg(crate::ui::theme::accent_secondary())

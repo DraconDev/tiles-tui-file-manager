@@ -1,21 +1,27 @@
 # Project State
 
 ## Current Focus
-Added visual distinction between open and closed files in the sidebar
+Improved sidebar UI and terminal spawning reliability
 
 ## Context
-This change improves the UI by making it clearer which files are currently open in the editor. The visual distinction helps users quickly identify which files are active in their workspace.
+The changes address two key issues:
+1. Terminal tab spawning reliability on Konsole 26.04.0+
+2. Sidebar visual feedback improvements
 
 ## Completed
-- [x] Added bold styling with accent color for open files in the sidebar
-- [x] Removed the open indicator (●) that was previously shown next to open files
+- [x] Fixed terminal tab spawning by replacing `qdbus` with `busctl` (more reliable)
+- [x] Added empty space context menu for file operations
+- [x] Enhanced sidebar keyboard navigation (Space/Enter/C/Up/Down)
+- [x] Improved open file highlighting in sidebar
+- [x] Updated CHANGELOG with detailed terminal spawning fixes
 
 ## In Progress
-- [ ] None
+- [ ] No active development work shown in diff
 
 ## Blockers
-- None
+- Dependency manifest loading failure for `dracon-files` (blocking runtime progress)
 
 ## Next Steps
-1. Verify the visual distinction works consistently across different file types
-2. Consider adding additional visual cues for modified files
+1. Resolve dependency manifest loading issue for `dracon-files`
+2. Verify terminal spawning works across different terminal emulators
+3. Test sidebar keyboard navigation in all view modes

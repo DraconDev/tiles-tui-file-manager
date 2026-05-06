@@ -6,12 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - **Terminal Tab Spawning** — Replaced `qdbus` with `busctl` for Konsole D-Bus calls
-  - `qdbus` crashes with SIGSEGV on Konsole 26.04.0+, causing "Qt Multimedia SymbolResolver" UI errors
+  - `qdbus` crashes with SIGSEGV (exit 139) on Konsole 26.04.0+, causing "Qt Multimedia SymbolResolver" UI errors
   - `busctl` (systemd) has no Qt dependency and works reliably
   - Ctrl+N now correctly opens a tab instead of a new window
-- **Empty Space Context Menu** — Right-click below the last file now shows context menu
+- **EmptySpace Context Menu** — Right-click below the last file now shows context menu
   - Provides NewFile, NewFolder, Paste, ToggleHidden, CollapseAll, TerminalTab, TerminalWindow, SystemMonitor
   - Previously only worked when clicking on actual files/folders
+
+### Added
+- **Sidebar Keyboard in Editor View** — Space/Enter/C/Up/Down now work in sidebar when in Editor view
+- **Open File Highlight** — Open files in sidebar now show full-row background highlight instead of dot
 
 ## [8.41.0] - Dolphin-Style Sidebar
 
