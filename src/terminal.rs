@@ -6,7 +6,7 @@ use std::path::Path;
 pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> bool {
     let path_str = path.to_string_lossy().to_string();
     let timestamp = chrono::Local::now();
-    
+
     let log = |msg: &str| {
         let _ = std::fs::OpenOptions::new()
             .append(true)
@@ -17,74 +17,34 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
                 writeln!(f, "[{}] [LOCAL_TERM] {}", timestamp, msg)
             });
     };
-    
-    log(&format!("spawn_terminal_at new_tab={} path={}", new_tab, path_str));
-    
-    if new_tab {
-        // Try D-Bus for Konsole
-        let service = std::env::var("KONSOLE_DBUS_SERVICE");
-        let window = std::env::var("KONSOLE_DBUS_WINDOW");
-        
-        log(&format!("Konsole env: service={:?}, window={:?}", service.as_ref().map(|s| s.as_str()), window.as_ref().map(|w| w.as_str())));
-        
-        if let (Ok(service), Ok(window)) = (service, window) {
-            let dbus_cmd = if command_exists("qdbus6") { "qdbus6" } else { "qdbus" };
-            log(&format!("Using D-Bus cmd: {}", dbus_cmd));
-            
-            let args = vec![
-                "--session".to_string(),
-                service.clone(),
-                window.clone(),
-                "org.kde.konsole.Window.newSession".to_string(),
-                ".".to_string(),
-                path_str.clone(),
-            ];
 
-            log(&format!("DBus args: {:?}", args));
-            
-            let output = std::process::Command::new(dbus_cmd).args(&args).output();
-            match output {
-                Ok(out) => {
-                    log(&format!("DBus success: status={}", out.status.success()));
-                    log(&format!("DBus stdout: {:?}", String::from_utf8_lossy(&out.stdout).trim().to_string()));
-                    log(&format!("DBus stderr: {:?}", String::from_utf8_lossy(&out.stderr).to_string()));
-                    
-                    if out.status.success() {
-                        let session_id = String::from_utf8_lossy(&out.stdout).trim().to_string();
-                        if !session_id.is_empty() {
-                            log(&format!("New session created: {}", session_id));
-                            if let Some(cmd_str) = command {
-                                let session_path = format!("/Sessions/{}", session_id);
-                                let _ = std::process::Command::new(dbus_cmd)
-                                    .args([
-                                        "--session", &service, &session_path,
-                                        "org.kde.konsole.Session.runCommand", cmd_str,
-                                    ])
-                                    .spawn();
-                            }
-                            return true;
-                        } else {
-                            log("Session ID was empty, D-Bus call succeeded but no session created");
-                        }
-                    } else {
-                        log("DBus call returned failure status");
-                    }
-                }
-                Err(e) => {
-                    log(&format!("DBus command failed: {:?}", e));
-                }
+    log(&format!("spawn_terminal_at new_tab={} path={}", new_tab, path_str));
+
+    if new_tab {
+        // Try konsole --new-tab first (most reliable method)
+        if command_exists("konsole") {
+            log("Trying konsole --new-tab");
+            let mut cmd = std::process::Command::new("konsole");
+            cmd.arg("--new-tab")
+               .arg("--workdir")
+               .arg(&path_str);
+            if let Some(cmd_str) = command {
+                cmd.arg("-e").arg(cmd_str);
             }
-        } else {
-            log("KONSOLE_DBUS_SERVICE or KONSOLE_DBUS_WINDOW not set, skipping D-Bus");
+            if cmd.spawn().is_ok() {
+                log("konsole --new-tab succeeded");
+                return true;
+            }
+            log("konsole --new-tab failed");
         }
-        
-        // Kitty tab
+
+        // Try Kitty tab
         if std::env::var("KITTY_WINDOW_ID").is_ok() {
             log("Kitty detected, trying to open tab");
             let mut args = vec![
-                "@".to_string(), 
-                "launch".to_string(), 
-                "--type=tab".to_string(), 
+                "@".to_string(),
+                "launch".to_string(),
+                "--type=tab".to_string(),
                 "--cwd".to_string(),
                 path_str.clone(),
             ];
@@ -97,16 +57,46 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
             }
             log("Kitty tab failed");
         }
+
+        // Try D-Bus for Konsole (only if KONSOLE_DBUS_SERVICE is set and konsole --new-tab didn't work)
+        if let Ok(service) = std::env::var("KONSOLE_DBUS_SERVICE") {
+            if let Ok(window) = std::env::var("KONSOLE_DBUS_WINDOW") {
+                log(&format!("Konsole D-Bus: service={}, window={}", service, window));
+                let dbus_cmd = if command_exists("qdbus6") { "qdbus6" } else { "qdbus" };
+                log(&format!("Using D-Bus cmd: {}", dbus_cmd));
+
+                // Try newSession with no args first (creates session with default profile/dir)
+                if let Ok(output) = std::process::Command::new(dbus_cmd)
+                    .args(["--session", &service, &window, "org.kde.konsole.Window.newSession"])
+                    .output()
+                {
+                    log(&format!("DBus stdout: {:?}", String::from_utf8_lossy(&output.stdout).trim()));
+                    log(&format!("DBus stderr: {:?}", String::from_utf8_lossy(&output.stderr).trim()));
+                    if output.status.success() {
+                        let session_id = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        if !session_id.is_empty() {
+                            log(&format!("D-Bus newSession created session: {}", session_id));
+                            // Try to set the working directory
+                            let session_path = format!("/Sessions/{}", session_id);
+                            let _ = std::process::Command::new(dbus_cmd)
+                                .args(["--session", &service, &session_path, "org.kde.konsole.Session.setWorkingDirectory", &path_str])
+                                .spawn();
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        log("All new_tab methods failed, falling back to new window");
     }
-    
-    log("Falling back to new window");
-    
+
     // Generic fallback: open new window
     let terminals = [
         "konsole", "gnome-terminal", "alacritty", "kitty", "wezterm",
         "xfce4-terminal", "x-terminal-emulator",
     ];
-    
+
     for term in terminals {
         let mut cmd = std::process::Command::new(term);
         match term {
@@ -123,17 +113,17 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
                 cmd.args(["--working-directory", &path_str]);
             }
         }
-        
+
         if let Some(cmd_str) = command {
             cmd.arg(cmd_str);
         }
-        
+
         if cmd.spawn().is_ok() {
             log(&format!("Fallback: opened new {} window", term));
             return true;
         }
     }
-    
+
     log("All terminal spawning methods failed");
     false
 }
