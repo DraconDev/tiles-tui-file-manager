@@ -153,6 +153,52 @@ fn execute_redo(
     Some(action_name)
 }
 
+pub fn handle_sidebar_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
+    crate::app::log_debug(&format!(
+        "[SIDEBAR_KEYS] sidebar_focus={}, mode={:?}, key={:?}",
+        app.sidebar_focus, app.mode, key.code
+    ));
+    
+    if !app.sidebar_focus {
+        return false;
+    }
+    
+    match key.code {
+        KeyCode::Char(' ') => {
+            crate::app::log_debug("[SIDEBAR_KEYS] Space - toggling folder");
+            handle_space_key(app, event_tx);
+            true
+        }
+        KeyCode::Char('C') => {
+            crate::app::log_debug("[SIDEBAR_KEYS] C - collapsing all");
+            app.tree_expanded_folders.clear();
+            true
+        }
+        KeyCode::Up => {
+            crate::app::log_debug("[SIDEBAR_KEYS] Up - navigating up");
+            app.sidebar_move_up();
+            true
+        }
+        KeyCode::Down => {
+            crate::app::log_debug("[SIDEBAR_KEYS] Down - navigating down");
+            let max = app.sidebar_bounds.len().saturating_sub(1);
+            if app.sidebar_index < max {
+                app.sidebar_index += 1;
+            }
+            true
+        }
+        KeyCode::Enter => {
+            crate::app::log_debug("[SIDEBAR_KEYS] Enter - activating item");
+            handle_enter_key(app, event_tx);
+            true
+        }
+        _ => {
+            crate::app::log_debug(&format!("[SIDEBAR_KEYS] Unhandled key: {:?}", key.code));
+            false
+        }
+    }
+}
+
 pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     if let Event::Key(key) = evt {
         let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
