@@ -159,6 +159,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
         let has_alt = key.modifiers.contains(KeyModifiers::ALT);
 
         if app.mode == AppMode::Normal {
+            crate::app::log_debug(&format!("[FM] mode=Normal, sidebar_focus={}, key={:?}", app.sidebar_focus, key.code));
             // Global Shortcuts
             match key.code {
                 KeyCode::Char('i') | KeyCode::Char('I') if has_control => {
@@ -415,6 +416,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     return true;
                 }
                 KeyCode::Char(' ') => {
+                    crate::app::log_debug("[FM] Space key received");
                     handle_space_key(app, event_tx);
                     return true;
                 }
@@ -1321,24 +1323,39 @@ pub fn handle_file_mouse(
 }
 
 fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
+    crate::app::log_debug(&format!(
+        "[SPACE] called: sidebar_focus={}, sidebar_index={}, bounds_len={}",
+        app.sidebar_focus, app.sidebar_index, app.sidebar_bounds.len()
+    ));
     // If sidebar is focused and selected item is a folder, toggle expand/collapse
     if app.sidebar_focus {
+        crate::app::log_debug("[SPACE] checking sidebar_bounds...");
         if let Some(bound) = app
             .sidebar_bounds
             .iter()
             .find(|b| b.index == app.sidebar_index)
         {
+            crate::app::log_debug(&format!("[SPACE] found bound at index {}, target={:?}", app.sidebar_index, bound.target));
             if let SidebarTarget::Project(path) = &bound.target {
+                crate::app::log_debug(&format!("[SPACE] path={}, is_dir={}", path.display(), path.is_dir()));
                 if path.is_dir() {
                     if app.tree_expanded_folders.contains(path) {
+                        crate::app::log_debug("[SPACE] removing from expanded_folders");
                         app.tree_expanded_folders.remove(path);
                     } else {
+                        crate::app::log_debug("[SPACE] adding to expanded_folders");
                         app.tree_expanded_folders.insert(path.clone());
                     }
                     return;
+                } else {
+                    crate::app::log_debug("[SPACE] path is NOT a dir");
                 }
             }
+        } else {
+            crate::app::log_debug(&format!("[SPACE] NO bound found at index {}", app.sidebar_index));
         }
+    } else {
+        crate::app::log_debug("[SPACE] sidebar_focus is false, skipping");
     }
 
     if let Some(fs) = app.current_file_state_mut() {
