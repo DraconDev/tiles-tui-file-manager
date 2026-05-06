@@ -24,6 +24,7 @@ mod events;
 mod icons;
 mod modules;
 mod state;
+mod terminal;
 mod ui;
 
 #[tokio::main]
