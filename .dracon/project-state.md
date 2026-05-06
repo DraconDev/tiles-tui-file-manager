@@ -1,24 +1,21 @@
 # Project State
 
 ## Current Focus
-Added terminal management functionality for opening terminals with tab/window support
+Refactored terminal spawning logic to use internal module instead of external dependency
 
 ## Context
-This implements a cross-terminal emulator solution for opening new terminal sessions with tab support when available, falling back to new windows when needed. It supports multiple terminal emulators (Konsole, Kitty, GNOME Terminal, etc.) and provides a unified interface for terminal operations.
+The code was previously using `dracon_terminal_engine::utils::spawn_terminal_at` to launch terminals, but this was moved to an internal `crate::terminal` module for better control and consistency with other terminal operations.
 
 ## Completed
-- [x] Added terminal spawning functionality with tab/window support
-- [x] Implemented D-Bus integration for Konsole
-- [x] Added support for Kitty terminal tabs
-- [x] Created fallback mechanism for other terminal emulators
-- [x] Added command execution support in new terminals
+- [x] Moved terminal spawning implementation from external dependency to internal module
+- [x] Maintained same functionality while improving code organization
 
 ## In Progress
-- [ ] Testing and optimization for different terminal emulators
+- [ ] No active work in progress
 
 ## Blockers
-- Need to verify behavior across all supported terminal emulators
+- None identified
 
 ## Next Steps
-1. Test terminal integration with various terminal emulators
-2. Add configuration options for preferred terminal emulator
+1. Verify all terminal operations work correctly with the new internal module
+2. Consider additional terminal-related refactoring opportunities
