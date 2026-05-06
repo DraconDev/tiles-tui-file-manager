@@ -4,17 +4,18 @@
 Added visual distinction between open and closed files in the sidebar
 
 ## Context
-Improving the sidebar UI to better indicate which files are currently open in the editor, making it easier for users to track their workspace state.
+This change improves the UI by making it clearer which files are currently open in the editor. The visual distinction helps users quickly identify which files are active in their workspace.
 
 ## Completed
-- [x] Added `is_open` flag to highlight files that are currently open in the editor
+- [x] Added bold styling with accent color for open files in the sidebar
+- [x] Removed the open indicator (●) that was previously shown next to open files
 
 ## In Progress
-- [x] Visual styling for open files (implementation pending)
+- [ ] None
 
 ## Blockers
-- Visual styling implementation needs to be completed
+- None
 
 ## Next Steps
-1. Implement visual styling for open files (e.g., different icon or color)
-2. Add keyboard shortcuts to toggle between open files
+1. Verify the visual distinction works consistently across different file types
+2. Consider adding additional visual cues for modified files

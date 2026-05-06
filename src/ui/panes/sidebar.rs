@@ -807,6 +807,11 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
                 .bg(selection_bg)
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD)
+        } else if is_open {
+            Style::default()
+                .bg(crate::ui::theme::accent_primary())
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD)
         } else if is_hovered_drop {
             Style::default()
                 .bg(crate::ui::theme::accent_secondary())
@@ -839,23 +844,11 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
         let indent_str = "  ".repeat(depth as usize);
 
-        let open_indicator = if !is_dir && open_files.contains(&path) {
-            Some(Span::styled(
-                " ●",
-                Style::default().fg(crate::ui::theme::accent_primary()),
-            ))
-        } else {
-            None
-        };
-
         let line = Line::from({
             let mut spans = vec![
                 Span::raw(format!("{}{}", indent_str, marker)),
                 Span::raw(icon),
             ];
-            if let Some(ind) = open_indicator {
-                spans.push(ind);
-            }
             spans.push(Span::raw(name));
             spans
         });
