@@ -1,26 +1,21 @@
 # Project State
 
 ## Current Focus
-Added server configuration management with TOML file persistence and migration support
+Added server configuration module to the project structure
 
 ## Context
-The project needed a standardized way to manage remote server bookmarks with persistent storage. This replaces the previous in-memory approach with a file-based system that supports migration from legacy bookmarks.
+This change prepares the foundation for server configuration management by adding the module declaration. The server configuration will later be implemented with TOML file persistence and other features.
 
 ## Completed
-- [x] Created `ServerConfig` struct with all required fields and serialization support
-- [x] Implemented TOML file persistence for server configurations
-- [x] Added migration path from legacy `RemoteBookmark` format
-- [x] Implemented raw TOML editing capabilities
-- [x] Added error handling and logging for file operations
-- [x] Created conversion utilities between `ServerConfig` and `RemoteBookmark`
+- [x] Added `servers` module declaration in main.rs
 
 ## In Progress
-- [ ] None (complete implementation)
+- [ ] Implement server configuration with TOML file persistence
 
 ## Blockers
-- None (feature is complete)
+- Missing implementation of server configuration logic
 
 ## Next Steps
-1. Integrate with connection management system
-2. Add UI components for server management
+1. Implement server configuration with TOML file persistence
+2. Add server management functionality
 ```

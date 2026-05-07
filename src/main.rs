@@ -23,6 +23,7 @@ mod event_helpers;
 mod events;
 mod icons;
 mod modules;
+mod servers;
 mod state;
 mod terminal;
 mod ui;
