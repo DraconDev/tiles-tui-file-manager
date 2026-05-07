@@ -1524,17 +1524,29 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     }
 
     let mut navigate_to = None;
+    let mut preview_remote = None;
     if let Some(fs) = app.current_file_state() {
         if let Some(idx) = fs.selection.selected {
             if let Some(path) = fs.files.get(idx) {
                 if is_virtual_divider(path) {
                     return;
                 }
-                if let Some(nav) = open_file_or_navigate(path) {
+                if fs.remote_session.is_some() {
+                    let is_dir = fs.metadata.get(path).map(|m| m.is_dir).unwrap_or(false);
+                    if is_dir {
+                        navigate_to = Some(path.clone());
+                    } else {
+                        preview_remote = Some(path.clone());
+                    }
+                } else if let Some(nav) = open_file_or_navigate(path) {
                     navigate_to = Some(nav);
                 }
             }
         }
+    }
+    if let Some(path) = preview_remote {
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(app.focused_pane_index, path));
+        return;
     }
     if let Some(p) = navigate_to {
         let restore = app.folder_memory.get(&p).copied();

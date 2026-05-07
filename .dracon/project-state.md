@@ -1,25 +1,23 @@
 # Project State
 
 ## Current Focus
-Improved file handling for remote sessions in the file manager
+Enhanced file handling for remote sessions in the file manager
 
 ## Context
-The change enhances double-click behavior for remote file sessions by:
-1. Adding proper directory detection for remote files
-2. Implementing preview functionality for remote files
-3. Maintaining existing local file behavior
+The change improves how the file manager handles file navigation and preview requests when connected to remote sessions. This addresses the need for distinct behavior between local and remote file operations.
 
 ## Completed
-- [x] Added robust directory detection for remote files
-- [x] Implemented remote file preview functionality
-- [x] Preserved existing local file handling logic
+- [x] Added remote session detection for file handling
+- [x] Implemented directory navigation for remote sessions
+- [x] Added remote file preview functionality
+- [x] Maintained backward compatibility for local file operations
 
 ## In Progress
-- [x] Remote file interaction improvements
+- [x] Remote file handling improvements
 
 ## Blockers
 - None identified in this change
 
 ## Next Steps
 1. Verify remote file preview functionality works as expected
-2. Test edge cases for mixed local/remote file interactions
+2. Test edge cases for mixed local/remote operations
