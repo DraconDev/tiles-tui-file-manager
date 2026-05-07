@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Improved event handling for remote server management in the settings modal
 
 ## Context
-This change was triggered by the ongoing server management overhaul and related dependency updates.
+The change modifies the `handle_add_remote_keys` function to properly utilize the event sender (`event_tx`) for remote server operations, ensuring proper event propagation for UI updates and state management.
 
 ## Completed
-- [x] Updated Cargo.lock with minor dependency changes
+- [x] Made the event sender parameter non-underscored to properly use it in remote server operations
 
 ## In Progress
-- [x] Server management overhaul (servers.toml configuration)
+- [x] Event handling for remote server management is now properly connected
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in synth-1774826981 slice
+- The dependency `dracon-files` manifest loading failure (from blueprint) may impact server configuration functionality
 
 ## Next Steps
-1. Resolve the dependency issue for `dracon-files`
-2. Complete the server management overhaul implementation
+1. Verify event propagation works correctly in remote server management UI
+2. Address the `dracon-files` dependency issue to enable full server configuration functionality

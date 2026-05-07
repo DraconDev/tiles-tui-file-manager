@@ -890,7 +890,7 @@ fn handle_command_palette_keys(
 fn handle_add_remote_keys(
     _key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
-    _event_tx: &mpsc::Sender<AppEvent>,
+    event_tx: &mpsc::Sender<AppEvent>,
     idx: usize,
     evt: &Event,
 ) -> bool {
