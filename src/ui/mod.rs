@@ -1695,7 +1695,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
             })),
             Cell::from(p.status.clone()).style(Style::default().fg(status_col)),
             Cell::from(format!("{:.1}% {}", p.cpu, mini_bar(p.cpu as f64, 4))).style(Style::default().fg(cpu_color)),
-            Cell::from(format!("{} {}", format_memory_mib(p.mem), mem_bar)).style(Style::default().fg(mem_color)),
+            Cell::from(format!("{} {}", format_memory_mib(p.mem as f64), mem_bar)).style(Style::default().fg(mem_color)),
         ])
         .style(style)
     });
