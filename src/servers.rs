@@ -347,4 +347,36 @@ key_path = "~/.ssh/micro1.key"
             servers.len()
         );
     }
+
+    #[test]
+    fn expand_tilde_no_tilde_returns_unchanged() {
+        let path = std::path::PathBuf::from("/usr/local/bin");
+        assert_eq!(expand_tilde(&path), path);
+    }
+
+    #[test]
+    fn expand_tilde_plain_home() {
+        let home = dirs::home_dir().expect("Home dir should exist");
+        let result = expand_tilde(std::path::Path::new("~"));
+        assert_eq!(result, home);
+    }
+
+    #[test]
+    fn expand_tilde_home_subpath() {
+        let home = dirs::home_dir().expect("Home dir should exist");
+        let result = expand_tilde(std::path::Path::new("~/.ssh/id_rsa"));
+        assert_eq!(result, home.join(".ssh/id_rsa"));
+    }
+
+    #[test]
+    fn expand_tilde_user_fallback() {
+        let result = expand_tilde(std::path::Path::new("~root/.bashrc"));
+        assert_eq!(result, std::path::PathBuf::from("/home/root/.bashrc"));
+    }
+
+    #[test]
+    fn expand_tilde_user_no_slash() {
+        let result = expand_tilde(std::path::Path::new("~nobody"));
+        assert_eq!(result, std::path::PathBuf::from("/home/nobody"));
+    }
 }
