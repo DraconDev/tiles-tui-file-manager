@@ -136,6 +136,7 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         },
         focused_pane_index: app.focused_pane_index,
         starred: app.starred.clone(),
+        remote_bookmarks: Vec::new(),
         current_view: app.current_view.clone(),
         window_size: if app.terminal_size.0 > 0 && app.terminal_size.1 > 0 {
             Some(app.terminal_size)

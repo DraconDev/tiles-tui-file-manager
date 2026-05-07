@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored `RemoteBookmark` usage to use the server configuration model instead of direct imports.
+Added empty remote_bookmarks vector to application state serialization
 
 ## Context
-This change aligns with the ongoing refactoring of remote bookmark management to use the centralized server configuration module, which was recently added to the project.
+This change prepares the application state for future remote bookmark functionality by including an empty vector in the serialized state. It aligns with ongoing refactoring efforts to use server configuration instead of direct remote bookmark management.
 
 ## Completed
-- [x] Moved `RemoteBookmark` import from `app` module to `state` module
-- [x] Removed direct dependency on `RemoteBookmark` in `config.rs`
+- [x] Added empty remote_bookmarks vector to application state serialization
+- [x] Updated Cargo.lock with dependency changes
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] Implementation of remote bookmark functionality using server configuration
 
 ## Blockers
-- None identified
+- Remote bookmark feature implementation depends on server configuration module completion
 
 ## Next Steps
-1. Verify all references to `RemoteBookmark` have been updated across the codebase
-2. Test the new configuration model integration with remote bookmarks
+1. Implement remote bookmark functionality using server configuration
+2. Update UI components to work with the new remote bookmark system
