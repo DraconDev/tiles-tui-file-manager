@@ -1383,6 +1383,7 @@ fn handle_settings_keys(
                 SettingsSection::General => 13,
                 SettingsSection::Columns => 3,
                 SettingsSection::Style => STYLE_MAX_INDEX,
+                SettingsSection::Remotes => app.servers.len().saturating_sub(1),
                 _ => 0,
             };
             if app.settings_index < max {
