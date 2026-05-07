@@ -1107,13 +1107,17 @@ fn handle_import_ssh_config_keys(
                     let mut skipped = 0usize;
                     let mut warnings = Vec::new();
                     for candidate in parsed {
-                        let exists = app.servers.iter().any(|b| {
-                            b.name == candidate.name
-                                && b.host == candidate.host
-                                && b.user == candidate.user
-                                && b.port == candidate.port
+                        // Check for duplicates: same name OR same host+user+port
+                        let duplicate = app.servers.iter().find(|b| {
+                            b.name == candidate.name ||
+                            (b.host == candidate.host && b.user == candidate.user && b.port == candidate.port)
                         });
-                        if exists {
+                        if let Some(existing) = duplicate {
+                            if existing.name == candidate.name {
+                                warnings.push(format!("{}: name already exists", candidate.name));
+                            } else {
+                                warnings.push(format!("{}: same server as '{}'", candidate.name, existing.name));
+                            }
                             skipped += 1;
                             continue;
                         }
