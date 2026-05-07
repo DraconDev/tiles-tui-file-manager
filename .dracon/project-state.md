@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added remote server name prefix to tab titles in the UI
 
 ## Context
-This change is part of ongoing dependency management for the project. The Cargo.lock file was updated to reflect a small adjustment in dependency versions, likely triggered by a routine maintenance process.
+This change improves the user experience by clearly indicating which remote server a tab is connected to, making it easier to distinguish between local and remote sessions.
 
 ## Completed
-- [x] Updated Cargo.lock with minor dependency adjustments
+- [x] Added conditional display of remote server name in tab titles
+- [x] Prefixed remote tabs with a remote server icon
+- [x] Maintained consistent styling with existing tab headers
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [ ] No active work in progress
 
 ## Blockers
 - None identified
 
 ## Next Steps
-1. Continue monitoring dependency updates
-2. Verify that the updated dependencies don't introduce breaking changes
+1. Verify the visual consistency across different terminal themes
+2. Consider adding more remote session metadata to the tab display

@@ -1876,7 +1876,14 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                         .unwrap_or_else(|| "/".to_string())
                 };
 
-                let mut spans = vec![Span::styled(format!(" {}", base_name), base_style)];
+                // Prefix remote server name for remote tabs
+                let display_name = if let Some(ref remote) = tab.remote_session {
+                    format!("{} {}", Icon::Remote.get(app.icon_mode), remote.name)
+                } else {
+                    base_name
+                };
+
+                let mut spans = vec![Span::styled(format!(" {}", display_name), base_style)];
                 if is_modified {
                     spans.push(Span::styled(
                         " ●",
