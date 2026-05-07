@@ -557,6 +557,7 @@ fn handle_sidebar_mouse(
                                     } else {
                                         app.tree_expanded_folders.insert(path_ref.clone());
                                     }
+                                    // Keep sidebar focused so keyboard (Up/Down/Space) keeps working
                                 } else {
                                     // Name click: navigate to folder (and expand if collapsed)
                                     if let Some(fs) = app.current_file_state_mut() {
@@ -572,8 +573,8 @@ fn handle_sidebar_mouse(
                                     if !was_expanded {
                                         app.tree_expanded_folders.insert(path_ref.clone());
                                     }
+                                    app.sidebar_focus = false;
                                 }
-                                app.sidebar_focus = false;
                             } else {
                                 let target_pane = {
                                     let pane_count = app.panes.len();
