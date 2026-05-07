@@ -101,6 +101,8 @@ pub struct App {
     pub mouse_click_count: usize,
     pub file_manager_last_click: std::time::Instant,
     pub file_manager_click_pos: (u16, u16),
+    /// Tracks remote connection health: server name -> (is_healthy, last_check_time)
+    pub remote_health: HashMap<String, (bool, std::time::Instant)>,
     pub is_resizing_sidebar: bool,
     pub editor_clipboard: Option<String>,
     pub clipboard: Option<(PathBuf, ClipboardOp)>,
