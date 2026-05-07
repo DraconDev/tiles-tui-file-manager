@@ -1,21 +1,25 @@
 # Project State
 
 ## Current Focus
-Added event for servers.toml changes to trigger UI updates
+Added automatic reloading of servers.toml configuration when modified externally
 
 ## Context
-This change supports the server management overhaul by providing a way to detect when the servers.toml configuration file changes, allowing the UI to react appropriately.
+To improve user experience by automatically detecting and applying changes to server configurations without requiring a manual restart of the application.
 
 ## Completed
-- [x] Added `ServersTomlChanged` variant to `AppEvent` enum
-- [x] Enabled UI to respond to configuration file changes
+- [x] Added file watcher for servers.toml using notify crate
+- [x] Implemented debouncing to prevent rapid successive reloads
+- [x] Added shutdown handling to cleanly terminate the watcher
+- [x] Integrated with application event system to trigger UI updates
+- [x] Added error handling and logging for watcher failures
 
 ## In Progress
-- [ ] Implement actual handling of the event in the UI system
+- [ ] None (feature is complete)
 
 ## Blockers
-- Need to implement the actual event handling logic in the UI components
+- None (feature is complete)
 
 ## Next Steps
-1. Implement event handling in relevant UI components
-2. Add tests for the new event variant
+1. Verify the watcher works correctly in production environments
+2. Add unit tests for the watcher functionality
+3. Consider adding configuration options for watcher behavior

@@ -237,6 +237,65 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         });
     }
 
+    // 4. Servers.toml Watcher (notify crate) — auto-reload when edited externally
+    {
+        let tx = event_tx.clone();
+        let shutdown_watch = shutdown.clone();
+        tokio::spawn(async move {
+            use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+            use std::sync::mpsc::channel;
+
+            let Some(toml_path) = crate::servers::servers_toml_path() else {
+                return;
+            };
+            let Some(parent) = toml_path.parent() else {
+                return;
+            };
+
+            let (watch_tx, watch_rx) = channel::<notify::Result<notify::Event>>();
+            let mut watcher = match RecommendedWatcher::new(
+                move |res| {
+                    let _ = watch_tx.send(res);
+                },
+                Config::default(),
+            ) {
+                Ok(w) => w,
+                Err(e) => {
+                    crate::app::log_debug(&format!("Failed to create servers.toml watcher: {}", e));
+                    return;
+                }
+            };
+
+            if let Err(e) = watcher.watch(parent, RecursiveMode::NonRecursive) {
+                crate::app::log_debug(&format!("Failed to watch servers.toml dir: {}", e));
+                return;
+            }
+
+            let mut last_modified = std::time::Instant::now();
+            loop {
+                if shutdown_watch.load(Ordering::Relaxed) {
+                    break;
+                }
+                // Poll with timeout so we can check shutdown flag
+                match watch_rx.recv_timeout(std::time::Duration::from_millis(500)) {
+                    Ok(Ok(event)) => {
+                        if event.paths.iter().any(|p| p == &toml_path) {
+                            // Debounce: ignore events within 500ms of each other
+                            if last_modified.elapsed() > std::time::Duration::from_millis(500) {
+                                last_modified = std::time::Instant::now();
+                                let _ = tx.send(AppEvent::ServersTomlChanged).await;
+                            }
+                        }
+                    }
+                    Ok(Err(e)) => {
+                        crate::app::log_debug(&format!("servers.toml watch error: {}", e));
+                    }
+                    Err(_) => {} // Timeout — check shutdown flag next loop
+                }
+            }
+        });
+    }
+
     // Initial State Setup
     let pane_count = {
         let mut app_guard = app.lock();
