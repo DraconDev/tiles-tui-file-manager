@@ -1,24 +1,24 @@
 # Project State
 
 ## Current Focus
-Added automatic SSH key permission fixing for Unix systems
+Improved SSH key permission handling with automatic fixes and better error separation
 
 ## Context
-To improve security and prevent connection failures, we need to ensure SSH keys have proper permissions (0o600). This change adds automatic permission fixing when loading SSH keys.
+The previous implementation had basic server validation but didn't handle SSH key permission issues automatically. Users were seeing permission errors that could be automatically fixed.
 
 ## Completed
-- [x] Added `auto_fix_key_permissions` function for Unix systems
-- [x] Implemented permission check and fix logic
-- [x] Added no-op implementation for non-Unix systems
+- [x] Added automatic SSH key permission fixing for Unix systems
+- [x] Separated hard validation errors from key permission warnings
+- [x] Added status reporting for automatically fixed keys
+- [x] Improved error handling flow with clear separation of error types
 
 ## In Progress
-- [ ] Testing across different Unix environments
+- [ ] No active work in progress
 
 ## Blockers
-- Need to verify behavior on various Unix distributions
-- Potential permission issues when running as non-root user
+- None identified
 
 ## Next Steps
-1. Test permission fixing functionality
-2. Add integration with SSH key loading code
-3. Document security implications in documentation
+1. Verify automatic fixes work across different Unix-like systems
+2. Add similar permission handling for Windows if needed
+3. Consider adding more granular permission checks for sensitive operations

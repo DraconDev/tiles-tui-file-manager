@@ -926,8 +926,21 @@ fn handle_add_remote_keys(
                 let editing_index = if edit_idx < app.servers.len() { Some(edit_idx) } else { None };
                 
                 let errors = crate::servers::validate_server(&app.pending_server, &app.servers, editing_index);
-                if !errors.is_empty() {
-                    let msg = errors.iter()
+                
+                // Separate hard errors from key permission warnings
+                let hard_errors: Vec<_> = errors.iter().filter(|e| e.field != "key_path").collect();
+                let key_warnings: Vec<_> = errors.iter().filter(|e| e.field == "key_path").collect();
+                
+                // Auto-fix key permissions if possible
+                let mut fixed_keys = Vec::new();
+                if let Some(ref kp) = app.pending_server.key_path {
+                    if crate::servers::auto_fix_key_permissions(kp) {
+                        fixed_keys.push(kp.file_name().unwrap_or_default().to_string_lossy().to_string());
+                    }
+                }
+                
+                if !hard_errors.is_empty() {
+                    let msg = hard_errors.iter()
                         .map(|e| format!("{}: {}", e.field, e.message))
                         .collect::<Vec<_>>()
                         .join(", ");
@@ -946,6 +959,13 @@ fn handle_add_remote_keys(
                 crate::servers::save_servers_quiet(&app.servers);
                 app.mode = AppMode::Normal;
                 app.input.clear();
+                
+                // Report any auto-fixes
+                if !fixed_keys.is_empty() {
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Fixed key permissions for: {}", fixed_keys.join(", "))
+                    ));
+                }
             }
             true
         }
