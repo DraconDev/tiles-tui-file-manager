@@ -1463,6 +1463,13 @@ fn handle_settings_keys(
                         open_style_color_input(app);
                     }
                 }
+                SettingsSection::Remotes => {
+                    if app.settings_index < app.servers.len() {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(
+                            app.focused_pane_index, app.settings_index
+                        ));
+                    }
+                }
                 _ => {}
             }
             true

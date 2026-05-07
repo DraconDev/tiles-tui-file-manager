@@ -1,23 +1,20 @@
 # Project State
 
 ## Current Focus
-Added dynamic index calculation for the Remotes settings section based on server count
+Added remote server connection handling in the settings modal
 
 ## Context
-This change supports the server configuration management system by ensuring the settings navigation respects the actual number of configured servers
+This change enables users to connect to remote servers directly from the settings modal, improving the workflow for managing remote connections without navigating to the main interface.
 
 ## Completed
-- [x] Added dynamic max index calculation for Remotes section using `app.servers.len()`
-- [x] Used `saturating_sub(1)` to handle empty server lists safely
+- [x] Added event dispatch for remote server connections when selecting a server in the Remotes settings section
 
 ## In Progress
-- [x] Server configuration management system integration
+- [x] Remote server connection functionality
 
 ## Blockers
-- Missing server configuration persistence implementation
-- Need to verify keyboard navigation works with dynamic sections
+- None identified in this change
 
 ## Next Steps
-1. Implement server configuration persistence
-2. Verify keyboard navigation with dynamic sections
-3. Add tests for the new index calculation logic
+1. Verify connection handling works as expected with the server configuration system
+2. Add UI feedback for connection attempts and status
