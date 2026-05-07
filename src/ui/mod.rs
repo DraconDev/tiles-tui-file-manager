@@ -1577,9 +1577,9 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let header_rects = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(column_constraints)
-        .split(Rect::new(area.x, area.y, effective_width, 1));
-    let mut current_col_x = area.x;
-    let header_cells = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"]
+        .split(Rect::new(draw_area.x, draw_area.y, effective_width, 1));
+    let mut current_col_x = draw_area.x;
+    let header_cells = ["PID", "NAME", "USER", "STATUS", "CPU", "MEMORY"]
         .iter()
         .enumerate()
         .map(|(i, h)| {
@@ -1588,13 +1588,13 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                 "NAME" => ProcessColumn::Name,
                 "USER" => ProcessColumn::User,
                 "STATUS" => ProcessColumn::Status,
-                "CPU%" => ProcessColumn::Cpu,
-                "MEM%" => ProcessColumn::Mem,
+                "CPU" => ProcessColumn::Cpu,
+                "MEMORY" => ProcessColumn::Mem,
                 _ => ProcessColumn::Pid,
             };
             let width = header_rects[i].width;
             app.process_column_bounds
-                .push((Rect::new(current_col_x, area.y, width, 1), col));
+                .push((Rect::new(current_col_x, draw_area.y, width, 1), col));
             current_col_x += width + spacing;
             let mut text = h.to_string();
             if app.process_sort_col == col {
@@ -1633,7 +1633,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
             Paragraph::new(empty_message)
                 .alignment(Alignment::Center)
                 .style(Style::default().fg(Color::Rgb(80, 85, 95))),
-            Rect::new(area.x, area.y + 3, area.width, 1),
+            Rect::new(draw_area.x, draw_area.y + 3, draw_area.width, 1),
         );
         return;
     }
@@ -1655,25 +1655,47 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         let cpu_color = if is_selected {
             Color::Black
         } else if p.cpu > 50.0 {
-            Color::Red
+            Color::Rgb(220, 100, 100)
+        } else if p.cpu > 20.0 {
+            Color::Rgb(220, 180, 100)
         } else {
-            crate::ui::theme::accent_secondary()
+            Color::Rgb(100, 200, 140)
         };
+        let mem_color = if is_selected {
+            Color::Black
+        } else if p.mem > 2048.0 {
+            Color::Rgb(220, 100, 100)
+        } else if p.mem > 512.0 {
+            Color::Rgb(220, 180, 100)
+        } else {
+            Color::Rgb(100, 180, 220)
+        };
+        let status_col = if is_selected {
+            Color::Black
+        } else {
+            process_status_color(&p.status)
+        };
+        let name_display = if p.name.len() > 22 {
+            format!("{}...", &p.name[..19])
+        } else {
+            p.name.clone()
+        };
+        let mem_bar = mini_bar((p.mem / app.system_state.total_mem.max(1.0) * 100.0) as f64, 4);
         Row::new(vec![
             Cell::from(format!("  {}", p.pid)).style(Style::default().fg(if is_selected {
                 Color::Black
             } else {
-                Color::Rgb(60, 65, 75)
+                Color::Rgb(80, 85, 95)
             })),
-            Cell::from(p.name.clone()).style(Style::default().add_modifier(Modifier::BOLD)),
+            Cell::from(name_display).style(Style::default().add_modifier(Modifier::BOLD)),
             Cell::from(p.user.clone()).style(Style::default().fg(if is_selected {
                 Color::Black
             } else {
                 crate::ui::theme::accent_primary()
             })),
-            Cell::from(p.status.clone()),
-            Cell::from(format!("{:.1}", p.cpu)).style(Style::default().fg(cpu_color)),
-            Cell::from(format!("{:.1}", p.mem)),
+            Cell::from(p.status.clone()).style(Style::default().fg(status_col)),
+            Cell::from(format!("{:.1}% {}", p.cpu, mini_bar(p.cpu as f64, 4))).style(Style::default().fg(cpu_color)),
+            Cell::from(format!("{} {}", format_memory_mib(p.mem), mem_bar)).style(Style::default().fg(mem_color)),
         ])
         .style(style)
     });
@@ -1681,7 +1703,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         Table::new(rows, column_constraints)
             .header(Row::new(header_cells).height(1).bottom_margin(1))
             .column_spacing(1),
-        area,
+        draw_area,
         &mut app.process_table_state,
     );
 }

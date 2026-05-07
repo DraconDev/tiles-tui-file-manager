@@ -1,25 +1,31 @@
 # Project State
 
 ## Current Focus
-Enhanced process monitoring UI with improved memory formatting, status visualization, and search filtering
+Enhanced process monitoring UI with improved memory formatting, status colors, and visual indicators
 
 ## Context
-The changes improve the system monitoring UI by adding better memory formatting (MiB to GiB conversion), visual process status indicators, and a search filter display. This makes the process view more informative and user-friendly.
+The changes improve the process view by:
+1. Adding visual indicators (mini-bars) for CPU and memory usage
+2. Implementing color-coded status indicators
+3. Improving memory display formatting
+4. Enhancing visual hierarchy with better text styling
 
 ## Completed
-- [x] Added memory formatting function (MiB to GiB conversion)
-- [x] Implemented colored process status indicators
-- [x] Added search filter display in the process view
-- [x] Enhanced process view layout with better column sizing
-- [x] Added mini-bar visualization for process metrics
+- [x] Added mini-bar visual indicators for CPU and memory usage
+- [x] Implemented color-coded status indicators
+- [x] Improved memory display formatting (now shows "MiB" units)
+- [x] Enhanced text styling for better visual hierarchy
+- [x] Updated column headers to be more descriptive ("CPU" instead of "CPU%")
+- [x] Added truncation for long process names
+- [x] Improved color contrast for selected items
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None (all changes are complete)
 
 ## Blockers
-- None identified
+- None (dependency `dracon-files` failed to load but isn't blocking current work)
 
 ## Next Steps
-1. Test the new UI components with various process states
-2. Consider adding more visual indicators for process priorities
-3. Evaluate performance impact of the new rendering logic
+1. Verify the new UI elements work correctly in different terminal environments
+2. Consider adding more visual indicators for other process metrics
+3. Document the new UI features for end users
