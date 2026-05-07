@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Improved sidebar keyboard navigation handling by removing redundant return value in space key handler.
+Added cache invalidation for sidebar views when collapsing all folders
 
 ## Context
-The change was prompted by a recent focus on refining sidebar keyboard interactions. The previous implementation of the space key handler included an unnecessary return value (`true`) that wasn't being used.
+The change was prompted by improving sidebar keyboard navigation handling. When collapsing all folders (via 'C' key), the UI wasn't properly refreshing to reflect the collapsed state in both the Files and Editor view sidebars.
 
 ## Completed
-- [x] Removed redundant `true` return value from space key handler in file_manager.rs
-- [x] Maintained existing space key functionality while cleaning up code
+- [x] Added cache invalidation for both sidebar views when collapsing all folders
+- [x] Triggered a Tick event to force UI refresh
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [x] Testing the cache invalidation behavior across different sidebar states
 
 ## Blockers
 - None identified for this specific change
 
 ## Next Steps
-1. Verify no regression in sidebar keyboard behavior
-2. Continue refining sidebar keyboard navigation features
+1. Verify cache invalidation works consistently across all sidebar states
+2. Add similar cache invalidation for other sidebar operations that modify view state

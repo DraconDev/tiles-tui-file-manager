@@ -171,6 +171,10 @@ pub fn handle_sidebar_keys(key: &dracon_terminal_engine::contracts::KeyEvent, ap
         KeyCode::Char('C') => {
             crate::app::log_debug("[SIDEBAR_KEYS] C - collapsing all");
             app.tree_expanded_folders.clear();
+            // Force cache invalidation for both Files and Editor view sidebars
+            app.sidebar_tree_cache_key = u64::MAX;
+            app.editor_sidebar_cache_key = u64::MAX;
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::Tick);
             true
         }
         KeyCode::Up => {
