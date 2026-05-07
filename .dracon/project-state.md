@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Added keyboard shortcut for importing OpenSSH configuration files in settings modal
+Added keyboard shortcut for importing OpenSSH configuration files with TOML and SSH config options
 
 ## Context
-This change enables users to quickly import their existing SSH configuration files by pressing 's' in the remotes settings section, pre-filling the input with the default SSH config path.
+This change enhances the remote settings UI by providing clearer import options for different configuration formats, making it easier for users to import server configurations.
 
 ## Completed
-- [x] Added 's' keyboard shortcut for SSH config import in remotes settings
-- [x] Pre-filled input with default SSH config path (~/.ssh/config)
-- [x] Positioned cursor at end of pre-filled path
+- [x] Added TOML import option with `[I]` shortcut
+- [x] Added SSH config import option with `[S]` shortcut
+- [x] Improved visual clarity of import options in the UI
 
 ## In Progress
-- [x] Implementation of actual SSH config parsing (from recent commits)
+- [ ] Testing import functionality across different configuration formats
 
 ## Blockers
-- None identified for this specific change
+- Missing integration tests for the new import options
 
 ## Next Steps
-1. Implement the actual SSH config parsing logic
-2. Add error handling for invalid config files
+1. Write integration tests for TOML and SSH config imports
+2. Verify error handling for malformed configurations
