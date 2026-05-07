@@ -10,7 +10,7 @@ pub use crate::state::{
     AppEvent, AppMode, ClipboardOp, CommandAction, CommandItem, CommitInfo, ContextMenuAction,
     ContextMenuTarget, CurrentView, DropTarget, FileCategory, FileColumn, FileMetadata, FileState,
     GitPendingChange, MonitorSubview, Pane, PreviewState, ProcessColumn,
-    RemoteBookmark, SettingsSection, SettingsTarget, SidebarBounds, SidebarTarget,
+    SettingsSection, SettingsTarget, SidebarBounds, SidebarTarget,
     SystemState, UndoAction, ViewPreferences, ViewStatePersistence,
 };
 

@@ -1,4 +1,4 @@
-use crate::app::{App, CurrentView, Pane};
+use crate::app::{App, CurrentView, Pane, RemoteBookmark};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -59,6 +59,8 @@ pub struct PersistentState {
     pub panes: Vec<Pane>,
     pub focused_pane_index: usize,
     pub starred: Vec<PathBuf>,
+    #[serde(default)]
+    pub remote_bookmarks: Vec<RemoteBookmark>,
     pub current_view: CurrentView,
     pub window_size: Option<(u16, u16)>,
     pub path_colors: HashMap<PathBuf, u8>,

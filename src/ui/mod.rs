@@ -4861,7 +4861,7 @@ fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
 
     f.render_widget(Paragraph::new(text), chunks[0]);
 
-    if app.remote_bookmarks.is_empty() {
+    if app.servers.is_empty() {
         f.render_widget(
             Paragraph::new("\n (No remote servers configured)")
                 .style(Style::default().fg(Color::DarkGray)),
@@ -4902,13 +4902,13 @@ fn draw_add_remote_modal(f: &mut Frame, app: &App) {
     };
 
     let fields = [
-        ("Name", &app.pending_remote.name),
-        ("Host", &app.pending_remote.host),
-        ("User", &app.pending_remote.user),
-        ("Port", &app.pending_remote.port.to_string()),
+        ("Name", &app.pending_server.name),
+        ("Host", &app.pending_server.host),
+        ("User", &app.pending_server.user),
+        ("Port", &app.pending_server.port.to_string()),
         (
             "Key Path",
-            &app.pending_remote
+            &app.pending_server
                 .key_path
                 .as_ref()
                 .map(|p| p.to_string_lossy().to_string())

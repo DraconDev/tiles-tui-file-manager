@@ -1,20 +1,24 @@
 # Project State
 
 ## Current Focus
-Refactored UI to use server configuration instead of remote bookmarks
+Refactored remote bookmark management to use server configuration model
 
 ## Context
-This change aligns with the ongoing refactoring of remote bookmark management to use the new server configuration model, which was recently introduced in the project.
+The codebase was refactoring remote bookmark management to use a more comprehensive server configuration model. This change consolidates remote server management into a dedicated module and updates the UI to reflect this new structure.
 
 ## Completed
-- [x] Updated UI to use `servers` configuration instead of `remote_bookmarks` in the remote settings display
+- [x] Removed `RemoteBookmark` from app.rs imports
+- [x] Added `RemoteBookmark` to config.rs imports
+- [x] Added `remote_bookmarks` field to `PersistentState` with default serialization
+- [x] Updated servers.rs to define server bookmarks
+- [x] Refactored UI to use `servers` instead of `remote_bookmarks`
 
 ## In Progress
-- [ ] No active work in progress related to this change
+- [ ] No active work in progress
 
 ## Blockers
-- None identified for this specific change
+- None identified
 
 ## Next Steps
-1. Verify UI behavior with the new server configuration
-2. Ensure all related UI components are updated to use the server configuration model
+1. Verify server configuration persistence works correctly
+2. Update documentation for the new server configuration system
