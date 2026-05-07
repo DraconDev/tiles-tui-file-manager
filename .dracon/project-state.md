@@ -1,23 +1,22 @@
 # Project State
 
 ## Current Focus
-Refactored remote bookmark management to use server configuration model
+Removed remote bookmark persistence from the application state.
 
 ## Context
-This change aligns with the server configuration feature work by replacing the remote bookmark system with a more generalized server configuration approach.
+This change was prompted by the refactoring of remote bookmark management to use the server configuration model. The remote bookmarks were previously stored in the persistent state but are now managed separately.
 
 ## Completed
-- [x] Renamed `remote_bookmarks` to `servers` to reflect broader functionality
-- [x] Updated `pending_remote` to `pending_server` with matching type
-- [x] Initialized server configuration with empty values in default state
+- [x] Removed `remote_bookmarks` field from `PersistentState` struct
+- [x] Removed `remote_bookmarks` from state serialization
+- [x] Removed unused import of `RemoteBookmark`
 
 ## In Progress
-- [ ] Implementation of server configuration persistence and management
+- [ ] None
 
 ## Blockers
-- Server configuration persistence layer not yet implemented
-- Need to update UI components to work with new server model
+- None
 
 ## Next Steps
-1. Implement server configuration persistence
-2. Update UI components to use the new server model
+1. Update any remaining code that might still reference remote bookmarks
+2. Verify that the server configuration model properly handles remote bookmark persistence
