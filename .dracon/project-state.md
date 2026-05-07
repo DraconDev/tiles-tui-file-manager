@@ -4,19 +4,19 @@
 Added remote server name prefix to tab titles in the UI
 
 ## Context
-This change improves the user experience by clearly indicating which remote server a tab is connected to, making it easier to distinguish between local and remote sessions.
+This change improves the user experience by making it clearer which tabs are connected to remote servers. The previous implementation only showed the file path, which could be confusing when multiple remote connections were open.
 
 ## Completed
 - [x] Added conditional display of remote server name in tab titles
-- [x] Prefixed remote tabs with a remote server icon
-- [x] Maintained consistent styling with existing tab headers
+- [x] Maintained existing behavior for local tabs
+- [x] Preserved the existing icon display for remote tabs
 
 ## In Progress
-- [ ] No active work in progress
+- [x] This change is complete
 
 ## Blockers
 - None identified
 
 ## Next Steps
-1. Verify the visual consistency across different terminal themes
-2. Consider adding more remote session metadata to the tab display
+1. Verify the change works with multiple remote connections
+2. Consider adding visual distinction (color/icon) for remote tabs

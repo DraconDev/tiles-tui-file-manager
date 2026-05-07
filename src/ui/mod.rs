@@ -1972,6 +1972,13 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "/".to_string());
 
+            // Prefix remote server name for remote tabs
+            let display_name = if let Some(ref remote) = tab.remote_session {
+                format!("{} {}", Icon::Remote.get(app.icon_mode), remote.name)
+            } else {
+                base_name
+            };
+
             let is_active_tab = t_i == pane.active_tab_index;
             let is_focused_pane = p_i == app.focused_pane_index && !app.sidebar_focus;
 
