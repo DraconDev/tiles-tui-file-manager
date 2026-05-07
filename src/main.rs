@@ -1186,21 +1186,37 @@ let list_path_for_filter = path.clone();
 
                         if let Some(session) = &list_remote {
                             // Remote: use SSH directory listing
-                            let (files, meta) = crate::modules::remote::read_dir_with_metadata(session, &list_path)
-                                .unwrap_or_default();
-                            let tree_files: Vec<(PathBuf, u16)> = files.into_iter().map(|p| (p, 0)).collect();
-                            let trimmed_filter = list_filter.trim();
-                            let g_result = if trimmed_filter.len() > 3 {
-                                crate::modules::remote::global_search(
-                                    session,
-                                    &list_path,
-                                    trimmed_filter,
-                                )
-                            } else {
-                                (Vec::new(), std::collections::HashMap::new())
-                            };
-                            crate::app::log_debug(&format!("remote read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-                            (tree_files, meta, g_result.0, g_result.1)
+                            match crate::modules::remote::read_dir_with_metadata(session, &list_path) {
+                                Ok((files, meta)) => {
+                                    // Mark connection as healthy
+                                    let mut app_guard = app_clone.lock();
+                                    app_guard.remote_health.insert(session.name.clone(), (true, std::time::Instant::now()));
+                                    drop(app_guard);
+                                    
+                                    let tree_files: Vec<(PathBuf, u16)> = files.into_iter().map(|p| (p, 0)).collect();
+                                    let trimmed_filter = list_filter.trim();
+                                    let g_result = if trimmed_filter.len() > 3 {
+                                        crate::modules::remote::global_search(
+                                            session,
+                                            &list_path,
+                                            trimmed_filter,
+                                        )
+                                    } else {
+                                        (Vec::new(), std::collections::HashMap::new())
+                                    };
+                                    crate::app::log_debug(&format!("remote read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
+                                    (tree_files, meta, g_result.0, g_result.1)
+                                }
+                                Err(e) => {
+                                    // Mark connection as unhealthy
+                                    let mut app_guard = app_clone.lock();
+                                    app_guard.remote_health.insert(session.name.clone(), (false, std::time::Instant::now()));
+                                    drop(app_guard);
+                                    
+                                    crate::app::log_debug(&format!("remote read_dir failed for {:?}: {}", list_path, e));
+                                    (Vec::new(), std::collections::HashMap::new(), Vec::new(), std::collections::HashMap::new())
+                                }
+                            }
                         } else {
                             // Local: walk expanded folders (Dolphin-style inline tree)
                             let max_depth = MAX_TREE_DEPTH;
