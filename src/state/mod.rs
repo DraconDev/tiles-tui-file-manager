@@ -61,6 +61,7 @@ pub enum AppEvent {
     Editor,
     Ui(UiEvent),
     Raw(dracon_terminal_engine::contracts::InputEvent),
+    ServersTomlChanged,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

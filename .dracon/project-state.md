@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added event for servers.toml changes to trigger UI updates
 
 ## Context
-This change was triggered by the ongoing refactoring of remote server management to use server configuration models instead of remote bookmarks. The update ensures all dependencies are properly resolved and versioned.
+This change supports the server management overhaul by providing a way to detect when the servers.toml configuration file changes, allowing the UI to react appropriately.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
+- [x] Added `ServersTomlChanged` variant to `AppEvent` enum
+- [x] Enabled UI to respond to configuration file changes
 
 ## In Progress
-- [ ] `synth-1774826981` - failed to load manifest for dependency `dracon-files`
+- [ ] Implement actual handling of the event in the UI system
 
 ## Blockers
-- Dependency resolution issue for `dracon-files` preventing progress
+- Need to implement the actual event handling logic in the UI components
 
 ## Next Steps
-1. Investigate and resolve the dependency issue for `dracon-files`
-2. Continue refactoring remote server management to use server configuration models
+1. Implement event handling in relevant UI components
+2. Add tests for the new event variant
