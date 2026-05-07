@@ -135,24 +135,26 @@ pub fn handle_event(
                 }
                 crate::app::log_debug("[MOD] handle_sidebar_keys did not handle key");
             } else {
-                // Handle Left/Right arrow for sidebar focus FIRST, before view routing
-                // This allows sidebar navigation in Editor view too
-                if let Event::Key(key) = evt {
-                    let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
-                    let has_alt = key.modifiers.contains(KeyModifiers::ALT);
-                    if !has_control && !has_alt {
-                        match key.code {
-                            KeyCode::Left => {
-                                crate::app::log_debug("[MOD] Left arrow - focusing sidebar");
-                                app.sidebar_focus = true;
-                                return true;
+                // Left/Right arrows: only in Files view (sidebar/editor split navigation)
+                // In Editor/Git/Commit/etc. views, Left/Right go to the editor
+                if app.current_view == CurrentView::Files {
+                    if let Event::Key(key) = evt {
+                        let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
+                        let has_alt = key.modifiers.contains(KeyModifiers::ALT);
+                        if !has_control && !has_alt {
+                            match key.code {
+                                KeyCode::Left => {
+                                    crate::app::log_debug("[MOD] Files view Left - focusing sidebar");
+                                    app.sidebar_focus = true;
+                                    return true;
+                                }
+                                KeyCode::Right => {
+                                    crate::app::log_debug("[MOD] Files view Right - unfocusing sidebar");
+                                    app.sidebar_focus = false;
+                                    return true;
+                                }
+                                _ => {}
                             }
-                            KeyCode::Right => {
-                                crate::app::log_debug("[MOD] Right arrow - unfocusing sidebar");
-                                app.sidebar_focus = false;
-                                return true;
-                            }
-                            _ => {}
                         }
                     }
                 }
