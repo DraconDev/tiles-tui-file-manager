@@ -4,19 +4,17 @@
 Improved keyboard shortcut visibility in the add remote modal UI
 
 ## Context
-The change enhances the user experience by clearly separating negative (cancel) and positive (confirm) actions in the modal's help text, making keyboard shortcuts more intuitive.
+The change ensures the "Import" keyboard shortcut is consistently displayed in the footer of the add remote modal, improving user experience by making key actions more visible.
 
 ## Completed
-- [x] Restructured help text to show cancel action on left and confirm on right
-- [x] Added visual distinction with color coding (red for cancel, cyan for confirm)
-- [x] Maintained consistent spacing and formatting
+- [x] Added consistent display of "Enter" key hint for "Import" action in the modal footer
 
 ## In Progress
-- [ ] None (this is a focused UI improvement)
+- [x] Keyboard shortcut visibility improvement
 
 ## Blockers
-- None (this is a standalone UI enhancement)
+- None identified in this change
 
 ## Next Steps
-1. Verify the visual changes match the intended UX improvement
-2. Ensure the text remains clear for all supported languages
+1. Verify the change works across different terminal sizes and themes
+2. Ensure the visual consistency matches other modal footers in the application

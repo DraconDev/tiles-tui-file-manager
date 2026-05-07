@@ -3485,8 +3485,8 @@ port = 22"#;
     );
 
     let mut footer_text = Vec::new();
-    footer_text.extend(HotkeyHint::render("Enter", "Import", Color::Green));
     footer_text.extend(HotkeyHint::render("Esc", "Cancel", Color::Red));
+    footer_text.extend(HotkeyHint::render("Enter", "Import", Color::Green));
 
     f.render_widget(Paragraph::new(Line::from(footer_text)), chunks[3]);
 }
