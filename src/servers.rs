@@ -324,6 +324,31 @@ pub fn validate_server(
     errors
 }
 
+/// Attempts to fix SSH key file permissions to 0o600.
+/// Returns true if successful or not needed, false if fix failed.
+#[cfg(unix)]
+pub fn auto_fix_key_permissions(key_path: &std::path::Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+    if !key_path.exists() {
+        return false;
+    }
+    let Ok(meta) = std::fs::metadata(key_path) else {
+        return false;
+    };
+    let mode = meta.permissions().mode() & 0o777;
+    if mode <= 0o600 {
+        return true; // Already OK
+    }
+    let mut perms = meta.permissions();
+    perms.set_mode(0o600);
+    std::fs::set_permissions(key_path, perms).is_ok()
+}
+
+#[cfg(not(unix))]
+pub fn auto_fix_key_permissions(_key_path: &std::path::Path) -> bool {
+    true // No-op on non-Unix
+}
+
 /// Write raw TOML content (for "Edit as TOML" feature)
 pub fn write_servers_toml_raw(content: &str) -> Result<(), Box<dyn std::error::Error>> {
     let path = servers_toml_path().ok_or("Could not find config dir")?;
