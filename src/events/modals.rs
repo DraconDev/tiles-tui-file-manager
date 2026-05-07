@@ -911,7 +911,7 @@ fn handle_add_remote_keys(
                     app.pending_server.key_path = if val.is_empty() {
                         None
                     } else {
-                        Some(std::path::PathBuf::from(val))
+                        Some(crate::servers::expand_tilde(&std::path::PathBuf::from(val)))
                     }
                 }
                 _ => {}
@@ -1013,7 +1013,7 @@ fn handle_import_servers_keys(
                             user: s.user,
                             port: s.port,
                             last_path: std::path::PathBuf::from("/"),
-                            key_path: s.key_path,
+                            key_path: s.key_path.map(|kp| crate::servers::expand_tilde(&kp)),
                         };
                         let exists = app.servers.iter().any(|b| {
                             b.name == candidate.name

@@ -1,6 +1,32 @@
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+/// Expand `~` and `~user` in a path to the full home directory path.
+/// Returns the original path if it doesn't start with `~` or home dir is unknown.
+pub fn expand_tilde(path: &Path) -> PathBuf {
+    let s = path.to_string_lossy();
+    if !s.starts_with('~') {
+        return path.to_path_buf();
+    }
+    if s == "~" || s.starts_with("~/") {
+        if let Some(home) = dirs::home_dir() {
+            if s == "~" {
+                return home;
+            }
+            return PathBuf::from(home).join(&s[2..]);
+        }
+    } else if s.starts_with("~") {
+        // ~user/... pattern
+        let end = s[1..].find('/').map(|i| i + 1).unwrap_or(s.len());
+        let user = &s[1..end];
+        // Convention: user homes under /home/<user>
+        let user_home = PathBuf::from("/home").join(user);
+        let rest = if end < s.len() { &s[end + 1..] } else { "" };
+        return if rest.is_empty() { user_home } else { user_home.join(rest) };
+    }
+    path.to_path_buf()
+}
 
 /// A single server bookmark (replaces RemoteBookmark)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -57,7 +83,18 @@ pub fn load_servers() -> Vec<ServerConfig> {
     match fs::read_to_string(&path) {
         Ok(content) => {
             match toml::from_str::<ServersFile>(&content) {
-                Ok(file) => file.server,
+                Ok(mut file) => {
+                    // Expand ~ in key_paths (ssh config files can use ~ paths)
+                    for server in &mut file.server {
+                        if let Some(ref kp) = server.key_path {
+                            let expanded = expand_tilde(kp);
+                            if expanded != *kp {
+                                server.key_path = Some(expanded);
+                            }
+                        }
+                    }
+                    file.server
+                }
                 Err(e) => {
                     crate::app::log_debug(&format!("Failed to parse servers.toml: {}", e));
                     Vec::new()

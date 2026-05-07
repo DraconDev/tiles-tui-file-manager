@@ -1,20 +1,23 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added tilde (~) path expansion for server key paths in configuration files
 
 ## Context
-This is an automated dependency update triggered by the project's dependency management system. The change affects the project's dependency tree without modifying any application code.
+The change addresses an issue where users might specify paths with `~` (home directory) in their server configuration files, which weren't being properly expanded to absolute paths. This affects SSH key paths and other file references in the servers.toml configuration.
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency versions
+- [x] Added `expand_tilde()` function to handle path expansion for `~` and `~user/` patterns
+- [x] Updated server configuration loading to automatically expand paths in key_path fields
+- [x] Modified modal handlers to properly expand paths when adding/importing servers
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress
 
 ## Blockers
-- None
+- None identified
 
 ## Next Steps
-1. Verify that the updated dependencies don't introduce breaking changes
-2. Prepare for potential integration testing with the new dependency versions
+1. Verify that all path references in the UI now properly expand tilde paths
+2. Add unit tests for the new path expansion functionality
+3. Document the new path expansion behavior in the server configuration documentation
