@@ -1,25 +1,24 @@
 # Project State
 
 ## Current Focus
-Added automatic reloading of servers.toml configuration when modified externally
+Added automatic reloading of servers.toml configuration and validation for server configurations
 
 ## Context
-To improve user experience by automatically detecting and applying changes to server configurations without requiring a manual restart of the application.
+The project now needs to handle dynamic updates to the servers.toml file and ensure server configurations are valid before being used.
 
 ## Completed
-- [x] Added file watcher for servers.toml using notify crate
-- [x] Implemented debouncing to prevent rapid successive reloads
-- [x] Added shutdown handling to cleanly terminate the watcher
-- [x] Integrated with application event system to trigger UI updates
-- [x] Added error handling and logging for watcher failures
+- [x] Added automatic reloading of servers.toml when modified externally
+- [x] Implemented server configuration validation with comprehensive checks
+- [x] Added validation for required fields (name, host, user, port)
+- [x] Added duplicate name detection during validation
+- [x] Integrated validation with the UI update system
 
 ## In Progress
-- [ ] None (feature is complete)
+- [x] Server configuration validation system is fully implemented
 
 ## Blockers
-- None (feature is complete)
+- No known blockers at this time
 
 ## Next Steps
-1. Verify the watcher works correctly in production environments
-2. Add unit tests for the watcher functionality
-3. Consider adding configuration options for watcher behavior
+1. Add UI feedback for validation errors during server configuration
+2. Implement automatic reloading of server connections when configuration changes

@@ -358,6 +358,19 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     crate::modules::system::SystemModule::update_app_state(&mut app_guard, data);
                     needs_draw = true;
                 }
+                AppEvent::ServersTomlChanged => {
+                    let mut app_guard = app.lock();
+                    let new_servers = crate::servers::load_servers();
+                    if new_servers != app_guard.servers {
+                        let count = new_servers.len();
+                        app_guard.servers = new_servers;
+                        crate::app::log_debug(&format!(
+                            "servers.toml changed externally, reloaded {} servers",
+                            count
+                        ));
+                        needs_draw = true;
+                    }
+                }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
                     let remote_opt = {
                         let app_guard = app.lock();

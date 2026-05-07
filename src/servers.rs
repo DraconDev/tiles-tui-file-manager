@@ -203,6 +203,62 @@ pub fn export_servers_to_toml(servers: &[ServerConfig]) -> Result<PathBuf, Box<d
     Ok(export_path)
 }
 
+/// Validation result for server config
+pub struct ValidationError {
+    pub field: &'static str,
+    pub message: String,
+}
+
+/// Validate a server config. Returns list of errors (empty if valid).
+pub fn validate_server(
+    server: &ServerConfig,
+    existing: &[ServerConfig],
+    editing_index: Option<usize>,
+) -> Vec<ValidationError> {
+    let mut errors = Vec::new();
+
+    if server.name.trim().is_empty() {
+        errors.push(ValidationError {
+            field: "name",
+            message: "Name is required".to_string(),
+        });
+    }
+
+    if server.host.trim().is_empty() {
+        errors.push(ValidationError {
+            field: "host",
+            message: "Host is required".to_string(),
+        });
+    }
+
+    if server.user.trim().is_empty() {
+        errors.push(ValidationError {
+            field: "user",
+            message: "User is required".to_string(),
+        });
+    }
+
+    if server.port == 0 {
+        errors.push(ValidationError {
+            field: "port",
+            message: "Port must be greater than 0".to_string(),
+        });
+    }
+
+    // Check for duplicate name (excluding the one being edited)
+    let is_duplicate = existing.iter().enumerate().any(|(i, s)| {
+        s.name == server.name && Some(i) != editing_index
+    });
+    if is_duplicate {
+        errors.push(ValidationError {
+            field: "name",
+            message: format!("A server named '{}' already exists", server.name),
+        });
+    }
+
+    errors
+}
+
 /// Write raw TOML content (for "Edit as TOML" feature)
 pub fn write_servers_toml_raw(content: &str) -> Result<(), Box<dyn std::error::Error>> {
     let path = servers_toml_path().ok_or("Could not find config dir")?;
