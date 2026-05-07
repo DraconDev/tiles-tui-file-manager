@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.86.2] - Server Management Overhaul
+
+### Added
+- **servers.toml** — Dedicated TOML config file for remote server bookmarks at `~/.config/tiles/servers.toml`
+  - Flat format: `[[server]] name="..." host="..." user="..." port=22 key_path="..."`
+  - Human-readable, editable with any text editor
+  - Auto-migrates legacy bookmarks from `state.json` on first run
+- **Settings → Remotes** — Full CRUD management UI
+  - **[A]dd** — Add new server via modal (Name, Host, User, Port, Key Path)
+  - **[E]dit** — Edit existing server inline (pre-fills current values)
+  - **[D]elete** — Remove selected server with confirmation
+  - **[I]mport** — Import servers from external TOML file
+  - —E[X]port** — Export all servers to `~/.config/tiles/servers-export.toml`
+  - **Edit [T]OML** — Opens `servers.toml` in `nano` for power editing
+  - **[Enter]** — Connect to selected server
+- **Context menu actions** for remote bookmarks now work
+  - **Connect** — Left-click or context menu → connects to server
+  - **Delete Bookmark** — Removes bookmark and saves to servers.toml
+
+### Changed
+- Server bookmarks moved from `state.json` to standalone `servers.toml`
+  - Easier to version control, share, and edit externally
+  - No longer mixed with UI state (pane positions, sidebar width, etc.)
+
+### Fixed
+- **Delete bookmark** context menu was broken (no handler existed)
+- **Connect bookmark** context menu was broken (no handler existed)
+
 ## [10.69.0] - Editor Sidebar Fixes
 
 ### Fixed
