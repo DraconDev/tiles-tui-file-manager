@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Enhanced remote server management UI with editing support and visual feedback
+Added signal for new remote server creation in settings modal
 
 ## Context
-The remote server management system needed better visual distinction between adding new servers and editing existing ones. This change improves user experience by providing clear visual feedback during server configuration.
+This change supports the remote server management system by distinguishing between adding a new server and editing an existing one.
 
 ## Completed
-- [x] Added conditional title text ("Add Remote Server" vs "Edit Remote Server")
-- [x] Implemented dynamic border color (green for new, yellow for editing)
-- [x] Added state detection for editing mode based on server index
+- [x] Added `open_with_index = usize::MAX` to signal new server creation
 
 ## In Progress
-- [ ] None (changes are complete)
+- [x] Remote server management system implementation
 
 ## Blockers
-- None (UI improvements are complete)
+- Missing manifest for dependency `dracon-files`
 
 ## Next Steps
-1. Verify keyboard shortcuts work with the new editing mode
-2. Test server configuration persistence with the updated UI
+1. Resolve dependency issue for `dracon-files`
+2. Complete server configuration module integration

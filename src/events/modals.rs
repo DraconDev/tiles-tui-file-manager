@@ -1276,6 +1276,7 @@ fn handle_settings_keys(
                 last_path: std::path::PathBuf::from("/"),
                 key_path: None,
             };
+            app.open_with_index = usize::MAX; // Signal: adding new (not editing)
             app.mode = AppMode::AddRemote(0);
             app.input.clear();
             true
