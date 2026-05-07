@@ -209,3 +209,15 @@ pub fn load_state() -> Option<PersistentState> {
     let json = fs::read_to_string(state_path).ok()?;
     serde_json::from_str(&json).ok()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn load_actual_state() {
+        let state = load_state();
+        println!("load_state() result: {:?}", state.is_some());
+        assert!(state.is_some(), "state.json should load successfully");
+    }
+}
