@@ -466,11 +466,14 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Char(' ') => {
                     crate::app::log_debug("[FM] Space key received");
-                    handle_space_key(app, event_tx);
-                    return true;
+                    return handle_space_key(app, event_tx);
                 }
                 KeyCode::Char('C') if app.sidebar_focus => {
                     app.tree_expanded_folders.clear();
+                    // Force cache invalidation for both Files and Editor view sidebars
+                    app.sidebar_tree_cache_key = u64::MAX;
+                    app.editor_sidebar_cache_key = u64::MAX;
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Tick);
                     return true;
                 }
                 KeyCode::Char('C') if !app.sidebar_focus => {
