@@ -2003,7 +2003,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 }
             }
 
-            spans.push(Span::styled(format!(" {} ", base_name), base_style));
+            spans.push(Span::styled(format!(" {} ", display_name), base_style));
 
             if matches!(app.current_view, CurrentView::Files | CurrentView::Git) {
                 if let Some(branch) = &tab.git_branch {
