@@ -1523,19 +1523,55 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     );
 }
 
+fn format_memory_mib(mem_mib: f64) -> String {
+    if mem_mib >= 1024.0 {
+        format!("{:.1}G", mem_mib / 1024.0)
+    } else {
+        format!("{:.0}M", mem_mib)
+    }
+}
+
+fn mini_bar(percent: f64, width: usize) -> String {
+    let filled = ((percent / 100.0) * width as f64).round() as usize;
+    let filled = filled.min(width);
+    let empty = width.saturating_sub(filled);
+    format!("{}{}", "█".repeat(filled), "░".repeat(empty))
+}
+
+fn process_status_color(status: &str) -> Color {
+    match status {
+        "Running" => Color::Rgb(100, 200, 100),
+        "Sleeping" | "Idle" | "Waiting" | "Parked" => Color::Rgb(100, 150, 220),
+        "Stopped" | "Traced" | "Stopped (Signal)" => Color::Rgb(220, 200, 100),
+        "Zombie" | "Dead" => Color::Rgb(220, 80, 80),
+        _ => Color::Gray,
+    }
+}
+
 fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
+    let mut draw_area = area;
+
+    // Show search filter indicator
+    if !app.process_search_filter.is_empty() {
+        let filter_text = format!(" 󰈲 Filter: '{}' ", app.process_search_filter);
+        let filter_para = Paragraph::new(filter_text)
+            .style(Style::default().fg(crate::ui::theme::accent_primary()));
+        f.render_widget(filter_para, Rect::new(area.x, area.y, area.width, 1));
+        draw_area = Rect::new(area.x, area.y + 1, area.width, area.height.saturating_sub(1));
+    }
+
     let column_constraints = [
         Constraint::Length(8),
-        Constraint::Min(25),
-        Constraint::Length(15),
+        Constraint::Min(20),
         Constraint::Length(12),
         Constraint::Length(10),
-        Constraint::Length(10),
+        Constraint::Length(14),
+        Constraint::Length(16),
     ];
     let num_cols = 6;
     let spacing = 2;
     let total_spacing = (num_cols - 1) * spacing;
-    let effective_width = area.width.saturating_sub(total_spacing);
+    let effective_width = draw_area.width.saturating_sub(total_spacing);
 
     app.process_column_bounds.clear();
     let header_rects = Layout::default()

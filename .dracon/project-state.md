@@ -1,21 +1,25 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Enhanced process monitoring UI with improved memory formatting, status visualization, and search filtering
 
 ## Context
-This change was triggered by a failed dependency resolution during the `synth-1774826981` phase, which couldn't load the manifest for `dracon-files`. The update ensures the project's dependency tree remains consistent.
+The changes improve the system monitoring UI by adding better memory formatting (MiB to GiB conversion), visual process status indicators, and a search filter display. This makes the process view more informative and user-friendly.
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency resolution issue
+- [x] Added memory formatting function (MiB to GiB conversion)
+- [x] Implemented colored process status indicators
+- [x] Added search filter display in the process view
+- [x] Enhanced process view layout with better column sizing
+- [x] Added mini-bar visualization for process metrics
 
 ## In Progress
 - [ ] No active work in progress
 
 ## Blockers
-- The `synth-1774826981` slice remains blocked due to unresolved dependency manifest
+- None identified
 
 ## Next Steps
-1. Investigate and resolve the dependency manifest issue for `dracon-files`
-2. Verify the updated Cargo.lock resolves all dependency conflicts
-```
+1. Test the new UI components with various process states
+2. Consider adding more visual indicators for process priorities
+3. Evaluate performance impact of the new rendering logic
