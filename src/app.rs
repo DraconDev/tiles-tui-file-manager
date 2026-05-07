@@ -265,6 +265,7 @@ impl App {
             mouse_click_count: 0,
             file_manager_last_click: std::time::Instant::now(),
             file_manager_click_pos: (0, 0),
+            remote_health: HashMap::new(),
             is_resizing_sidebar: false,
             editor_clipboard: None,
             clipboard: None,
