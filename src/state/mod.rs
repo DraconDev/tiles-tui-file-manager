@@ -179,6 +179,7 @@ pub enum AppMode {
     ResetSettingsConfirm,
     AddRemote(usize),
     ImportServers,
+    ImportSshConfig,
     Viewer,
     Hotkeys,
     Header(usize),

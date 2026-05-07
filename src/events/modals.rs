@@ -245,6 +245,7 @@ fn handle_modal_keys(
         AppMode::CommandPalette => handle_command_palette_keys(key, app, event_tx, evt),
         AppMode::AddRemote(idx) => handle_add_remote_keys(key, app, event_tx, idx, evt),
         AppMode::ImportServers => handle_import_servers_keys(key, app, event_tx, evt),
+        AppMode::ImportSshConfig => handle_import_ssh_config_keys(key, app, event_tx, evt),
         AppMode::Highlight => handle_highlight_keys(key, app),
         AppMode::StyleColorInput => handle_style_color_input_keys(key, app),
         AppMode::ResetSettingsConfirm => handle_reset_settings_confirm_keys(key, app),

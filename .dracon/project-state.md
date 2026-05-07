@@ -1,32 +1,22 @@
 # Project State
 
 ## Current Focus
-Added OpenSSH config parsing to extract server bookmarks with proper validation and path handling
+Added support for importing OpenSSH configuration files to extract server bookmarks
 
 ## Context
-This change enables importing server configurations from OpenSSH config files, which is a common practice among developers. The implementation handles:
-- Multi-host entries (e.g., `Host host1 host2`)
-- Wildcard entries (skips `Host *`)
-- Required HostName validation
-- Proper path expansion for identity files
-- Port number parsing
+This change enables users to import their existing OpenSSH configuration files (typically `~/.ssh/config`) to automatically populate server bookmarks in the application, improving usability for users migrating from traditional SSH clients.
 
 ## Completed
-- [x] SSH config parser implementation
-- [x] Host name splitting for multi-host entries
-- [x] Wildcard entry filtering
-- [x] HostName validation
-- [x] User/port/key parsing
-- [x] Path expansion for identity files
-- [x] Basic test structure
+- [x] Added new `AppMode::ImportSshConfig` state variant
+- [x] Implemented key handling for the new import mode
 
 ## In Progress
-- [ ] Comprehensive unit tests for edge cases
+- [ ] Implementation of the actual SSH config parsing logic (planned in recent commits)
 
 ## Blockers
-- Need to implement full test coverage for all edge cases
+- SSH config parsing implementation is pending (related to recent feature commits)
 
 ## Next Steps
-1. Complete unit test coverage
-2. Add integration with server management system
-```
+1. Complete the SSH config parsing implementation
+2. Add UI elements for the import process
+3. Add validation for imported server configurations
