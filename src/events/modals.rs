@@ -1320,7 +1320,7 @@ fn handle_settings_keys(
         KeyCode::Char('x') | KeyCode::Char('X')
             if app.settings_section == SettingsSection::Remotes =>
         {
-            if let Err(e) = export_servers_to_toml(&app.servers) {
+            if let Err(e) = crate::servers::export_servers_to_toml(&app.servers) {
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                     format!("Export failed: {}", e)
                 ));

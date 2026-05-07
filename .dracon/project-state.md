@@ -1,25 +1,20 @@
 # Project State
 
 ## Current Focus
-Enhanced remote server editing support with proper index handling
+Improved server configuration export functionality by updating the module path reference.
 
 ## Context
-The changes improve the remote server management UI by:
-1. Adding clear visual distinction between adding new servers and editing existing ones
-2. Fixing the index handling logic to properly detect edit mode
-3. Maintaining consistent UI behavior for both create and edit operations
+This change addresses a refactoring where server configuration functionality was moved to a new module. The previous direct function call needed to be updated to use the new module path.
 
 ## Completed
-- [x] Added proper edit mode detection using `usize::MAX` as the "not editing" sentinel value
-- [x] Updated UI title and color to clearly indicate edit mode
-- [x] Fixed index boundary checking in the modal handler
+- [x] Updated server configuration export call to use the new module path (`crate::servers::export_servers_to_toml`)
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Verify UI behavior with both new server creation and existing server editing
-2. Test edge cases around server index boundaries
+1. Verify the server configuration export functionality works as expected
+2. Ensure all related keyboard shortcuts and UI elements continue to function properly
