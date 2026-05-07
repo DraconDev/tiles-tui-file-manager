@@ -377,6 +377,71 @@ key_path = "~/.ssh/micro1.key"
     }
 
     #[test]
+    fn parse_ssh_config_sample() {
+        let config = r#"
+# Comments should be ignored
+Host myserver
+    HostName 192.168.1.1
+    User admin
+    Port 2222
+    IdentityFile ~/.ssh/id_rsa
+
+Host *
+    User default
+
+Host server2 server3
+    HostName example.com
+    User root
+"#;
+        let servers = parse_ssh_config(config);
+        assert_eq!(servers.len(), 3, "Expected 3 servers (Host * should be skipped, server2/server3 split)");
+        
+        let s0 = servers.iter().find(|s| s.name == "myserver").expect("myserver");
+        assert_eq!(s0.host, "192.168.1.1");
+        assert_eq!(s0.user, "admin");
+        assert_eq!(s0.port, 2222);
+        assert!(s0.key_path.is_some());
+        
+        let s1 = servers.iter().find(|s| s.name == "server2").expect("server2");
+        assert_eq!(s1.host, "example.com");
+        assert_eq!(s1.user, "root");
+        
+        let s2 = servers.iter().find(|s| s.name == "server3").expect("server3");
+        assert_eq!(s2.host, "example.com");
+        assert_eq!(s2.user, "root");
+    }
+
+    #[test]
+    fn parse_ssh_config_skips_wildcards_and_globals() {
+        let config = r#"
+Host *
+    User default
+    Port 9999
+
+Host *
+    ForwardAgent yes
+"#;
+        let servers = parse_ssh_config(config);
+        assert_eq!(servers.len(), 0, "Wildcard-only configs should produce no servers");
+    }
+
+    #[test]
+    fn parse_ssh_config_defaults() {
+        let config = r#"
+Host simple
+    HostName simple.example.com
+"#;
+        let servers = parse_ssh_config(config);
+        assert_eq!(servers.len(), 1);
+        assert_eq!(servers[0].name, "simple");
+        assert_eq!(servers[0].host, "simple.example.com");
+        assert_eq!(servers[0].user, "");
+        assert_eq!(servers[0].port, 22);
+        assert!(servers[0].key_path.is_none());
+    }
+}
+
+    #[test]
     fn expand_tilde_no_tilde_returns_unchanged() {
         let path = std::path::PathBuf::from("/usr/local/bin");
         assert_eq!(expand_tilde(&path), path);
