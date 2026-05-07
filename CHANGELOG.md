@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.69.0] - Editor Sidebar Fixes
+
+### Fixed
+- **Arrow keys in Editor view** — Left/Right arrows now move the text cursor instead of hijacking sidebar focus
+  - Previously: Left arrow always focused sidebar, breaking text navigation
+  - Now: Arrow keys only toggle sidebar focus in Files view; in Editor/Commit/Git views they control the editor cursor
+- **Folder collapse in Editor view sidebar** — Clicking folder arrows (▸/▾) now expands/collapses folders
+  - Root cause: `arrow_end_x` was not calculated in Editor view sidebar bounds, so all clicks were treated as "name click" (navigate) instead of "arrow click" (toggle)
+  - Added proper `arrow_end_x` calculation in `draw_project_sidebar` matching Files view behavior
+- **Sidebar focus persistence** — Arrow clicks now keep sidebar focused so keyboard navigation (Up/Down/Space/C) continues to work
+  - Previously: ALL folder clicks unfocused sidebar, breaking keyboard workflow
+  - Now: Arrow clicks keep focus; name clicks navigate and unfocus (as before)
+
 ## [10.61.0] - Terminal & Context Menu Fixes
 
 ### Fixed

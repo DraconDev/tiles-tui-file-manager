@@ -1,20 +1,23 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Fixed editor sidebar keyboard navigation and folder collapse behavior
 
 ## Context
-This change updates the dependency versions in Cargo.lock to ensure compatibility with the latest versions of project dependencies. The update was triggered by recent development work on sidebar keyboard navigation handling and cache invalidation features.
+Improved sidebar usability by making keyboard navigation work consistently across different views and fixing folder collapse functionality
 
 ## Completed
-- [x] Updated Cargo.lock with latest dependency versions
+- [x] Fixed arrow key behavior in Editor view (now controls cursor instead of hijacking sidebar focus)
+- [x] Implemented proper folder collapse/expand in Editor view sidebar
+- [x] Added sidebar focus persistence for arrow clicks
+- [x] Updated CHANGELOG.md with detailed fix documentation
 
 ## In Progress
-- [ ] No active development work in progress
+- [x] Sidebar keyboard navigation improvements
 
 ## Blockers
-- Dependency resolution for `dracon-files` package (manifest loading failure)
+- None identified in this change
 
 ## Next Steps
-1. Investigate and resolve the manifest loading failure for `dracon-files`
-2. Continue development of sidebar keyboard navigation features
+1. Verify no regressions in other sidebar views
+2. Consider adding visual feedback for folder collapse state changes
