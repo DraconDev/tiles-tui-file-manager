@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Updated note about UI behavior for empty folders
+Updated documentation to include a proposed UI feature for displaying item counts in empty folders.
 
 ## Context
-The change clarifies the UI behavior for empty folders by removing outdated notes about showing open contents.
+The team is refining the UI behavior for empty folders, considering whether showing item counts could improve usability.
 
 ## Completed
-- [x] Removed outdated note about showing open contents for empty folders
-- [x] Updated note to reflect current behavior
+- [x] Updated note.md to propose showing item counts for empty folders
 
 ## In Progress
-- [ ] None
+- [x] Evaluating whether to implement the proposed feature
 
 ## Blockers
-- None
+- User feedback needed on whether showing item counts is valuable
 
 ## Next Steps
-1. Verify UI behavior matches the updated note
-2. Ensure documentation reflects current implementation
+1. Gather feedback on the proposed feature
+2. Implement if approved, otherwise refine the documentation
