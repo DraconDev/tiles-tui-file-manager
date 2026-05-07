@@ -1157,11 +1157,21 @@ fn handle_import_ssh_config_keys(
                             skipped += 1;
                             continue;
                         }
-                        // Collect key_path warnings
+                        // Collect key_path warnings and auto-fix
+                        let mut key_fixed = false;
                         for e in &errors {
                             if e.field == "key_path" {
-                                warnings.push(format!("{}: {}", candidate.name, e.message));
+                                if let Some(ref kp) = candidate.key_path {
+                                    if crate::servers::auto_fix_key_permissions(kp) {
+                                        key_fixed = true;
+                                    } else {
+                                        warnings.push(format!("{}: {}", candidate.name, e.message));
+                                    }
+                                }
                             }
+                        }
+                        if key_fixed {
+                            warnings.push(format!("{}: fixed key permissions", candidate.name));
                         }
                         app.servers.push(candidate);
                         imported += 1;
