@@ -1174,6 +1174,7 @@ let list_path_for_filter = path.clone();
 
             let tx = event_tx.clone();
             let app_clone = app.clone();
+            let app_clone_for_health = app.clone();
             let expanded_folders = tree_expanded;
             tokio::spawn(async move {
                 let list_path = path.clone();
@@ -1189,7 +1190,7 @@ let list_path_for_filter = path.clone();
                             match crate::modules::remote::read_dir_with_metadata(session, &list_path) {
                                 Ok((files, meta)) => {
                                     // Mark connection as healthy
-                                    let mut app_guard = app_clone.lock();
+                                    let mut app_guard = app_clone_for_health.lock();
                                     app_guard.remote_health.insert(session.name.clone(), (true, std::time::Instant::now()));
                                     drop(app_guard);
                                     
@@ -1209,7 +1210,7 @@ let list_path_for_filter = path.clone();
                                 }
                                 Err(e) => {
                                     // Mark connection as unhealthy
-                                    let mut app_guard = app_clone.lock();
+                                    let mut app_guard = app_clone_for_health.lock();
                                     app_guard.remote_health.insert(session.name.clone(), (false, std::time::Instant::now()));
                                     drop(app_guard);
                                     

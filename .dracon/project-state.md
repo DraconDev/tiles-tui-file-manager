@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Added visual remote connection health indicator in the UI footer
+Improved remote connection health tracking by separating the app clone for health updates
 
 ## Context
-This change implements a visual health indicator for remote connections in the application footer, showing connection status with color-coded indicators (green for healthy, yellow for stale, red for unhealthy).
+The previous implementation reused the same app clone for both directory listing and health updates, which could lead to contention. This change separates the concerns for better resource management.
 
 ## Completed
-- [x] Added remote connection health status indicator in UI footer
-- [x] Implemented color-coded status (green/yellow/red) based on connection health
-- [x] Added visual indicator (●) to show connection status at a glance
+- [x] Created a dedicated `app_clone_for_health` for remote connection health updates
+- [x] Updated both success and error paths to use the dedicated clone
 
 ## In Progress
-- [ ] None (this is a complete feature implementation)
+- [ ] None - this is a complete refactoring
 
 ## Blockers
-- None (feature is complete and integrated)
+- None - this is a completed refactoring
 
 ## Next Steps
-1. Verify the health indicator updates correctly during connection state changes
-2. Consider adding tooltips to explain the status colors to users
+1. Verify no performance impact from the additional clone
+2. Consider if similar patterns should be applied to other async operations
+```
