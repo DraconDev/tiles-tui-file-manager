@@ -1,24 +1,22 @@
 # Project State
 
 ## Current Focus
-Added unit tests for tilde (~) path expansion in server key paths
+Added security validation for server key file permissions
 
 ## Context
-The change implements robust path expansion for server configuration files, particularly for SSH key paths that may contain tilde (~) references to home directories. This is needed to properly resolve paths in cross-platform environments.
+The change addresses potential security risks by enforcing proper file permissions for server key files. This follows recent work on path expansion and configuration validation.
 
 ## Completed
-- [x] Added test for paths without tilde (returns unchanged)
-- [x] Added test for plain home directory expansion (~)
-- [x] Added test for home subpath expansion (~/.ssh/id_rsa)
-- [x] Added test for user-specific fallback (~root/.bashrc)
-- [x] Added test for user-only expansion (~nobody)
+- [x] Added permission check for key files (must be 600 or stricter)
+- [x] Added validation for missing key files
+- [x] Implemented platform-specific Unix permission checks
 
 ## In Progress
-- [ ] None (all tests implemented)
+- [ ] No active work in progress
 
 ## Blockers
-- None (tests are complete and passing)
+- None identified
 
 ## Next Steps
-1. Verify all tests pass in CI
-2. Consider adding more edge cases if needed
+1. Verify cross-platform compatibility
+2. Add similar validation for certificate files

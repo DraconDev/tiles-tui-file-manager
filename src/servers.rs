@@ -293,6 +293,34 @@ pub fn validate_server(
         });
     }
 
+    // Warn if key file has overly permissive permissions
+    if let Some(ref kp) = server.key_path {
+        if kp.exists() {
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                if let Ok(meta) = std::fs::metadata(kp) {
+                    let mode = meta.permissions().mode() & 0o777;
+                    if mode > 0o600 {
+                        errors.push(ValidationError {
+                            field: "key_path",
+                            message: format!(
+                                "Key file permissions are {:03o} (should be 600). Run: chmod 600 {}",
+                                mode,
+                                kp.display()
+                            ),
+                        });
+                    }
+                }
+            }
+        } else {
+            errors.push(ValidationError {
+                field: "key_path",
+                message: format!("Key file not found: {}", kp.display()),
+            });
+        }
+    }
+
     errors
 }
 
