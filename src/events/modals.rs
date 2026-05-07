@@ -922,12 +922,26 @@ fn handle_add_remote_keys(
             } else {
                 // Check if we're editing (open_with_index stores the edit index, usize::MAX means add new)
                 let edit_idx = app.open_with_index;
-                if edit_idx < app.servers.len() {
-                    app.servers[edit_idx] = app.pending_server.clone();
+                let editing_index = if edit_idx < app.servers.len() { Some(edit_idx) } else { None };
+                
+                let errors = crate::servers::validate_server(&app.pending_server, &app.servers, editing_index);
+                if !errors.is_empty() {
+                    let msg = errors.iter()
+                        .map(|e| format!("{}: {}", e.field, e.message))
+                        .collect::<Vec<_>>()
+                        .join(", ");
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Validation error: {}", msg)
+                    ));
+                    return true;
+                }
+                
+                if let Some(idx) = editing_index {
+                    app.servers[idx] = app.pending_server.clone();
                 } else {
                     app.servers.push(app.pending_server.clone());
                 }
-                app.open_with_index = 0; // Reset
+                app.open_with_index = usize::MAX; // Reset
                 crate::servers::save_servers_quiet(&app.servers);
                 app.mode = AppMode::Normal;
                 app.input.clear();
