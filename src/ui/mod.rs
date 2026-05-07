@@ -4841,22 +4841,27 @@ fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
     let text = vec![
         Line::from("Manage your remote server bookmarks here."),
         Line::from(vec![
-            Span::raw("Tip: Import servers by clicking "),
-            Span::styled(
-                " REMOTES [Import] ",
-                Style::default()
-                    .fg(crate::ui::theme::accent_secondary())
-                    .add_modifier(Modifier::BOLD),
-            ),
-            Span::raw(" in the sidebar."),
+            Span::styled("[A]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw("dd "),
+            Span::styled("[E]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw("dit "),
+            Span::styled("[D]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw("elete "),
+            Span::styled("[I]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw("mport "),
+            Span::styled("[X]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw("port "),
+            Span::styled("[T]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw("OML "),
+            Span::styled("[Enter]", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+            Span::raw(" Connect"),
         ]),
-        Line::from("Format (TOML): [[servers]] name=\"...\" host=\"...\" user=\"...\" port=22"),
         Line::from(""),
     ];
 
     let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([Constraint::Length(4), Constraint::Min(0)])
+        .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(area);
 
     f.render_widget(Paragraph::new(text), chunks[0]);
