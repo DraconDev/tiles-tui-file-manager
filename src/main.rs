@@ -1174,81 +1174,84 @@ let list_path_for_filter = path.clone();
                 let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
-                        if let Some(session) = &list_remote {
-                            let _ = crate::modules::remote::read_dir_with_metadata(session, &list_path);
-                        } else {
-                            let _ = crate::modules::files::read_dir_with_metadata(&list_path);
-                        }
 
-                        // Always walk expanded folders (Dolphin-style inline tree)
-                        // Keep files and depths as pairs throughout the entire pipeline
-                        // to avoid index misalignment after filtering/sorting
-                        let max_depth = MAX_TREE_DEPTH;
-                        let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
-                        fn walk_tree(
-                            path: &std::path::Path,
-                            depth: u16,
-                            max_depth: u16,
-                            expanded: &std::collections::HashSet<PathBuf>,
-                            hidden: bool,
-                            tree_files: &mut Vec<(PathBuf, u16)>,
-                        ) {
-                            if depth >= max_depth {
-                                return;
-                            }
-                            let Ok(entries) = std::fs::read_dir(path) else { return };
-                            let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
-                            sorted.sort_by(|a, b| {
-                                let a_is_dir = a.path().is_dir();
-                                let b_is_dir = b.path().is_dir();
-                                if a_is_dir != b_is_dir {
-                                    return if a_is_dir {
-                                        std::cmp::Ordering::Less
-                                    } else {
-                                        std::cmp::Ordering::Greater
-                                    };
-                                }
-                                a.file_name().cmp(&b.file_name())
-                            });
-                            for entry in sorted {
-                                let p = entry.path();
-                                let name = p.file_name().unwrap_or_default().to_string_lossy();
-                                if !hidden && name.starts_with('.') {
-                                    continue;
-                                }
-                                tree_files.push((p.clone(), depth));
-                                if p.is_dir() && expanded.contains(&p) {
-                                    walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
-                                }
-                            }
-                        }
-                        walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
-                        // Collect metadata for all tree items
-                        let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                        let (files_meta, g_files, g_meta) = {
-                            let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
-                            // meta = (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) — we only need the HashMap
+                        if let Some(session) = &list_remote {
+                            // Remote: use SSH directory listing
+                            let (files, meta) = crate::modules::remote::read_dir_with_metadata(session, &list_path)
+                                .unwrap_or_default();
+                            let tree_files: Vec<(PathBuf, u16)> = files.into_iter().map(|p| (p, 0)).collect();
                             let trimmed_filter = list_filter.trim();
                             let g_result = if trimmed_filter.len() > 3 {
-                                if let Some(session) = &list_remote {
-                                    crate::modules::remote::global_search(
-                                        session,
-                                        &list_path,
-                                        trimmed_filter,
-                                    )
-                                } else {
-                                    let search_root =
-                                        dirs::home_dir().unwrap_or_else(|| list_path.clone());
-                                    crate::modules::files::global_search(&search_root, trimmed_filter)
-                                }
+                                crate::modules::remote::global_search(
+                                    session,
+                                    &list_path,
+                                    trimmed_filter,
+                                )
                             } else {
                                 (Vec::new(), std::collections::HashMap::new())
                             };
-                            (meta.1, g_result.0, g_result.1)
-                        };
+                            crate::app::log_debug(&format!("remote read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
+                            (tree_files, meta, g_result.0, g_result.1)
+                        } else {
+                            // Local: walk expanded folders (Dolphin-style inline tree)
+                            let max_depth = MAX_TREE_DEPTH;
+                            let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
+                            fn walk_tree(
+                                path: &std::path::Path,
+                                depth: u16,
+                                max_depth: u16,
+                                expanded: &std::collections::HashSet<PathBuf>,
+                                hidden: bool,
+                                tree_files: &mut Vec<(PathBuf, u16)>,
+                            ) {
+                                if depth >= max_depth {
+                                    return;
+                                }
+                                let Ok(entries) = std::fs::read_dir(path) else { return };
+                                let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+                                sorted.sort_by(|a, b| {
+                                    let a_is_dir = a.path().is_dir();
+                                    let b_is_dir = b.path().is_dir();
+                                    if a_is_dir != b_is_dir {
+                                        return if a_is_dir {
+                                            std::cmp::Ordering::Less
+                                        } else {
+                                            std::cmp::Ordering::Greater
+                                        };
+                                    }
+                                    a.file_name().cmp(&b.file_name())
+                                });
+                                for entry in sorted {
+                                    let p = entry.path();
+                                    let name = p.file_name().unwrap_or_default().to_string_lossy();
+                                    if !hidden && name.starts_with('.') {
+                                        continue;
+                                    }
+                                    tree_files.push((p.clone(), depth));
+                                    if p.is_dir() && expanded.contains(&p) {
+                                        walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
+                                    }
+                                }
+                            }
+                            walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
+                            // Collect metadata for all tree items
+                            let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
+                            let (files_meta, g_files, g_meta) = {
+                                let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                                let trimmed_filter = list_filter.trim();
+                                let g_result = if trimmed_filter.len() > 3 {
+                                    let search_root =
+                                        dirs::home_dir().unwrap_or_else(|| list_path.clone());
+                                    crate::modules::files::global_search(&search_root, trimmed_filter)
+                                } else {
+                                    (Vec::new(), std::collections::HashMap::new())
+                                };
+                                (meta.1, g_result.0, g_result.1)
+                            };
 
-                        crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-(tree_files, files_meta, g_files, g_meta)
+                            crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
+                            (tree_files, files_meta, g_files, g_meta)
+                        }
                     })
                     .await
                     .unwrap_or_else(|_| {
