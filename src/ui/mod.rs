@@ -3727,19 +3727,10 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
     let is_hover =
         |bx: u16, len: u16| mx >= inner.x + bx && mx < inner.x + bx + len && my == button_y;
 
-    // [ YES ] at x=5 (width 9)
-    // [ NO ]  at x=25 (width 8)
+    // [ NO ]  at x=5 (width 8)  - LEFT (negative)
+    // [ YES ] at x=25 (width 9) - RIGHT (positive)
 
-    let yes_style = if is_hover(5, 9) {
-        Style::default()
-            .bg(Color::Red)
-            .fg(Color::Black)
-            .add_modifier(Modifier::BOLD)
-    } else {
-        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
-    };
-
-    let no_style = if is_hover(25, 8) {
+    let no_style = if is_hover(5, 8) {
         Style::default()
             .bg(Color::White)
             .fg(Color::Black)
@@ -3748,14 +3739,23 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
         Style::default().fg(Color::White)
     };
 
-    f.render_widget(
-        Paragraph::new(" [ YES ] ").style(yes_style),
-        Rect::new(inner.x + 5, button_y, 9, 1),
-    );
+    let yes_style = if is_hover(25, 9) {
+        Style::default()
+            .bg(Color::Red)
+            .fg(Color::Black)
+            .add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+    };
 
     f.render_widget(
         Paragraph::new(" [ NO ] ").style(no_style),
-        Rect::new(inner.x + 25, button_y, 8, 1),
+        Rect::new(inner.x + 5, button_y, 8, 1),
+    );
+
+    f.render_widget(
+        Paragraph::new(" [ YES ] ").style(yes_style),
+        Rect::new(inner.x + 25, button_y, 9, 1),
     );
 }
 

@@ -1,20 +1,25 @@
 # Project State
 
 ## Current Focus
-Improved keyboard shortcut visibility in the add remote modal UI
+Reordered and restyled delete confirmation modal buttons for better visual hierarchy
 
 ## Context
-The change ensures the "Import" keyboard shortcut is consistently displayed in the footer of the add remote modal, improving user experience by making key actions more visible.
+Improved user interaction clarity in the delete confirmation modal by:
+1. Swapping button positions to follow standard left-negative/right-positive convention
+2. Adjusting visual styling to make the destructive action (YES) more prominent
 
 ## Completed
-- [x] Added consistent display of "Enter" key hint for "Import" action in the modal footer
+- [x] Reversed button order to place "NO" on left and "YES" on right
+- [x] Updated button widths to match text content
+- [x] Adjusted hover styles to maintain visual consistency
+- [x] Maintained same functionality while improving UX
 
 ## In Progress
-- [x] Keyboard shortcut visibility improvement
+- [ ] None
 
 ## Blockers
-- None identified in this change
+- None
 
 ## Next Steps
-1. Verify the change works across different terminal sizes and themes
-2. Ensure the visual consistency matches other modal footers in the application
+1. Verify visual consistency with other modal dialogs
+2. Test with users to confirm improved comprehension
