@@ -4881,7 +4881,7 @@ fn draw_add_remote_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(60, 50, f.area());
     f.render_widget(Clear, area);
     
-    let is_editing = app.open_with_index > 0 && app.open_with_index < app.servers.len() + 1;
+    let is_editing = app.open_with_index != usize::MAX && app.open_with_index < app.servers.len();
     let title = if is_editing { " Edit Remote Server " } else { " Add Remote Server " };
     let border_color = if is_editing { Color::Yellow } else { Color::Green };
     

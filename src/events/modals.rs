@@ -920,7 +920,7 @@ fn handle_add_remote_keys(
                 app.mode = AppMode::AddRemote(idx + 1);
                 app.input.set_value(String::new());
             } else {
-                // Check if we're editing (open_with_index stores the edit index)
+                // Check if we're editing (open_with_index stores the edit index, usize::MAX means add new)
                 let edit_idx = app.open_with_index;
                 if edit_idx < app.servers.len() {
                     app.servers[edit_idx] = app.pending_server.clone();

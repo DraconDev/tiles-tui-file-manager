@@ -1,20 +1,25 @@
 # Project State
 
 ## Current Focus
-Added signal for new remote server creation in settings modal
+Enhanced remote server editing support with proper index handling
 
 ## Context
-This change supports the remote server management system by distinguishing between adding a new server and editing an existing one.
+The changes improve the remote server management UI by:
+1. Adding clear visual distinction between adding new servers and editing existing ones
+2. Fixing the index handling logic to properly detect edit mode
+3. Maintaining consistent UI behavior for both create and edit operations
 
 ## Completed
-- [x] Added `open_with_index = usize::MAX` to signal new server creation
+- [x] Added proper edit mode detection using `usize::MAX` as the "not editing" sentinel value
+- [x] Updated UI title and color to clearly indicate edit mode
+- [x] Fixed index boundary checking in the modal handler
 
 ## In Progress
-- [x] Remote server management system implementation
+- [ ] No active work in progress
 
 ## Blockers
-- Missing manifest for dependency `dracon-files`
+- None identified
 
 ## Next Steps
-1. Resolve dependency issue for `dracon-files`
-2. Complete server configuration module integration
+1. Verify UI behavior with both new server creation and existing server editing
+2. Test edge cases around server index boundaries
