@@ -1,24 +1,20 @@
 # Project State
 
 ## Current Focus
-Refactored remote bookmark management to use server configuration model consistently across the application
+Refactored UI to use server configuration instead of remote bookmarks
 
 ## Context
-The codebase was refactoring remote bookmark management to use a dedicated server configuration model, which required updating all references to the old remote bookmark structure. This change standardizes the server management system and improves maintainability.
+This change aligns with the ongoing refactoring of remote bookmark management to use the new server configuration model, which was recently introduced in the project.
 
 ## Completed
-- [x] Updated command generation to use server configuration instead of remote bookmarks
-- [x] Modified context menu handling to work with server configuration
-- [x] Updated remote server addition modal to use pending_server instead of pending_remote
-- [x] Updated server import functionality to use server configuration model
-- [x] Changed persistence to use server-specific save function
+- [x] Updated UI to use `servers` configuration instead of `remote_bookmarks` in the remote settings display
 
 ## In Progress
-- [ ] No active work in progress shown in the diff
+- [ ] No active work in progress related to this change
 
 ## Blockers
-- None identified in this commit
+- None identified for this specific change
 
 ## Next Steps
-1. Verify all server management features work correctly with the new configuration model
-2. Update any remaining references to remote bookmarks in the codebase
+1. Verify UI behavior with the new server configuration
+2. Ensure all related UI components are updated to use the server configuration model

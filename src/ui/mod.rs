@@ -4790,7 +4790,7 @@ fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
     let rows: Vec<_> = app
-        .remote_bookmarks
+        .servers
         .iter()
         .enumerate()
         .map(|(i, b)| {
