@@ -1,23 +1,26 @@
 # Project State
 
 ## Current Focus
-Fixed editor sidebar keyboard navigation and folder collapse behavior
+Added server configuration management with TOML file persistence and migration support
 
 ## Context
-Improved sidebar usability by making keyboard navigation work consistently across different views and fixing folder collapse functionality
+The project needed a standardized way to manage remote server bookmarks with persistent storage. This replaces the previous in-memory approach with a file-based system that supports migration from legacy bookmarks.
 
 ## Completed
-- [x] Fixed arrow key behavior in Editor view (now controls cursor instead of hijacking sidebar focus)
-- [x] Implemented proper folder collapse/expand in Editor view sidebar
-- [x] Added sidebar focus persistence for arrow clicks
-- [x] Updated CHANGELOG.md with detailed fix documentation
+- [x] Created `ServerConfig` struct with all required fields and serialization support
+- [x] Implemented TOML file persistence for server configurations
+- [x] Added migration path from legacy `RemoteBookmark` format
+- [x] Implemented raw TOML editing capabilities
+- [x] Added error handling and logging for file operations
+- [x] Created conversion utilities between `ServerConfig` and `RemoteBookmark`
 
 ## In Progress
-- [x] Sidebar keyboard navigation improvements
+- [ ] None (complete implementation)
 
 ## Blockers
-- None identified in this change
+- None (feature is complete)
 
 ## Next Steps
-1. Verify no regressions in other sidebar views
-2. Consider adding visual feedback for folder collapse state changes
+1. Integrate with connection management system
+2. Add UI components for server management
+```
