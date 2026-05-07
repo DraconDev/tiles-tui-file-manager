@@ -295,4 +295,19 @@ key_path = "~/.ssh/micro1.key"
         assert_eq!(file.server[0].name, "main1");
         assert_eq!(file.server[1].host, "141.147.94.186");
     }
+
+    #[test]
+    fn load_actual_servers_toml() {
+        let servers = load_servers();
+        println!("Loaded {} servers from ~/.config/tiles/servers.toml", servers.len());
+        for s in &servers {
+            println!("  - {}@{}:{}", s.user, s.host, s.port);
+        }
+        // The file exists and should have 4 servers
+        assert!(
+            servers.len() >= 4,
+            "Expected at least 4 servers, got {}. Check ~/.config/tiles/servers.toml exists and is valid.",
+            servers.len()
+        );
+    }
 }
