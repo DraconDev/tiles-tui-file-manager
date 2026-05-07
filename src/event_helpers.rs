@@ -56,7 +56,7 @@ pub fn update_commands(app: &mut App) {
         },
     ];
 
-    for (i, bookmark) in app.remote_bookmarks.iter().enumerate() {
+    for (i, bookmark) in app.servers.iter().enumerate() {
         commands.push(CommandItem {
             key: format!("r{}", i),
             desc: format!("Connect to {}", bookmark.name),
@@ -506,7 +506,7 @@ pub fn handle_context_menu_action(
                     }
                 }
                 ContextMenuTarget::SidebarRemote(idx) => {
-                    if let Some(bookmark) = app.remote_bookmarks.get(*idx) {
+                    if let Some(bookmark) = app.servers.get(*idx) {
                         target_dir = Some(bookmark.last_path.clone());
                     }
                 }

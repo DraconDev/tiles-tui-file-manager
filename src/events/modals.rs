@@ -903,12 +903,12 @@ fn handle_add_remote_keys(
         KeyCode::Tab | KeyCode::Enter => {
             let val = app.input.value.clone();
             match idx {
-                0 => app.pending_remote.name = val,
-                1 => app.pending_remote.host = val,
-                2 => app.pending_remote.user = val,
-                3 => app.pending_remote.port = val.parse().unwrap_or(22),
+                0 => app.pending_server.name = val,
+                1 => app.pending_server.host = val,
+                2 => app.pending_server.user = val,
+                3 => app.pending_server.port = val.parse().unwrap_or(22),
                 4 => {
-                    app.pending_remote.key_path = if val.is_empty() {
+                    app.pending_server.key_path = if val.is_empty() {
                         None
                     } else {
                         Some(std::path::PathBuf::from(val))
@@ -920,8 +920,8 @@ fn handle_add_remote_keys(
                 app.mode = AppMode::AddRemote(idx + 1);
                 app.input.set_value(String::new());
             } else {
-                app.remote_bookmarks.push(app.pending_remote.clone());
-                crate::config::save_state_quiet(app);
+                app.servers.push(app.pending_server.clone());
+                crate::servers::save_servers_quiet(&app.servers);
                 app.mode = AppMode::Normal;
                 app.input.clear();
             }
@@ -986,7 +986,7 @@ fn handle_import_servers_keys(
                 Ok(data) => {
                     let mut imported = 0usize;
                     for s in data.servers {
-                        let candidate = crate::state::RemoteBookmark {
+                        let candidate = crate::servers::ServerConfig {
                             name: s.name,
                             host: s.host,
                             user: s.user,
@@ -994,18 +994,18 @@ fn handle_import_servers_keys(
                             last_path: std::path::PathBuf::from("/"),
                             key_path: s.key_path,
                         };
-                        let exists = app.remote_bookmarks.iter().any(|b| {
+                        let exists = app.servers.iter().any(|b| {
                             b.name == candidate.name
                                 && b.host == candidate.host
                                 && b.user == candidate.user
                                 && b.port == candidate.port
                         });
                         if !exists {
-                            app.remote_bookmarks.push(candidate);
+                            app.servers.push(candidate);
                             imported += 1;
                         }
                     }
-                    crate::config::save_state_quiet(app);
+                    crate::servers::save_servers_quiet(&app.servers);
                     app.last_action_msg = Some((
                         format!("Imported {} server(s)", imported),
                         std::time::Instant::now(),

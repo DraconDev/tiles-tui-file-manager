@@ -1,21 +1,24 @@
 # Project State
 
 ## Current Focus
-Refactored sidebar to use server configuration instead of remote bookmarks
+Refactored remote bookmark management to use server configuration model consistently across the application
 
 ## Context
-The sidebar was previously using remote bookmarks for server connections. This change aligns with the new server configuration system introduced in recent commits.
+The codebase was refactoring remote bookmark management to use a dedicated server configuration model, which required updating all references to the old remote bookmark structure. This change standardizes the server management system and improves maintainability.
 
 ## Completed
-- [x] Updated sidebar to display server information from `app.servers` instead of `app.remote_bookmarks`
-- [x] Modified the "No remotes" message to check `app.servers.is_empty()` instead of `app.remote_bookmarks.is_empty()`
+- [x] Updated command generation to use server configuration instead of remote bookmarks
+- [x] Modified context menu handling to work with server configuration
+- [x] Updated remote server addition modal to use pending_server instead of pending_remote
+- [x] Updated server import functionality to use server configuration model
+- [x] Changed persistence to use server-specific save function
 
 ## In Progress
-- [ ] None (this is a complete refactoring)
+- [ ] No active work in progress shown in the diff
 
 ## Blockers
-- None (this change is complete)
+- None identified in this commit
 
 ## Next Steps
-1. Verify sidebar behavior with the new server configuration
-2. Ensure all related UI components are updated to use the server configuration system
+1. Verify all server management features work correctly with the new configuration model
+2. Update any remaining references to remote bookmarks in the codebase
