@@ -1006,6 +1006,8 @@ fn handle_import_servers_keys(
             match parsed {
                 Ok(data) => {
                     let mut imported = 0usize;
+                    let mut skipped = 0usize;
+                    let mut warnings = Vec::new();
                     for s in data.servers {
                         let candidate = crate::servers::ServerConfig {
                             name: s.name,
@@ -1021,16 +1023,35 @@ fn handle_import_servers_keys(
                                 && b.user == candidate.user
                                 && b.port == candidate.port
                         });
-                        if !exists {
-                            app.servers.push(candidate);
-                            imported += 1;
+                        if exists {
+                            skipped += 1;
+                            continue;
                         }
+                        let errors = crate::servers::validate_server(&candidate, &app.servers, None);
+                        let hard_errors: Vec<_> = errors.iter().filter(|e| e.field != "key_path").collect();
+                        if !hard_errors.is_empty() {
+                            skipped += 1;
+                            continue;
+                        }
+                        // Collect key_path warnings
+                        for e in &errors {
+                            if e.field == "key_path" {
+                                warnings.push(format!("{}: {}", candidate.name, e.message));
+                            }
+                        }
+                        app.servers.push(candidate);
+                        imported += 1;
                     }
                     crate::servers::save_servers_quiet(&app.servers);
-                    app.last_action_msg = Some((
-                        format!("Imported {} server(s)", imported),
-                        std::time::Instant::now(),
-                    ));
+                    let mut msg = format!("Imported {} server(s)", imported);
+                    if skipped > 0 {
+                        msg.push_str(&format!(", skipped {}", skipped));
+                    }
+                    if !warnings.is_empty() {
+                        msg.push_str(" | Warnings: ");
+                        msg.push_str(&warnings.join("; "));
+                    }
+                    app.last_action_msg = Some((msg, std::time::Instant::now()));
                     app.mode = AppMode::Normal;
                     app.input.clear();
                 }
