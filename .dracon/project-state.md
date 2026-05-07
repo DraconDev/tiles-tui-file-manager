@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Improved keyboard shortcut visibility in the add remote modal UI
 
 ## Context
-This change was triggered by the ongoing server management overhaul (servers.toml integration) and follows previous dependency updates in this feature area.
+The change enhances the user experience by clearly separating negative (cancel) and positive (confirm) actions in the modal's help text, making keyboard shortcuts more intuitive.
 
 ## Completed
-- [x] Updated Cargo.lock with new dependency versions
+- [x] Restructured help text to show cancel action on left and confirm on right
+- [x] Added visual distinction with color coding (red for cancel, cyan for confirm)
+- [x] Maintained consistent spacing and formatting
 
 ## In Progress
-- [ ] `synth-1774826981` - failed to load manifest for dependency `dracon-files`
+- [ ] None (this is a focused UI improvement)
 
 ## Blockers
-- Missing manifest for `dracon-files` dependency
+- None (this is a standalone UI enhancement)
 
 ## Next Steps
-1. Resolve the missing manifest for `dracon-files`
-2. Continue with server configuration validation implementation
+1. Verify the visual changes match the intended UX improvement
+2. Ensure the text remains clear for all supported languages

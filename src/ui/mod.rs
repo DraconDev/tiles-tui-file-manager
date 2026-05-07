@@ -4951,18 +4951,20 @@ fn draw_add_remote_modal(f: &mut Frame, app: &App) {
 
     let help_text = vec![
         Line::from(vec![
+            // Negative action on LEFT
+            Span::styled(
+                " [Esc] ",
+                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+            ),
+            Span::raw("Cancel    "),
+            // Positive action on RIGHT
             Span::styled(
                 " [Tab/Enter] ",
                 Style::default()
                     .fg(Color::Cyan)
                     .add_modifier(Modifier::BOLD),
             ),
-            Span::raw("Next Field  "),
-            Span::styled(
-                " [Esc] ",
-                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
-            ),
-            Span::raw("Cancel"),
+            Span::raw("Next Field"),
         ]),
         Line::from("On the last field, [Enter] will save the bookmark."),
     ];
