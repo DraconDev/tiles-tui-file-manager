@@ -3071,24 +3071,22 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             left_spans.push(s);
         }
 
-        // Add Remote Status Badge
-        let is_remote = app.panes.iter().any(|p| {
-            if let Some(fs) = p.current_state() {
-                fs.remote_session.is_some()
-            } else {
-                false
+        // Add Remote Status Badge - show server name for active pane
+        if let Some(fs) = app.current_file_state() {
+            if let Some(ref remote) = fs.remote_session {
+                left_spans.push(Span::raw(" │ "));
+                left_spans.push(Span::styled(
+                    format!(
+                        " {} {} ",
+                        Icon::Remote.get(app.icon_mode),
+                        remote.name
+                    ),
+                    Style::default()
+                        .bg(crate::ui::theme::accent_secondary())
+                        .fg(Color::Black)
+                        .add_modifier(Modifier::BOLD),
+                ));
             }
-        });
-
-        if is_remote {
-            left_spans.push(Span::raw(" │ "));
-            left_spans.push(Span::styled(
-                " REMOTE ",
-                Style::default()
-                    .bg(crate::ui::theme::accent_secondary())
-                    .fg(Color::Black)
-                    .add_modifier(Modifier::BOLD),
-            ));
         }
     }
 

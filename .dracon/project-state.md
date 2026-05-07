@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Enhanced remote server status display in the UI footer with server name visibility.
 
 ## Context
-This change is part of ongoing dependency management for the project. The update ensures compatibility with the latest versions of project dependencies while maintaining stability.
+The change improves user visibility of active remote connections by showing the server name in the footer status badge, replacing the generic "REMOTE" label.
 
 ## Completed
-- [x] Updated Cargo.lock with latest dependency versions
+- [x] Added server name display in remote status badge
+- [x] Maintained consistent styling with accent color and bold text
+- [x] Optimized the logic to only show for active panes with remote sessions
 
 ## In Progress
-- [x] No active work in progress related to this change
+- [ ] No active work in progress
 
 ## Blockers
-- None reported for this specific change
+- None identified
 
 ## Next Steps
-1. Continue monitoring dependency updates
-2. Verify that the updated dependencies don't introduce breaking changes
+1. Verify the new display works across different terminal sizes
+2. Consider adding server status indicators (connected/disconnected)
