@@ -562,10 +562,3 @@ Host simple
         assert_eq!(result, std::path::PathBuf::from("/home/nobody"));
     }
 }
-
-    #[test]
-    fn expand_tilde_user_no_slash() {
-        let result = expand_tilde(std::path::Path::new("~nobody"));
-        assert_eq!(result, std::path::PathBuf::from("/home/nobody"));
-    }
-}
