@@ -4,19 +4,21 @@
 Added support for importing OpenSSH configuration files to extract server bookmarks
 
 ## Context
-This change enables users to import their existing OpenSSH configuration files (typically `~/.ssh/config`) to automatically populate server bookmarks in the application, improving usability for users migrating from traditional SSH clients.
+This change enables users to import server configurations from their existing SSH config files, streamlining the process of setting up remote connections in the application.
 
 ## Completed
-- [x] Added new `AppMode::ImportSshConfig` state variant
-- [x] Implemented key handling for the new import mode
+- [x] Added SSH config import functionality with validation
+- [x] Implemented duplicate server detection
+- [x] Added error handling for invalid SSH config files
+- [x] Included warning system for potential key path issues
+- [x] Added status message reporting for import results
 
 ## In Progress
-- [ ] Implementation of the actual SSH config parsing logic (planned in recent commits)
+- [ ] None (feature is complete)
 
 ## Blockers
-- SSH config parsing implementation is pending (related to recent feature commits)
+- None (feature is complete)
 
 ## Next Steps
-1. Complete the SSH config parsing implementation
-2. Add UI elements for the import process
-3. Add validation for imported server configurations
+1. Verify integration with existing server management features
+2. Consider adding unit tests for the new import functionality

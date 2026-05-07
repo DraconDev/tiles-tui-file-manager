@@ -1068,6 +1068,101 @@ fn handle_import_servers_keys(
     }
 }
 
+fn handle_import_ssh_config_keys(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+    evt: &Event,
+) -> bool {
+    match key.code {
+        KeyCode::Esc => {
+            app.mode = AppMode::Normal;
+            app.input.clear();
+            true
+        }
+        KeyCode::Enter => {
+            let path = app.input.value.trim().to_string();
+            if path.is_empty() {
+                app.last_action_msg = Some((
+                    "SSH config path is empty".to_string(),
+                    std::time::Instant::now(),
+                ));
+                return true;
+            }
+
+            match std::fs::read_to_string(&path) {
+                Ok(content) => {
+                    let parsed = crate::servers::parse_ssh_config(&content);
+                    if parsed.is_empty() {
+                        app.last_action_msg = Some((
+                            "No valid Host entries found in SSH config".to_string(),
+                            std::time::Instant::now(),
+                        ));
+                        app.mode = AppMode::Normal;
+                        app.input.clear();
+                        return true;
+                    }
+
+                    let mut imported = 0usize;
+                    let mut skipped = 0usize;
+                    let mut warnings = Vec::new();
+                    for candidate in parsed {
+                        let exists = app.servers.iter().any(|b| {
+                            b.name == candidate.name
+                                && b.host == candidate.host
+                                && b.user == candidate.user
+                                && b.port == candidate.port
+                        });
+                        if exists {
+                            skipped += 1;
+                            continue;
+                        }
+                        let errors = crate::servers::validate_server(&candidate, &app.servers, None);
+                        let hard_errors: Vec<_> = errors.iter().filter(|e| e.field != "key_path").collect();
+                        if !hard_errors.is_empty() {
+                            skipped += 1;
+                            continue;
+                        }
+                        // Collect key_path warnings
+                        for e in &errors {
+                            if e.field == "key_path" {
+                                warnings.push(format!("{}: {}", candidate.name, e.message));
+                            }
+                        }
+                        app.servers.push(candidate);
+                        imported += 1;
+                    }
+                    crate::servers::save_servers_quiet(&app.servers);
+                    let mut msg = format!("Imported {} server(s) from SSH config", imported);
+                    if skipped > 0 {
+                        msg.push_str(&format!(", skipped {}", skipped));
+                    }
+                    if !warnings.is_empty() {
+                        msg.push_str(" | Warnings: ");
+                        msg.push_str(&warnings.join("; "));
+                    }
+                    app.last_action_msg = Some((msg, std::time::Instant::now()));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Imported {} server(s) from SSH config", imported)
+                    ));
+                    app.mode = AppMode::Normal;
+                    app.input.clear();
+                }
+                Err(e) => {
+                    app.last_action_msg = Some((
+                        format!("Failed reading {}: {}", path, e),
+                        std::time::Instant::now(),
+                    ));
+                }
+            }
+            true
+        }
+        _ => app
+            .input
+            .handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt)),
+    }
+}
+
 fn handle_highlight_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app: &mut App) -> bool {
     if let KeyCode::Char(c) = key.code {
         if let Some(digit) = c.to_digit(10) {
