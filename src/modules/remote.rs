@@ -98,6 +98,24 @@ pub fn is_dir(remote: &RemoteSession, path: &Path) -> std::io::Result<bool> {
     provider.is_dir(&to_connection(remote), path)
 }
 
+/// Check if a remote file is binary by reading the first 8KB and looking for null bytes.
+/// Returns (is_binary, size_mb) where size_mb is 0 if unknown.
+pub fn is_binary_file(remote: &RemoteSession, path: &Path) -> std::io::Result<(bool, u64)> {
+    let path_str = path.to_string_lossy();
+    let escaped = path_str.replace('\'', "'\"'\"'");
+    
+    // Get file size
+    let size_out = exec_program(remote, "sh", &["-c", &format!("stat -c%s '{}' 2>/dev/null || echo 0", escaped)])?;
+    let size: u64 = size_out.trim().parse().unwrap_or(0);
+    let size_mb = size / (1024 * 1024);
+    
+    // Read first 8KB and check for null bytes
+    let chunk = exec_program(remote, "sh", &["-c", &format!("head -c 8192 '{}' 2>/dev/null", escaped)])?;
+    let has_null = chunk.bytes().any(|b| b == 0);
+    
+    Ok((has_null, size_mb))
+}
+
 pub fn global_search(
     remote: &RemoteSession,
     root: &Path,

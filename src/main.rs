@@ -568,8 +568,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                         .map(|n| n.to_string_lossy().to_string())
                                         .unwrap_or_else(|| "/".to_string())
                                 ),
-                                Ok(false) => crate::modules::remote::read_to_string(remote, &path)
-                                    .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
+                                Ok(false) => {
+                                    match crate::modules::remote::is_binary_file(remote, &path) {
+                                        Ok((true, size_mb)) => {
+                                            format!("<Binary file: {} MB - cannot preview remotely>", size_mb)
+                                        }
+                                        Ok((false, _)) => crate::modules::remote::read_to_string(remote, &path)
+                                            .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
+                                        Err(e) => format!("Error checking remote file: {e}"),
+                                    }
+                                }
                                 Err(e) => format!("Error probing remote path: {e}"),
                             }
                         } else if path.is_dir() {
