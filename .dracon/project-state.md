@@ -1,21 +1,24 @@
 # Project State
 
 ## Current Focus
-Removed redundant tilde path expansion test case in `servers.rs`
+Added comprehensive documentation for remote server management in Tiles
 
 ## Context
-The project is in planning phase with execution disabled. The change removes a duplicate test case for tilde (~) path expansion that was already covered by another test.
+The recent feature additions for remote server support (SSH bookmarks, config imports) needed clear documentation to ensure users can effectively configure and manage remote connections.
 
 ## Completed
-- [x] Removed duplicate test case for tilde path expansion in `servers.rs`
+- [x] Added detailed documentation for remote server management
+- [x] Documented SSH bookmark management interface
+- [x] Explained tilde path expansion for SSH keys
+- [x] Added keyboard shortcut reference for remote operations
+- [x] Included security warning about key permissions
 
 ## In Progress
 - [ ] No active work in progress
 
 ## Blockers
-- Project is in planning phase with trigger set to BLOCKED
-- Missing manifest for dependency `dracon-files`
+- None identified
 
 ## Next Steps
-1. Resolve dependency issue with `dracon-files`
-2. Enable execution when dependencies are resolved
+1. Verify documentation accuracy with user testing
+2. Consider adding visual guides for remote operations

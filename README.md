@@ -75,6 +75,37 @@ A high-performance terminal file manager built in Rust. Modular pane system, int
 | `Ctrl+L` | Edit current path |
 | `q` | Quit |
 
+## Remote Servers
+
+Tiles supports browsing remote filesystems via SSH. Manage server bookmarks in **Settings → Remotes** (`Ctrl+G` then `5`).
+
+### Adding Servers
+- **Manually**: Press `A` in Remotes settings to add a new server bookmark
+- **Import TOML**: Press `I` to import a `servers.toml` file
+- **Import SSH Config**: Press `S` to import directly from your `~/.ssh/config` file
+
+### Tilde Expansion
+Paths containing `~` are automatically expanded:
+- `~` or `~/path` → resolves to your home directory
+- `~user/path` → resolves to `/home/user/path`
+
+This applies to SSH key paths in both manual entry and SSH config import.
+
+### Key Permission Validation
+SSH private keys must have restrictive permissions (≤ 0600). Tiles warns you if a key is too permissive and shows the exact `chmod` command needed.
+
+### Remotes Shortcuts (in Settings)
+| Key | Action |
+|-----|--------|
+| `A` | Add new server |
+| `E` | Edit selected server |
+| `D` | Delete selected server |
+| `I` | Import from TOML |
+| `S` | Import from SSH config |
+| `X` | Export to TOML |
+| `T` | Edit servers.toml |
+| `Enter` | Connect to selected server |
+
 ## Install
 
 ```bash
