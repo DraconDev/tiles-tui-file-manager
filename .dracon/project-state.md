@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Changed the tick interval from 250ms to 1 second in the terminal backend.
+Changed terminal refresh rate from 33ms to 50ms
 
 ## Context
-The change was made to reduce the frequency of UI updates, which should improve performance while maintaining responsiveness.
+Optimizing the terminal rendering performance by adjusting the frame rate
 
 ## Completed
-- [x] Updated tick interval from 250ms to 1 second
+- [x] Updated frame rate from 33ms to 50ms in the main rendering loop
 
 ## In Progress
-- [ ] None
+- [x] Terminal rendering optimization
 
 ## Blockers
-- None
+- No known blockers at this time
 
 ## Next Steps
-1. Verify the new interval doesn't affect user experience negatively
-2. Consider making the interval configurable via settings
+1. Verify the new frame rate provides better performance
+2. Monitor for any visual artifacts or performance improvements

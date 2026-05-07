@@ -1491,7 +1491,7 @@ paired = new_paired;
             terminal.draw(|f| ui::draw(f, &mut app_guard))?;
         }
 
-        tokio::time::sleep(Duration::from_millis(33)).await;
+        tokio::time::sleep(Duration::from_millis(50)).await;
     }
 
     Ok(())
