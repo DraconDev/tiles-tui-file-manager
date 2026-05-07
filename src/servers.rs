@@ -187,6 +187,22 @@ port = 22
     fs::read_to_string(&path).ok()
 }
 
+/// Export servers to a TOML file (for backup/sharing)
+pub fn export_servers_to_toml(servers: &[ServerConfig]) -> Result<PathBuf, Box<dyn std::error::Error>> {
+    let config_dir = dirs::config_dir()
+        .ok_or("Could not find config dir")?
+        .join("tiles");
+    let export_path = config_dir.join("servers-export.toml");
+    
+    let file = ServersFile {
+        server: servers.to_vec(),
+    };
+    
+    let toml_string = toml::to_string_pretty(&file)?;
+    fs::write(&export_path, toml_string)?;
+    Ok(export_path)
+}
+
 /// Write raw TOML content (for "Edit as TOML" feature)
 pub fn write_servers_toml_raw(content: &str) -> Result<(), Box<dyn std::error::Error>> {
     let path = servers_toml_path().ok_or("Could not find config dir")?;

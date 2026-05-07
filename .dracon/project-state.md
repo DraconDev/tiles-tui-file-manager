@@ -1,26 +1,22 @@
 # Project State
 
 ## Current Focus
-Added comprehensive keyboard shortcuts for remote server management in settings
+Added server configuration export functionality to TOML format
 
 ## Context
-The recent refactoring to use server configuration instead of remote bookmarks required corresponding UI updates. This change adds keyboard-driven management of remote servers in the settings modal.
+This change enables users to export their server configurations for backup or sharing purposes, maintaining consistency with the existing TOML-based configuration system.
 
 ## Completed
-- [x] Added 'a' key to create new remote server configuration
-- [x] Added 'e' key to edit existing server configurations
-- [x] Added 'd' key to delete server configurations
-- [x] Added 'i' key to import server configurations
-- [x] Added 'x' key to export server configurations
-- [x] Added 't' key to open servers.toml in system editor
+- [x] Added `export_servers_to_toml` function to serialize server configurations
+- [x] Implemented TOML file writing with pretty formatting
+- [x] Created standardized export path in config directory
 
 ## In Progress
-- [ ] None (all keyboard shortcuts implemented)
+- [ ] None (feature is complete)
 
 ## Blockers
-- None (feature complete)
+- None (feature is self-contained)
 
 ## Next Steps
-1. Test keyboard navigation in settings modal
-2. Verify server configuration persistence
-```
+1. Add UI integration for the export functionality
+2. Implement import capability to complement the export feature
