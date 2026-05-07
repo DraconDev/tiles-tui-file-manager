@@ -9,6 +9,15 @@ All notable changes to this project will be documented in this file.
   - Flat format: `[[server]] name="..." host="..." user="..." port=22 key_path="..."`
   - Human-readable, editable with any text editor
   - Auto-migrates legacy bookmarks from `state.json` on first run
+- **File watcher** — `servers.toml` auto-reloads when edited externally
+  - Uses `notify` crate to watch the config directory
+  - Debounced (500ms) to avoid duplicate reloads
+  - No restart needed — changes appear immediately
+- **Validation** — Server input is validated before saving
+  - Name, Host, User are required (cannot be empty)
+  - Port must be > 0
+  - Duplicate names are rejected (unless editing the same server)
+  - Validation errors shown in status bar
 - **Settings → Remotes** — Full CRUD management UI
   - **[A]dd** — Add new server via modal (Name, Host, User, Port, Key Path)
   - **[E]dit** — Edit existing server inline (pre-fills current values)

@@ -1,20 +1,22 @@
 # Project State
 
 ## Current Focus
-Improved event handling for remote server management in the settings modal
+Added documentation for server configuration auto-reload and validation features
 
 ## Context
-The change modifies the `handle_add_remote_keys` function to properly utilize the event sender (`event_tx`) for remote server operations, ensuring proper event propagation for UI updates and state management.
+The recent feature additions for automatic reloading of `servers.toml` and server configuration validation needed proper documentation to ensure users understand the new capabilities.
 
 ## Completed
-- [x] Made the event sender parameter non-underscored to properly use it in remote server operations
+- [x] Documented auto-reload functionality with implementation details
+- [x] Documented validation rules for server configurations
+- [x] Added status bar error display for validation failures
 
 ## In Progress
-- [x] Event handling for remote server management is now properly connected
+- [x] CHANGELOG.md updates for the new features
 
 ## Blockers
-- The dependency `dracon-files` manifest loading failure (from blueprint) may impact server configuration functionality
+- None identified for this documentation update
 
 ## Next Steps
-1. Verify event propagation works correctly in remote server management UI
-2. Address the `dracon-files` dependency issue to enable full server configuration functionality
+1. Review and merge the CHANGELOG updates
+2. Prepare for the next development cycle focusing on server management UI improvements
