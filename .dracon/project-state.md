@@ -1,21 +1,23 @@
 # Project State
 
 ## Current Focus
-Added server configuration module to the project structure
+Refactored remote bookmark management to use server configuration model
 
 ## Context
-This change prepares the foundation for server configuration management by adding the module declaration. The server configuration will later be implemented with TOML file persistence and other features.
+This change aligns with the server configuration feature work by replacing the remote bookmark system with a more generalized server configuration approach.
 
 ## Completed
-- [x] Added `servers` module declaration in main.rs
+- [x] Renamed `remote_bookmarks` to `servers` to reflect broader functionality
+- [x] Updated `pending_remote` to `pending_server` with matching type
+- [x] Initialized server configuration with empty values in default state
 
 ## In Progress
-- [ ] Implement server configuration with TOML file persistence
+- [ ] Implementation of server configuration persistence and management
 
 ## Blockers
-- Missing implementation of server configuration logic
+- Server configuration persistence layer not yet implemented
+- Need to update UI components to work with new server model
 
 ## Next Steps
-1. Implement server configuration with TOML file persistence
-2. Add server management functionality
-```
+1. Implement server configuration persistence
+2. Update UI components to use the new server model

@@ -38,8 +38,8 @@ pub struct App {
     pub sidebar_index: usize,
     pub starred: Vec<PathBuf>,
     pub recent_folders: Vec<PathBuf>,
-    pub remote_bookmarks: Vec<RemoteBookmark>,
-    pub pending_remote: RemoteBookmark,
+    pub servers: Vec<crate::servers::ServerConfig>,
+    pub pending_server: crate::servers::ServerConfig,
     pub external_tools: HashMap<String, Vec<crate::config::ExternalTool>>,
     pub show_sidebar: bool,
     pub sidebar_folders: bool,
@@ -198,8 +198,8 @@ impl App {
             .flatten()
             .collect(),
             recent_folders: Vec::new(),
-            remote_bookmarks: Vec::new(),
-            pending_remote: RemoteBookmark {
+            servers: Vec::new(),
+            pending_server: crate::servers::ServerConfig {
                 name: String::new(),
                 host: String::new(),
                 user: String::new(),
