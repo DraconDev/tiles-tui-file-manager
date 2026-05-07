@@ -334,6 +334,96 @@ pub fn write_servers_toml_raw(content: &str) -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
+/// Parse an OpenSSH config file and extract server bookmarks.
+/// Skips wildcard entries (`Host *`) and entries without a HostName.
+/// Splits multi-name Host entries (e.g., `Host host1 host2`) into separate servers.
+pub fn parse_ssh_config(content: &str) -> Vec<ServerConfig> {
+    let mut servers = Vec::new();
+    let mut current_names: Vec<String> = Vec::new();
+    let mut current_hostname: Option<String> = None;
+    let mut current_user = String::new();
+    let mut current_port: u16 = 22;
+    let mut current_key: Option<PathBuf> = None;
+
+    fn flush(
+        servers: &mut Vec<ServerConfig>,
+        names: &mut Vec<String>,
+        hostname: &mut Option<String>,
+        user: &mut String,
+        port: &mut u16,
+        key: &mut Option<PathBuf>,
+    ) {
+        if let Some(host) = hostname.take() {
+            for name in names.drain(..) {
+                // Skip wildcard entries
+                if name == "*" {
+                    continue;
+                }
+                servers.push(ServerConfig {
+                    name: name.clone(),
+                    host: host.clone(),
+                    user: user.clone(),
+                    port: *port,
+                    last_path: PathBuf::from("/"),
+                    key_path: key.clone(),
+                });
+            }
+        }
+        *user = String::new();
+        *port = 22;
+        *key = None;
+    }
+
+    for line in content.lines() {
+        let line = line.trim();
+        // Skip empty lines and comments
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        // Split into keyword and arguments
+        let mut parts = line.split_whitespace();
+        let Some(keyword) = parts.next() else { continue };
+        let args: Vec<&str> = parts.collect();
+
+        match keyword.to_ascii_lowercase().as_str() {
+            "host" => {
+                // Flush previous entry
+                flush(&mut servers, &mut current_names, &mut current_hostname, &mut current_user, &mut current_port, &mut current_key);
+                current_names = args.into_iter().map(|s| s.to_string()).collect();
+            }
+            "hostname" => {
+                if let Some(v) = args.first() {
+                    current_hostname = Some(v.to_string());
+                }
+            }
+            "user" => {
+                if let Some(v) = args.first() {
+                    current_user = v.to_string();
+                }
+            }
+            "port" => {
+                if let Some(v) = args.first() {
+                    if let Ok(p) = v.parse::<u16>() {
+                        current_port = p;
+                    }
+                }
+            }
+            "identityfile" => {
+                if let Some(v) = args.first() {
+                    current_key = Some(expand_tilde(&PathBuf::from(v.to_string())));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Flush final entry
+    flush(&mut servers, &mut current_names, &mut current_hostname, &mut current_user, &mut current_port, &mut current_key);
+
+    servers
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
