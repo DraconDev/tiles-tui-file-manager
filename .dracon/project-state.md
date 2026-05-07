@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Optimized file watch synchronization in the terminal backend to reduce unnecessary redraws.
 
 ## Context
-This change updates the dependency versions in the lockfile, likely triggered by recent feature additions related to OpenSSH configuration parsing and remote server management.
+The previous implementation forced a redraw on every tick event, which was inefficient. The change ensures redraws only occur when truly needed (keyboard, mouse, or state changes).
 
 ## Completed
-- [x] Updated dependency versions in Cargo.lock
+- [x] Removed forced redraws from tick events
+- [x] Added comment clarifying event-driven redraw triggers
 
 ## In Progress
-- [ ] Slice `synth-1774826981` blocked by failed manifest loading for `dracon-files`
+- [ ] None (change is complete)
 
 ## Blockers
-- Missing manifest for dependency `dracon-files` preventing slice execution
+- None (this is a refactoring with no dependencies)
 
 ## Next Steps
-1. Investigate and resolve the manifest loading issue for `dracon-files`
-2. Resume work on the OpenSSH configuration parsing features
+1. Verify no visual regressions in terminal UI
+2. Monitor performance impact with file watchers active

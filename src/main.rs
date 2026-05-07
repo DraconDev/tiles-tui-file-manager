@@ -329,7 +329,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         while let Ok(event) = event_rx.try_recv() {
             match event {
                 AppEvent::Tick => {
-                    needs_draw = true;
+                    // Tick only syncs file watches; no forced redraw.
+                    // Redraws are event-driven (keys, mouse, state changes).
                     if last_watch_sync.elapsed() >= Duration::from_millis(WATCH_SYNC_INTERVAL_MS) {
                         let app_guard = app.lock();
                         sync_watches(&app_guard, &mut debouncer);
