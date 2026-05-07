@@ -920,7 +920,14 @@ fn handle_add_remote_keys(
                 app.mode = AppMode::AddRemote(idx + 1);
                 app.input.set_value(String::new());
             } else {
-                app.servers.push(app.pending_server.clone());
+                // Check if we're editing (open_with_index stores the edit index)
+                let edit_idx = app.open_with_index;
+                if edit_idx < app.servers.len() {
+                    app.servers[edit_idx] = app.pending_server.clone();
+                } else {
+                    app.servers.push(app.pending_server.clone());
+                }
+                app.open_with_index = 0; // Reset
                 crate::servers::save_servers_quiet(&app.servers);
                 app.mode = AppMode::Normal;
                 app.input.clear();

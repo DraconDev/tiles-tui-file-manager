@@ -1,22 +1,23 @@
 # Project State
 
 ## Current Focus
-Added server configuration export functionality to TOML format
+Added server editing support to the remote server management system
 
 ## Context
-This change enables users to export their server configurations for backup or sharing purposes, maintaining consistency with the existing TOML-based configuration system.
+The change enables editing existing server configurations by tracking the edit index in `app.open_with_index` and updating the server at that position rather than always appending new servers.
 
 ## Completed
-- [x] Added `export_servers_to_toml` function to serialize server configurations
-- [x] Implemented TOML file writing with pretty formatting
-- [x] Created standardized export path in config directory
+- [x] Added conditional logic to check if we're editing an existing server
+- [x] Implemented server update when editing rather than always pushing new entries
+- [x] Added reset of `open_with_index` after operation
+- [x] Maintained existing behavior for adding new servers
 
 ## In Progress
-- [ ] None (feature is complete)
+- [x] Server editing functionality is now fully operational
 
 ## Blockers
-- None (feature is self-contained)
+- None identified in this change
 
 ## Next Steps
-1. Add UI integration for the export functionality
-2. Implement import capability to complement the export feature
+1. Verify the editing behavior works correctly with the existing server persistence
+2. Consider adding visual feedback when editing servers
