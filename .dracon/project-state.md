@@ -1,20 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved server configuration export functionality by updating the module path reference.
+Minor dependency update in Cargo.lock
 
 ## Context
-This change addresses a refactoring where server configuration functionality was moved to a new module. The previous direct function call needed to be updated to use the new module path.
+This change was triggered by the ongoing refactoring of remote server management to use server configuration models instead of remote bookmarks. The update ensures all dependencies are properly resolved and versioned.
 
 ## Completed
-- [x] Updated server configuration export call to use the new module path (`crate::servers::export_servers_to_toml`)
+- [x] Updated Cargo.lock to resolve dependency versions
 
 ## In Progress
-- [ ] None
+- [ ] `synth-1774826981` - failed to load manifest for dependency `dracon-files`
 
 ## Blockers
-- None
+- Dependency resolution issue for `dracon-files` preventing progress
 
 ## Next Steps
-1. Verify the server configuration export functionality works as expected
-2. Ensure all related keyboard shortcuts and UI elements continue to function properly
+1. Investigate and resolve the dependency issue for `dracon-files`
+2. Continue refactoring remote server management to use server configuration models
