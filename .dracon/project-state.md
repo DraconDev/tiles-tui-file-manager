@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Removed outdated notes about a bug and TODO list
+Updated note about UI behavior for empty folders
 
 ## Context
-The previous note.md contained a placeholder note about a missing git branch display and a TODO list, which was likely temporary or placeholder content.
+The change clarifies the UI behavior for empty folders by removing outdated notes about showing open contents.
 
 ## Completed
-- [x] Removed placeholder note about git branch display
-- [x] Removed placeholder TODO list
+- [x] Removed outdated note about showing open contents for empty folders
+- [x] Updated note to reflect current behavior
 
 ## In Progress
-- [x] No active work in progress
+- [ ] None
 
 ## Blockers
-- None identified
+- None
 
 ## Next Steps
-1. Update note.md with actual project notes
-2. Address the git branch display issue when ready
+1. Verify UI behavior matches the updated note
+2. Ensure documentation reflects current implementation
