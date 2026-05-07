@@ -557,6 +557,37 @@ Host simple
     }
 
     #[test]
+    fn parse_ssh_config_match_host_directive() {
+        let config = r#"
+Host main
+    HostName main.example.com
+    User admin
+
+Match host staging
+    HostName staging.example.com
+    User deploy
+    Port 2222
+    IdentityFile ~/.ssh/staging.key
+
+Match exec "test %h = prod"
+    HostName prod.example.com
+    User root
+"#;
+        let servers = parse_ssh_config(config);
+        assert_eq!(servers.len(), 2, "Should have main and staging; exec Match skipped");
+        
+        let main = servers.iter().find(|s| s.name == "main").unwrap();
+        assert_eq!(main.host, "main.example.com");
+        assert_eq!(main.user, "admin");
+        
+        let staging = servers.iter().find(|s| s.name == "staging").unwrap();
+        assert_eq!(staging.host, "staging.example.com");
+        assert_eq!(staging.user, "deploy");
+        assert_eq!(staging.port, 2222);
+        assert_eq!(staging.key_path, Some(expand_tilde(&PathBuf::from("~/.ssh/staging.key"))));
+    }
+
+    #[test]
     fn expand_tilde_no_tilde_returns_unchanged() {
         let path = std::path::PathBuf::from("/usr/local/bin");
         assert_eq!(expand_tilde(&path), path);
