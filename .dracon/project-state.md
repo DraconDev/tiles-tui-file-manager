@@ -1,22 +1,24 @@
 # Project State
 
 ## Current Focus
-Removed remote bookmark persistence from the application state.
+Refactored remote bookmark management to use server configuration model with TOML persistence
 
 ## Context
-This change was prompted by the refactoring of remote bookmark management to use the server configuration model. The remote bookmarks were previously stored in the persistent state but are now managed separately.
+The change replaces the legacy remote bookmarks system with a more robust server configuration approach. This was prompted by the need for better persistence and configuration management.
 
 ## Completed
-- [x] Removed `remote_bookmarks` field from `PersistentState` struct
-- [x] Removed `remote_bookmarks` from state serialization
-- [x] Removed unused import of `RemoteBookmark`
+- [x] Refactored remote bookmark handling to use new server configuration model
+- [x] Added TOML file persistence for server configurations
+- [x] Implemented migration path for legacy remote bookmarks
+- [x] Updated sidebar display to show server configurations instead of remote bookmarks
 
 ## In Progress
-- [ ] None
+- [ ] No active work in progress beyond these changes
 
 ## Blockers
-- None
+- None identified for this specific change
 
 ## Next Steps
-1. Update any remaining code that might still reference remote bookmarks
-2. Verify that the server configuration model properly handles remote bookmark persistence
+1. Verify server configuration loading and migration works correctly
+2. Add validation for server configurations
+3. Implement server connection testing functionality

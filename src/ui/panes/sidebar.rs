@@ -510,7 +510,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 });
                 current_y += 1;
             }
-            for (i, bookmark) in app.remote_bookmarks.iter().enumerate() {
+            for (i, bookmark) in app.servers.iter().enumerate() {
                 if !show_remotes {
                     break;
                 }

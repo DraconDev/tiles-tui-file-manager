@@ -302,7 +302,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
                     let remote_opt = {
                         let app_guard = app.lock();
-                        app_guard.remote_bookmarks.get(bookmark_idx).cloned()
+                        app_guard.servers.get(bookmark_idx)
+                            .cloned()
+                            .map(crate::state::RemoteBookmark::from)
                     };
                     if let Some(remote) = remote_opt {
                         let tx = event_tx.clone();
@@ -1490,7 +1492,11 @@ fn setup_app(
         }
         app.starred = loaded_starred;
 
-        app.remote_bookmarks = state.remote_bookmarks;
+        // Load servers from servers.toml (new primary storage)
+        // Migrate legacy remote_bookmarks from state.json if servers.toml doesn't exist
+        crate::servers::maybe_migrate_legacy_bookmarks(&state.remote_bookmarks);
+        app.servers = crate::servers::load_servers();
+
         app.path_colors = state.path_colors;
         app.external_tools = state.external_tools;
         if let Some(mode) = state.icon_mode {
