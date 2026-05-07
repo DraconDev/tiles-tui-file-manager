@@ -568,7 +568,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 });
                 current_y += 1;
             }
-            if app.remote_bookmarks.is_empty() {
+            if app.servers.is_empty() {
                 sidebar_items.push(
                     ListItem::new("(No remotes)").style(Style::default().fg(Color::DarkGray)),
                 );
@@ -640,7 +640,7 @@ if app.sidebar_tree_cache_key != cache_key {
                         path.to_string_lossy().to_string()
                     }
                     SidebarTarget::Remote(idx) => app
-                        .remote_bookmarks
+                        .servers
                         .get(*idx)
                         .map(|r| format!("{}@{}:{}", r.user, r.host, r.port))
                         .unwrap_or_default(),

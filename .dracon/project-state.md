@@ -1,24 +1,21 @@
 # Project State
 
 ## Current Focus
-Refactored remote bookmark management to use server configuration model with TOML persistence
+Refactored sidebar to use server configuration instead of remote bookmarks
 
 ## Context
-The change replaces the legacy remote bookmarks system with a more robust server configuration approach. This was prompted by the need for better persistence and configuration management.
+The sidebar was previously using remote bookmarks for server connections. This change aligns with the new server configuration system introduced in recent commits.
 
 ## Completed
-- [x] Refactored remote bookmark handling to use new server configuration model
-- [x] Added TOML file persistence for server configurations
-- [x] Implemented migration path for legacy remote bookmarks
-- [x] Updated sidebar display to show server configurations instead of remote bookmarks
+- [x] Updated sidebar to display server information from `app.servers` instead of `app.remote_bookmarks`
+- [x] Modified the "No remotes" message to check `app.servers.is_empty()` instead of `app.remote_bookmarks.is_empty()`
 
 ## In Progress
-- [ ] No active work in progress beyond these changes
+- [ ] None (this is a complete refactoring)
 
 ## Blockers
-- None identified for this specific change
+- None (this change is complete)
 
 ## Next Steps
-1. Verify server configuration loading and migration works correctly
-2. Add validation for server configurations
-3. Implement server connection testing functionality
+1. Verify sidebar behavior with the new server configuration
+2. Ensure all related UI components are updated to use the server configuration system
