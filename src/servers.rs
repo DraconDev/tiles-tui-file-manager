@@ -268,3 +268,31 @@ pub fn write_servers_toml_raw(content: &str) -> Result<(), Box<dyn std::error::E
     fs::write(&path, content)?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parse_sample_toml() {
+        let toml = r#"
+[[server]]
+name = "main1"
+host = "84.8.158.35"
+user = "ubuntu"
+port = 22
+key_path = "~/.ssh/main1.key"
+
+[[server]]
+name = "micro1"
+host = "141.147.94.186"
+user = "ubuntu"
+port = 22
+key_path = "~/.ssh/micro1.key"
+"#;
+        let file: ServersFile = toml::from_str(toml).expect("Should parse");
+        assert_eq!(file.server.len(), 2);
+        assert_eq!(file.server[0].name, "main1");
+        assert_eq!(file.server[1].host, "141.147.94.186");
+    }
+}

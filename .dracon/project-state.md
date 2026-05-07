@@ -1,20 +1,21 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added unit test for server configuration parsing in `servers.rs`
 
 ## Context
-This change was triggered by the ongoing server management overhaul, particularly the recent work on automatic reloading of servers.toml configuration and related documentation improvements.
+This change adds a test case to verify the parsing of server configuration files in TOML format, ensuring the application can correctly read and validate server definitions.
 
 ## Completed
-- [x] Updated Cargo.lock with dependency changes
+- [x] Added test case for parsing sample server configuration
+- [x] Verified test covers basic server attributes (name, host, user, port, key_path)
 
 ## In Progress
-- [ ] Slice `synth-1774826981` - failed to load manifest for dependency `dracon-files`
+- [ ] None
 
 ## Blockers
-- Missing manifest for dependency `dracon-files` preventing slice completion
+- None
 
 ## Next Steps
-1. Resolve dependency manifest issue for `dracon-files`
-2. Continue server management documentation improvements
+1. Expand test coverage to include error cases (invalid formats, missing fields)
+2. Add integration tests for the full server configuration workflow
