@@ -1773,7 +1773,6 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
             (burger_icon, "burger"),
             (back_icon, "back"),
             (forward_icon, "forward"),
-            (split_icon, "split"),
             (search_icon, "search"),
             (monitor_icon, "monitor"),
             (git_icon, "git"),
@@ -1798,6 +1797,22 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
             app.header_icon_bounds.push((rect, id.to_string()));
             cur_icon_x += width + 2;
         }
+
+        // Split icon at far right
+        let split_width = split_icon.width() as u16;
+        let split_x = area.x + area.width - split_width - 2;
+        let split_rect = Rect::new(split_x, area.y, split_width, 1);
+        let mut split_style = Style::default().fg(crate::ui::theme::accent_secondary());
+        if let AppMode::Header(idx) = app.mode {
+            if idx == 7 {
+                split_style = split_style
+                    .bg(crate::ui::theme::accent_primary())
+                    .fg(Color::Black)
+                    .add_modifier(Modifier::BOLD);
+            }
+        }
+        f.render_widget(Paragraph::new(split_icon).style(split_style), split_rect);
+        app.header_icon_bounds.push((split_rect, "split".to_string()));
     }
 
     if pane_count == 0 {

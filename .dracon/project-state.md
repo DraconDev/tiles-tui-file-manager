@@ -1,20 +1,24 @@
 # Project State
 
 ## Current Focus
-Updated documentation to include a proposed UI feature for displaying item counts in empty folders.
+Added split view icon to the far right of the global header with proper styling and selection state
 
 ## Context
-The team is refining the UI behavior for empty folders, considering whether showing item counts could improve usability.
+The split icon was previously in the main icon row but needed to be repositioned to the far right for better visual hierarchy. This change ensures the split functionality remains accessible while maintaining consistent styling with other header icons.
 
 ## Completed
-- [x] Updated note.md to propose showing item counts for empty folders
+- [x] Removed split icon from main icon row
+- [x] Added split icon to far right of header
+- [x] Implemented proper styling for split icon
+- [x] Added selection state highlighting for split icon
+- [x] Updated header icon bounds tracking
 
 ## In Progress
-- [x] Evaluating whether to implement the proposed feature
+- [x] Split icon positioning and styling implementation
 
 ## Blockers
-- User feedback needed on whether showing item counts is valuable
+- None identified
 
 ## Next Steps
-1. Gather feedback on the proposed feature
-2. Implement if approved, otherwise refine the documentation
+1. Verify split icon behavior with existing UI components
+2. Test split view functionality with new icon position
