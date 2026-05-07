@@ -1,20 +1,25 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Improved file handling for remote sessions in the file manager
 
 ## Context
-This change was triggered by the ongoing work on OpenSSH configuration parsing and server management features. The update ensures all dependencies are properly synchronized with the latest versions required by the project's dependencies.
+The change enhances double-click behavior for remote file sessions by:
+1. Adding proper directory detection for remote files
+2. Implementing preview functionality for remote files
+3. Maintaining existing local file behavior
 
 ## Completed
-- [x] Updated Cargo.lock to resolve dependency versions
+- [x] Added robust directory detection for remote files
+- [x] Implemented remote file preview functionality
+- [x] Preserved existing local file handling logic
 
 ## In Progress
-- [x] OpenSSH configuration parsing and server management features
+- [x] Remote file interaction improvements
 
 ## Blockers
-- Failed to load manifest for dependency `dracon-files` in slice `synth-1774826981`
+- None identified in this change
 
 ## Next Steps
-1. Investigate and resolve the dependency manifest loading failure for `dracon-files`
-2. Continue implementing OpenSSH configuration parsing features
+1. Verify remote file preview functionality works as expected
+2. Test edge cases for mixed local/remote file interactions

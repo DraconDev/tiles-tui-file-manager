@@ -1192,7 +1192,18 @@ pub fn handle_file_mouse(
 
                     // Double Click
                     if is_double {
-                        if path.is_dir() {
+                        let is_dir = if let Some(fs) = app.current_file_state() {
+                            if let Some(meta) = fs.metadata.get(&path) {
+                                meta.is_dir
+                            } else if fs.remote_session.is_some() {
+                                false
+                            } else {
+                                path.is_dir()
+                            }
+                        } else {
+                            path.is_dir()
+                        };
+                        if is_dir {
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.current_path = path.clone();
                                 fs.selection.clear();
@@ -1200,6 +1211,8 @@ pub fn handle_file_mouse(
                                 crate::event_helpers::push_history(fs, path);
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
+                        } else if app.current_file_state().and_then(|fs| fs.remote_session.as_ref()).is_some() {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(app.focused_pane_index, path));
                         } else {
                             let _ = open_file_or_navigate(&path);
                         }
