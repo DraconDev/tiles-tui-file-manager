@@ -1,24 +1,22 @@
 # Project State
 
 ## Current Focus
-Added support for importing OpenSSH configuration files to extract server bookmarks
+Added keyboard shortcut for importing OpenSSH configuration files in settings modal
 
 ## Context
-This change enables users to import server configurations from their existing SSH config files, streamlining the process of setting up remote connections in the application.
+This change enables users to quickly import their existing SSH configuration files by pressing 's' in the remotes settings section, pre-filling the input with the default SSH config path.
 
 ## Completed
-- [x] Added SSH config import functionality with validation
-- [x] Implemented duplicate server detection
-- [x] Added error handling for invalid SSH config files
-- [x] Included warning system for potential key path issues
-- [x] Added status message reporting for import results
+- [x] Added 's' keyboard shortcut for SSH config import in remotes settings
+- [x] Pre-filled input with default SSH config path (~/.ssh/config)
+- [x] Positioned cursor at end of pre-filled path
 
 ## In Progress
-- [ ] None (feature is complete)
+- [x] Implementation of actual SSH config parsing (from recent commits)
 
 ## Blockers
-- None (feature is complete)
+- None identified for this specific change
 
 ## Next Steps
-1. Verify integration with existing server management features
-2. Consider adding unit tests for the new import functionality
+1. Implement the actual SSH config parsing logic
+2. Add error handling for invalid config files

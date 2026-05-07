@@ -1483,6 +1483,16 @@ fn handle_settings_keys(
             }
             true
         }
+        KeyCode::Char('s') | KeyCode::Char('S')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            app.mode = AppMode::ImportSshConfig;
+            app.input.clear();
+            // Pre-fill with default SSH config path
+            app.input.set_value("~/.ssh/config".to_string());
+            app.input.cursor_position = app.input.value.len();
+            true
+        }
         KeyCode::Char('r') | KeyCode::Char('R')
             if app.settings_section == SettingsSection::Style =>
         {
