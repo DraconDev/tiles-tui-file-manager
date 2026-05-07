@@ -344,6 +344,8 @@ pub fn parse_ssh_config(content: &str) -> Vec<ServerConfig> {
     let mut current_user = String::new();
     let mut current_port: u16 = 22;
     let mut current_key: Option<PathBuf> = None;
+    let mut in_match_block = false;
+    let mut match_is_host = false;
 
     fn flush(
         servers: &mut Vec<ServerConfig>,
@@ -388,30 +390,54 @@ pub fn parse_ssh_config(content: &str) -> Vec<ServerConfig> {
 
         match keyword.to_ascii_lowercase().as_str() {
             "host" => {
+                in_match_block = false;
+                match_is_host = false;
                 // Flush previous entry
                 flush(&mut servers, &mut current_names, &mut current_hostname, &mut current_user, &mut current_port, &mut current_key);
                 current_names = args.into_iter().map(|s| s.to_string()).collect();
             }
+            "match" => {
+                // End any previous block
+                flush(&mut servers, &mut current_names, &mut current_hostname, &mut current_user, &mut current_port, &mut current_key);
+                // Check if this is "Match host <pattern>"
+                if args.len() >= 2 && args[0].to_ascii_lowercase() == "host" {
+                    in_match_block = true;
+                    match_is_host = true;
+                    current_names = args[1..].iter().map(|s| s.to_string()).collect();
+                } else {
+                    // Skip other Match types (exec, user, etc.)
+                    in_match_block = true;
+                    match_is_host = false;
+                }
+            }
             "hostname" => {
-                if let Some(v) = args.first() {
-                    current_hostname = Some(v.to_string());
+                if !in_match_block || match_is_host {
+                    if let Some(v) = args.first() {
+                        current_hostname = Some(v.to_string());
+                    }
                 }
             }
             "user" => {
-                if let Some(v) = args.first() {
-                    current_user = v.to_string();
+                if !in_match_block || match_is_host {
+                    if let Some(v) = args.first() {
+                        current_user = v.to_string();
+                    }
                 }
             }
             "port" => {
-                if let Some(v) = args.first() {
-                    if let Ok(p) = v.parse::<u16>() {
-                        current_port = p;
+                if !in_match_block || match_is_host {
+                    if let Some(v) = args.first() {
+                        if let Ok(p) = v.parse::<u16>() {
+                            current_port = p;
+                        }
                     }
                 }
             }
             "identityfile" => {
-                if let Some(v) = args.first() {
-                    current_key = Some(expand_tilde(&PathBuf::from(v.to_string())));
+                if !in_match_block || match_is_host {
+                    if let Some(v) = args.first() {
+                        current_key = Some(expand_tilde(&PathBuf::from(v.to_string())));
+                    }
                 }
             }
             _ => {}

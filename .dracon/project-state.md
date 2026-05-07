@@ -1,15 +1,16 @@
 # Project State
 
 ## Current Focus
-Added binary file detection for remote file previews to prevent corruption and improve UX
+Added support for parsing SSH `Match` blocks in configuration files
 
 ## Context
-Previously, the system would attempt to display binary files as text, which could corrupt the terminal. This change adds a check to detect binary files and display a size warning instead.
+The change extends the SSH config parser to handle `Match` directives, particularly focusing on `Match host` patterns. This was needed to properly handle conditional configurations in SSH config files.
 
 ## Completed
-- [x] Added `is_binary_file` function to detect binary files by checking for null bytes in the first 8KB
-- [x] Integrated binary detection into remote file preview logic
-- [x] Updated Cargo.lock with dependency updates
+- [x] Added tracking for `Match` block state
+- [x] Implemented special handling for `Match host` patterns
+- [x] Modified existing directives to respect `Match` block context
+- [x] Preserved existing behavior for non-Match configurations
 
 ## In Progress
 - [ ] No active work in progress
@@ -18,5 +19,5 @@ Previously, the system would attempt to display binary files as text, which coul
 - None identified
 
 ## Next Steps
-1. Verify binary detection works across different file types
-2. Consider adding more sophisticated binary detection if needed
+1. Verify handling of other `Match` types (user, exec, etc.)
+2. Add tests for the new `Match` block parsing logic
