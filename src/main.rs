@@ -232,7 +232,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     break;
                 }
                 let _ = tx.send(AppEvent::Tick).await;
-                tokio::time::sleep(Duration::from_millis(250)).await;
+                tokio::time::sleep(Duration::from_secs(1)).await;
             }
         });
     }

@@ -1,21 +1,20 @@
 # Project State
 
 ## Current Focus
-Optimized file watch synchronization in the terminal backend to reduce unnecessary redraws.
+Changed the tick interval from 250ms to 1 second in the terminal backend.
 
 ## Context
-The previous implementation forced a redraw on every tick event, which was inefficient. The change ensures redraws only occur when truly needed (keyboard, mouse, or state changes).
+The change was made to reduce the frequency of UI updates, which should improve performance while maintaining responsiveness.
 
 ## Completed
-- [x] Removed forced redraws from tick events
-- [x] Added comment clarifying event-driven redraw triggers
+- [x] Updated tick interval from 250ms to 1 second
 
 ## In Progress
-- [ ] None (change is complete)
+- [ ] None
 
 ## Blockers
-- None (this is a refactoring with no dependencies)
+- None
 
 ## Next Steps
-1. Verify no visual regressions in terminal UI
-2. Monitor performance impact with file watchers active
+1. Verify the new interval doesn't affect user experience negatively
+2. Consider making the interval configurable via settings
