@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Added comprehensive keyboard shortcuts for remote server management in the settings modal
+Enhanced remote server management UI with editing support and visual feedback
 
 ## Context
-This change enhances the remote server management interface by implementing keyboard shortcuts for common actions, improving accessibility and workflow efficiency.
+The remote server management system needed better visual distinction between adding new servers and editing existing ones. This change improves user experience by providing clear visual feedback during server configuration.
 
 ## Completed
-- [x] Added keyboard shortcuts for Add, Edit, Delete, Import, Export, and Connect actions
-- [x] Updated the layout constraints to accommodate the new shortcut information
-- [x] Removed the TOML format example text which was redundant with the shortcuts
+- [x] Added conditional title text ("Add Remote Server" vs "Edit Remote Server")
+- [x] Implemented dynamic border color (green for new, yellow for editing)
+- [x] Added state detection for editing mode based on server index
 
 ## In Progress
-- [ ] None (this change is complete)
+- [ ] None (changes are complete)
 
 ## Blockers
-- None (this change is complete)
+- None (UI improvements are complete)
 
 ## Next Steps
-1. Verify the new keyboard shortcuts work as expected in the UI
-2. Update user documentation to include the new shortcuts
+1. Verify keyboard shortcuts work with the new editing mode
+2. Test server configuration persistence with the updated UI

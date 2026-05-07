@@ -4880,11 +4880,16 @@ fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
 fn draw_add_remote_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(60, 50, f.area());
     f.render_widget(Clear, area);
+    
+    let is_editing = app.open_with_index > 0 && app.open_with_index < app.servers.len() + 1;
+    let title = if is_editing { " Edit Remote Server " } else { " Add Remote Server " };
+    let border_color = if is_editing { Color::Yellow } else { Color::Green };
+    
     let block = Block::default()
-        .title(" Add Remote Server ")
+        .title(title)
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Green));
+        .border_style(Style::default().fg(border_color));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
