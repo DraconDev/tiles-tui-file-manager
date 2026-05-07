@@ -1,24 +1,26 @@
 # Project State
 
 ## Current Focus
-Added context menu actions for remote server management in the sidebar
+Added comprehensive keyboard shortcuts for remote server management in settings
 
 ## Context
-This change implements functionality for managing remote servers through the sidebar context menu, building on the recent refactoring to use server configuration instead of remote bookmarks.
+The recent refactoring to use server configuration instead of remote bookmarks required corresponding UI updates. This change adds keyboard-driven management of remote servers in the settings modal.
 
 ## Completed
-- [x] Added `DeleteRemote` action to remove servers from configuration
-- [x] Added `ConnectRemote` action to establish connections to servers
-- [x] Implemented proper error handling for invalid server indices
-- [x] Added status message feedback for server deletion
+- [x] Added 'a' key to create new remote server configuration
+- [x] Added 'e' key to edit existing server configurations
+- [x] Added 'd' key to delete server configurations
+- [x] Added 'i' key to import server configurations
+- [x] Added 'x' key to export server configurations
+- [x] Added 't' key to open servers.toml in system editor
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] None (all keyboard shortcuts implemented)
 
 ## Blockers
-- None identified
+- None (feature complete)
 
 ## Next Steps
-1. Verify server connection handling works as expected
-2. Add visual feedback for connection status
-3. Implement server configuration editing interface
+1. Test keyboard navigation in settings modal
+2. Verify server configuration persistence
+```

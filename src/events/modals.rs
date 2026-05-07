@@ -1257,6 +1257,93 @@ fn handle_settings_keys(
             app.settings_index = 0;
             true
         }
+        // Remotes section actions
+        KeyCode::Char('a') | KeyCode::Char('A')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            app.pending_server = crate::servers::ServerConfig {
+                name: String::new(),
+                host: String::new(),
+                user: String::new(),
+                port: 22,
+                last_path: std::path::PathBuf::from("/"),
+                key_path: None,
+            };
+            app.mode = AppMode::AddRemote(0);
+            app.input.clear();
+            true
+        }
+        KeyCode::Char('e') | KeyCode::Char('E')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            if let Some(server) = app.servers.get(app.settings_index).cloned() {
+                app.pending_server = server;
+                app.mode = AppMode::AddRemote(0);
+                app.input.set_value(app.pending_server.name.clone());
+                app.input.cursor_position = app.pending_server.name.len();
+                // Store index for save handler to know we're editing
+                app.open_with_index = app.settings_index;
+            }
+            true
+        }
+        KeyCode::Char('d') | KeyCode::Char('D')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            if app.settings_index < app.servers.len() {
+                let name = app.servers[app.settings_index].name.clone();
+                app.servers.remove(app.settings_index);
+                crate::servers::save_servers_quiet(&app.servers);
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                    format!("Deleted server: {}", name)
+                ));
+                if app.settings_index >= app.servers.len() && app.settings_index > 0 {
+                    app.settings_index -= 1;
+                }
+            }
+            true
+        }
+        KeyCode::Char('i') | KeyCode::Char('I')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            app.mode = AppMode::ImportServers;
+            app.input.clear();
+            true
+        }
+        KeyCode::Char('x') | KeyCode::Char('X')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            if let Err(e) = export_servers_to_toml(&app.servers) {
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                    format!("Export failed: {}", e)
+                ));
+            } else {
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                    "Exported servers to ~/.config/tiles/servers-export.toml".to_string()
+                ));
+            }
+            true
+        }
+        KeyCode::Char('t') | KeyCode::Char('T')
+            if app.settings_section == SettingsSection::Remotes =>
+        {
+            // Open servers.toml in editor
+            if let Some(content) = crate::servers::read_servers_toml_raw() {
+                app.input.set_value(content);
+                app.input.cursor_position = 0;
+                app.mode = AppMode::EditorSearch; // Reuse editor search mode temporarily
+                // Actually, let's create a new mode or handle differently
+                // For now, open with system editor
+                if let Some(path) = crate::servers::servers_toml_path() {
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
+                        path: path.parent().unwrap_or(&std::path::PathBuf::from(".")).to_path_buf(),
+                        new_tab: false,
+                        remote: None,
+                        command: Some(format!("nano {}", path.display())),
+                    });
+                }
+            }
+            true
+        }
         KeyCode::Char('r') | KeyCode::Char('R')
             if app.settings_section == SettingsSection::Style =>
         {
