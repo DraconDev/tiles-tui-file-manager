@@ -385,6 +385,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if matches!(app.mode, AppMode::ImportServers) {
         draw_import_servers_modal(f, app);
     }
+    if matches!(app.mode, AppMode::ImportSshConfig) {
+        draw_import_ssh_config_modal(f, app);
+    }
     if let AppMode::OpenWith(ref path) = app.mode {
         draw_open_with_modal(f, app, path);
     }

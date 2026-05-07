@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added keyboard shortcut for importing OpenSSH configuration files with TOML and SSH config options
+Added UI support for importing OpenSSH configuration files
 
 ## Context
-This change enhances the remote settings UI by providing clearer import options for different configuration formats, making it easier for users to import server configurations.
+This change enables the UI to display a modal for importing OpenSSH configuration files, following the recent implementation of OpenSSH config parsing functionality.
 
 ## Completed
-- [x] Added TOML import option with `[I]` shortcut
-- [x] Added SSH config import option with `[S]` shortcut
-- [x] Improved visual clarity of import options in the UI
+- [x] Added UI modal for OpenSSH configuration import
+- [x] Integrated with existing OpenSSH parsing functionality
 
 ## In Progress
-- [ ] Testing import functionality across different configuration formats
+- [x] UI implementation for OpenSSH import feature
 
 ## Blockers
-- Missing integration tests for the new import options
+- Dependency on successful manifest loading for `dracon-files` (blocked by synth-1774826981)
 
 ## Next Steps
-1. Write integration tests for TOML and SSH config imports
-2. Verify error handling for malformed configurations
+1. Complete dependency resolution for `dracon-files`
+2. Add keyboard shortcut integration for OpenSSH import
