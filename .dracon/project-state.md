@@ -1,20 +1,24 @@
 # Project State
 
 ## Current Focus
-Minor dependency update in Cargo.lock
+Added context menu actions for remote server management in the sidebar
 
 ## Context
-This change is part of ongoing dependency management and project maintenance. The update ensures the project uses the latest compatible versions of dependencies while maintaining stability.
+This change implements functionality for managing remote servers through the sidebar context menu, building on the recent refactoring to use server configuration instead of remote bookmarks.
 
 ## Completed
-- [x] Updated Cargo.lock with dependency version changes
+- [x] Added `DeleteRemote` action to remove servers from configuration
+- [x] Added `ConnectRemote` action to establish connections to servers
+- [x] Implemented proper error handling for invalid server indices
+- [x] Added status message feedback for server deletion
 
 ## In Progress
-- [ ] None (dependency update is complete)
+- [ ] No active work in progress
 
 ## Blockers
-- None (this is a maintenance task)
+- None identified
 
 ## Next Steps
-1. Verify the updated dependencies don't introduce breaking changes
-2. Continue with the current planning phase for the `synth-1774826981` slice
+1. Verify server connection handling works as expected
+2. Add visual feedback for connection status
+3. Implement server configuration editing interface

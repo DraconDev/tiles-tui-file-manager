@@ -819,6 +819,25 @@ pub fn handle_context_menu_action(
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path, content));
             }
         }
+        ContextMenuAction::DeleteRemote => {
+            if let ContextMenuTarget::SidebarRemote(idx) = target {
+                if *idx < app.servers.len() {
+                    let name = app.servers[*idx].name.clone();
+                    app.servers.remove(*idx);
+                    crate::servers::save_servers_quiet(&app.servers);
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Deleted server: {}", name)
+                    ));
+                }
+            }
+        }
+        ContextMenuAction::ConnectRemote => {
+            if let ContextMenuTarget::SidebarRemote(idx) = target {
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(
+                    app.focused_pane_index, *idx
+                ));
+            }
+        }
         _ => {}
     }
 }
