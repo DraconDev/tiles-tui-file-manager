@@ -21,8 +21,8 @@ pub fn kill_modal_button_positions(term_size: (u16, u16)) -> (u16, u16, u16, u16
     let inner_y = my + 1;
     let inner_h = mh - 2;
     let button_y = inner_y + inner_h.saturating_sub(2);
-    let yes_x = inner_x + 5;
-    let no_x = inner_x + 25;
+    let no_x = inner_x + 5;
+    let yes_x = inner_x + 25;
     (inner_x, button_y, yes_x, no_x)
 }
 

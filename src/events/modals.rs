@@ -1802,7 +1802,13 @@ pub fn handle_modal_mouse(
                     column >= inner_x + bx && column < inner_x + bx + len && row == button_y
                 };
 
-                if is_hit(5, 9) {
+                if is_hit(5, 8) {
+                    app.mode = AppMode::Normal;
+                    app.input.clear();
+                    return true;
+                }
+
+                if is_hit(25, 9) {
                     // Collect paths to delete
                     if let Some(fs) = app.current_file_state() {
                         let mut paths = Vec::new();
@@ -1821,12 +1827,6 @@ pub fn handle_modal_mouse(
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(p));
                         }
                     }
-                    app.mode = AppMode::Normal;
-                    app.input.clear();
-                    return true;
-                }
-
-                if is_hit(25, 8) {
                     app.mode = AppMode::Normal;
                     app.input.clear();
                     return true;
