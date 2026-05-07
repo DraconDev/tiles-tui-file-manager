@@ -529,7 +529,6 @@ Host simple
         assert_eq!(servers[0].port, 22);
         assert!(servers[0].key_path.is_none());
     }
-}
 
     #[test]
     fn expand_tilde_no_tilde_returns_unchanged() {
@@ -556,6 +555,13 @@ Host simple
         let result = expand_tilde(std::path::Path::new("~root/.bashrc"));
         assert_eq!(result, std::path::PathBuf::from("/home/root/.bashrc"));
     }
+
+    #[test]
+    fn expand_tilde_user_no_slash() {
+        let result = expand_tilde(std::path::Path::new("~nobody"));
+        assert_eq!(result, std::path::PathBuf::from("/home/nobody"));
+    }
+}
 
     #[test]
     fn expand_tilde_user_no_slash() {

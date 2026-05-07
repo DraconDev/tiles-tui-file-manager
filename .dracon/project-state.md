@@ -1,21 +1,25 @@
 # Project State
 
 ## Current Focus
-Added UI support for importing OpenSSH configuration files
+Added UI support for importing OpenSSH configuration files with keyboard shortcuts and path expansion
 
 ## Context
-This change enables the UI to display a modal for importing OpenSSH configuration files, following the recent implementation of OpenSSH config parsing functionality.
+This change enables users to import SSH configuration files directly into the application, improving setup efficiency and consistency with standard SSH tools.
 
 ## Completed
-- [x] Added UI modal for OpenSSH configuration import
-- [x] Integrated with existing OpenSSH parsing functionality
+- [x] Added modal UI for importing SSH config files
+- [x] Implemented keyboard shortcuts for import operations
+- [x] Added tilde (~) path expansion for server key paths
+- [x] Enhanced server configuration parsing with comprehensive unit tests
 
 ## In Progress
-- [x] UI implementation for OpenSSH import feature
+- [ ] Integration testing of the import functionality
 
 ## Blockers
-- Dependency on successful manifest loading for `dracon-files` (blocked by synth-1774826981)
+- Missing validation for SSH config file permissions
+- Need to confirm default import behavior for existing configurations
 
 ## Next Steps
-1. Complete dependency resolution for `dracon-files`
-2. Add keyboard shortcut integration for OpenSSH import
+1. Implement validation for SSH config file permissions
+2. Add user confirmation for overwriting existing configurations
+3. Complete integration tests for the import feature

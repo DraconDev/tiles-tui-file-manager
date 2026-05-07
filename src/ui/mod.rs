@@ -3506,6 +3506,66 @@ port = 22"#;
     f.render_widget(Paragraph::new(Line::from(footer_text)), chunks[3]);
 }
 
+fn draw_import_ssh_config_modal(f: &mut Frame, app: &App) {
+    let area = centered_rect(65, 22, f.area());
+    f.render_widget(Clear, area);
+    let block = Block::default()
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .title(" Import from SSH Config ")
+        .border_style(Style::default().fg(crate::ui::theme::accent_secondary()));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(2),
+            Constraint::Length(1),
+            Constraint::Fill(1),
+            Constraint::Length(1),
+        ])
+        .split(inner);
+
+    f.render_widget(
+        Paragraph::new("Enter path to SSH config file (e.g., ~/.ssh/config):"),
+        chunks[0],
+    );
+
+    let input_area = chunks[1];
+    f.render_widget(
+        Paragraph::new("> ").style(Style::default().fg(crate::ui::theme::accent_secondary())),
+        Rect::new(input_area.x, input_area.y, 2, 1),
+    );
+    f.render_widget(
+        &app.input,
+        Rect::new(
+            input_area.x + 2,
+            input_area.y,
+            input_area.width.saturating_sub(2),
+            1,
+        ),
+    );
+
+    let example = r#"Parses Host entries:
+Host myserver
+    HostName 192.168.1.1
+    User admin
+    Port 2222
+    IdentityFile ~/.ssh/id_rsa"#;
+
+    f.render_widget(
+        Paragraph::new(example).style(Style::default().fg(Color::DarkGray)),
+        chunks[2],
+    );
+
+    let mut footer_text = Vec::new();
+    footer_text.extend(HotkeyHint::render("Esc", "Cancel", Color::Red));
+    footer_text.extend(HotkeyHint::render("Enter", "Import", Color::Green));
+
+    f.render_widget(Paragraph::new(Line::from(footer_text)), chunks[3]);
+}
+
 fn draw_command_palette(f: &mut Frame, app: &mut App) {
     let area = centered_rect(60, 40, f.area());
     f.render_widget(Clear, area);
