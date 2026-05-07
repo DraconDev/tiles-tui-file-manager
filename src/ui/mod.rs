@@ -3055,8 +3055,23 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
 
         // Add Remote Status Badge - show server name for active pane
         if let Some(fs) = app.current_file_state() {
-            if let Some(ref remote) = fs.remote_session {
+            if let Some(remote) = &fs.remote_session {
+                let health_color = if let Some((healthy, last_check)) = app.remote_health.get(&remote.name) {
+                    if !healthy {
+                        Color::Red
+                    } else if last_check.elapsed().as_secs() > 60 {
+                        Color::Yellow
+                    } else {
+                        Color::Green
+                    }
+                } else {
+                    Color::Gray
+                };
                 left_spans.push(Span::raw(" │ "));
+                left_spans.push(Span::styled(
+                    "●",
+                    Style::default().fg(health_color).add_modifier(Modifier::BOLD),
+                ));
                 left_spans.push(Span::styled(
                     format!(
                         " {} {} ",

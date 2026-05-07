@@ -1,26 +1,22 @@
 # Project State
 
 ## Current Focus
-Added remote connection health tracking to application state for better error handling and monitoring
+Added visual remote connection health indicator in the UI footer
 
 ## Context
-The change improves reliability by tracking SSH connection health, which was previously missing. This helps with:
-- Detecting failed connections
-- Providing feedback to users
-- Enabling automatic retries or fallbacks
+This change implements a visual health indicator for remote connections in the application footer, showing connection status with color-coded indicators (green for healthy, yellow for stale, red for unhealthy).
 
 ## Completed
-- [x] Added remote connection health tracking in application state
-- [x] Implemented connection health updates on success/failure
-- [x] Added debug logging for connection status
-- [x] Maintained existing functionality while adding health tracking
+- [x] Added remote connection health status indicator in UI footer
+- [x] Implemented color-coded status (green/yellow/red) based on connection health
+- [x] Added visual indicator (●) to show connection status at a glance
 
 ## In Progress
-- [ ] (none - this is a complete feature)
+- [ ] None (this is a complete feature implementation)
 
 ## Blockers
-- None - this is a complete implementation
+- None (feature is complete and integrated)
 
 ## Next Steps
-1. Use the health tracking in UI components to show connection status
-2. Add automatic reconnection logic based on health status
+1. Verify the health indicator updates correctly during connection state changes
+2. Consider adding tooltips to explain the status colors to users
