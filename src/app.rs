@@ -9,7 +9,7 @@ use dracon_terminal_engine::widgets::TextInput;
 pub use crate::state::{
     AppEvent, AppMode, ClipboardOp, CommandAction, CommandItem, CommitInfo, ContextMenuAction,
     ContextMenuTarget, CurrentView, DropTarget, FileCategory, FileColumn, FileMetadata, FileState,
-    GitPendingChange, MonitorSubview, Pane, PreviewState, ProcessColumn,
+    GitPendingChange, MonitorSubview, Pane, PreviewState, ProcessColumn, RemoteSession,
     SettingsSection, SettingsTarget, SidebarBounds, SidebarTarget,
     SystemState, UndoAction, ViewPreferences, ViewStatePersistence,
 };
@@ -82,6 +82,7 @@ pub struct App {
     pub header_icon_bounds: Vec<(ratatui::layout::Rect, String)>,
     pub tab_bounds: Vec<(ratatui::layout::Rect, usize, usize)>,
     pub hovered_header_icon: Option<String>,
+    pub tab_tooltip: Option<(String, u16, u16)>, // (text, x, y)
     /// Folders expanded in the main file pane view.
     /// Controls expand/collapse in the file listing.
     pub expanded_folders: HashSet<PathBuf>,
@@ -127,6 +128,9 @@ pub struct App {
     #[allow(dead_code)]
     pub tile_queue: Arc<StdMutex<Vec<TilePlacement>>>,
     pub saved_pane: Option<Pane>,
+    /// SSH connection pool: bookmark name -> RemoteSession
+    /// Allows multiple tabs to reuse the same SSH connection.
+    pub remote_session_pool: HashMap<String, RemoteSession>,
 }
 
 impl App {
@@ -206,6 +210,7 @@ impl App {
             servers: Vec::new(),
             pending_server: crate::servers::ServerConfig {
                 name: String::new(),
+                alias: None,
                 host: String::new(),
                 user: String::new(),
                 port: 22,
@@ -257,6 +262,7 @@ impl App {
             header_icon_bounds: Vec::new(),
             tab_bounds: Vec::new(),
             hovered_header_icon: None,
+            tab_tooltip: None,
             expanded_folders: HashSet::new(),
             tree_expanded_folders: HashSet::new(),
             sidebar_tree_cache: None,
@@ -299,6 +305,7 @@ editor: ViewPreferences {
             background_tasks: Vec::new(),
             tile_queue,
             saved_pane: None,
+            remote_session_pool: HashMap::new(),
         }
     }
 

@@ -514,7 +514,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 if !show_remotes {
                     break;
                 }
-                if !matches_filter(&bookmark.name) {
+                if !matches_filter(bookmark.display_name()) {
                     continue;
                 }
 
@@ -546,7 +546,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     ));
                 }
                 let icon = Icon::Remote.get(app.icon_mode);
-                spans.push(Span::styled(format!("{}{} ", icon, bookmark.name), style));
+                spans.push(Span::styled(format!("{}{} ", icon, bookmark.display_name()), style));
                 spans.push(Span::styled(
                     "[ssh]",
                     if is_selected {

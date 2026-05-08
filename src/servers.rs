@@ -32,6 +32,8 @@ pub fn expand_tilde(path: &Path) -> PathBuf {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ServerConfig {
     pub name: String,
+    #[serde(default)]
+    pub alias: Option<String>,
     pub host: String,
     pub user: String,
     #[serde(default = "default_port")]
@@ -40,6 +42,13 @@ pub struct ServerConfig {
     pub key_path: Option<PathBuf>,
     #[serde(default)]
     pub last_path: PathBuf,
+}
+
+impl ServerConfig {
+    /// Returns the alias if set, otherwise the name
+    pub fn display_name(&self) -> &str {
+        self.alias.as_deref().unwrap_or(&self.name)
+    }
 }
 
 fn default_port() -> u16 {
@@ -155,6 +164,7 @@ pub fn maybe_migrate_legacy_bookmarks(legacy: &[crate::state::RemoteBookmark]) {
         .iter()
         .map(|b| ServerConfig {
             name: b.name.clone(),
+            alias: b.alias.clone(),
             host: b.host.clone(),
             user: b.user.clone(),
             port: b.port,
@@ -178,6 +188,7 @@ impl From<ServerConfig> for crate::state::RemoteBookmark {
     fn from(s: ServerConfig) -> Self {
         crate::state::RemoteBookmark {
             name: s.name,
+            alias: s.alias,
             host: s.host,
             user: s.user,
             port: s.port,
@@ -192,6 +203,7 @@ impl From<crate::state::RemoteBookmark> for ServerConfig {
     fn from(b: crate::state::RemoteBookmark) -> Self {
         ServerConfig {
             name: b.name,
+            alias: b.alias,
             host: b.host,
             user: b.user,
             port: b.port,
@@ -210,9 +222,12 @@ pub fn read_servers_toml_raw() -> Option<String> {
             r#"# Tiles Server Configuration
 # Add your remote servers here.
 # Each [[server]] block defines one bookmark.
+#
+# Optional: alias = "Display Name" (shown in UI instead of name)
 
 [[server]]
 name = "Example Server"
+# alias = "My Server"
 host = "192.168.1.100"
 user = "admin"
 port = 22
@@ -388,6 +403,7 @@ pub fn parse_ssh_config(content: &str) -> Vec<ServerConfig> {
                 }
                 servers.push(ServerConfig {
                     name: name.clone(),
+                    alias: None,
                     host: host.clone(),
                     user: user.clone(),
                     port: *port,

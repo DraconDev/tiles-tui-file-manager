@@ -59,7 +59,7 @@ pub fn update_commands(app: &mut App) {
     for (i, bookmark) in app.servers.iter().enumerate() {
         commands.push(CommandItem {
             key: format!("r{}", i),
-            desc: format!("Connect to {}", bookmark.name),
+            desc: format!("Connect to {}", bookmark.display_name()),
             action: CommandAction::ConnectToRemote(i),
         });
     }
@@ -587,23 +587,13 @@ pub fn handle_context_menu_action(
             }
         }
         ContextMenuAction::Compress => {
-            if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
-                if let Some(path) = path_opt {
-                    let name = path.file_name()
-                        .and_then(|n| n.to_str())
-                        .unwrap_or("archive");
-                    let dest = path.parent()
-                        .map(|p| p.join(format!("{}.zip", name)));
-                    if let Some(dest_path) = dest {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                            "Compressing {}...",
-                            path.display()
-                        )));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(path.clone(), dest_path));
-                    }
+            if let Some(fs) = app.current_file_state() {
+                let selected: Vec<PathBuf> = fs.selection.multi_selected_indices().iter()
+                    .filter_map(|&idx| fs.files.get(idx).cloned())
+                    .collect();
+                if !selected.is_empty() {
+                    app.mode = AppMode::CreateArchive(selected);
+                    app.input.clear();
                 }
             }
         }

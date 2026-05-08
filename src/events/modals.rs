@@ -255,7 +255,8 @@ fn handle_modal_keys(
         | AppMode::Rename
         | AppMode::Delete(_)
         | AppMode::DeleteFile(_)
-        | AppMode::BulkRename { .. } => handle_input_modals_keys(key, app, event_tx),
+        | AppMode::BulkRename { .. }
+        | AppMode::CreateArchive(_) => handle_input_modals_keys(key, app, event_tx),
         AppMode::PathInput => handle_path_input_keys(key, app, event_tx),
         AppMode::SaveAs(_) => handle_save_as_keys(key, app, event_tx),
         AppMode::Header(idx) => handle_header_keys(key, app, event_tx, idx),
@@ -1004,10 +1005,11 @@ fn handle_add_remote_keys(
             let val = app.input.value.clone();
             match idx {
                 0 => app.pending_server.name = val,
-                1 => app.pending_server.host = val,
-                2 => app.pending_server.user = val,
-                3 => app.pending_server.port = val.parse().unwrap_or(22),
-                4 => {
+                1 => app.pending_server.alias = if val.is_empty() { None } else { Some(val) },
+                2 => app.pending_server.host = val,
+                3 => app.pending_server.user = val,
+                4 => app.pending_server.port = val.parse().unwrap_or(22),
+                5 => {
                     app.pending_server.key_path = if val.is_empty() {
                         None
                     } else {
@@ -1016,7 +1018,7 @@ fn handle_add_remote_keys(
                 }
                 _ => {}
             }
-            if idx < 4 {
+            if idx < 5 {
                 app.mode = AppMode::AddRemote(idx + 1);
                 app.input.set_value(String::new());
             } else {
@@ -1131,6 +1133,7 @@ fn handle_import_servers_keys(
                     for s in data.servers {
                         let candidate = crate::servers::ServerConfig {
                             name: s.name,
+                            alias: None,
                             host: s.host,
                             user: s.user,
                             port: s.port,
@@ -1455,6 +1458,20 @@ fn handle_input_modals_keys(
                             }
                         }
                     }
+                    AppMode::CreateArchive(ref paths) => {
+                        let input = app.input.value.trim();
+                        if !input.is_empty() {
+                            let archive_name = if input.ends_with(".tar.gz") || input.ends_with(".zip") {
+                                input.to_string()
+                            } else {
+                                format!("{}.tar.gz", input)
+                            };
+                            if let Some(fs) = app.current_file_state() {
+                                let dest = fs.current_path.join(&archive_name);
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateArchive(paths.clone(), dest));
+                            }
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -1544,6 +1561,7 @@ fn handle_settings_keys(
         {
             app.pending_server = crate::servers::ServerConfig {
                 name: String::new(),
+                alias: None,
                 host: String::new(),
                 user: String::new(),
                 port: 22,

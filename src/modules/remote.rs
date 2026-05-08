@@ -37,6 +37,7 @@ pub fn connect_remote(bookmark: &RemoteBookmark) -> anyhow::Result<RemoteSession
         host: connected.host,
         user: connected.user,
         name: connected.name,
+        alias: bookmark.alias.clone(),
         port: connected.port,
         key_path: connected.key_path,
     })
@@ -194,6 +195,23 @@ pub fn upload_file(remote: &RemoteSession, local_path: &Path, remote_path: &Path
         upload_via_base64(remote, local_path, remote_path)?;
     }
     Ok(())
+}
+
+/// Calculate the total size of a remote directory in bytes.
+/// Uses `du -sb` for fast calculation.
+pub fn folder_size(remote: &RemoteSession, path: &Path) -> std::io::Result<u64> {
+    let path_str = path.to_string_lossy().replace('\'', "'\"'\"'");
+    let output = exec_program(remote, "sh", &["-c", &format!(
+        "du -sb '{}' 2>/dev/null | cut -f1",
+        path_str
+    )])?;
+    let size: u64 = output.trim().parse().map_err(|e| {
+        std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            format!("Failed to parse folder size: {}", e),
+        )
+    })?;
+    Ok(size)
 }
 
 fn upload_via_scp(
@@ -539,6 +557,38 @@ fn escape_shell_single_quoted(input: &str) -> String {
     format!("'{}'", input.replace('\'', "'\"'\"'"))
 }
 
+pub async fn create_archive(
+    remote: &RemoteSession,
+    paths: &[PathBuf],
+    dest: &Path,
+) -> std::io::Result<()> {
+    let is_zip = dest.extension().and_then(|e| e.to_str()) == Some("zip");
+    
+    let path_strs: Vec<String> = paths.iter()
+        .map(|p| p.to_string_lossy().to_string())
+        .collect();
+    
+    if is_zip {
+        let args = ["-r"]
+            .iter()
+            .map(|s| s.to_string())
+            .chain(std::iter::once(dest.to_string_lossy().to_string()))
+            .chain(path_strs.into_iter())
+            .collect::<Vec<_>>();
+        exec_program(remote, "zip", &args.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
+    } else {
+        let args = ["-czf"]
+            .iter()
+            .map(|s| s.to_string())
+            .chain(std::iter::once(dest.to_string_lossy().to_string()))
+            .chain(path_strs.into_iter())
+            .collect::<Vec<_>>();
+        exec_program(remote, "tar", &args.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
+    }
+    
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -548,6 +598,7 @@ mod tests {
             host: "example.com".to_string(),
             user: "dracon".to_string(),
             name: "test".to_string(),
+            alias: None,
             port: 2222,
             key_path: Some(PathBuf::from("/home/dracon/.ssh/id_ed25519")),
         }

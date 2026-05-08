@@ -373,13 +373,33 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
-                    let remote_opt = {
+                    let (remote_opt, cached_session) = {
                         let app_guard = app.lock();
-                        app_guard.servers.get(bookmark_idx)
+                        let remote_opt = app_guard.servers.get(bookmark_idx)
                             .cloned()
-                            .map(crate::state::RemoteBookmark::from)
+                            .map(crate::state::RemoteBookmark::from);
+                        let cached = remote_opt.as_ref()
+                            .and_then(|r| app_guard.remote_session_pool.get(&r.name).cloned());
+                        (remote_opt, cached)
                     };
-                    if let Some(remote) = remote_opt {
+                    
+                    if let Some(session) = cached_session {
+                        // Reuse cached connection
+                        let mut app_guard = app.lock();
+                        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                            if let Some(fs) = pane.current_state_mut() {
+                                fs.remote_session = Some(session);
+                                fs.bookmark_idx = Some(bookmark_idx);
+                                fs.retry_count = 0;
+                                fs.current_path = PathBuf::from("/");
+                            }
+                        }
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                            "Connected to {} (cached)",
+                            remote_opt.as_ref().map(|r| r.display_name()).unwrap_or_default()
+                        )));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                    } else if let Some(remote) = remote_opt {
                         // Store bookmark_idx for potential reconnection
                         {
                             let mut app_guard = app.lock();
@@ -392,9 +412,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                         let tx = event_tx.clone();
                         let p_idx = pane_idx;
+                        let remote_name = remote.name.clone();
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Connecting to {} ({})...",
-                            remote.name, remote.host
+                            remote.display_name(), remote.host
                         )));
 
                         tokio::spawn(async move {
@@ -406,7 +427,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             match connect_result {
                                 Ok(Ok(session)) => {
                                     let _ =
-                                        tx.send(AppEvent::RemoteConnected(p_idx, session)).await;
+                                        tx.send(AppEvent::RemoteConnected(p_idx, session, remote_name)).await;
                                 }
                                 Ok(Err(e)) => {
                                     let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
@@ -422,8 +443,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         });
                     }
                 }
-                AppEvent::RemoteConnected(pane_idx, session) => {
+                AppEvent::RemoteConnected(pane_idx, session, remote_name) => {
                     let mut app_guard = app.lock();
+                    // Cache the session for reuse
+                    app_guard.remote_session_pool.insert(remote_name.clone(), session.clone());
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
@@ -1098,16 +1121,52 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     editor.language = "diff".to_string();
                     editor.read_only = true;
                     
-                    let pane_idx = app.focused_pane_index;
+                    let pane_idx = {
+                        let app_guard = app.lock();
+                        app_guard.focused_pane_index
+                    };
                     let mut app_guard = app.lock();
                     if let Some(fs) = app_guard.panes.get_mut(pane_idx).and_then(|p| p.current_state_mut()) {
                         fs.preview = Some(crate::state::PreviewState {
                             path: path_a.clone(),
-                            editor,
+                            editor: Some(editor),
                             content: diff_content,
+                            last_saved: None,
+                            image_data: None,
+                            highlighted_lines: None,
                         });
                     }
                     needs_draw = true;
+                }
+                AppEvent::CreateArchive(paths, dest) => {
+                    let remote = {
+                        let app_guard = app.lock();
+                        app_guard
+                            .current_file_state()
+                            .and_then(|fs| fs.remote_session.clone())
+                    };
+                    
+                    let tx = event_tx.clone();
+                    tokio::spawn(async move {
+                        let result = if let Some(remote) = &remote {
+                            crate::modules::remote::create_archive(remote, &paths, &dest).await
+                        } else {
+                            crate::modules::files::create_archive(&paths, &dest).await
+                        };
+                        
+                        match result {
+                            Ok(_) => {
+                                let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(
+                                    format!("Created archive: {}", dest.display())
+                                ));
+                            }
+                            Err(e) => {
+                                let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(
+                                    format!("Failed to create archive: {}", e)
+                                ));
+                            }
+                        }
+                    });
                 }
                 AppEvent::UploadToRemote(src, dest) => {
                     let tx = event_tx.clone();
@@ -1195,6 +1254,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Symlink failed: {}", e)));
                         }
                     }
+                }
+                AppEvent::FolderSizesUpdated(pane_idx, sizes) => {
+                    let mut app_guard = app.lock();
+                    if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                        if let Some(fs) = pane.current_state_mut() {
+                            fs.folder_sizes.extend(sizes);
+                        }
+                    }
+                    needs_draw = true;
                 }
                 AppEvent::SpawnTerminal {
                     path,
@@ -1601,7 +1669,31 @@ paired = new_paired;
 
                             fs.tree_file_depths = tree_file_depths;
                             fs.files = files;
-                            fs.metadata = metadata;
+                            fs.metadata = metadata.clone();
+                            fs.folder_sizes.clear(); // Clear stale folder sizes
+
+                            // Calculate folder sizes asynchronously
+                            let dirs_to_size: Vec<PathBuf> = fs.files.iter()
+                                .filter(|p| metadata.get(*p).map(|m| m.is_dir).unwrap_or(false))
+                                .cloned()
+                                .collect();
+                            if !dirs_to_size.is_empty() {
+                                let size_remote = remote.clone();
+                                let size_tx = tx.clone();
+                                let size_pane_idx = pane_idx;
+                                tokio::spawn(async move {
+                                    let mut sizes = std::collections::HashMap::new();
+                                    for dir_path in dirs_to_size {
+                                        let size = if let Some(ref session) = size_remote {
+                                            crate::modules::remote::folder_size(session, &dir_path).unwrap_or(0)
+                                        } else {
+                                            crate::modules::files::folder_size(&dir_path)
+                                        };
+                                        sizes.insert(dir_path, size);
+                                    }
+                                    let _ = size_tx.send(AppEvent::FolderSizesUpdated(size_pane_idx, sizes)).await;
+                                });
+                            }
 
                             // Apply pending selection and scroll (e.g., after navigate_up)
                             if let Some((pending_path, pending_scroll)) = fs.pending_select_path.take() {

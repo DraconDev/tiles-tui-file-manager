@@ -20,9 +20,11 @@ pub enum AppEvent {
     Delete(PathBuf),
     TrashFile(PathBuf),
     Chmod(PathBuf, u32),
+    CreateArchive(Vec<PathBuf>, PathBuf),
     ComputeChecksums(PathBuf),
     Copy(PathBuf, PathBuf),
     UploadToRemote(PathBuf, PathBuf),
+    FolderSizesUpdated(usize, std::collections::HashMap<std::path::PathBuf, u64>),
     CompareFiles(PathBuf, PathBuf),
     Symlink(PathBuf, PathBuf),
     StatusMsg(String),
@@ -33,7 +35,7 @@ pub enum AppEvent {
     SystemMonitor,
     AddToFavorites(PathBuf),
     ConnectToRemote(usize, usize),
-    RemoteConnected(usize, RemoteSession),
+    RemoteConnected(usize, RemoteSession, String),
     ReconnectRemote(usize),
     SystemUpdated(dracon_system::SystemSnapshot),
 
@@ -187,6 +189,7 @@ pub enum AppMode {
     AddRemote(usize),
     ImportServers,
     ImportSshConfig,
+    CreateArchive(Vec<PathBuf>),
     Viewer,
     Hotkeys,
     Header(usize),
@@ -279,6 +282,8 @@ pub struct FileMetadata {
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct RemoteBookmark {
     pub name: String,
+    #[serde(default)]
+    pub alias: Option<String>,
     pub host: String,
     pub user: String,
     pub port: u16,
@@ -286,11 +291,20 @@ pub struct RemoteBookmark {
     pub key_path: Option<PathBuf>,
 }
 
+impl RemoteBookmark {
+    /// Returns the alias if set, otherwise the name
+    pub fn display_name(&self) -> &str {
+        self.alias.as_deref().unwrap_or(&self.name)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RemoteSession {
     pub host: String,
     pub user: String,
     pub name: String,
+    #[serde(default)]
+    pub alias: Option<String>,
     pub port: u16,
     pub key_path: Option<PathBuf>,
 }
@@ -302,6 +316,13 @@ impl std::fmt::Debug for RemoteSession {
             .field("user", &self.user)
             .field("name", &self.name)
             .finish()
+    }
+}
+
+impl RemoteSession {
+    /// Returns the alias if set, otherwise the name
+    pub fn display_name(&self) -> &str {
+        self.alias.as_deref().unwrap_or(&self.name)
     }
 }
 
@@ -325,6 +346,8 @@ pub struct FileState {
     pub sort_ascending: bool,
     #[serde(skip)]
     pub metadata: HashMap<PathBuf, FileMetadata>,
+    #[serde(skip)]
+    pub folder_sizes: HashMap<PathBuf, u64>,
     #[serde(skip)]
     #[allow(dead_code)]
     pub path_colors: HashMap<PathBuf, u8>,
@@ -403,6 +426,7 @@ impl FileState {
             sort_column: sort_col,
             sort_ascending: sort_asc,
             metadata: HashMap::new(),
+            folder_sizes: HashMap::new(),
             path_colors: HashMap::new(),
             preview: None,
             view_height: 0,

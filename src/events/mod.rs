@@ -426,7 +426,7 @@ fn handle_general_mouse(
     }
 
     // 4. Tabs
-    if let Some((_, p_idx, t_idx)) = app
+    if let Some((rect, p_idx, t_idx)) = app
         .tab_bounds
         .iter()
         .find(|(r, _, _)| r.contains(ratatui::layout::Position { x: column, y: row }))
@@ -454,8 +454,25 @@ fn handle_general_mouse(
                 }
                 return true;
             }
+            MouseEventKind::Moved | MouseEventKind::Drag(_) => {
+                // Show tooltip with tab details
+                if let Some(pane) = app.panes.get(p_idx) {
+                    if let Some(tab) = pane.tabs.get(t_idx) {
+                        let mut tooltip_lines = Vec::new();
+                        tooltip_lines.push(format!("Path: {}", tab.current_path.display()));
+                        if let Some(ref remote) = tab.remote_session {
+                            tooltip_lines.push(format!("Server: {} ({}", remote.display_name(), remote.host));
+                            tooltip_lines.push(format!("User: {} | Port: {}", remote.user, remote.port));
+                        }
+                        let tooltip_text = tooltip_lines.join("\n");
+                        app.tab_tooltip = Some((tooltip_text, rect.x, rect.y + 1));
+                    }
+                }
+            }
             _ => {}
         }
+    } else {
+        app.tab_tooltip = None;
     }
 
     // 5. Sidebar vs Panes
