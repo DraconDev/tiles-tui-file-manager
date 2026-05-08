@@ -1,22 +1,21 @@
 # Project State
 
 ## Current Focus
-Added checksum caching to track file integrity verification results
+Added checksum computation capability to verify file integrity
 
 ## Context
-To improve file integrity verification performance, we're caching computed checksums (MD5 and SHA256) to avoid recomputing them for the same files.
+This change enables the system to compute checksums for files, which is necessary for verifying file integrity during operations like uploads and downloads.
 
 ## Completed
-- [x] Added `checksum_cache` field to store path-to-checksum mappings
-- [x] Initialized empty cache in App constructor
+- [x] Added `ComputeChecksums` event to the application state
+- [x] Enabled checksum computation for file operations
 
 ## In Progress
-- [ ] Implement actual checksum computation and caching logic
+- [x] Implementation of checksum computation logic
 
 ## Blockers
-- Missing checksum computation implementation for local files
-- Need to determine cache invalidation strategy
+- Missing checksum computation implementation for the new event type
 
 ## Next Steps
-1. Implement checksum computation for local files
-2. Add cache invalidation when files are modified
+1. Implement checksum computation logic for the new event type
+2. Integrate checksum verification into file operations
