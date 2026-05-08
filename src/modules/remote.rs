@@ -188,6 +188,7 @@ pub fn download_remote_file(remote: &RemoteSession, path: &Path) -> std::io::Res
 
 /// Upload a local file to a remote path using scp (preferred) or base64 fallback.
 /// Returns Ok(()) on success.
+#[allow(dead_code)]
 pub fn upload_file(remote: &RemoteSession, local_path: &Path, remote_path: &Path) -> std::io::Result<()> {
     // Try scp first, fall back to base64 encoding via ssh exec
     if upload_via_scp(remote, local_path, remote_path).is_ok() {
@@ -270,6 +271,7 @@ fn upload_via_scp(
     Ok(())
 }
 
+#[allow(dead_code)]
 fn upload_via_base64(
     remote: &RemoteSession,
     local_path: &Path,
@@ -287,7 +289,7 @@ fn upload_via_base64_with_progress(
     use base64::Engine;
     
     let bytes = std::fs::read(local_path)?;
-    let total_size = bytes.len();
+    let _total_size = bytes.len();
     let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
     
     let remote_path_escaped = remote_path.to_string_lossy().replace('\'', "'\"'\"'");
