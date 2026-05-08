@@ -1078,6 +1078,37 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     });
                 }
+                AppEvent::CompareFiles(path_a, path_b) => {
+                    let remote = {
+                        let app_guard = app.lock();
+                        app_guard
+                            .current_file_state()
+                            .and_then(|fs| fs.remote_session.clone())
+                    };
+                    
+                    let diff_content = if let Some(remote) = &remote {
+                        crate::modules::remote::diff_files(remote, &path_a, &path_b)
+                            .unwrap_or_else(|e| format!("Error computing diff: {}", e))
+                    } else {
+                        crate::modules::files::diff_files(&path_a, &path_b)
+                            .unwrap_or_else(|e| format!("Error computing diff: {}", e))
+                    };
+                    
+                    let mut editor = dracon_terminal_engine::widgets::TextEditor::with_content(&diff_content);
+                    editor.language = "diff".to_string();
+                    editor.read_only = true;
+                    
+                    let pane_idx = app.focused_pane_index;
+                    let mut app_guard = app.lock();
+                    if let Some(fs) = app_guard.panes.get_mut(pane_idx).and_then(|p| p.current_state_mut()) {
+                        fs.preview = Some(crate::state::PreviewState {
+                            path: path_a.clone(),
+                            editor,
+                            content: diff_content,
+                        });
+                    }
+                    needs_draw = true;
+                }
                 AppEvent::UploadToRemote(src, dest) => {
                     let tx = event_tx.clone();
                     let app_clone = app.clone();

@@ -1,28 +1,25 @@
 # Project State
 
 ## Current Focus
-Added unified file comparison functionality to enable diff operations between local files
+Added unified file comparison functionality to enable diff operations between local and remote files
 
 ## Context
-This implements a core feature for comparing file contents, supporting:
-- Unified diff output format
-- Error handling for diff command failures
-- Clear output when files are identical
-- Integration with existing file handling modules
+This change implements a new file comparison feature that works with both local and remote files, providing a unified interface for diff operations. It was prompted by the need for better file comparison capabilities in the application.
 
 ## Completed
-- [x] Added `diff_files` function that computes unified diff between two files
-- [x] Handles diff command output and error cases
-- [x] Returns clear messages for identical files
-- [x] Properly processes file paths for the diff command
+- [x] Added `CompareFiles` event handler in main.rs
+- [x] Implemented unified diff computation for both local and remote files
+- [x] Added text editor preview for diff results
+- [x] Updated context menu to include Compare action
+- [x] Removed outdated Drag action from context menu
 
 ## In Progress
-- [ ] Integration with UI context menu (mentioned in recent commits)
+- [ ] No active work in progress
 
 ## Blockers
-- UI integration requires frontend changes not yet implemented
+- None identified
 
 ## Next Steps
-1. Implement UI integration for file comparison
-2. Add unit tests for the diff functionality
-3. Consider adding support for binary file comparison
+1. Test the new file comparison functionality with various file types
+2. Add more diff visualization options
+3. Implement file comparison between different remote sessions

@@ -3359,9 +3359,7 @@ fn draw_context_menu(
             ContextMenuAction::CollapseAll => {
                 format!(" {} Collapse All", Icon::Folder.get(app.icon_mode))
             }
-            ContextMenuAction::Drag => {
-                format!(" {} Drag...", Icon::Remote.get(app.icon_mode))
-            }
+            ContextMenuAction::Compare => format!(" {} Compare", Icon::Document.get(app.icon_mode)),
             ContextMenuAction::SetColor(_) => {
                 format!(" {} Highlight...", Icon::Image.get(app.icon_mode))
             }
