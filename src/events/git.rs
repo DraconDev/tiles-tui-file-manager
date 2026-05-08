@@ -97,8 +97,34 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                             return true;
                         }
                     }
+                    KeyCode::Char('/') if matches!(app.mode, AppMode::Normal) => {
+                        app.mode = AppMode::Search;
+                        app.input.clear();
+                        return true;
+                    }
+                    KeyCode::Esc if matches!(app.mode, AppMode::Search) => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.git_search_filter.clear();
+                        }
+                        app.mode = AppMode::Normal;
+                        app.input.clear();
+                        return true;
+                    }
+                    KeyCode::Enter if matches!(app.mode, AppMode::Search) => {
+                        let query = app.input.value.clone();
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.git_search_filter = query;
+                        }
+                        app.mode = AppMode::Normal;
+                        app.input.clear();
+                        return true;
+                    }
                     _ => {}
                 }
+            } else if matches!(app.mode, AppMode::Search) {
+                // Handle character input for search
+                let res = app.input.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt));
+                return res;
             }
         }
     }
