@@ -1489,7 +1489,7 @@ fn handle_input_modals_keys(
                     AppMode::CreateArchive(ref paths, format_idx) => {
                         let input = app.input.value.trim();
                         if !input.is_empty() {
-                            let ext = if *format_idx == 1 { ".zip" } else { ".tar.gz" };
+                            let ext = if format_idx == 1 { ".zip" } else { ".tar.gz" };
                             let archive_name = if input.ends_with(ext) {
                                 input.to_string()
                             } else {
@@ -1497,7 +1497,7 @@ fn handle_input_modals_keys(
                             };
                             if let Some(fs) = app.current_file_state() {
                                 let dest = fs.current_path.join(&archive_name);
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateArchive(paths.clone(), dest, *format_idx));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateArchive(paths.clone(), dest, format_idx));
                             }
                         }
                     }
