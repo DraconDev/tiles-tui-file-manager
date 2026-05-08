@@ -415,7 +415,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .cloned()
                             .map(crate::state::RemoteBookmark::from);
                         let cached = remote_opt.as_ref()
-                            .and_then(|r| app_guard.remote_session_pool.get(&r.name).cloned());
+                            .and_then(|r| app_guard.remote_session_pool.get(&r.name))
+                            .map(|(session, _last_used)| session.clone());
                         (remote_opt, cached)
                     };
                     
