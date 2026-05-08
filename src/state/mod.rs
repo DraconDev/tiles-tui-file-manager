@@ -374,6 +374,7 @@ impl FileState {
     pub fn new(
         path: PathBuf,
         remote: Option<RemoteSession>,
+        bookmark_idx: Option<usize>,
         show_hidden: bool,
         columns: Vec<FileColumn>,
         sort_col: FileColumn,
@@ -382,6 +383,7 @@ impl FileState {
         Self {
             current_path: path.clone(),
             remote_session: remote,
+            bookmark_idx,
             files: Vec::new(),
             selection: SelectionState::default(),
             show_hidden,

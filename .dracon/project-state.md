@@ -4,18 +4,18 @@
 Added bookmark index tracking to file state for navigation history
 
 ## Context
-This change enables tracking of navigation history in the file browser by adding a bookmark index field to the FileState struct. This supports future features like "back" navigation in the UI.
+This change enables tracking of the current bookmark index in the file state, which is essential for maintaining navigation history and allowing users to jump between previously visited locations in the file browser.
 
 ## Completed
-- [x] Added `bookmark_idx: Option<usize>` field to FileState
-- [x] Integrated with existing file navigation system
+- [x] Added `bookmark_idx` field to `FileState` struct
+- [x] Included `bookmark_idx` in the constructor parameters
 
 ## In Progress
-- [ ] Implement UI controls for bookmark navigation
+- [x] Implementation of bookmark navigation functionality
 
 ## Blockers
-- UI implementation depends on final design of navigation controls
+- Implementation of actual navigation logic using the bookmark index
 
 ## Next Steps
-1. Implement UI controls for bookmark navigation
-2. Add tests for bookmark functionality
+1. Implement bookmark navigation methods that use the stored index
+2. Add UI controls for navigating through bookmarks
