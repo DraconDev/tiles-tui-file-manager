@@ -189,11 +189,36 @@ pub fn download_remote_file(remote: &RemoteSession, path: &Path) -> std::io::Res
 /// Upload a local file to a remote path using scp (preferred) or base64 fallback.
 /// Returns Ok(()) on success.
 pub fn upload_file(remote: &RemoteSession, local_path: &Path, remote_path: &Path) -> std::io::Result<()> {
-    // Try scp first (fastest, handles binary, any size)
-    if let Err(_) = upload_via_scp(remote, local_path, remote_path) {
-        // Fallback: base64 encoding via ssh exec (slower, ~1-2MB max practical)
-        upload_via_base64(remote, local_path, remote_path)?;
+    // Try scp first, fall back to base64 encoding via ssh exec
+    if upload_via_scp(remote, local_path, remote_path).is_ok() {
+        return Ok(());
     }
+    upload_via_base64(remote, local_path, remote_path)
+}
+
+pub fn upload_file_with_progress(
+    remote: &RemoteSession, 
+    local_path: &Path, 
+    remote_path: &Path,
+    progress_callback: &mut dyn FnMut(f32),
+) -> std::io::Result<()> {
+    // Get file size for progress calculation
+    let file_size = std::fs::metadata(local_path)?.len();
+    if file_size == 0 {
+        progress_callback(100.0);
+        return Ok(());
+    }
+    
+    // Try scp first with simple progress (0% -> 100%)
+    progress_callback(0.0);
+    if upload_via_scp(remote, local_path, remote_path).is_ok() {
+        progress_callback(100.0);
+        return Ok(());
+    }
+    
+    // Fall back to base64 with chunk-based progress
+    upload_via_base64_with_progress(remote, local_path, remote_path, progress_callback)
+}
     Ok(())
 }
 
