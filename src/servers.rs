@@ -366,6 +366,7 @@ pub fn auto_fix_key_permissions(_key_path: &std::path::Path) -> bool {
 }
 
 /// Write raw TOML content (for "Edit as TOML" feature)
+#[allow(dead_code)]
 pub fn write_servers_toml_raw(content: &str) -> Result<(), Box<dyn std::error::Error>> {
     let path = servers_toml_path().ok_or("Could not find config dir")?;
     if let Some(parent) = path.parent() {
