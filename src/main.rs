@@ -1042,6 +1042,42 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     });
                 }
+                AppEvent::UploadToRemote(src, dest) => {
+                    let tx = event_tx.clone();
+                    let app_clone = app.clone();
+                    let src_name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "file".to_string());
+                    let task_id = uuid::Uuid::new_v4();
+
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::TaskProgress(task_id, 0.0, format!("Uploading {}...", src_name)));
+
+                    tokio::spawn(async move {
+                        let remote = {
+                            let app_guard = app_clone.lock();
+                            app_guard
+                                .current_file_state()
+                                .and_then(|fs| fs.remote_session.clone())
+                        };
+
+                        let uploaded = if let Some(remote) = &remote {
+                            crate::modules::remote::upload_file(remote, &src, &dest).is_ok()
+                        } else {
+                            false
+                        };
+
+                        if uploaded {
+                            let _ = tx.send(AppEvent::StatusMsg(format!(
+                                "Uploaded {}", src_name
+                            ))).await;
+                        } else {
+                            let _ = tx.send(AppEvent::StatusMsg(format!(
+                                "Failed to upload {}", src_name
+                            ))).await;
+                        }
+
+                        let _ = tx.send(AppEvent::TaskFinished(task_id)).await;
+                        let _ = tx.send(AppEvent::RefreshFiles(0)).await;
+                    });
+                }
                 AppEvent::Symlink(src, dest) => {
                     let remote = {
                         let app_guard = app.lock();

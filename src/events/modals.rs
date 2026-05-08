@@ -238,7 +238,8 @@ fn handle_modal_keys(
         AppMode::DragDropMenu {
             ref sources,
             ref target,
-        } => handle_drag_drop_keys(key, app, event_tx, sources, target),
+            target_is_remote,
+        } => handle_drag_drop_keys(key, app, event_tx, sources, target, target_is_remote),
         AppMode::EditorReplace => handle_editor_replace_keys(key, app, event_tx, evt),
         AppMode::EditorSearch => handle_editor_search_keys(key, app, event_tx, evt),
         AppMode::EditorGoToLine => handle_editor_goto_keys(key, app, event_tx, evt),
@@ -631,9 +632,13 @@ fn handle_drag_drop_keys(
     event_tx: &mpsc::Sender<AppEvent>,
     sources: &[std::path::PathBuf],
     target: &std::path::Path,
+    target_is_remote: bool,
 ) -> bool {
     match key.code {
         KeyCode::Char('c') | KeyCode::Char('C') => {
+            if target_is_remote {
+                return true; // Copy not supported to remote, use Upload
+            }
             for source in sources {
                 let dest = target.join(
                     source
@@ -646,6 +651,9 @@ fn handle_drag_drop_keys(
             true
         }
         KeyCode::Char('m') | KeyCode::Char('M') => {
+            if target_is_remote {
+                return true; // Move not supported to remote, use Upload
+            }
             for source in sources {
                 let dest = target.join(
                     source
@@ -662,6 +670,9 @@ fn handle_drag_drop_keys(
             true
         }
         KeyCode::Char('l') | KeyCode::Char('L') => {
+            if target_is_remote {
+                return true; // Link not supported to remote
+            }
             for source in sources {
                 let dest = target.join(
                     source
@@ -672,6 +683,22 @@ fn handle_drag_drop_keys(
             }
             app.mode = AppMode::Normal;
             true
+        }
+        KeyCode::Char('u') | KeyCode::Char('U') => {
+            if target_is_remote {
+                for source in sources {
+                    let dest = target.join(
+                        source
+                            .file_name()
+                            .unwrap_or_else(|| std::ffi::OsStr::new("root")),
+                    );
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::UploadToRemote(source.clone(), dest));
+                }
+                app.mode = AppMode::Normal;
+                true
+            } else {
+                true
+            }
         }
         KeyCode::Esc => {
             app.mode = AppMode::Normal;
@@ -2064,6 +2091,7 @@ pub fn handle_modal_mouse(
         AppMode::DragDropMenu {
             ref sources,
             ref target,
+            target_is_remote,
         } => {
             if let MouseEventKind::Down(MouseButton::Left) = me.kind {
                 // centered_rect(60, 20, ...) uses percentages
@@ -2095,34 +2123,50 @@ pub fn handle_modal_mouse(
                 let sources = sources.clone();
                 let target = target.to_path_buf();
 
-                // Button layout: " [C] Copy " (10) + "  " (2) + " [M] Move " (10) + "  " (2) + " [L] Link " (10) + "  " (2) + " [Esc] Cancel " (14)
-                if is_hit(0, 10) {
-                    for src in &sources {
-                        let dest = target.join(src.file_name().unwrap_or_default());
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src.clone(), dest));
+                if target_is_remote {
+                    // Remote layout: " [U] Upload " (12) + "  " (2) + " [Esc] Cancel " (14)
+                    if is_hit(0, 12) {
+                        for src in &sources {
+                            let dest = target.join(src.file_name().unwrap_or_default());
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::UploadToRemote(src.clone(), dest));
+                        }
+                        app.mode = AppMode::Normal;
+                        return true;
                     }
-                    app.mode = AppMode::Normal;
-                    return true;
-                }
-                if is_hit(12, 10) {
-                    for src in &sources {
-                        let dest = target.join(src.file_name().unwrap_or_default());
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(src.clone(), dest));
+                    if is_hit(14, 14) {
+                        app.mode = AppMode::Normal;
+                        return true;
                     }
-                    app.mode = AppMode::Normal;
-                    return true;
-                }
-                if is_hit(24, 10) {
-                    for src in &sources {
-                        let dest = target.join(src.file_name().unwrap_or_default());
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Symlink(src.clone(), dest));
+                } else {
+                    // Local layout: " [C] Copy " (10) + "  " (2) + " [M] Move " (10) + "  " (2) + " [L] Link " (10) + "  " (2) + " [Esc] Cancel " (14)
+                    if is_hit(0, 10) {
+                        for src in &sources {
+                            let dest = target.join(src.file_name().unwrap_or_default());
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src.clone(), dest));
+                        }
+                        app.mode = AppMode::Normal;
+                        return true;
                     }
-                    app.mode = AppMode::Normal;
-                    return true;
-                }
-                if is_hit(36, 14) {
-                    app.mode = AppMode::Normal;
-                    return true;
+                    if is_hit(12, 10) {
+                        for src in &sources {
+                            let dest = target.join(src.file_name().unwrap_or_default());
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(src.clone(), dest));
+                        }
+                        app.mode = AppMode::Normal;
+                        return true;
+                    }
+                    if is_hit(24, 10) {
+                        for src in &sources {
+                            let dest = target.join(src.file_name().unwrap_or_default());
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Symlink(src.clone(), dest));
+                        }
+                        app.mode = AppMode::Normal;
+                        return true;
+                    }
+                    if is_hit(36, 14) {
+                        app.mode = AppMode::Normal;
+                        return true;
+                    }
                 }
             }
         }

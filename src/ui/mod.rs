@@ -400,7 +400,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         target_is_remote,
     } = app.mode
     {
-        draw_drag_drop_modal(f, app, sources, target, *target_is_remote);
+        draw_drag_drop_modal(f, app, sources, target, target_is_remote);
     }
 
     if app.is_dragging {
