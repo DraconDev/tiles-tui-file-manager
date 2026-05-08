@@ -1475,7 +1475,7 @@ fn handle_input_modals_keys(
                             };
                             if let Some(fs) = app.current_file_state() {
                                 let dest = fs.current_path.join(&archive_name);
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateArchive(paths.clone(), dest));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateArchive(paths.clone(), dest, *format_idx));
                             }
                         }
                     }
