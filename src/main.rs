@@ -1182,7 +1182,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let tx = event_tx.clone();
                     tokio::spawn(async move {
                         let result = if let Some(remote) = &remote {
-                            crate::modules::remote::create_archive(remote, &paths, &dest).await
+                            tokio::task::spawn_blocking({
+                                let remote = remote.clone();
+                                let paths = paths.clone();
+                                let dest = dest.clone();
+                                move || crate::modules::remote::create_archive(&remote, &paths, &dest)
+                            }).await.unwrap_or(Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn failed")))
                         } else {
                             crate::modules::files::create_archive(&paths, &dest).await
                         };
