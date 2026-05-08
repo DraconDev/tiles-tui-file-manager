@@ -197,19 +197,22 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         });
     }
 
-    // 2. System Stats Loop (Tokio) — polls every 3s; fast enough for the Monitor view
-    //    without burning CPU when the user is in Files/Editor/Git.
+    // 2. System Stats Loop (Tokio) — polls every 2s with persistent SystemModule
+    //    so CPU/process deltas are calculated correctly (needs baseline across calls)
     {
         let tx = event_tx.clone();
         let shutdown_stats = shutdown.clone();
+        let sys_mod = std::sync::Arc::new(std::sync::Mutex::new(
+            crate::modules::system::SystemModule::new()
+        ));
         tokio::spawn(async move {
             loop {
                 if shutdown_stats.load(Ordering::Relaxed) {
                     break;
                 }
-                let data = tokio::task::spawn_blocking({
-                    let mut sys_mod = crate::modules::system::SystemModule::new();
-                    move || sys_mod.get_data()
+                let sys_mod = sys_mod.clone();
+                let data = tokio::task::spawn_blocking(move || {
+                    sys_mod.lock().unwrap().get_data()
                 })
                 .await
                 .ok()
@@ -217,7 +220,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 if let Some(data) = data {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
-                tokio::time::sleep(Duration::from_secs(3)).await;
+                tokio::time::sleep(Duration::from_secs(2)).await;
             }
         });
     }
