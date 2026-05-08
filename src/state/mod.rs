@@ -450,6 +450,7 @@ impl FileState {
             git_remotes: Vec::new(),
             git_stashes: Vec::new(),
             git_cache_until: None,
+            last_folder_size_calc: None,
             search_debounce_until: None,
             tree_file_depths: Vec::new(),
         }
