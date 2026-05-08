@@ -600,29 +600,33 @@ pub fn create_archive(
     remote: &RemoteSession,
     paths: &[PathBuf],
     dest: &Path,
+    format: usize,
 ) -> std::io::Result<()> {
-    let is_zip = dest.extension().and_then(|e| e.to_str()) == Some("zip");
-    
     let path_strs: Vec<String> = paths.iter()
         .map(|p| p.to_string_lossy().to_string())
         .collect();
     
-    if is_zip {
-        let args = ["-r"]
-            .iter()
-            .map(|s| s.to_string())
-            .chain(std::iter::once(dest.to_string_lossy().to_string()))
-            .chain(path_strs.into_iter())
-            .collect::<Vec<_>>();
-        exec_program(remote, "zip", &args.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
-    } else {
-        let args = ["-czf"]
-            .iter()
-            .map(|s| s.to_string())
-            .chain(std::iter::once(dest.to_string_lossy().to_string()))
-            .chain(path_strs.into_iter())
-            .collect::<Vec<_>>();
-        exec_program(remote, "tar", &args.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
+    match format {
+        1 => {
+            // ZIP format
+            let args = ["-r"]
+                .iter()
+                .map(|s| s.to_string())
+                .chain(std::iter::once(dest.to_string_lossy().to_string()))
+                .chain(path_strs.into_iter())
+                .collect::<Vec<_>>();
+            exec_program(remote, "zip", &args.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
+        }
+        _ => {
+            // Default to tar.gz (format 0)
+            let args = ["-czf"]
+                .iter()
+                .map(|s| s.to_string())
+                .chain(std::iter::once(dest.to_string_lossy().to_string()))
+                .chain(path_strs.into_iter())
+                .collect::<Vec<_>>();
+            exec_program(remote, "tar", &args.iter().map(|s| s.as_str()).collect::<Vec<_>>())?;
+        }
     }
     
     Ok(())
