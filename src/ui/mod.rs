@@ -2640,7 +2640,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                                     .add_modifier(Modifier::BOLD),
                             ),
                             Cell::from(refs_compact),
-                            Cell::from(act.author.clone()).style(Style::default().fg(Color::Cyan)),
+                            Cell::from(act.author.clone()).style(Style::default().fg(author_color(&act.author))),
                             Cell::from(act.message.clone()).style(Style::default().fg(THEME.fg)),
                         ];
                         row_cells.extend(stats_cells);
