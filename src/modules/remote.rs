@@ -290,7 +290,7 @@ fn upload_via_base64_with_progress(
     let total_size = bytes.len();
     let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
     
-    let remote_path_escaped = remote_path.to_string_lossy().replace('\'', '"'"'"');
+    let remote_path_escaped = remote_path.to_string_lossy().replace('\'', "'\"'\"'");
     
     // Write base64 in chunks to avoid command line length limits
     const CHUNK_SIZE: usize = 4096;
