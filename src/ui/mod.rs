@@ -3478,6 +3478,7 @@ fn draw_context_menu(
                 format!(" {} Collapse All", Icon::Folder.get(app.icon_mode))
             }
             ContextMenuAction::Compare => format!(" {} Compare", Icon::Document.get(app.icon_mode)),
+            ContextMenuAction::Download => format!(" {} Download", Icon::File.get(app.icon_mode)),
             ContextMenuAction::SetColor(_) => {
                 format!(" {} Highlight...", Icon::Image.get(app.icon_mode))
             }
