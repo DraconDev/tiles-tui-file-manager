@@ -189,7 +189,7 @@ pub enum AppMode {
     AddRemote(usize),
     ImportServers,
     ImportSshConfig,
-    CreateArchive(Vec<PathBuf>),
+    CreateArchive(Vec<PathBuf>, usize),
     Viewer,
     Hotkeys,
     Header(usize),
