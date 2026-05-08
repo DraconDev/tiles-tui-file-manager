@@ -1489,10 +1489,11 @@ fn handle_input_modals_keys(
                     AppMode::CreateArchive(ref paths, format_idx) => {
                         let input = app.input.value.trim();
                         if !input.is_empty() {
-                            let archive_name = if input.ends_with(".tar.gz") || input.ends_with(".zip") {
+                            let ext = if *format_idx == 1 { ".zip" } else { ".tar.gz" };
+                            let archive_name = if input.ends_with(ext) {
                                 input.to_string()
                             } else {
-                                format!("{}.tar.gz", input)
+                                format!("{}{}", input, ext)
                             };
                             if let Some(fs) = app.current_file_state() {
                                 let dest = fs.current_path.join(&archive_name);
