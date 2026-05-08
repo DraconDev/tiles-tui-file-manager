@@ -1,25 +1,21 @@
 # Project State
 
 ## Current Focus
-Added file permission modification support in the UI with octal input validation
+Added bookmark index tracking to file state for navigation history
 
 ## Context
-This change enables users to modify file permissions directly in the application's properties modal by adding an "Edit Permissions" mode that accepts octal permission values (000-777).
+This change enables tracking of navigation history in the file browser by adding a bookmark index field to the FileState struct. This supports future features like "back" navigation in the UI.
 
 ## Completed
-- [x] Added new `AppMode::EditPermissions` variant to handle permission editing state
-- [x] Implemented key handling for permission editing (Esc to cancel, Enter to apply)
-- [x] Added octal input validation with error messages for invalid entries
-- [x] Created dedicated UI modal for permission editing with examples
-- [x] Integrated permission editing into the properties modal with an [E] keybinding
+- [x] Added `bookmark_idx: Option<usize>` field to FileState
+- [x] Integrated with existing file navigation system
 
 ## In Progress
-- [ ] None (feature is complete)
+- [ ] Implement UI controls for bookmark navigation
 
 ## Blockers
-- None (feature is fully implemented)
+- UI implementation depends on final design of navigation controls
 
 ## Next Steps
-1. Test permission changes across different file types
-2. Add visual feedback for successful permission changes
-3. Consider adding a permission calculator helper tool
+1. Implement UI controls for bookmark navigation
+2. Add tests for bookmark functionality

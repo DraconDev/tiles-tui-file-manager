@@ -303,6 +303,7 @@ impl std::fmt::Debug for RemoteSession {
 pub struct FileState {
     pub current_path: PathBuf,
     pub remote_session: Option<RemoteSession>,
+    pub bookmark_idx: Option<usize>,
     pub files: Vec<PathBuf>,
     pub selection: SelectionState,
     pub show_hidden: bool,
