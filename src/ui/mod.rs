@@ -1425,17 +1425,17 @@ fn format_bytes(bytes: u64) -> String {
 
 fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     let current_user = std::env::var("USER").unwrap_or_else(|_| "dracon".to_string());
-    let app_procs: Vec<_> = app
+    let app_procs: Vec<(usize, &ProcessInfo)> = app
         .system_state
         .processes
         .iter()
-        .filter(|p| {
+        .enumerate()
+        .filter(|(_, p)| {
             let matches = if app.process_search_filter.is_empty() {
                 true
             } else {
-                p.name
-                    .to_lowercase()
-                    .contains(&app.process_search_filter.to_lowercase())
+                p.name.to_lowercase().contains(&app.process_search_filter.to_lowercase())
+                    || p.user.to_lowercase().contains(&app.process_search_filter.to_lowercase())
             };
             p.user == current_user
                 && !p.name.starts_with('[')
@@ -1444,100 +1444,154 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         })
         .collect();
 
-    let rows = app_procs.iter().enumerate().map(|(i, p)| {
-        let mut is_selected = false;
-        let mut style = if i % 2 == 0 {
-            Style::default().fg(Color::Rgb(180, 185, 190))
-        } else {
-            Style::default().fg(Color::Rgb(140, 145, 150))
-        };
-        if app.process_selected_idx == Some(i)
-            && app.monitor_subview == MonitorSubview::Applications
-        {
-            style = style
-                .bg(crate::ui::theme::accent_primary())
-                .fg(Color::Black)
-                .add_modifier(Modifier::BOLD);
-            is_selected = true;
-        }
-        let cpu_color = if is_selected {
-            Color::Black
-        } else if p.cpu > 50.0 {
-            Color::Red
-        } else {
-            crate::ui::theme::accent_secondary()
-        };
-        Row::new(vec![
-            Cell::from(format!("  {}", p.name)),
-            Cell::from(format!("{:.1}%", p.cpu)).style(Style::default().fg(cpu_color)),
-            Cell::from(format!("{:.1} MB", p.mem)),
-            Cell::from(p.pid.to_string()).style(Style::default().fg(if is_selected {
-                Color::Black
-            } else {
-                Color::Rgb(60, 65, 75)
-            })),
-            Cell::from(p.status.clone()),
-        ])
-        .style(style)
-    });
-    let column_constraints = [
-        Constraint::Min(35),
-        Constraint::Length(10),
-        Constraint::Length(15),
-        Constraint::Length(10),
-        Constraint::Length(15),
+    // Layout: summary (1-2) + table + footer (1)
+    let has_filter = !app.process_search_filter.is_empty();
+    let summary_height = if has_filter { 2 } else { 1 };
+    let footer_height = 1;
+    let table_height = area.height.saturating_sub(summary_height + footer_height);
+
+    if table_height == 0 {
+        return;
+    }
+
+    let summary_area = Rect::new(area.x, area.y, area.width, summary_height);
+    let table_area = Rect::new(area.x, area.y + summary_height, area.width, table_height);
+    let footer_area = Rect::new(area.x, area.y + summary_height + table_height, area.width, footer_height);
+
+    // ── SUMMARY BAR ──
+    let total_cpu: f32 = app_procs.iter().map(|(_, p)| p.cpu).sum();
+    let total_mem: f32 = app_procs.iter().map(|(_, p)| p.mem).sum();
+    let total_count = app_procs.len();
+
+    let mut summary_spans = vec![
+        Span::styled(" 󰀲 ", Style::default().fg(crate::ui::theme::accent_secondary())),
+        Span::styled(format!("{} applications", total_count), Style::default().fg(Color::Rgb(180, 185, 190))),
+        Span::styled(" | ", Style::default().fg(Color::Rgb(60, 65, 75))),
+        Span::styled("CPU: ", Style::default().fg(Color::Rgb(100, 150, 180))),
+        Span::styled(format!("{:.1}%", total_cpu), Style::default().fg(if total_cpu > 50.0 { Color::Rgb(220, 100, 100) } else if total_cpu > 20.0 { Color::Rgb(220, 180, 100) } else { Color::Rgb(100, 200, 140) })),
+        Span::styled(" | ", Style::default().fg(Color::Rgb(60, 65, 75))),
+        Span::styled("MEM: ", Style::default().fg(Color::Rgb(100, 150, 180))),
+        Span::styled(format!("{:.1}G", total_mem / 1024.0), Style::default().fg(Color::Rgb(100, 180, 220))),
     ];
-    let num_cols = 5;
-    let spacing = 2;
-    let total_spacing = (num_cols - 1) * spacing;
-    let effective_width = area.width.saturating_sub(total_spacing);
 
-    let header_rects = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(column_constraints)
-        .split(Rect::new(area.x, area.y, effective_width, 1));
+    if has_filter {
+        let filter_line = Line::from(vec![
+            Span::styled(" 󰈲 Filter: '", Style::default().fg(crate::ui::theme::accent_secondary())),
+            Span::styled(&app.process_search_filter, Style::default().fg(Color::White)),
+            Span::styled("'", Style::default().fg(crate::ui::theme::accent_secondary())),
+        ]);
+        f.render_widget(Paragraph::new(vec![Line::from(summary_spans), filter_line]), summary_area);
+    } else {
+        f.render_widget(Paragraph::new(Line::from(summary_spans)), summary_area);
+    }
 
-    app.process_column_bounds.clear();
-    let mut current_col_x = area.x;
-    let header_cells = [
-        ("  Application", ProcessColumn::Name),
-        ("CPU", ProcessColumn::Cpu),
-        ("Memory", ProcessColumn::Mem),
-        ("PID", ProcessColumn::Pid),
-        ("Status", ProcessColumn::Status),
-    ]
-    .iter()
-    .enumerate()
-    .map(|(i, (h, col))| {
-        let width = header_rects[i].width;
-        app.process_column_bounds
-            .push((Rect::new(current_col_x, area.y, width, 1), *col));
-        current_col_x += width + spacing;
-        let mut text = h.to_string();
-        if app.process_sort_col == *col {
-            text.push_str(if app.process_sort_asc {
-                " 󰁝"
-            } else {
-                " 󰁅"
-            });
-        }
-        Cell::from(text).style(
-            Style::default()
-                .fg(if app.process_sort_col == *col {
-                    crate::ui::theme::accent_primary()
-                } else {
-                    Color::Rgb(60, 65, 75)
-                })
-                .add_modifier(Modifier::BOLD),
-        )
-    });
+    // ── TABLE ──
+    let name_width = table_area.width.saturating_sub(3 + 10 + 14 + 16 + 12) as usize;
 
-    f.render_widget(
-        Table::new(rows, column_constraints)
-            .header(Row::new(header_cells).height(1).bottom_margin(1))
-            .column_spacing(2),
-        area,
-    );
+    let header_cells = vec![
+        Cell::from("").style(Style::default().fg(Color::Rgb(100, 105, 115)).add_modifier(Modifier::BOLD)),
+        Cell::from("Application").style(Style::default().fg(Color::Rgb(100, 105, 115)).add_modifier(Modifier::BOLD)),
+        Cell::from("CPU").style(Style::default().fg(Color::Rgb(100, 105, 115)).add_modifier(Modifier::BOLD)),
+        Cell::from("Memory").style(Style::default().fg(Color::Rgb(100, 105, 115)).add_modifier(Modifier::BOLD)),
+        Cell::from("PID").style(Style::default().fg(Color::Rgb(100, 105, 115)).add_modifier(Modifier::BOLD)),
+    ];
+
+    let rows: Vec<Row> = app_procs.iter().enumerate().map(|(row_idx, (_, p))| {
+        let is_selected = app.process_selected_idx == Some(row_idx);
+
+        // Status icon
+        let status_color = process_status_color(&p.status);
+        let status_icon = "●";
+
+        // CPU display
+        let cpu_pct = p.cpu as f64;
+        let cpu_bar = mini_bar(cpu_pct, 6);
+        let cpu_color = if cpu_pct > 50.0 {
+            Color::Rgb(220, 100, 100)
+        } else if cpu_pct > 20.0 {
+            Color::Rgb(220, 180, 100)
+        } else {
+            Color::Rgb(100, 200, 140)
+        };
+
+        // MEM display
+        let mem_pct = (p.mem / app.system_state.total_mem.max(1.0) as f32 * 100.0) as f64;
+        let mem_bar = mini_bar(mem_pct, 6);
+        let mem_color = if p.mem > 2048.0 {
+            Color::Rgb(220, 100, 100)
+        } else if p.mem > 512.0 {
+            Color::Rgb(220, 180, 100)
+        } else {
+            Color::Rgb(100, 180, 220)
+        };
+
+        // Truncate name
+        let name_display = if p.name.len() > name_width.saturating_sub(2) {
+            format!("{}..", &p.name[..name_width.saturating_sub(4)])
+        } else {
+            p.name.clone()
+        };
+
+        let cells = vec![
+            Cell::from(status_icon).style(Style::default().fg(status_color)),
+            Cell::from(name_display).style(Style::default().fg(Color::Rgb(220, 225, 230)).add_modifier(Modifier::BOLD)),
+            Cell::from(format!("{:>5.1}% {}", cpu_pct, cpu_bar)).style(Style::default().fg(cpu_color)),
+            Cell::from(format!("{:>6} {}", format_memory_mib(p.mem as f64), mem_bar)).style(Style::default().fg(mem_color)),
+            Cell::from(format!("{}", p.pid)).style(Style::default().fg(Color::Rgb(120, 125, 135))),
+        ];
+
+        let style = if is_selected {
+            Style::default().bg(crate::ui::theme::accent_primary()).fg(Color::Black)
+        } else if row_idx % 2 == 0 {
+            Style::default().bg(Color::Rgb(25, 28, 32))
+        } else {
+            Style::default().bg(Color::Rgb(20, 23, 27))
+        };
+
+        Row::new(cells).style(style).height(1)
+    }).collect();
+
+    let table = Table::new(rows, [
+        Constraint::Length(3),
+        Constraint::Min(name_width as u16),
+        Constraint::Length(14),
+        Constraint::Length(16),
+        Constraint::Length(10),
+    ])
+    .header(Row::new(header_cells).height(1).style(Style::default().fg(Color::Rgb(100, 105, 115))))
+    .row_highlight_style(Style::default().bg(crate::ui::theme::accent_primary()).fg(Color::Black))
+    .highlight_symbol("▶ ");
+
+    let table_block = Block::default()
+        .borders(Borders::TOP | Borders::BOTTOM)
+        .border_style(Style::default().fg(Color::Rgb(40, 45, 55)));
+
+    let mut table_state = TableState::default();
+    if let Some(idx) = app.process_selected_idx {
+        table_state.select(Some(idx));
+    }
+
+    f.render_stateful_widget(table.block(table_block), table_area, &mut table_state);
+
+    // ── FOOTER ──
+    let mut footer_spans = vec![
+        Span::styled("↑↓", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" Navigate  ", Style::default().fg(Color::Rgb(100, 105, 115))),
+        Span::styled("k", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" Kill  ", Style::default().fg(Color::Rgb(100, 105, 115))),
+        Span::styled("c", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" Copy PID  ", Style::default().fg(Color::Rgb(100, 105, 115))),
+        Span::styled("/", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" Search", Style::default().fg(Color::Rgb(100, 105, 115))),
+    ];
+
+    if has_filter {
+        footer_spans.push(Span::styled("  |  ", Style::default().fg(Color::Rgb(60, 65, 75))));
+        footer_spans.push(Span::styled("Esc", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)));
+        footer_spans.push(Span::styled(" Clear filter", Style::default().fg(Color::Rgb(100, 105, 115))));
+    }
+
+    f.render_widget(Paragraph::new(Line::from(footer_spans)), footer_area);
 }
 
 fn format_memory_mib(mem_mib: f64) -> String {
