@@ -1,24 +1,21 @@
 # Project State
 
 ## Current Focus
-Added retry count tracking for remote connections and removed automatic input selection in permission editing
+Added retry count tracking for remote connections to the application state.
 
 ## Context
-The changes address two separate but related improvements:
-1. Better remote connection resilience by tracking retry attempts
-2. Simplified permission editing workflow by removing automatic input selection
+This change supports improved error handling and retry logic for remote file operations, building on previous work with remote connection health tracking and SSH key management.
 
 ## Completed
-- [x] Added `retry_count` field to `FileState` for tracking remote connection attempts
-- [x] Removed automatic input selection when editing file permissions
-- [x] Updated all `FileState` constructor calls to include the new `None` parameter
+- [x] Added `retry_count` field to `FileState` for tracking remote operation retries
 
 ## In Progress
-- [ ] None - all changes are complete
+- [x] Implementation of retry logic for remote file operations
 
 ## Blockers
-- None - all changes are implemented and tested
+- Need to implement retry logic that uses this counter
+- Requires integration with existing remote connection health tracking
 
 ## Next Steps
-1. Verify remote connection stability with the new retry tracking
-2. Test permission editing workflow with the removed automatic selection
+1. Implement retry logic for remote file operations using the new counter
+2. Add UI indicators for retry attempts in progress

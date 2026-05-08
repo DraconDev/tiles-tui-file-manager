@@ -406,6 +406,7 @@ impl FileState {
             breadcrumb_bounds: Vec::new(),
             breadcrumb_header_bounds: None,
             local_count: 0,
+            retry_count: 0,
             pending_select_path: None,
             git_history: Vec::new(),
             git_history_state: ratatui::widgets::TableState::default(),
