@@ -281,6 +281,36 @@ pub fn show_file_diff(repo_path: &Path, file_path: &str) -> std::io::Result<Stri
     provider.show_file_diff(repo_path, file_path)
 }
 
+/// Compute MD5 and SHA256 checksums for a local file.
+/// Returns (md5_hex, sha256_hex) or error.
+pub fn compute_checksums(path: &Path) -> std::io::Result<(String, String)> {
+    let md5_out = std::process::Command::new("sh")
+        .args(&["-c", &format!(
+            "md5sum '{}' 2>/dev/null || md5 -q '{}' 2>/dev/null || echo ''",
+            path.display(), path.display()
+        )])
+        .output()?;
+    let md5 = String::from_utf8_lossy(&md5_out.stdout)
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .to_string();
+    
+    let sha_out = std::process::Command::new("sh")
+        .args(&["-c", &format!(
+            "sha256sum '{}' 2>/dev/null || shasum -a 256 '{}' 2>/dev/null || echo ''",
+            path.display(), path.display()
+        )])
+        .output()?;
+    let sha256 = String::from_utf8_lossy(&sha_out.stdout)
+        .split_whitespace()
+        .next()
+        .unwrap_or("")
+        .to_string();
+    
+    Ok((md5, sha256))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
