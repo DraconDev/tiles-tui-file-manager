@@ -692,6 +692,7 @@ fn draw_drag_drop_modal(
     app: &App,
     sources: &[std::path::PathBuf],
     target: &std::path::Path,
+    target_is_remote: bool,
 ) {
     let area = centered_rect(60, 20, f.area());
     f.render_widget(Clear, area);
@@ -721,27 +722,6 @@ fn draw_drag_drop_modal(
 
     let is_hover = |bx: u16, len: u16| {
         mx >= inner.x + bx && mx < inner.x + bx + len && my == inner.y + button_y_offset as u16
-    };
-
-    let copy_style = if is_hover(0, 10) {
-        Style::default().bg(Color::Green).fg(Color::Black)
-    } else {
-        Style::default().fg(Color::Green)
-    };
-    let move_style = if is_hover(12, 10) {
-        Style::default().bg(Color::Yellow).fg(Color::Black)
-    } else {
-        Style::default().fg(Color::Yellow)
-    };
-    let link_style = if is_hover(24, 10) {
-        Style::default().bg(Color::Magenta).fg(Color::Black)
-    } else {
-        Style::default().fg(Color::Magenta)
-    };
-    let cancel_style = if is_hover(36, 14) {
-        Style::default().bg(Color::Red).fg(Color::Black)
-    } else {
-        Style::default().fg(Color::Red)
     };
 
     let mut text = Vec::new();
@@ -791,15 +771,53 @@ fn draw_drag_drop_modal(
     // Spacing
     text.push(Line::from(""));
 
-    text.push(Line::from(vec![
-        Span::styled(" [C] Copy ", copy_style.add_modifier(Modifier::BOLD)),
-        Span::raw("  "),
-        Span::styled(" [M] Move ", move_style.add_modifier(Modifier::BOLD)),
-        Span::raw("  "),
-        Span::styled(" [L] Link ", link_style.add_modifier(Modifier::BOLD)),
-        Span::raw("  "),
-        Span::styled(" [Esc] Cancel ", cancel_style.add_modifier(Modifier::BOLD)),
-    ]));
+    if target_is_remote {
+        let upload_style = if is_hover(0, 12) {
+            Style::default().bg(Color::Green).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::Green)
+        };
+        let cancel_style = if is_hover(14, 14) {
+            Style::default().bg(Color::Red).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::Red)
+        };
+        text.push(Line::from(vec![
+            Span::styled(" [U] Upload ", upload_style.add_modifier(Modifier::BOLD)),
+            Span::raw("  "),
+            Span::styled(" [Esc] Cancel ", cancel_style.add_modifier(Modifier::BOLD)),
+        ]));
+    } else {
+        let copy_style = if is_hover(0, 10) {
+            Style::default().bg(Color::Green).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::Green)
+        };
+        let move_style = if is_hover(12, 10) {
+            Style::default().bg(Color::Yellow).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::Yellow)
+        };
+        let link_style = if is_hover(24, 10) {
+            Style::default().bg(Color::Magenta).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::Magenta)
+        };
+        let cancel_style = if is_hover(36, 14) {
+            Style::default().bg(Color::Red).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::Red)
+        };
+        text.push(Line::from(vec![
+            Span::styled(" [C] Copy ", copy_style.add_modifier(Modifier::BOLD)),
+            Span::raw("  "),
+            Span::styled(" [M] Move ", move_style.add_modifier(Modifier::BOLD)),
+            Span::raw("  "),
+            Span::styled(" [L] Link ", link_style.add_modifier(Modifier::BOLD)),
+            Span::raw("  "),
+            Span::styled(" [Esc] Cancel ", cancel_style.add_modifier(Modifier::BOLD)),
+        ]));
+    }
 
     f.render_widget(Paragraph::new(text), inner);
 }

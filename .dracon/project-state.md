@@ -1,30 +1,27 @@
 # Project State
 
 ## Current Focus
-Added remote file upload functionality with fallback mechanisms
+Enhanced drag-and-drop modal UI with remote file upload support
 
 ## Context
-The changes implement file upload capabilities for remote sessions, including:
-1. Primary SCP-based upload (fastest method)
-2. Fallback base64 encoding via SSH (for cases where SCP isn't available)
-3. Proper handling of remote vs local targets in drag-and-drop operations
+The drag-and-drop modal now needs to handle both local and remote file operations, requiring different UI options based on the target location.
 
 ## Completed
-- [x] Added remote file upload via SCP with proper SSH configuration
-- [x] Implemented base64 fallback upload method
-- [x] Enhanced drag-and-drop menu to distinguish remote vs local targets
-- [x] Added proper error handling for upload operations
-- [x] Updated state management to track remote upload operations
+- [x] Added `target_is_remote` parameter to distinguish between local and remote operations
+- [x] Implemented conditional UI rendering for remote vs local targets
+- [x] Added "Upload" option for remote targets with green styling
+- [x] Maintained existing copy/move/link options for local operations
+- [x] Preserved hover effects and styling for all action buttons
 
 ## In Progress
-- [ ] Testing upload performance with large files
-- [ ] Adding progress indicators for upload operations
+- [ ] Testing edge cases for remote file operations
+- [ ] Integration with remote file transfer backend
 
 ## Blockers
-- Need to verify upload behavior with different file types and sizes
-- Potential performance impact with very large files needs validation
+- Remote file transfer implementation not yet complete
+- Need to verify upload progress feedback in UI
 
 ## Next Steps
-1. Add upload progress indicators to UI
-2. Implement retry logic for failed uploads
-3. Add user feedback for successful/failed uploads
+1. Complete remote file transfer implementation
+2. Add visual feedback for upload progress
+3. Test cross-platform remote file operations
