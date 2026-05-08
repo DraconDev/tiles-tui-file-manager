@@ -213,42 +213,29 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     break;
                 }
                 
-                // Only collect stats when monitor view is active
+                // Collect stats at different rates based on active view
+                // Always collect so sparkline history stays current
                 let is_monitor_active = {
                     let app_guard = app_for_stats.lock();
                     app_guard.current_view == CurrentView::Processes
                 };
                 
-                if is_monitor_active {
-                    was_monitor_active = true;
+                let data = {
                     let sys_mod = sys_mod.clone();
-                    let data = tokio::task::spawn_blocking(move || {
+                    tokio::task::spawn_blocking(move || {
                         sys_mod.lock().unwrap().get_data()
                     })
                     .await
                     .ok()
-                    .and_then(|r| r.ok());
-                    if let Some(data) = data {
-                        let _ = tx.send(AppEvent::SystemUpdated(data)).await;
-                    }
+                    .and_then(|r| r.ok())
+                };
+                if let Some(data) = data {
+                    let _ = tx.send(AppEvent::SystemUpdated(data)).await;
+                }
+                
+                if is_monitor_active {
                     tokio::time::sleep(Duration::from_secs(2)).await;
                 } else {
-                    // When leaving monitor, do one final capture so the overview
-                    // isn't completely stale when user returns
-                    if was_monitor_active {
-                        was_monitor_active = false;
-                        let sys_mod = sys_mod.clone();
-                        let data = tokio::task::spawn_blocking(move || {
-                            sys_mod.lock().unwrap().get_data()
-                        })
-                        .await
-                        .ok()
-                        .and_then(|r| r.ok());
-                        if let Some(data) = data {
-                            let _ = tx.send(AppEvent::SystemUpdated(data)).await;
-                        }
-                    }
-                    // Sleep longer when monitor is not active
                     tokio::time::sleep(Duration::from_secs(5)).await;
                 }
             }
