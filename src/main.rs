@@ -1219,6 +1219,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let app_clone = app.clone();
                     let src_name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "file".to_string());
                     let task_id = uuid::Uuid::new_v4();
+                    let progress_tx = event_tx.clone();
 
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::TaskProgress(task_id, 0.0, format!("Uploading {}...", src_name)));
 
@@ -1230,8 +1231,21 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 .and_then(|fs| fs.remote_session.clone())
                         };
 
+                        let mut last_progress = 0.0f32;
+                        let progress_callback = |progress: f32| {
+                            // Only send updates when progress changes by at least 5%
+                            if progress - last_progress >= 5.0 || progress >= 100.0 {
+                                last_progress = progress;
+                                let _ = crate::app::try_send_event(&progress_tx, AppEvent::TaskProgress(
+                                    task_id, 
+                                    progress / 100.0, 
+                                    format!("Uploading {}... {:.0}%", src_name, progress)
+                                ));
+                            }
+                        };
+
                         let uploaded = if let Some(remote) = &remote {
-                            crate::modules::remote::upload_file(remote, &src, &dest).is_ok()
+                            crate::modules::remote::upload_file_with_progress(remote, &src, &dest, &mut progress_callback).is_ok()
                         } else {
                             false
                         };
