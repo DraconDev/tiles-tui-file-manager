@@ -1,25 +1,21 @@
 # Project State
 
 ## Current Focus
-Added remote file upload functionality with fallback mechanisms
+Added checksum computation for remote files to verify file integrity
 
 ## Context
-The drag-and-drop modal was enhanced to support remote file uploads, replacing local file operations when targeting remote locations. This provides a unified interface for both local and remote file management.
+To ensure data integrity during remote file operations, we need to verify files after transfer by computing their checksums. This change supports both MD5 and SHA256 hashes with cross-platform compatibility.
 
 ## Completed
-- [x] Added remote file upload capability in drag-and-drop modal
-- [x] Implemented fallback mechanisms for upload failures
-- [x] Added visual feedback for upload progress and completion
-- [x] Updated UI to show different options for local vs remote targets
-- [x] Enhanced error handling for remote upload operations
+- [x] Added `compute_checksums` function that calculates MD5 and SHA256 checksums for remote files
+- [x] Implemented fallback mechanisms for different checksum command variations across Unix systems
 
 ## In Progress
-- [ ] Testing upload performance with large files
+- [ ] Testing checksum verification in file transfer workflows
 
 ## Blockers
-- None identified
+- Need to integrate checksum verification into existing file upload/download operations
 
 ## Next Steps
-1. Test remote upload functionality with various file types
-2. Add support for directory uploads
-3. Implement upload progress indicators in the UI
+1. Integrate checksum verification into remote file transfer operations
+2. Add checksum comparison to verify file integrity after transfer

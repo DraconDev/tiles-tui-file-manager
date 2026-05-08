@@ -266,6 +266,26 @@ fn upload_via_base64(
     Ok(())
 }
 
+/// Compute MD5 and SHA256 checksums for a remote file.
+/// Returns (md5_hex, sha256_hex) or error.
+pub fn compute_checksums(remote: &RemoteSession, path: &Path) -> std::io::Result<(String, String)> {
+    let path_str = path.to_string_lossy().replace('\'', "'\"'\"'");
+    
+    let md5_out = exec_program(remote, "sh", &["-c", &format!(
+        "md5sum '{}' 2>/dev/null || md5 -q '{}' 2>/dev/null || echo ''",
+        path_str, path_str
+    )])?;
+    let md5 = md5_out.split_whitespace().next().unwrap_or("").to_string();
+    
+    let sha_out = exec_program(remote, "sh", &["-c", &format!(
+        "sha256sum '{}' 2>/dev/null || shasum -a 256 '{}' 2>/dev/null || echo ''",
+        path_str, path_str
+    )])?;
+    let sha256 = sha_out.split_whitespace().next().unwrap_or("").to_string();
+    
+    Ok((md5, sha256))
+}
+
 pub fn global_search(
     remote: &RemoteSession,
     root: &Path,
