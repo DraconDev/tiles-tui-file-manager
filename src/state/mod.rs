@@ -133,6 +133,7 @@ pub enum ContextMenuAction {
     CollapseAll,
     Drag,
     Compare,
+    Download,
     SetColor(Option<u8>),
     SortBy(FileColumn),
     Separator,
