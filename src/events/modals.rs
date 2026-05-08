@@ -2159,6 +2159,7 @@ mod tests {
         app.mode = AppMode::DragDropMenu {
             sources: vec![src.clone()],
             target: target.clone(),
+            target_is_remote: false,
         };
 
         let handled = handle_modal_mouse(

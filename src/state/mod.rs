@@ -21,6 +21,7 @@ pub enum AppEvent {
     TrashFile(PathBuf),
     Chmod(PathBuf, u32),
     Copy(PathBuf, PathBuf),
+    UploadToRemote(PathBuf, PathBuf),
     Symlink(PathBuf, PathBuf),
     StatusMsg(String),
     FilesChangedOnDisk(PathBuf),
@@ -198,6 +199,7 @@ pub enum AppMode {
     DragDropMenu {
         sources: Vec<PathBuf>,
         target: PathBuf,
+        target_is_remote: bool,
     },
     ContextMenu {
         x: u16,

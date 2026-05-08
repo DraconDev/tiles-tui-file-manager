@@ -1,21 +1,30 @@
 # Project State
 
 ## Current Focus
-Refactored remote connection retry mechanism to use dedicated channel for retry events
+Added remote file upload functionality with fallback mechanisms
 
 ## Context
-The change improves reliability by separating retry events from regular application events, preventing potential deadlocks during reconnection attempts.
+The changes implement file upload capabilities for remote sessions, including:
+1. Primary SCP-based upload (fastest method)
+2. Fallback base64 encoding via SSH (for cases where SCP isn't available)
+3. Proper handling of remote vs local targets in drag-and-drop operations
 
 ## Completed
-- [x] Changed retry event sender from `tx` to dedicated `tx_retry` channel
-- [x] Updated Cargo.lock with dependency updates
+- [x] Added remote file upload via SCP with proper SSH configuration
+- [x] Implemented base64 fallback upload method
+- [x] Enhanced drag-and-drop menu to distinguish remote vs local targets
+- [x] Added proper error handling for upload operations
+- [x] Updated state management to track remote upload operations
 
 ## In Progress
-- [x] Remote connection retry mechanism refactoring
+- [ ] Testing upload performance with large files
+- [ ] Adding progress indicators for upload operations
 
 ## Blockers
-- None identified in this change
+- Need to verify upload behavior with different file types and sizes
+- Potential performance impact with very large files needs validation
 
 ## Next Steps
-1. Verify retry events are properly handled by the dedicated channel
-2. Test connection stability with multiple retry attempts
+1. Add upload progress indicators to UI
+2. Implement retry logic for failed uploads
+3. Add user feedback for successful/failed uploads

@@ -1241,9 +1241,13 @@ pub fn handle_file_mouse(
                 if let Some(DropTarget::Folder(target_path)) = app.hovered_drop_target.take() {
                     if let Some(source_path) = app.drag_source.take() {
                         if source_path != target_path {
+                            let target_is_remote = app.current_file_state()
+                                .and_then(|fs| fs.remote_session.as_ref())
+                                .is_some();
                             app.mode = AppMode::DragDropMenu {
                                 sources: vec![source_path],
                                 target: target_path,
+                                target_is_remote,
                             };
                         }
                     }

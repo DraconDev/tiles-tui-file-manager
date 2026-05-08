@@ -185,6 +185,87 @@ pub fn download_remote_file(remote: &RemoteSession, path: &Path) -> std::io::Res
     Ok(local_path)
 }
 
+/// Upload a local file to a remote path using scp (preferred) or base64 fallback.
+/// Returns Ok(()) on success.
+pub fn upload_file(remote: &RemoteSession, local_path: &Path, remote_path: &Path) -> std::io::Result<()> {
+    // Try scp first (fastest, handles binary, any size)
+    if let Err(_) = upload_via_scp(remote, local_path, remote_path) {
+        // Fallback: base64 encoding via ssh exec (slower, ~1-2MB max practical)
+        upload_via_base64(remote, local_path, remote_path)?;
+    }
+    Ok(())
+}
+
+fn upload_via_scp(
+    remote: &RemoteSession,
+    local_path: &Path,
+    remote_path: &Path,
+) -> std::io::Result<()> {
+    let mut cmd = std::process::Command::new("scp");
+    cmd.arg("-o").arg("StrictHostKeyChecking=no")
+       .arg("-o").arg("BatchMode=yes");
+    
+    if remote.port != 22 {
+        cmd.arg("-P").arg(remote.port.to_string());
+    }
+    
+    if let Some(key) = &remote.key_path {
+        cmd.arg("-i").arg(key);
+    }
+    
+    cmd.arg(local_path);
+    
+    let host_spec = format!("{}@{}:{}", remote.user, remote.host, remote_path.to_string_lossy());
+    cmd.arg(&host_spec);
+    
+    let output = cmd.output()?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("scp upload failed: {}", stderr),
+        ));
+    }
+    Ok(())
+}
+
+fn upload_via_base64(
+    remote: &RemoteSession,
+    local_path: &Path,
+    remote_path: &Path,
+) -> std::io::Result<()> {
+    use base64::Engine;
+    
+    let bytes = std::fs::read(local_path)?;
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+    
+    let remote_path_escaped = remote_path.to_string_lossy().replace('\'', "'\"'\"'");
+    
+    // Write base64 in chunks to avoid command line length limits
+    const CHUNK_SIZE: usize = 4096;
+    
+    // First, ensure parent directory exists
+    let parent = remote_path.parent()
+        .map(|p| p.to_string_lossy().replace('\'', "'\"'\"'"))
+        .unwrap_or_else(|| "/tmp".to_string());
+    let _ = exec_program(remote, "sh", &["-c", &format!("mkdir -p '{}'", parent)])?;
+    
+    // Clear target file
+    let _ = exec_program(remote, "sh", &["-c", &format!("> '{}'", remote_path_escaped)])?;
+    
+    // Append base64 chunks
+    for chunk in b64.as_bytes().chunks(CHUNK_SIZE) {
+        let chunk_str = std::str::from_utf8(chunk).unwrap_or("");
+        let cmd = format!(
+            "printf '%s' '{}' | base64 -d >> '{}'",
+            chunk_str, remote_path_escaped
+        );
+        let _ = exec_program(remote, "sh", &["-c", &cmd])?;
+    }
+    
+    Ok(())
+}
+
 pub fn global_search(
     remote: &RemoteSession,
     root: &Path,

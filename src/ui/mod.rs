@@ -397,9 +397,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if let AppMode::DragDropMenu {
         ref sources,
         ref target,
+        target_is_remote,
     } = app.mode
     {
-        draw_drag_drop_modal(f, app, sources, target);
+        draw_drag_drop_modal(f, app, sources, target, *target_is_remote);
     }
 
     if app.is_dragging {
