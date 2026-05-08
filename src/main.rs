@@ -382,6 +382,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             &mut panes_needing_refresh,
                         ) {
                             needs_draw = true;
+                            last_activity = std::time::Instant::now();
                         }
                         // Note: ui::draw already calls f.render_widget(Clear, f.area())
                         // so terminal.clear() is redundant and can cause flicker/black screen
