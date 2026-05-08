@@ -389,6 +389,8 @@ pub struct FileState {
     #[serde(skip)]
     pub git_stashes: Vec<String>,
     #[serde(skip)]
+    pub git_search_filter: String,
+    #[serde(skip)]
     pub git_cache_until: Option<Instant>,
     #[serde(skip)]
     pub last_folder_size_calc: Option<Instant>,
@@ -450,6 +452,7 @@ impl FileState {
             git_summary: None,
             git_remotes: Vec::new(),
             git_stashes: Vec::new(),
+            git_search_filter: String::new(),
             git_cache_until: None,
             last_folder_size_calc: None,
             search_debounce_until: None,
