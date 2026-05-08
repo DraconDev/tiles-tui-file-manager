@@ -2349,17 +2349,83 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
+    // Status bar: ahead/behind, stash count
+    let status_bar_h = 1u16;
+    let status_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(status_bar_h), Constraint::Min(0)])
+        .split(inner);
+
+    let status_area = status_chunks[0];
+    let content_area = status_chunks[1];
+
+    // Build status line
+    let mut status_spans = vec![
+        Span::styled(
+            "  ",
+            Style::default().fg(crate::ui::theme::accent_primary()),
+        ),
+        Span::styled(
+            branch_name,
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        ),
+    ];
+
+    if tab.git_ahead > 0 || tab.git_behind > 0 {
+        status_spans.push(Span::raw("  " ));
+        if tab.git_ahead > 0 {
+            status_spans.push(Span::styled(
+                format!("↑{} ", tab.git_ahead),
+                Style::default().fg(Color::Green),
+            ));
+        }
+        if tab.git_behind > 0 {
+            status_spans.push(Span::styled(
+                format!("↓{} ", tab.git_behind),
+                Style::default().fg(Color::Red),
+            ));
+        }
+    }
+
+    if !tab.git_stashes.is_empty() {
+        status_spans.push(Span::styled(
+            format!(" 󰆓 {} ", tab.git_stashes.len()),
+            Style::default().fg(Color::Magenta),
+        ));
+    }
+
+    if !tab.git_remotes.is_empty() {
+        let remote_names: Vec<&str> = tab.git_remotes.iter()
+            .filter_map(|r| r.split_whitespace().next())
+            .collect::<std::collections::HashSet<_>>()
+            .into_iter()
+            .collect();
+        if !remote_names.is_empty() {
+            status_spans.push(Span::styled(
+                format!(" 󰒍 {} ", remote_names.join(", ")),
+                Style::default().fg(Color::Cyan),
+            ));
+        }
+    }
+
+    f.render_widget(
+        Paragraph::new(Line::from(status_spans)),
+        status_area,
+    );
+
     // Only show ACTIVE (pending) changes at top, no INFO panel
     let top_h = if pending_len == 0 {
         0
     } else {
-        (pending_len as u16 + 2).min(inner.height / 3)
+        (pending_len as u16 + 2).min(content_area.height / 3)
     };
 
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(top_h), Constraint::Min(0)])
-        .split(inner);
+        .split(content_area);
 
     let top_area = main_chunks[0];
     let history_area = main_chunks[1];
