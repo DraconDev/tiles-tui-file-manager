@@ -1,4 +1,4 @@
-use crate::app::App;
+use crate::app::{App, CurrentView};
 use std::collections::VecDeque;
 use dracon_system::{
     DiskSnapshot, ProcessControlContract, ProcessController, ProcessSnapshot, SystemSnapshot,
