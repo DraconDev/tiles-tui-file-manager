@@ -1245,7 +1245,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         };
 
                         let uploaded = if let Some(remote) = &remote {
-                            crate::modules::remote::upload_file_with_progress(remote, &src, &dest, &mut progress_callback).is_ok()
+                            crate::modules::remote::upload_file_with_progress(remote, &src, &dest, progress_callback).is_ok()
                         } else {
                             false
                         };
