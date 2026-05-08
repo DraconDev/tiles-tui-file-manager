@@ -592,7 +592,7 @@ pub fn handle_context_menu_action(
                     .filter_map(|&idx| fs.files.get(idx).cloned())
                     .collect();
                 if !selected.is_empty() {
-                    app.mode = AppMode::CreateArchive(selected);
+                    app.mode = AppMode::CreateArchive(selected, 0);
                     app.input.clear();
                 }
             }
