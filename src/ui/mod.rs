@@ -1235,52 +1235,58 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         mem_chunks[1],
     );
 
-    // CPU Cores - Heatmap grid with colored blocks
+    // CPU Cores - Compact horizontal bars
     if !app.system_state.cpu_cores.is_empty() {
         let cores = &app.system_state.cpu_cores;
-        let cols = if cores.len() > 16 { 8 } else if cores.len() > 8 { 4 } else { 2 };
-        let rows = (cores.len() + cols - 1) / cols;
-        
-        let core_label = Paragraph::new(vec![
-            Line::from(vec![Span::styled("CPU Cores", Style::default().fg(Color::Rgb(80, 85, 95)).add_modifier(Modifier::BOLD))])
-        ]);
+        // Always use 2 columns for adequate bar width
+        let cols = 2usize;
+        let rows = (cores.len() + 1) / 2;
         
         let core_area = left[2];
         let label_height = 1u16;
-        let grid_area = Rect::new(core_area.x, core_area.y + label_height, core_area.width, core_area.height.saturating_sub(label_height));
+        let grid_height = core_area.height.saturating_sub(label_height);
+        let row_height = (grid_height / rows as u16).max(1);
         
-        f.render_widget(core_label, Rect::new(core_area.x, core_area.y, core_area.width, label_height));
+        // Label
+        f.render_widget(
+            Paragraph::new(Line::from(vec![
+                Span::styled("CPU Cores", Style::default().fg(Color::Rgb(80, 85, 95)).add_modifier(Modifier::BOLD))
+            ])),
+            Rect::new(core_area.x, core_area.y, core_area.width, label_height),
+        );
         
-        let cell_w = grid_area.width / cols as u16;
-        let cell_h = grid_area.height / rows as u16;
+        let grid_area = Rect::new(core_area.x, core_area.y + label_height, core_area.width, grid_height);
+        let half_width = grid_area.width / 2;
         
         for (i, usage) in cores.iter().enumerate() {
             let col = i % cols;
             let row = i / cols;
-            let x = grid_area.x + col as u16 * cell_w;
-            let y = grid_area.y + row as u16 * cell_h;
-            let area = Rect::new(x, y, cell_w, cell_h);
+            let x = grid_area.x + col as u16 * half_width;
+            let y = grid_area.y + row as u16 * row_height;
+            let area = Rect::new(x, y, half_width, row_height);
             
             let intensity = (*usage / 100.0).clamp(0.0, 1.0);
-            let fg = if intensity > 0.8 {
-                Color::Rgb(255, 120, 120)
+            let (fg, bg) = if intensity > 0.8 {
+                (Color::Rgb(255, 120, 120), Color::Rgb(60, 20, 20))
             } else if intensity > 0.5 {
-                Color::Rgb(255, 200, 100)
+                (Color::Rgb(255, 200, 100), Color::Rgb(50, 40, 10))
             } else if intensity > 0.2 {
-                Color::Rgb(120, 220, 160)
+                (Color::Rgb(120, 220, 160), Color::Rgb(15, 40, 25))
             } else {
-                Color::Rgb(100, 105, 115)
+                (Color::Rgb(100, 105, 115), Color::Rgb(25, 28, 32))
             };
             
-            let mini_bar_len = ((cell_w.saturating_sub(10) as f32 * intensity) as usize).min(cell_w.saturating_sub(10) as usize);
-            let mini_bar = "█".repeat(mini_bar_len) + &"░".repeat((cell_w.saturating_sub(10) as usize).saturating_sub(mini_bar_len));
+            // Bar width: half_width - 12 chars for label+percentage
+            let bar_max = (half_width.saturating_sub(12) as usize).max(4);
+            let filled = ((bar_max as f32 * intensity) as usize).max(if intensity > 0.01 { 1 } else { 0 });
+            let bar = "█".repeat(filled) + &"░".repeat(bar_max - filled);
             
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(format!("{:02} ", i), Style::default().fg(Color::Rgb(80, 85, 95))),
-                    Span::styled(mini_bar, Style::default().fg(fg)),
+                    Span::styled(format!("C{:02} ", i), Style::default().fg(Color::Rgb(80, 85, 95))),
+                    Span::styled(bar, Style::default().fg(fg)),
                     Span::styled(format!(" {:>3.0}%", usage), Style::default().fg(fg).add_modifier(Modifier::BOLD)),
-                ])),
+                ])).style(Style::default().bg(bg)),
                 area,
             );
         }
