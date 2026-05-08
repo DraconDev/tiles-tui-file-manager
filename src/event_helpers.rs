@@ -146,6 +146,11 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
                     if selected_count == 2 {
                         actions.push(ContextMenuAction::Compare);
                     }
+
+                    // Download option for remote files
+                    if fs.remote_session.is_some() {
+                        actions.push(ContextMenuAction::Download);
+                    }
                 }
             }
 
