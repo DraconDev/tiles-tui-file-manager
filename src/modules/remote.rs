@@ -299,14 +299,20 @@ pub fn upload_file_with_progress(
         return Ok(());
     }
     
-    // Try scp first with simple progress (0% -> 100%)
+    // Try SFTP first (native, most reliable, with progress)
+    progress_callback(0.0);
+    if upload_via_sftp(remote, local_path, remote_path, &mut progress_callback).is_ok() {
+        return Ok(());
+    }
+    
+    // Fall back to scp (simple progress: 0% -> 100%)
     progress_callback(0.0);
     if upload_via_scp(remote, local_path, remote_path).is_ok() {
         progress_callback(100.0);
         return Ok(());
     }
     
-    // Fall back to base64 with chunk-based progress
+    // Last resort: base64 encoding via SSH exec
     upload_via_base64_with_progress(remote, local_path, remote_path, progress_callback)
 }
 
