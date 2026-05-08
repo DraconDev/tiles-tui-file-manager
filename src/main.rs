@@ -355,6 +355,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
     const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
+    let mut last_activity = std::time::Instant::now();
+    const IDLE_THRESHOLD_MS: u64 = 500;
 
     loop {
         let mut needs_draw = false;
