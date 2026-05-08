@@ -207,7 +207,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             crate::modules::system::SystemModule::new()
         ));
         tokio::spawn(async move {
-            let mut was_monitor_active = false;
             loop {
                 if shutdown_stats.load(Ordering::Relaxed) {
                     break;
