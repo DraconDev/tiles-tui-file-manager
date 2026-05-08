@@ -219,8 +219,6 @@ pub fn upload_file_with_progress(
     // Fall back to base64 with chunk-based progress
     upload_via_base64_with_progress(remote, local_path, remote_path, progress_callback)
 }
-    Ok(())
-}
 
 /// Calculate the total size of a remote directory in bytes.
 /// Uses `du -sb` for fast calculation.
