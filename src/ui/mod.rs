@@ -4031,10 +4031,36 @@ fn draw_properties_modal(f: &mut Frame, app: &App) {
         }
     }
 
+    // Show cached checksums if available
+    if let Some(fs) = app.current_file_state() {
+        let target_path = fs
+            .selection
+            .selected
+            .and_then(|idx| fs.files.get(idx))
+            .unwrap_or(&fs.current_path);
+        if let Some((md5, sha256)) = app.checksum_cache.get(target_path) {
+            text.push(Line::from(""));
+            if !md5.is_empty() {
+                text.push(Line::from(vec![
+                    Span::styled("MD5:    ", Style::default().fg(crate::ui::theme::accent_secondary())),
+                    Span::raw(&md5[..std::cmp::min(md5.len(), 32)]),
+                ]));
+            }
+            if !sha256.is_empty() {
+                text.push(Line::from(vec![
+                    Span::styled("SHA256: ", Style::default().fg(crate::ui::theme::accent_secondary())),
+                    Span::raw(&sha256[..std::cmp::min(sha256.len(), 32)]),
+                ]));
+            }
+        }
+    }
+
     text.push(Line::from(""));
     text.push(Line::from(vec![
         Span::styled(" [E] ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
         Span::styled("Edit Permissions   ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" [C] ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+        Span::styled("Checksums   ", Style::default().fg(Color::DarkGray)),
         Span::styled(" [Esc] ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
         Span::styled("Close", Style::default().fg(Color::DarkGray)),
     ]));

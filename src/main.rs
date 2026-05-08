@@ -988,6 +988,40 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
                 }
+                AppEvent::ComputeChecksums(path) => {
+                    let tx = event_tx.clone();
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let remote = {
+                            let app_guard = app_clone.lock();
+                            app_guard
+                                .current_file_state()
+                                .and_then(|fs| fs.remote_session.clone())
+                        };
+                        
+                        let result = if let Some(remote) = &remote {
+                            crate::modules::remote::compute_checksums(remote, &path)
+                        } else {
+                            crate::modules::files::compute_checksums(&path)
+                        };
+                        
+                        match result {
+                            Ok((md5, sha256)) => {
+                                let mut app_guard = app_clone.lock();
+                                app_guard.checksum_cache.insert(path.clone(), (md5.clone(), sha256.clone()));
+                                let _ = tx.send(AppEvent::StatusMsg(format!(
+                                    "Checksums computed for {}",
+                                    path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                                ))).await;
+                            }
+                            Err(e) => {
+                                let _ = tx.send(AppEvent::StatusMsg(format!(
+                                    "Checksum failed: {}", e
+                                ))).await;
+                            }
+                        }
+                    });
+                }
                 AppEvent::Copy(src, dest) => {
                     let tx = event_tx.clone();
                     let app_clone = app.clone();

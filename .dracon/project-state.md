@@ -1,21 +1,24 @@
 # Project State
 
 ## Current Focus
-Added checksum computation capability to verify file integrity
+Added checksum computation and display functionality for file integrity verification
 
 ## Context
-This change enables the system to compute checksums for files, which is necessary for verifying file integrity during operations like uploads and downloads.
+The changes implement file integrity verification by computing and displaying MD5 and SHA256 checksums for selected files, supporting both local and remote files.
 
 ## Completed
-- [x] Added `ComputeChecksums` event to the application state
-- [x] Enabled checksum computation for file operations
+- [x] Added checksum computation for both local and remote files
+- [x] Implemented checksum caching to avoid redundant computations
+- [x] Added UI display for checksum values in the properties modal
+- [x] Integrated checksum computation with the existing event system
+- [x] Added keyboard shortcut ('C') to trigger checksum computation
 
 ## In Progress
-- [x] Implementation of checksum computation logic
+- [ ] None (all changes are complete)
 
 ## Blockers
-- Missing checksum computation implementation for the new event type
+- None (feature is fully implemented)
 
 ## Next Steps
-1. Implement checksum computation logic for the new event type
-2. Integrate checksum verification into file operations
+1. Add checksum verification against known good values
+2. Implement checksum comparison between files

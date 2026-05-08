@@ -268,7 +268,7 @@ fn handle_modal_keys(
             }
         }
         AppMode::Settings => handle_settings_keys(key, app, event_tx),
-        AppMode::Properties => handle_properties_keys(key, app),
+        AppMode::Properties => handle_properties_keys(key, app, event_tx),
         AppMode::EditPermissions(_) => handle_edit_permissions_keys(key, app, event_tx),
         AppMode::Search => handle_search_keys(key, app, event_tx),
         AppMode::OpenWith(path) => {
@@ -472,7 +472,7 @@ fn handle_save_as_keys(
     }
 }
 
-fn handle_properties_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app: &mut App) -> bool {
+fn handle_properties_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     match key.code {
         KeyCode::Esc | KeyCode::Enter | KeyCode::Char('q') => {
             app.mode = AppMode::Normal;
@@ -490,6 +490,21 @@ fn handle_properties_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app
                 let current_mode = fs.metadata.get(&target_path).map(|m| m.permissions).unwrap_or(0o644);
                 app.mode = AppMode::EditPermissions(target_path);
                 app.input.set_value(format!("{:o}", current_mode));
+            }
+            true
+        }
+        KeyCode::Char('c') | KeyCode::Char('C') => {
+            // Compute checksums
+            if let Some(fs) = app.current_file_state() {
+                let target_path = fs
+                    .selection
+                    .selected
+                    .and_then(|idx| fs.files.get(idx))
+                    .cloned()
+                    .unwrap_or_else(|| fs.current_path.clone());
+                // Remove from cache to force recomputation
+                app.checksum_cache.remove(&target_path);
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::ComputeChecksums(target_path));
             }
             true
         }
