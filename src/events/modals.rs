@@ -476,6 +476,22 @@ fn handle_properties_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app
             app.mode = AppMode::Normal;
             true
         }
+        KeyCode::Char('e') | KeyCode::Char('E') => {
+            // Enter permissions edit mode
+            if let Some(fs) = app.current_file_state() {
+                let target_path = fs
+                    .selection
+                    .selected
+                    .and_then(|idx| fs.files.get(idx))
+                    .cloned()
+                    .unwrap_or_else(|| fs.current_path.clone());
+                let current_mode = fs.metadata.get(&target_path).map(|m| m.permissions).unwrap_or(0o644);
+                app.mode = AppMode::EditPermissions(target_path);
+                app.input.set_value(format!("{:o}", current_mode));
+                app.input.select_all();
+            }
+            true
+        }
         _ => true,
     }
 }

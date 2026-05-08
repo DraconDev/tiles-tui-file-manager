@@ -1,25 +1,24 @@
 # Project State
 
 ## Current Focus
-Added file permission modification support for both local and remote files
+Added file permission modification support in edit mode
 
 ## Context
-To enable users to modify file permissions directly within the application, we needed to implement a cross-platform solution that works for both local and remote files. This addresses user requests for more file management capabilities in the file browser.
+This change enables users to modify file permissions directly within the application by pressing 'e' or 'E' in normal mode. It provides a streamlined workflow for permission management.
 
 ## Completed
-- [x] Added `Chmod` event to application state
-- [x] Implemented permission modification for both local and remote files
-- [x] Added success/error feedback in status messages
-- [x] Added file refresh after permission changes
-- [x] Added `EditPermissions` mode to application state
+- [x] Added permission edit mode triggered by 'e'/'E' key
+- [x] Implemented permission value display in octal format
+- [x] Added automatic selection of current permission value
+- [x] Integrated with existing file selection system
 
 ## In Progress
-- [ ] UI implementation for permission editing (not yet implemented)
+- [ ] None (feature complete)
 
 ## Blockers
-- UI implementation pending design approval
+- None (feature implemented)
 
 ## Next Steps
-1. Implement permission editing UI component
-2. Add keyboard shortcuts for permission changes
-3. Add permission display in file properties view
+1. Implement permission save functionality
+2. Add visual feedback for permission changes
+```
