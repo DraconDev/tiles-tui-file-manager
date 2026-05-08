@@ -1362,7 +1362,7 @@ fn handle_highlight_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app:
 fn handle_input_modals_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
-    _event_tx: &mpsc::Sender<AppEvent>,
+    event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
     use dracon_terminal_engine::contracts::KeyCode;
     
