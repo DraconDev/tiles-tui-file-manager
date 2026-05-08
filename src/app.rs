@@ -103,6 +103,8 @@ pub struct App {
     pub file_manager_click_pos: (u16, u16),
     /// Tracks remote connection health: server name -> (is_healthy, last_check_time)
     pub remote_health: HashMap<String, (bool, std::time::Instant)>,
+    /// Cached checksums: path -> (md5, sha256)
+    pub checksum_cache: HashMap<PathBuf, (String, String)>,
     pub is_resizing_sidebar: bool,
     pub editor_clipboard: Option<String>,
     pub clipboard: Option<(PathBuf, ClipboardOp)>,
@@ -267,6 +269,7 @@ impl App {
             file_manager_last_click: std::time::Instant::now(),
             file_manager_click_pos: (0, 0),
             remote_health: HashMap::new(),
+            checksum_cache: HashMap::new(),
             is_resizing_sidebar: false,
             editor_clipboard: None,
             clipboard: None,

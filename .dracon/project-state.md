@@ -1,22 +1,22 @@
 # Project State
 
 ## Current Focus
-Added checksum computation for local files to verify file integrity
+Added checksum caching to track file integrity verification results
 
 ## Context
-This change enables verification of file integrity by computing both MD5 and SHA256 checksums for local files. This is important for ensuring data consistency when working with remote files or during file transfers.
+To improve file integrity verification performance, we're caching computed checksums (MD5 and SHA256) to avoid recomputing them for the same files.
 
 ## Completed
-- [x] Added `compute_checksums` function that calculates both MD5 and SHA256 checksums
-- [x] Implemented cross-platform support with fallback commands for different systems
-- [x] Added proper error handling for file operations
+- [x] Added `checksum_cache` field to store path-to-checksum mappings
+- [x] Initialized empty cache in App constructor
 
 ## In Progress
-- [ ] Testing and validation of checksum accuracy across different file types
+- [ ] Implement actual checksum computation and caching logic
 
 ## Blockers
-- Need to verify checksum consistency with remote file verification system
+- Missing checksum computation implementation for local files
+- Need to determine cache invalidation strategy
 
 ## Next Steps
-1. Implement checksum verification for remote files
-2. Add checksum display in file information UI
+1. Implement checksum computation for local files
+2. Add cache invalidation when files are modified
