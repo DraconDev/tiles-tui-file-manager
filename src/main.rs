@@ -1614,6 +1614,11 @@ let list_path_for_filter = path.clone();
                                     return;
                                 }
 
+                            // Pre-compute search filter values to avoid repeated allocations
+                            let search_filter_lower = fs.search_filter.to_lowercase();
+                            let has_search_filter = !fs.search_filter.is_empty();
+                            let show_hidden = fs.show_hidden;
+                            
                             // tree_files is Vec<(PathBuf, u16)> — keep pairs intact through filter/sort
                             let mut paired: Vec<(PathBuf, u16)> = tree_files.into_iter().filter(|(p, _)| {
                                 let is_hidden = p
@@ -1622,11 +1627,11 @@ let list_path_for_filter = path.clone();
                                     .map(|s| s.starts_with('.'))
                                     .unwrap_or(false);
 
-                                if !fs.show_hidden && is_hidden {
+                                if !show_hidden && is_hidden {
                                     return false;
                                 }
 
-                                if !fs.search_filter.is_empty() {
+                                if has_search_filter {
                                     let name = p
                                         .file_name()
                                         .and_then(|n| n.to_str())
@@ -1634,7 +1639,7 @@ let list_path_for_filter = path.clone();
                                     let matches = if FUZZY_SEARCH {
                                         fuzzy_contains(name, &fs.search_filter)
                                     } else {
-                                        name.to_lowercase().contains(&fs.search_filter.to_lowercase())
+                                        name.to_lowercase().contains(&search_filter_lower)
                                     };
                                     if !matches {
                                         return false;
@@ -1645,7 +1650,7 @@ let list_path_for_filter = path.clone();
                             }).collect();
 
                             // Search filter: include ancestor folders so matching children are visible
-                            if !fs.search_filter.is_empty() {
+                            if has_search_filter {
                                 use std::collections::HashSet;
                                 let filter_lower = fs.search_filter.to_lowercase();
                                 let mut keep: HashSet<PathBuf> = HashSet::new();
