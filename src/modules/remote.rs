@@ -197,6 +197,95 @@ pub fn upload_file(remote: &RemoteSession, local_path: &Path, remote_path: &Path
     upload_via_base64(remote, local_path, remote_path)
 }
 
+/// Upload a file via SFTP using native libssh2 SFTP protocol.
+/// This is the preferred method as it doesn't require external scp binary.
+pub fn upload_via_sftp(
+    remote: &RemoteSession,
+    local_path: &Path,
+    remote_path: &Path,
+    mut progress_callback: impl FnMut(f32),
+) -> std::io::Result<()> {
+    use ssh2::{Session, OpenFlags, OpenType};
+    use std::net::TcpStream;
+    use std::io::{Read, Write};
+
+    let file_size = std::fs::metadata(local_path)?.len();
+    
+    // Establish TCP connection
+    let addr = format!("{}:{}", remote.host, remote.port);
+    let tcp = TcpStream::connect(&addr)?;
+    
+    // Create SSH session
+    let mut sess = Session::new()?;
+    sess.set_tcp_stream(tcp);
+    sess.handshake()?;
+    
+    // Authenticate with key
+    if let Some(key_path) = &remote.key_path {
+        sess.userauth_pubkey_file(
+            &remote.user,
+            None,
+            key_path,
+            None,
+        )?;
+    } else {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "No SSH key path provided",
+        ));
+    }
+    
+    if !sess.authenticated() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::PermissionDenied,
+            "SSH authentication failed",
+        ));
+    }
+    
+    // Get SFTP handle
+    let sftp = sess.sftp()?;
+    
+    // Ensure parent directory exists
+    if let Some(parent) = remote_path.parent() {
+        let _ = sftp.mkdir(parent, 0o755);
+    }
+    
+    // Create remote file
+    let mut remote_file = sftp.open_mode(
+        remote_path,
+        OpenFlags::WRITE | OpenFlags::CREATE | OpenFlags::TRUNCATE,
+        0o644,
+        OpenType::File,
+    )?;
+    
+    // Read local file and write to remote
+    let mut local_file = std::fs::File::open(local_path)?;
+    let mut buffer = vec![0u8; 65536]; // 64KB chunks
+    let mut total_written: u64 = 0;
+    
+    loop {
+        let n = local_file.read(&mut buffer)?;
+        if n == 0 {
+            break;
+        }
+        remote_file.write_all(&buffer[..n])?;
+        total_written += n as u64;
+        
+        if file_size > 0 {
+            let progress = (total_written as f64 / file_size as f64 * 100.0).min(100.0) as f32;
+            progress_callback(progress);
+        }
+    }
+    
+    // Close files (SFTP file close is important)
+    drop(remote_file);
+    drop(sftp);
+    sess.disconnect(None, "Upload complete", None)?;
+    
+    progress_callback(100.0);
+    Ok(())
+}
+
 pub fn upload_file_with_progress(
     remote: &RemoteSession, 
     local_path: &Path, 
