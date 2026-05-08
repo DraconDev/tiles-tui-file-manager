@@ -436,7 +436,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::ReconnectRemote(pane_idx) => {
                     let bookmark_idx = {
-                        let app_guard = app.lock();
+                        let mut app_guard = app.lock();
+                        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                            if let Some(fs) = pane.current_state_mut() {
+                                fs.retry_count += 1;
+                            }
+                        }
                         app_guard.panes.get(pane_idx)
                             .and_then(|p| p.current_state())
                             .and_then(|fs| fs.bookmark_idx)
