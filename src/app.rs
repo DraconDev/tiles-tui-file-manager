@@ -128,9 +128,10 @@ pub struct App {
     #[allow(dead_code)]
     pub tile_queue: Arc<StdMutex<Vec<TilePlacement>>>,
     pub saved_pane: Option<Pane>,
-    /// SSH connection pool: bookmark name -> RemoteSession
+    /// SSH connection pool: bookmark name -> (RemoteSession, last_used_time)
     /// Allows multiple tabs to reuse the same SSH connection.
-    pub remote_session_pool: HashMap<String, RemoteSession>,
+    /// Stale entries are cleaned up after 5 minutes of inactivity.
+    pub remote_session_pool: HashMap<String, (RemoteSession, Instant)>,
 }
 
 impl App {
