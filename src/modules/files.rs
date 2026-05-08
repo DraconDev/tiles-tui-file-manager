@@ -354,31 +354,33 @@ pub fn diff_files(path_a: &Path, path_b: &Path) -> std::io::Result<String> {
     }
 }
 
-pub async fn create_archive(paths: &[PathBuf], dest: &Path) -> std::io::Result<()> {
+pub async fn create_archive(paths: &[PathBuf], dest: &Path, format: usize) -> std::io::Result<()> {
     use tokio::process::Command;
     
-    let is_zip = dest.extension().and_then(|e| e.to_str()) == Some("zip");
-    
-    if is_zip {
-        let mut cmd = Command::new("zip");
-        cmd.arg("-r").arg(dest).args(paths);
-        let output = cmd.output().await?;
-        if !output.status.success() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                String::from_utf8_lossy(&output.stderr),
-            ));
+    match format {
+        1 => {
+            // ZIP format
+            let mut cmd = Command::new("zip");
+            cmd.arg("-r").arg(dest).args(paths);
+            let output = cmd.output().await?;
+            if !output.status.success() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    String::from_utf8_lossy(&output.stderr),
+                ));
+            }
         }
-    } else {
-        // Default to tar.gz
-        let mut cmd = Command::new("tar");
-        cmd.arg("-czf").arg(dest).args(paths);
-        let output = cmd.output().await?;
-        if !output.status.success() {
-            return Err(std::io::Error::new(
-                std::io::ErrorKind::Other,
-                String::from_utf8_lossy(&output.stderr),
-            ));
+        _ => {
+            // Default to tar.gz (format 0)
+            let mut cmd = Command::new("tar");
+            cmd.arg("-czf").arg(dest).args(paths);
+            let output = cmd.output().await?;
+            if !output.status.success() {
+                return Err(std::io::Error::new(
+                    std::io::ErrorKind::Other,
+                    String::from_utf8_lossy(&output.stderr),
+                ));
+            }
         }
     }
     
