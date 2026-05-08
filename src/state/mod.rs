@@ -129,6 +129,7 @@ pub enum ContextMenuAction {
     SystemMonitor,
     CollapseAll,
     Drag,
+    Compare,
     SetColor(Option<u8>),
     SortBy(FileColumn),
     Separator,

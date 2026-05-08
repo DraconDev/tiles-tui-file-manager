@@ -1,22 +1,20 @@
 # Project State
 
 ## Current Focus
-Improved checksum computation display by extracting file name handling into a separate variable
+Added a new `Compare` action to the context menu for file comparison functionality.
 
 ## Context
-The change was motivated by code clarity and potential performance optimization. The original code had nested operations that could be simplified by separating the file name extraction from the checksum storage and status message.
+This change extends the existing context menu actions to include a dedicated option for comparing files, which aligns with recent work on file integrity verification and remote file operations.
 
 ## Completed
-- [x] Extracted file name handling into a separate variable for better readability
-- [x] Simplified the checksum cache insertion by removing unnecessary cloning
-- [x] Improved status message formatting by using the pre-extracted file name
+- [x] Added `Compare` variant to `ContextMenuAction` enum
 
 ## In Progress
-- [ ] None (this is a focused refactoring)
+- [x] Implementation of file comparison functionality
 
 ## Blockers
-- None (this is a completed refactoring)
+- Implementation of the actual comparison logic is not yet complete
 
 ## Next Steps
-1. Verify that the checksum computation functionality remains unchanged
-2. Check for any performance improvements from the refactored code
+1. Implement the file comparison logic
+2. Add UI components to display comparison results
