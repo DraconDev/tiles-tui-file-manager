@@ -1179,7 +1179,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     needs_draw = true;
                 }
-                AppEvent::CreateArchive(paths, dest) => {
+                AppEvent::CreateArchive(paths, dest, format_idx) => {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard
