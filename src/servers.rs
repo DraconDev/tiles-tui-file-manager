@@ -62,6 +62,7 @@ pub struct ServersFile {
     pub server: Vec<ServerConfig>,
 }
 
+#[allow(dead_code)]
 impl ServersFile {
     pub fn is_empty(&self) -> bool {
         self.server.is_empty()
