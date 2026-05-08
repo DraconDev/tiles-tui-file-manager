@@ -571,7 +571,31 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 Ok(false) => {
                                     match crate::modules::remote::is_binary_file(remote, &path) {
                                         Ok((true, size_mb)) => {
-                                            format!("<Binary file: {} MB - cannot preview remotely>", size_mb)
+                                            if size_mb < 50 {
+                                                let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                                    "Downloading {} MB binary from remote...", size_mb
+                                                )));
+                                                match crate::modules::remote::download_remote_file(remote, &path) {
+                                                    Ok(local_path) => {
+                                                        dracon_terminal_engine::utils::spawn_detached(
+                                                            "xdg-open",
+                                                            vec![local_path.to_string_lossy().to_string()],
+                                                        );
+                                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                                            "Opened {} ({} MB) locally", path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default(), size_mb
+                                                        )));
+                                                        format!("<Binary file: {} MB - opened locally>", size_mb)
+                                                    }
+                                                    Err(e) => {
+                                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                                            "Download failed: {}", e
+                                                        )));
+                                                        format!("<Binary file: {} MB - download failed: {}>", size_mb, e)
+                                                    }
+                                                }
+                                            } else {
+                                                format!("<Binary file: {} MB - too large for auto-download>", size_mb)
+                                            }
                                         }
                                         Ok((false, _)) => crate::modules::remote::read_to_string(remote, &path)
                                             .unwrap_or_else(|e| format!("Error reading remote file: {e}")),

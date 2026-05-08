@@ -116,6 +116,68 @@ pub fn is_binary_file(remote: &RemoteSession, path: &Path) -> std::io::Result<(b
     Ok((has_null, size_mb))
 }
 
+/// Download a remote file to a local temp path using ssh streaming.
+/// Returns the local path where the file was saved.
+pub fn download_remote_file(remote: &RemoteSession, path: &Path) -> std::io::Result<PathBuf> {
+    let file_name = path.file_name()
+        .map(|n| n.to_string_lossy().to_string())
+        .unwrap_or_else(|| "downloaded".to_string());
+    
+    let tmp_dir = std::env::temp_dir().join("tiles_remote");
+    std::fs::create_dir_all(&tmp_dir)?;
+    
+    // Sanitize filename for local filesystem
+    let safe_name: String = file_name.chars()
+        .map(|c| if c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_' { c } else { '_' })
+        .collect();
+    
+    let local_path = tmp_dir.join(&safe_name);
+    
+    // Build ssh command
+    let mut cmd = std::process::Command::new("ssh");
+    cmd.arg("-o").arg("StrictHostKeyChecking=no")
+       .arg("-o").arg("BatchMode=yes");
+    
+    if remote.port != 22 {
+        cmd.arg("-p").arg(remote.port.to_string());
+    }
+    
+    if let Some(key) = &remote.key_path {
+        cmd.arg("-i").arg(key);
+    }
+    
+    let host_spec = format!("{}@{}", remote.user, remote.host);
+    let remote_path_escaped = path.to_string_lossy().replace('\'', "'\"'\"'");
+    
+    cmd.arg(&host_spec)
+       .arg(format!("cat '{}'", remote_path_escaped));
+    
+    // Stream stdout to local file
+    let output = cmd.stdout(std::process::Stdio::piped())
+        .spawn()?;
+    
+    if let Some(mut stdout) = output.stdout {
+        use std::io::{Read, Write};
+        let mut file = std::fs::File::create(&local_path)?;
+        let mut buffer = [0u8; 8192];
+        loop {
+            let n = stdout.read(&mut buffer)?;
+            if n == 0 { break; }
+            file.write_all(&buffer[..n])?;
+        }
+    }
+    
+    let status = output.wait()?;
+    if !status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("ssh download failed for {}", path.display()),
+        ));
+    }
+    
+    Ok(local_path)
+}
+
 pub fn global_search(
     remote: &RemoteSession,
     root: &Path,
