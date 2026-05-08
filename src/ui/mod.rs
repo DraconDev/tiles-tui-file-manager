@@ -2346,6 +2346,26 @@ fn format_relative_time(date_str: &str) -> String {
     }
 }
 
+fn author_color(author: &str) -> Color {
+    let colors = [
+        Color::Cyan,
+        Color::Magenta,
+        Color::Yellow,
+        Color::Green,
+        Color::Blue,
+        Color::LightCyan,
+        Color::LightMagenta,
+        Color::LightYellow,
+        Color::LightGreen,
+        Color::LightBlue,
+    ];
+    let mut hash = 0u64;
+    for byte in author.bytes() {
+        hash = hash.wrapping_mul(31).wrapping_add(byte as u64);
+    }
+    colors[(hash % colors.len() as u64) as usize]
+}
+
 fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(Clear, area);
     let pane_idx = app.focused_pane_index;
