@@ -20,7 +20,7 @@ pub enum AppEvent {
     Delete(PathBuf),
     TrashFile(PathBuf),
     Chmod(PathBuf, u32),
-    CreateArchive(Vec<PathBuf>, PathBuf),
+    CreateArchive(Vec<PathBuf>, PathBuf, usize),
     ComputeChecksums(PathBuf),
     Copy(PathBuf, PathBuf),
     UploadToRemote(PathBuf, PathBuf),
