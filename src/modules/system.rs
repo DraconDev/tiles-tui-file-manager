@@ -94,7 +94,11 @@ impl SystemModule {
         s.net_in = data.net_in;
         s.net_out = data.net_out;
 
-        app.apply_process_sort();
+        // Only sort processes if monitor view is active — sorting 300+ processes
+        // every 2 seconds when user isn't looking is wasteful
+        if app.current_view == CurrentView::Processes {
+            app.apply_process_sort();
+        }
     }
 }
 
