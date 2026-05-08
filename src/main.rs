@@ -483,7 +483,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::RemoteConnected(pane_idx, session, remote_name) => {
                     let mut app_guard = app.lock();
                     // Cache the session for reuse
-                    app_guard.remote_session_pool.insert(remote_name.clone(), session.clone());
+                    app_guard.remote_session_pool.insert(remote_name.clone(), (session.clone(), std::time::Instant::now()));
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
