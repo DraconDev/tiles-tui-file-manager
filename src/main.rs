@@ -354,7 +354,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64)> =
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
-    const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
+    const WATCH_SYNC_INTERVAL_MS: u64 = 5000;
     let mut last_activity = std::time::Instant::now();
     const IDLE_THRESHOLD_MS: u64 = 500;
 
@@ -364,8 +364,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         while let Ok(event) = event_rx.try_recv() {
             match event {
                 AppEvent::Tick => {
-                    // Tick no longer syncs file watches — sync is now event-driven
-                    // after RefreshFiles, tab changes, and folder expansion
+                    // Sync file watches periodically (every 5 seconds) to catch new/removed paths
+                    // without doing it on every Tick event
+                    if last_watch_sync.elapsed() >= Duration::from_millis(WATCH_SYNC_INTERVAL_MS) {
+                        let app_guard = app.lock();
+                        sync_watches(&app_guard, &mut debouncer);
+                        last_watch_sync = std::time::Instant::now();
+                    }
                 }
                 AppEvent::Raw(raw) => {
                     {
