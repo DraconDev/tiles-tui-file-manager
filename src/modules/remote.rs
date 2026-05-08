@@ -153,10 +153,10 @@ pub fn download_remote_file(remote: &RemoteSession, path: &Path) -> std::io::Res
        .arg(format!("cat '{}'", remote_path_escaped));
     
     // Stream stdout to local file
-    let output = cmd.stdout(std::process::Stdio::piped())
+    let mut child = cmd.stdout(std::process::Stdio::piped())
         .spawn()?;
     
-    if let Some(mut stdout) = output.stdout {
+    if let Some(mut stdout) = child.stdout.take() {
         use std::io::{Read, Write};
         let mut file = std::fs::File::create(&local_path)?;
         let mut buffer = [0u8; 8192];
@@ -167,7 +167,7 @@ pub fn download_remote_file(remote: &RemoteSession, path: &Path) -> std::io::Res
         }
     }
     
-    let status = output.wait()?;
+    let status = child.wait()?;
     if !status.success() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::Other,

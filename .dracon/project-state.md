@@ -1,25 +1,22 @@
 # Project State
 
 ## Current Focus
-Added binary file handling for remote file previews with automatic download for small files
+Improved error handling and process management in remote file downloads
 
 ## Context
-The previous implementation only detected binary files but didn't handle them meaningfully. This change adds functionality to automatically download and open small binary files locally while providing appropriate feedback for larger files.
+The changes address potential resource leaks and process management issues in the remote file download functionality, ensuring proper cleanup of child processes and stdout streams.
 
 ## Completed
-- [x] Added binary file detection in remote file previews
-- [x] Implemented automatic download for binary files under 50MB
-- [x] Added local file opening for downloaded binaries
-- [x] Created status messages for download operations
-- [x] Added size-based handling for binary files
+- [x] Fixed potential resource leak by properly managing child process stdout stream
+- [x] Improved process handling by using `child.wait()` instead of `output.wait()`
+- [x] Enhanced error handling for remote file download operations
 
 ## In Progress
-- [ ] None (all changes are complete)
+- [ ] No active work in progress
 
 ## Blockers
-- None (feature is complete)
+- Dependency resolution for `dracon-files` manifest (blocked by runtime progress)
 
 ## Next Steps
-1. Test with various binary file types and sizes
-2. Consider adding configuration options for download thresholds
-3. Evaluate adding preview capabilities for certain binary formats
+1. Resolve dependency issues for `dracon-files`
+2. Verify remote file download functionality with various file types
