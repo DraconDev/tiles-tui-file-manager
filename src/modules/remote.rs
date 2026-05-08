@@ -557,7 +557,7 @@ fn escape_shell_single_quoted(input: &str) -> String {
     format!("'{}'", input.replace('\'', "'\"'\"'"))
 }
 
-pub async fn create_archive(
+pub fn create_archive(
     remote: &RemoteSession,
     paths: &[PathBuf],
     dest: &Path,
