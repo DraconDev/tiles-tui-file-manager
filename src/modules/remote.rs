@@ -200,7 +200,7 @@ pub fn upload_file_with_progress(
     remote: &RemoteSession, 
     local_path: &Path, 
     remote_path: &Path,
-    progress_callback: &mut dyn FnMut(f32),
+    mut progress_callback: impl FnMut(f32),
 ) -> std::io::Result<()> {
     // Get file size for progress calculation
     let file_size = std::fs::metadata(local_path)?.len();
@@ -282,7 +282,7 @@ fn upload_via_base64_with_progress(
     remote: &RemoteSession,
     local_path: &Path,
     remote_path: &Path,
-    progress_callback: &mut dyn FnMut(f32),
+    mut progress_callback: impl FnMut(f32),
 ) -> std::io::Result<()> {
     use base64::Engine;
     
