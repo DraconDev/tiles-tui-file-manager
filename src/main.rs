@@ -921,6 +921,38 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
                 }
+                AppEvent::Chmod(path, mode) => {
+                    let remote = {
+                        let app_guard = app.lock();
+                        app_guard
+                            .current_file_state()
+                            .and_then(|fs| fs.remote_session.clone())
+                    };
+                    let focused = app.lock().focused_pane_index;
+                    let result = if let Some(remote) = remote {
+                        crate::modules::remote::chmod(&remote, &path, mode)
+                    } else {
+                        use std::os::unix::fs::PermissionsExt;
+                        let mut perms = std::fs::metadata(&path)?.permissions();
+                        perms.set_mode(mode);
+                        std::fs::set_permissions(&path, perms)
+                    };
+                    match result {
+                        Ok(_) => {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "Permissions set to {:o} for {}",
+                                mode,
+                                path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                            )));
+                        }
+                        Err(e) => {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "chmod failed: {}", e
+                            )));
+                        }
+                    }
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
+                }
                 AppEvent::Copy(src, dest) => {
                     let tx = event_tx.clone();
                     let app_clone = app.clone();

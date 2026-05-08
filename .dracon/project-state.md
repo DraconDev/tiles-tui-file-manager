@@ -1,22 +1,25 @@
 # Project State
 
 ## Current Focus
-Improved error handling and process management in remote file downloads
+Added file permission modification support for both local and remote files
 
 ## Context
-The changes address potential resource leaks and process management issues in the remote file download functionality, ensuring proper cleanup of child processes and stdout streams.
+To enable users to modify file permissions directly within the application, we needed to implement a cross-platform solution that works for both local and remote files. This addresses user requests for more file management capabilities in the file browser.
 
 ## Completed
-- [x] Fixed potential resource leak by properly managing child process stdout stream
-- [x] Improved process handling by using `child.wait()` instead of `output.wait()`
-- [x] Enhanced error handling for remote file download operations
+- [x] Added `Chmod` event to application state
+- [x] Implemented permission modification for both local and remote files
+- [x] Added success/error feedback in status messages
+- [x] Added file refresh after permission changes
+- [x] Added `EditPermissions` mode to application state
 
 ## In Progress
-- [ ] No active work in progress
+- [ ] UI implementation for permission editing (not yet implemented)
 
 ## Blockers
-- Dependency resolution for `dracon-files` manifest (blocked by runtime progress)
+- UI implementation pending design approval
 
 ## Next Steps
-1. Resolve dependency issues for `dracon-files`
-2. Verify remote file download functionality with various file types
+1. Implement permission editing UI component
+2. Add keyboard shortcuts for permission changes
+3. Add permission display in file properties view

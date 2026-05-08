@@ -98,6 +98,13 @@ pub fn is_dir(remote: &RemoteSession, path: &Path) -> std::io::Result<bool> {
     provider.is_dir(&to_connection(remote), path)
 }
 
+pub fn chmod(remote: &RemoteSession, path: &Path, mode: u32) -> std::io::Result<()> {
+    let path_str = path.to_string_lossy();
+    let escaped = path_str.replace('\'', "'\"'\"'");
+    let _ = exec_program(remote, "chmod", &[&format!("{:o}", mode), &escaped])?;
+    Ok(())
+}
+
 /// Check if a remote file is binary by reading the first 8KB and looking for null bytes.
 /// Returns (is_binary, size_mb) where size_mb is 0 if unknown.
 pub fn is_binary_file(remote: &RemoteSession, path: &Path) -> std::io::Result<(bool, u64)> {
