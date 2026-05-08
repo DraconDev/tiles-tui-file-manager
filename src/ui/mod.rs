@@ -404,6 +404,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         draw_drag_drop_modal(f, app, sources, target, target_is_remote);
     }
 
+    if let AppMode::CreateArchive(ref paths, format_idx) = app.mode {
+        draw_create_archive_modal(f, app, paths, format_idx);
+    }
+
     if app.is_dragging {
         draw_drag_ghost(f, app);
     }
