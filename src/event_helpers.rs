@@ -136,6 +136,16 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
                     } else {
                         actions.push(ContextMenuAction::AddToFavorites);
                     }
+
+                    // Compare option if exactly 2 files selected
+                    let selected_count = if fs.selection.multi.is_empty() {
+                        1
+                    } else {
+                        fs.selection.multi.len() + if fs.selection.multi.contains(idx) { 0 } else { 1 }
+                    };
+                    if selected_count == 2 {
+                        actions.push(ContextMenuAction::Compare);
+                    }
                 }
             }
 
