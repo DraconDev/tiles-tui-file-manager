@@ -1861,6 +1861,7 @@ paired = new_paired;
         }
 
         if needs_draw {
+            last_activity = std::time::Instant::now();
             let mut app_guard = app.lock();
             if !app_guard.running {
                 shutdown.store(true, Ordering::Release);
@@ -1869,7 +1870,13 @@ paired = new_paired;
             terminal.draw(|f| ui::draw(f, &mut app_guard))?;
         }
 
-        tokio::time::sleep(Duration::from_millis(50)).await;
+        // Adaptive sleep: 50ms when active, 100ms when idle
+        let sleep_ms = if last_activity.elapsed() >= Duration::from_millis(IDLE_THRESHOLD_MS) {
+            100
+        } else {
+            50
+        };
+        tokio::time::sleep(Duration::from_millis(sleep_ms)).await;
     }
 
     Ok(())
