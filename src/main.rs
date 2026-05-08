@@ -1272,6 +1272,7 @@ let list_path_for_filter = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
                 let start_generation = current_generation;
+                let tx_retry = tx.clone();
                 let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
