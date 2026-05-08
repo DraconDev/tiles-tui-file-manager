@@ -1,21 +1,21 @@
 # Project State
 
 ## Current Focus
-Added retry count tracking for remote connection reconnection attempts
+Refactored remote connection retry mechanism to use dedicated channel for retry events
 
 ## Context
-This change supports the ongoing work on improving remote connection reliability by tracking retry attempts during reconnection processes.
+The change improves reliability by separating retry events from regular application events, preventing potential deadlocks during reconnection attempts.
 
 ## Completed
-- [x] Added retry count tracking for remote connections during reconnection attempts
+- [x] Changed retry event sender from `tx` to dedicated `tx_retry` channel
+- [x] Updated Cargo.lock with dependency updates
 
 ## In Progress
-- [ ] None (this is a focused fix)
+- [x] Remote connection retry mechanism refactoring
 
 ## Blockers
-- None (this is a standalone improvement)
+- None identified in this change
 
 ## Next Steps
-1. Verify retry count tracking works correctly in reconnection scenarios
-2. Consider adding visual feedback for retry attempts in the UI
-```
+1. Verify retry events are properly handled by the dedicated channel
+2. Test connection stability with multiple retry attempts

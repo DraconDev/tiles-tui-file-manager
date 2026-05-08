@@ -1314,9 +1314,9 @@ let list_path_for_filter = path.clone();
                                     
                                     // Trigger reconnection if under retry limit
                                     if retry_count < 3 {
-                                        let _ = crate::app::try_send_event(&tx, AppEvent::ReconnectRemote(pane_idx));
+                                        let _ = crate::app::try_send_event(&tx_retry, AppEvent::ReconnectRemote(pane_idx));
                                     } else {
-                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(
+                                        let _ = crate::app::try_send_event(&tx_retry, AppEvent::StatusMsg(
                                             format!("Connection to {} failed after 3 retries", session.name)
                                         ));
                                     }
