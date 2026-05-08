@@ -197,30 +197,60 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         });
     }
 
-    // 2. System Stats Loop (Tokio) — polls every 2s with persistent SystemModule
-    //    so CPU/process deltas are calculated correctly (needs baseline across calls)
+    // 2. System Stats Loop (Tokio) — polls every 3s only when monitor is visible
+    //    Skip collection when in Files/Editor/Git to save CPU
     {
         let tx = event_tx.clone();
         let shutdown_stats = shutdown.clone();
+        let app_for_stats = app.clone();
         let sys_mod = std::sync::Arc::new(std::sync::Mutex::new(
             crate::modules::system::SystemModule::new()
         ));
         tokio::spawn(async move {
+            let mut was_monitor_active = false;
             loop {
                 if shutdown_stats.load(Ordering::Relaxed) {
                     break;
                 }
-                let sys_mod = sys_mod.clone();
-                let data = tokio::task::spawn_blocking(move || {
-                    sys_mod.lock().unwrap().get_data()
-                })
-                .await
-                .ok()
-                .and_then(|r| r.ok());
-                if let Some(data) = data {
-                    let _ = tx.send(AppEvent::SystemUpdated(data)).await;
+                
+                // Only collect stats when monitor view is active
+                let is_monitor_active = {
+                    let app_guard = app_for_stats.lock();
+                    app_guard.current_view == CurrentView::Processes
+                };
+                
+                if is_monitor_active {
+                    was_monitor_active = true;
+                    let sys_mod = sys_mod.clone();
+                    let data = tokio::task::spawn_blocking(move || {
+                        sys_mod.lock().unwrap().get_data()
+                    })
+                    .await
+                    .ok()
+                    .and_then(|r| r.ok());
+                    if let Some(data) = data {
+                        let _ = tx.send(AppEvent::SystemUpdated(data)).await;
+                    }
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                } else {
+                    // When leaving monitor, do one final capture so the overview
+                    // isn't completely stale when user returns
+                    if was_monitor_active {
+                        was_monitor_active = false;
+                        let sys_mod = sys_mod.clone();
+                        let data = tokio::task::spawn_blocking(move || {
+                            sys_mod.lock().unwrap().get_data()
+                        })
+                        .await
+                        .ok()
+                        .and_then(|r| r.ok());
+                        if let Some(data) = data {
+                            let _ = tx.send(AppEvent::SystemUpdated(data)).await;
+                        }
+                    }
+                    // Sleep longer when monitor is not active
+                    tokio::time::sleep(Duration::from_secs(5)).await;
                 }
-                tokio::time::sleep(Duration::from_secs(2)).await;
             }
         });
     }
