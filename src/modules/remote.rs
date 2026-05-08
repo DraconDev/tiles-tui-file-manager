@@ -322,9 +322,6 @@ fn upload_via_base64_with_progress(
     progress_callback(100.0);
     Ok(())
 }
-    
-    Ok(())
-}
 
 /// Compute MD5 and SHA256 checksums for a remote file.
 /// Returns (md5_hex, sha256_hex) or error.
