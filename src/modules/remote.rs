@@ -277,19 +277,30 @@ fn upload_via_base64(
     local_path: &Path,
     remote_path: &Path,
 ) -> std::io::Result<()> {
+    upload_via_base64_with_progress(remote, local_path, remote_path, &mut |_| {})
+}
+
+fn upload_via_base64_with_progress(
+    remote: &RemoteSession,
+    local_path: &Path,
+    remote_path: &Path,
+    progress_callback: &mut dyn FnMut(f32),
+) -> std::io::Result<()> {
     use base64::Engine;
     
     let bytes = std::fs::read(local_path)?;
+    let total_size = bytes.len();
     let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
     
-    let remote_path_escaped = remote_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let remote_path_escaped = remote_path.to_string_lossy().replace('\'', '"'"'"');
     
     // Write base64 in chunks to avoid command line length limits
     const CHUNK_SIZE: usize = 4096;
+    let total_chunks = b64.len().div_ceil(CHUNK_SIZE);
     
     // First, ensure parent directory exists
     let parent = remote_path.parent()
-        .map(|p| p.to_string_lossy().replace('\'', "'\"'\"'"))
+        .map(|p| p.to_string_lossy().replace('\'', '"'"'"'))
         .unwrap_or_else(|| "/tmp".to_string());
     let _ = exec_program(remote, "sh", &["-c", &format!("mkdir -p '{}'", parent)])?;
     
@@ -297,14 +308,22 @@ fn upload_via_base64(
     let _ = exec_program(remote, "sh", &["-c", &format!("> '{}'", remote_path_escaped)])?;
     
     // Append base64 chunks
-    for chunk in b64.as_bytes().chunks(CHUNK_SIZE) {
+    for (i, chunk) in b64.as_bytes().chunks(CHUNK_SIZE).enumerate() {
         let chunk_str = std::str::from_utf8(chunk).unwrap_or("");
         let cmd = format!(
             "printf '%s' '{}' | base64 -d >> '{}'",
             chunk_str, remote_path_escaped
         );
         let _ = exec_program(remote, "sh", &["-c", &cmd])?;
+        
+        // Report progress
+        let progress = ((i + 1) as f32 / total_chunks as f32) * 100.0;
+        progress_callback(progress);
     }
+    
+    progress_callback(100.0);
+    Ok(())
+}
     
     Ok(())
 }
