@@ -1598,6 +1598,7 @@ fn setup_app(
                 pane.tabs.push(crate::state::FileState::new(
                     cwd,
                     None,
+                    None,
                     app.default_show_hidden,
                     app.single_columns.clone(),
                     crate::state::FileColumn::Name,

@@ -31,6 +31,7 @@ pub enum AppEvent {
     AddToFavorites(PathBuf),
     ConnectToRemote(usize, usize),
     RemoteConnected(usize, RemoteSession),
+    ReconnectRemote(usize),
     SystemUpdated(dracon_system::SystemSnapshot),
 
     KillProcess(u32),
@@ -304,6 +305,8 @@ pub struct FileState {
     pub current_path: PathBuf,
     pub remote_session: Option<RemoteSession>,
     pub bookmark_idx: Option<usize>,
+    #[serde(skip)]
+    pub retry_count: u8,
     pub files: Vec<PathBuf>,
     pub selection: SelectionState,
     pub show_hidden: bool,
@@ -558,6 +561,7 @@ mod tests {
         let mut fs = FileState::new(
             PathBuf::from("/test"),
             None,
+            None,
             false,
             vec![FileColumn::Name],
             FileColumn::Name,
@@ -574,6 +578,7 @@ mod tests {
     fn clamped_scroll_returns_min_of_scroll_and_max() {
         let mut fs = FileState::new(
             PathBuf::from("/test"),
+            None,
             None,
             false,
             vec![FileColumn::Name],
@@ -592,6 +597,7 @@ mod tests {
         let mut fs = FileState::new(
             PathBuf::from("/test"),
             None,
+            None,
             false,
             vec![FileColumn::Name],
             FileColumn::Name,
@@ -608,6 +614,7 @@ mod tests {
     fn clamped_scroll_clamps_large_scroll_values() {
         let mut fs = FileState::new(
             PathBuf::from("/test"),
+            None,
             None,
             false,
             vec![FileColumn::Name],

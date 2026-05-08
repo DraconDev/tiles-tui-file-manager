@@ -1115,6 +1115,7 @@ mod tests {
         FileState::new(
             PathBuf::from(path),
             None,
+            None,
             false,
             vec![crate::state::FileColumn::Name],
             crate::state::FileColumn::Name,

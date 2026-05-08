@@ -133,6 +133,7 @@ impl App {
         let initial_fs = FileState::new(
             start_path,
             None,
+            None,
             false,
             vec![
                 FileColumn::Name,

@@ -489,7 +489,6 @@ fn handle_properties_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app
                 let current_mode = fs.metadata.get(&target_path).map(|m| m.permissions).unwrap_or(0o644);
                 app.mode = AppMode::EditPermissions(target_path);
                 app.input.set_value(format!("{:o}", current_mode));
-                app.input.select_all();
             }
             true
         }
