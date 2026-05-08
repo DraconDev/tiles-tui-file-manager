@@ -1710,35 +1710,36 @@ paired = new_paired;
                             fs.metadata = metadata.clone();
                             fs.folder_sizes.clear(); // Clear stale folder sizes
 
-                            // NOTE: Folder size calculation disabled for performance.
-                            // Calculating sizes for all directories on every refresh is very expensive
-                            // (recursive directory walks locally, SSH exec per directory remotely).
-                            // To re-enable, uncomment the block below and consider:
-                            // 1. Only calculating visible directories
-                            // 2. Caching with proper invalidation
-                            // 3. Calculating on-demand when user expands/hovers
+                            // Calculate folder sizes with rate limiting (max once per 5 seconds)
+                            // to avoid recursive directory walks on every navigation
+                            let should_calc_sizes = fs.last_folder_size_calc
+                                .map(|last| last.elapsed() >= Duration::from_secs(5))
+                                .unwrap_or(true);
                             
-                            // let dirs_to_size: Vec<PathBuf> = fs.files.iter()
-                            //     .filter(|p| metadata.get(*p).map(|m| m.is_dir).unwrap_or(false))
-                            //     .cloned()
-                            //     .collect();
-                            // if !dirs_to_size.is_empty() {
-                            //     let size_remote = remote.clone();
-                            //     let size_tx = tx.clone();
-                            //     let size_pane_idx = pane_idx;
-                            //     tokio::spawn(async move {
-                            //         let mut sizes = std::collections::HashMap::new();
-                            //         for dir_path in dirs_to_size {
-                            //             let size = if let Some(ref session) = size_remote {
-                            //                 crate::modules::remote::folder_size(session, &dir_path).unwrap_or(0)
-                            //             } else {
-                            //                 crate::modules::files::folder_size(&dir_path)
-                            //             };
-                            //             sizes.insert(dir_path, size);
-                            //         }
-                            //         let _ = size_tx.send(AppEvent::FolderSizesUpdated(size_pane_idx, sizes)).await;
-                            //     });
-                            // }
+                            if should_calc_sizes {
+                                fs.last_folder_size_calc = Some(Instant::now());
+                                let dirs_to_size: Vec<PathBuf> = fs.files.iter()
+                                    .filter(|p| metadata.get(*p).map(|m| m.is_dir).unwrap_or(false))
+                                    .cloned()
+                                    .collect();
+                                if !dirs_to_size.is_empty() {
+                                    let size_remote = remote.clone();
+                                    let size_tx = tx.clone();
+                                    let size_pane_idx = pane_idx;
+                                    tokio::spawn(async move {
+                                        let mut sizes = std::collections::HashMap::new();
+                                        for dir_path in dirs_to_size {
+                                            let size = if let Some(ref session) = size_remote {
+                                                crate::modules::remote::folder_size(session, &dir_path).unwrap_or(0)
+                                            } else {
+                                                crate::modules::files::folder_size(&dir_path)
+                                            };
+                                            sizes.insert(dir_path, size);
+                                        }
+                                        let _ = size_tx.send(AppEvent::FolderSizesUpdated(size_pane_idx, sizes)).await;
+                                    });
+                                }
+                            }
 
                             // Apply pending selection and scroll (e.g., after navigate_up)
                             if let Some((pending_path, pending_scroll)) = fs.pending_select_path.take() {
