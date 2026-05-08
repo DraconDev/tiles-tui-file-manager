@@ -256,7 +256,7 @@ fn handle_modal_keys(
         | AppMode::Delete(_)
         | AppMode::DeleteFile(_)
         | AppMode::BulkRename { .. }
-        | AppMode::CreateArchive(_) => handle_input_modals_keys(key, app, event_tx),
+        | AppMode::CreateArchive(_, _) => handle_input_modals_keys(key, app, event_tx),
         AppMode::PathInput => handle_path_input_keys(key, app, event_tx),
         AppMode::SaveAs(_) => handle_save_as_keys(key, app, event_tx),
         AppMode::Header(idx) => handle_header_keys(key, app, event_tx, idx),
@@ -1465,7 +1465,7 @@ fn handle_input_modals_keys(
                             }
                         }
                     }
-                    AppMode::CreateArchive(ref paths) => {
+                    AppMode::CreateArchive(ref paths, format_idx) => {
                         let input = app.input.value.trim();
                         if !input.is_empty() {
                             let archive_name = if input.ends_with(".tar.gz") || input.ends_with(".zip") {
