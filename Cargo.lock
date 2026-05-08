@@ -2677,7 +2677,7 @@ dependencies = [
 
 [[package]]
 name = "tiles"
-version = "10.146.63"
+version = "10.146.65"
 dependencies = [
  "anyhow",
  "base64",
@@ -2696,6 +2696,7 @@ dependencies = [
  "regex",
  "serde",
  "serde_json",
+ "ssh2",
  "tokio",
  "toml",
  "trash",
