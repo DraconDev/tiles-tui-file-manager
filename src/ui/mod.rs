@@ -2288,6 +2288,64 @@ fn refs_line(refs: &[String], max_refs: usize) -> Line<'static> {
     Line::from(spans)
 }
 
+fn format_relative_time(date_str: &str) -> String {
+    // If already relative (contains "ago"), shorten it
+    if date_str.contains("ago") {
+        return date_str
+            .replace(" years", "y")
+            .replace(" year", "y")
+            .replace(" months", "mo")
+            .replace(" month", "mo")
+            .replace(" weeks", "w")
+            .replace(" week", "w")
+            .replace(" days", "d")
+            .replace(" day", "d")
+            .replace(" hours", "h")
+            .replace(" hour", "h")
+            .replace(" minutes", "m")
+            .replace(" minute", "m")
+            .replace(" seconds", "s")
+            .replace(" second", "s")
+            .replace(" ago", "")
+            .replace("ago", "");
+    }
+
+    // Try to parse as a datetime
+    let now = chrono::Local::now();
+    let dt = chrono::DateTime::parse_from_rfc3339(date_str)
+        .map(|d| d.with_timezone(&chrono::Local))
+        .or_else(|_| chrono::DateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S %z").map(|d| d.with_timezone(&chrono::Local)))
+        .or_else(|_| chrono::NaiveDateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S").map(|d| d.and_local_timezone(chrono::Local).unwrap()))
+        .or_else(|_| chrono::NaiveDate::parse_from_str(date_str, "%Y-%m-%d").map(|d| d.and_hms_opt(0, 0, 0).unwrap().and_local_timezone(chrono::Local).unwrap()));
+
+    if let Ok(dt) = dt {
+        let duration = now.signed_duration_since(dt);
+        let secs = duration.num_seconds();
+        if secs < 60 {
+            return format!("{}s", secs);
+        } else if secs < 3600 {
+            return format!("{}m", secs / 60);
+        } else if secs < 86400 {
+            return format!("{}h", secs / 3600);
+        } else if secs < 604800 {
+            return format!("{}d", secs / 86400);
+        } else if secs < 2592000 {
+            return format!("{}w", secs / 604800);
+        } else if secs < 31536000 {
+            return format!("{}mo", secs / 2592000);
+        } else {
+            return format!("{}y", secs / 31536000);
+        }
+    }
+
+    // Fallback: return truncated original
+    if date_str.len() > 12 {
+        format!("{}..", &date_str[..10])
+    } else {
+        date_str.to_string()
+    }
+}
+
 fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(Clear, area);
     let pane_idx = app.focused_pane_index;
@@ -2554,7 +2612,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                         }
 
                         let mut row_cells = vec![
-                            Cell::from(act.date.clone())
+                            Cell::from(format_relative_time(&act.date))
                                 .style(Style::default().fg(Color::DarkGray)),
                             Cell::from(h_short).style(
                                 Style::default()
