@@ -298,7 +298,7 @@ fn upload_via_base64_with_progress(
     
     // First, ensure parent directory exists
     let parent = remote_path.parent()
-        .map(|p| p.to_string_lossy().replace('\'', '"'"'"'))
+        .map(|p| p.to_string_lossy().replace('\'', "'\"'\"'"))
         .unwrap_or_else(|| "/tmp".to_string());
     let _ = exec_program(remote, "sh", &["-c", &format!("mkdir -p '{}'", parent)])?;
     
