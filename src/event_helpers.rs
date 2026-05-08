@@ -848,6 +848,36 @@ pub fn handle_context_menu_action(
                 ));
             }
         }
+        ContextMenuAction::Compare => {
+            if let ContextMenuTarget::File(idx) = target {
+                if let Some(fs) = app.current_file_state() {
+                    let mut selected: Vec<PathBuf> = Vec::new();
+                    
+                    // Collect all selected files
+                    if !fs.selection.multi.is_empty() {
+                        for &si in fs.selection.multi_selected_indices() {
+                            if let Some(p) = fs.files.get(si) {
+                                selected.push(p.clone());
+                            }
+                        }
+                    }
+                    
+                    // Ensure the right-clicked file is included
+                    if let Some(p) = fs.files.get(*idx) {
+                        if !selected.contains(p) {
+                            selected.push(p.clone());
+                        }
+                    }
+                    
+                    if selected.len() >= 2 {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::CompareFiles(
+                            selected[0].clone(),
+                            selected[1].clone(),
+                        ));
+                    }
+                }
+            }
+        }
         _ => {}
     }
 }

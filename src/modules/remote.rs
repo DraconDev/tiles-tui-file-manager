@@ -286,6 +286,20 @@ pub fn compute_checksums(remote: &RemoteSession, path: &Path) -> std::io::Result
     Ok((md5, sha256))
 }
 
+/// Compute unified diff between two remote files.
+/// Returns the diff output as a string.
+pub fn diff_files(remote: &RemoteSession, path_a: &Path, path_b: &Path) -> std::io::Result<String> {
+    let a_escaped = path_a.to_string_lossy().replace('\'', "'\"'\"'");
+    let b_escaped = path_b.to_string_lossy().replace('\'', "'\"'\"'");
+    
+    let out = exec_program(remote, "sh", &["-c", &format!(
+        "diff -u '{}' '{}' 2>/dev/null || diff '{}' '{}' 2>/dev/null || echo '<diff not available>'",
+        a_escaped, b_escaped, a_escaped, b_escaped
+    )])?;
+    
+    Ok(out)
+}
+
 pub fn global_search(
     remote: &RemoteSession,
     root: &Path,

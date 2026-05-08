@@ -1,21 +1,23 @@
 # Project State
 
 ## Current Focus
-Added file comparison functionality to the context menu when exactly two files are selected.
+Added file comparison functionality to the context menu when exactly two files are selected
 
 ## Context
-This change enables users to compare files directly from the context menu, improving workflow efficiency for comparing file contents.
+This change enables users to compare files directly from the context menu, which was a requested feature for better file analysis workflows.
 
 ## Completed
-- [x] Added `Compare` action to context menu when exactly two files are selected
-- [x] Implemented selection count logic to determine when comparison is valid
+- [x] Added `CompareFiles` event to application state
+- [x] Implemented file comparison action in context menu handler
+- [x] Added remote file diff capability with fallback mechanisms
+- [x] Enhanced context menu to handle file comparison when exactly two files are selected
 
 ## In Progress
-- [x] Context menu comparison feature implementation
+- [ ] Testing edge cases for file comparison with different file types
 
 ## Blockers
-- None identified for this specific change
+- Need to verify diff output formatting for large files
 
 ## Next Steps
-1. Implement the actual file comparison functionality
-2. Add UI components to display comparison results
+1. Add visual diff display component
+2. Implement performance optimizations for large file comparisons

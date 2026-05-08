@@ -23,6 +23,7 @@ pub enum AppEvent {
     ComputeChecksums(PathBuf),
     Copy(PathBuf, PathBuf),
     UploadToRemote(PathBuf, PathBuf),
+    CompareFiles(PathBuf, PathBuf),
     Symlink(PathBuf, PathBuf),
     StatusMsg(String),
     FilesChangedOnDisk(PathBuf),
