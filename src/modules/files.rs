@@ -311,6 +311,31 @@ pub fn compute_checksums(path: &Path) -> std::io::Result<(String, String)> {
     Ok((md5, sha256))
 }
 
+/// Compute unified diff between two local files.
+/// Returns the diff output as a string.
+pub fn diff_files(path_a: &Path, path_b: &Path) -> std::io::Result<String> {
+    let output = std::process::Command::new("diff")
+        .args(&["-u", &path_a.to_string_lossy(), &path_b.to_string_lossy()])
+        .output()?;
+    
+    // diff returns exit code 1 when files differ, which is not an error for us
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    
+    if !stderr.is_empty() && stdout.is_empty() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            stderr.to_string(),
+        ));
+    }
+    
+    if stdout.is_empty() {
+        Ok("Files are identical.\n".to_string())
+    } else {
+        Ok(stdout.to_string())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
