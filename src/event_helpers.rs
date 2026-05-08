@@ -873,6 +873,40 @@ pub fn handle_context_menu_action(
                 }
             }
         }
+        ContextMenuAction::Download => {
+            if let ContextMenuTarget::File(idx) = target {
+                if let Some(fs) = app.current_file_state() {
+                    if let Some(path) = fs.files.get(*idx) {
+                        if let Some(remote) = &fs.remote_session {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "Downloading {} from remote...", path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                            )));
+                            let remote = remote.clone();
+                            let path = path.clone();
+                            let tx = event_tx.clone();
+                            tokio::spawn(async move {
+                                match crate::modules::remote::download_remote_file(&remote, &path) {
+                                    Ok(local_path) => {
+                                        dracon_terminal_engine::utils::spawn_detached(
+                                            "xdg-open",
+                                            vec![local_path.to_string_lossy().to_string()],
+                                        );
+                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                            "Downloaded and opened {}", path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                                        )));
+                                    }
+                                    Err(e) => {
+                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                            "Download failed: {}", e
+                                        )));
+                                    }
+                                }
+                            });
+                        }
+                    }
+                }
+            }
+        }
         _ => {}
     }
 }
