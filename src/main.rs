@@ -380,6 +380,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .map(crate::state::RemoteBookmark::from)
                     };
                     if let Some(remote) = remote_opt {
+                        // Store bookmark_idx for potential reconnection
+                        {
+                            let mut app_guard = app.lock();
+                            if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                                if let Some(fs) = pane.current_state_mut() {
+                                    fs.bookmark_idx = Some(bookmark_idx);
+                                    fs.retry_count = 0;
+                                }
+                            }
+                        }
                         let tx = event_tx.clone();
                         let p_idx = pane_idx;
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -418,8 +428,28 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
                             fs.current_path = PathBuf::from("/");
+                            fs.retry_count = 0;
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                         }
+                    }
+                    needs_draw = true;
+                }
+                AppEvent::ReconnectRemote(pane_idx) => {
+                    let bookmark_idx = {
+                        let app_guard = app.lock();
+                        app_guard.panes.get(pane_idx)
+                            .and_then(|p| p.current_state())
+                            .and_then(|fs| fs.bookmark_idx)
+                    };
+                    if let Some(idx) = bookmark_idx {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            "Connection lost. Reconnecting...".to_string()
+                        ));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(pane_idx, idx));
+                    } else {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            "Connection lost. Cannot auto-reconnect (no bookmark).".to_string()
+                        ));
                     }
                     needs_draw = true;
                 }
@@ -1268,9 +1298,22 @@ let list_path_for_filter = path.clone();
                                     // Mark connection as unhealthy
                                     let mut app_guard = app_clone_for_health.lock();
                                     app_guard.remote_health.insert(session.name.clone(), (false, std::time::Instant::now()));
+                                    let retry_count = app_guard.panes.get(pane_idx)
+                                        .and_then(|p| p.current_state())
+                                        .map(|fs| fs.retry_count)
+                                        .unwrap_or(0);
                                     drop(app_guard);
                                     
-                                    crate::app::log_debug(&format!("remote read_dir failed for {:?}: {}", list_path, e));
+                                    crate::app::log_debug(&format!("remote read_dir failed for {:?}: {} (retry={})", list_path, e, retry_count));
+                                    
+                                    // Trigger reconnection if under retry limit
+                                    if retry_count < 3 {
+                                        let _ = crate::app::try_send_event(&tx, AppEvent::ReconnectRemote(pane_idx));
+                                    } else {
+                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(
+                                            format!("Connection to {} failed after 3 retries", session.name)
+                                        ));
+                                    }
                                     (Vec::new(), std::collections::HashMap::new(), Vec::new(), std::collections::HashMap::new())
                                 }
                             }
