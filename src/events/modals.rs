@@ -1362,8 +1362,29 @@ fn handle_highlight_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app:
 fn handle_input_modals_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
-    event_tx: &mpsc::Sender<AppEvent>,
+    _event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
+    use dracon_terminal_engine::contracts::KeyCode;
+    
+    // Handle format selection for CreateArchive
+    if let AppMode::CreateArchive(_, ref mut format_idx) = app.mode {
+        match key.code {
+            KeyCode::Up => {
+                if *format_idx > 0 {
+                    *format_idx -= 1;
+                }
+                return true;
+            }
+            KeyCode::Down => {
+                if *format_idx < 1 {
+                    *format_idx += 1;
+                }
+                return true;
+            }
+            _ => {}
+        }
+    }
+    
     match key.code {
         KeyCode::Esc => {
             app.mode = AppMode::Normal;
