@@ -361,6 +361,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if matches!(app.mode, AppMode::Properties) {
         draw_properties_modal(f, app);
     }
+    if matches!(app.mode, AppMode::EditPermissions(_)) {
+        draw_edit_permissions_modal(f, app);
+    }
     if matches!(app.mode, AppMode::NewFolder) {
         draw_new_folder_modal(f, app);
     }
@@ -4009,12 +4012,66 @@ fn draw_properties_modal(f: &mut Frame, app: &App) {
         }
     }
 
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::styled(" [E] ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+        Span::styled("Edit Permissions   ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" [Esc] ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+        Span::styled("Close", Style::default().fg(Color::DarkGray)),
+    ]));
+
     let block = Block::default()
         .title(" Properties ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(crate::ui::theme::accent_primary()));
     f.render_widget(Paragraph::new(text).block(block), area);
+}
+
+fn draw_edit_permissions_modal(f: &mut Frame, app: &App) {
+    let area = centered_rect(40, 20, f.area());
+    f.render_widget(Clear, area);
+
+    let mut text = Vec::new();
+    text.push(Line::from(vec![
+        Span::styled("Edit Permissions (octal):", Style::default().fg(crate::ui::theme::accent_secondary())),
+    ]));
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::raw("  "),
+        Span::styled(&app.input.value, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled("_", Style::default().fg(Color::White)),
+    ]));
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::styled("Examples: ", Style::default().fg(Color::DarkGray)),
+        Span::raw("644=file rw-, 755=dir rwx, 600=private"),
+    ]));
+
+    let help = vec![
+        Line::from(vec![
+            Span::styled(" [Enter] ", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+            Span::raw("Apply    "),
+            Span::styled(" [Esc] ", Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)),
+            Span::raw("Cancel"),
+        ]),
+    ];
+
+    let block = Block::default()
+        .title(" Permissions ")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(crate::ui::theme::accent_primary()));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(3), Constraint::Length(1)])
+        .split(inner);
+
+    f.render_widget(Paragraph::new(text), chunks[0]);
+    f.render_widget(Paragraph::new(help).alignment(Alignment::Center), chunks[1]);
 }
 
 fn draw_settings_modal(f: &mut Frame, app: &App) {

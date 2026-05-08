@@ -268,6 +268,7 @@ fn handle_modal_keys(
         }
         AppMode::Settings => handle_settings_keys(key, app, event_tx),
         AppMode::Properties => handle_properties_keys(key, app),
+        AppMode::EditPermissions(_) => handle_edit_permissions_keys(key, app, event_tx),
         AppMode::Search => handle_search_keys(key, app, event_tx),
         AppMode::OpenWith(path) => {
             match key.code {
@@ -493,6 +494,47 @@ fn handle_properties_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app
             true
         }
         _ => true,
+    }
+}
+
+fn handle_edit_permissions_keys(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+) -> bool {
+    match key.code {
+        KeyCode::Esc => {
+            app.mode = AppMode::Properties;
+            app.input.clear();
+            true
+        }
+        KeyCode::Enter => {
+            let input = app.input.value.trim();
+            if let Ok(mode) = u32::from_str_radix(input, 8) {
+                if mode <= 0o777 {
+                    if let AppMode::EditPermissions(ref path) = app.mode {
+                        let path_clone = path.clone();
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Chmod(path_clone, mode));
+                        app.mode = AppMode::Normal;
+                        app.input.clear();
+                    }
+                } else {
+                    app.last_action_msg = Some((
+                        "Invalid mode: must be 000-777".to_string(),
+                        std::time::Instant::now(),
+                    ));
+                }
+            } else {
+                app.last_action_msg = Some((
+                    "Invalid mode: use octal (e.g., 644, 755)".to_string(),
+                    std::time::Instant::now(),
+                ));
+            }
+            true
+        }
+        _ => app
+            .input
+            .handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(&Event::Key(*key))),
     }
 }
 
