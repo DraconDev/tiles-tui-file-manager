@@ -1194,10 +1194,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 let remote = remote.clone();
                                 let paths = paths.clone();
                                 let dest = dest.clone();
-                                move || crate::modules::remote::create_archive(&remote, &paths, &dest)
+                                let format_idx = format_idx;
+                                move || crate::modules::remote::create_archive(&remote, &paths, &dest, format_idx)
                             }).await.unwrap_or(Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn failed")))
                         } else {
-                            crate::modules::files::create_archive(&paths, &dest).await
+                            crate::modules::files::create_archive(&paths, &dest, format_idx).await
                         };
                         
                         match result {
