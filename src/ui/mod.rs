@@ -1463,7 +1463,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     let total_mem: f32 = app_procs.iter().map(|(_, p)| p.mem).sum();
     let total_count = app_procs.len();
 
-    let mut summary_spans = vec![
+    let summary_spans = vec![
         Span::styled(" 󰀲 ", Style::default().fg(crate::ui::theme::accent_secondary())),
         Span::styled(format!("{} applications", total_count), Style::default().fg(Color::Rgb(180, 185, 190))),
         Span::styled(" | ", Style::default().fg(Color::Rgb(60, 65, 75))),
