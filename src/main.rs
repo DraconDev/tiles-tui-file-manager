@@ -484,6 +484,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let mut app_guard = app.lock();
                     // Cache the session for reuse
                     app_guard.remote_session_pool.insert(remote_name.clone(), (session.clone(), std::time::Instant::now()));
+                    // Clean up stale sessions (older than 5 minutes)
+                    let stale_threshold = std::time::Duration::from_secs(300);
+                    let now = std::time::Instant::now();
+                    app_guard.remote_session_pool.retain(|_, (_, last_used)| now.duration_since(*last_used) < stale_threshold);
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
