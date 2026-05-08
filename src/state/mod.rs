@@ -390,6 +390,8 @@ pub struct FileState {
     #[serde(skip)]
     pub git_cache_until: Option<Instant>,
     #[serde(skip)]
+    pub last_folder_size_calc: Option<Instant>,
+    #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
     pub tree_file_depths: Vec<u16>,
 }
