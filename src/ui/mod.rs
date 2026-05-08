@@ -827,6 +827,78 @@ fn draw_drag_drop_modal(
     f.render_widget(Paragraph::new(text), inner);
 }
 
+fn draw_create_archive_modal(
+    f: &mut Frame,
+    app: &App,
+    paths: &[std::path::PathBuf],
+    format_idx: usize,
+) {
+    let area = centered_rect(50, 18, f.area());
+    f.render_widget(Clear, area);
+    let block = Block::default()
+        .title(" Create Archive ")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(crate::ui::theme::accent_primary()));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let formats = ["tar.gz", "zip"];
+    
+    let mut text = Vec::new();
+    
+    // File count
+    text.push(Line::from(vec![
+        Span::raw("Files: "),
+        Span::styled(
+            format!("{}", paths.len()),
+            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+        ),
+    ]));
+    
+    // Format selection
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::styled("Format:", Style::default().fg(Color::Yellow)),
+    ]));
+    
+    for (i, format) in formats.iter().enumerate() {
+        let is_selected = i == format_idx;
+        let style = if is_selected {
+            Style::default().bg(crate::ui::theme::accent_primary()).fg(Color::Black)
+        } else {
+            Style::default().fg(Color::DarkGray)
+        };
+        let prefix = if is_selected { "▶ " } else { "  " };
+        text.push(Line::from(vec![
+            Span::styled(format!("{}{}", prefix, format), style.add_modifier(Modifier::BOLD)),
+        ]));
+    }
+    
+    // Filename
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::raw("Filename: "),
+        Span::styled(
+            &app.input.value,
+            Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+        ),
+    ]));
+    
+    // Help
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::styled("↑↓", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+        Span::raw(" Select Format  "),
+        Span::styled("Enter", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+        Span::raw(" Create  "),
+        Span::styled("Esc", Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD)),
+        Span::raw(" Cancel"),
+    ]));
+
+    f.render_widget(Paragraph::new(text), inner);
+}
+
 fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
     let area = centered_rect(70, 80, f.area());
     f.render_widget(Clear, area);
