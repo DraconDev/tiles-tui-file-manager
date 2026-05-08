@@ -1007,11 +1007,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         
                         match result {
                             Ok((md5, sha256)) => {
-                                let mut app_guard = app_clone.lock();
-                                app_guard.checksum_cache.insert(path.clone(), (md5.clone(), sha256.clone()));
+                                let file_name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                                {
+                                    let mut app_guard = app_clone.lock();
+                                    app_guard.checksum_cache.insert(path.clone(), (md5, sha256));
+                                }
                                 let _ = tx.send(AppEvent::StatusMsg(format!(
-                                    "Checksums computed for {}",
-                                    path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                                    "Checksums computed for {}", file_name
                                 ))).await;
                             }
                             Err(e) => {

@@ -1,24 +1,22 @@
 # Project State
 
 ## Current Focus
-Added checksum computation and display functionality for file integrity verification
+Improved checksum computation display by extracting file name handling into a separate variable
 
 ## Context
-The changes implement file integrity verification by computing and displaying MD5 and SHA256 checksums for selected files, supporting both local and remote files.
+The change was motivated by code clarity and potential performance optimization. The original code had nested operations that could be simplified by separating the file name extraction from the checksum storage and status message.
 
 ## Completed
-- [x] Added checksum computation for both local and remote files
-- [x] Implemented checksum caching to avoid redundant computations
-- [x] Added UI display for checksum values in the properties modal
-- [x] Integrated checksum computation with the existing event system
-- [x] Added keyboard shortcut ('C') to trigger checksum computation
+- [x] Extracted file name handling into a separate variable for better readability
+- [x] Simplified the checksum cache insertion by removing unnecessary cloning
+- [x] Improved status message formatting by using the pre-extracted file name
 
 ## In Progress
-- [ ] None (all changes are complete)
+- [ ] None (this is a focused refactoring)
 
 ## Blockers
-- None (feature is fully implemented)
+- None (this is a completed refactoring)
 
 ## Next Steps
-1. Add checksum verification against known good values
-2. Implement checksum comparison between files
+1. Verify that the checksum computation functionality remains unchanged
+2. Check for any performance improvements from the refactored code
