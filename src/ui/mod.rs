@@ -1263,22 +1263,23 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             
             let intensity = (*usage / 100.0).clamp(0.0, 1.0);
             let (bg, fg) = if intensity > 0.8 {
-                (Color::Rgb(80, 30, 30), Color::Rgb(255, 150, 150))
+                (Color::Rgb(100, 35, 35), Color::Rgb(255, 150, 150))
             } else if intensity > 0.5 {
-                (Color::Rgb(80, 60, 20), Color::Rgb(255, 200, 100))
+                (Color::Rgb(100, 80, 30), Color::Rgb(255, 220, 120))
             } else if intensity > 0.2 {
-                (Color::Rgb(20, 60, 40), Color::Rgb(100, 220, 160))
+                (Color::Rgb(30, 80, 50), Color::Rgb(120, 240, 180))
             } else {
-                (Color::Rgb(25, 28, 32), Color::Rgb(80, 85, 95))
+                (Color::Rgb(45, 50, 58), Color::Rgb(140, 145, 155))
             };
             
-            let mini_bar_len = ((cell_w.saturating_sub(6) as f32 * intensity) as usize).min(cell_w.saturating_sub(6) as usize);
-            let mini_bar = "█".repeat(mini_bar_len);
+            let mini_bar_len = ((cell_w.saturating_sub(8) as f32 * intensity) as usize).min(cell_w.saturating_sub(8) as usize);
+            let mini_bar = "█".repeat(mini_bar_len) + &"░".repeat((cell_w.saturating_sub(8) as usize).saturating_sub(mini_bar_len));
             
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(format!("{:02}", i), Style::default().fg(fg).add_modifier(Modifier::BOLD)),
+                    Span::styled(format!("{:02} ", i), Style::default().fg(fg).add_modifier(Modifier::BOLD)),
                     Span::styled(mini_bar, Style::default().fg(fg)),
+                    Span::styled(format!(" {:>3.0}%", usage), Style::default().fg(fg)),
                 ])).style(Style::default().bg(bg)),
                 area,
             );
