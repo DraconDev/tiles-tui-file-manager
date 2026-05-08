@@ -1034,9 +1034,12 @@ fn handle_add_remote_keys(
                 
                 // Auto-fix key permissions if possible
                 let mut fixed_keys = Vec::new();
+                let mut failed_fixes = Vec::new();
                 if let Some(ref kp) = app.pending_server.key_path {
                     if crate::servers::auto_fix_key_permissions(kp) {
                         fixed_keys.push(kp.file_name().unwrap_or_default().to_string_lossy().to_string());
+                    } else if !key_warnings.is_empty() {
+                        failed_fixes.push(kp.file_name().unwrap_or_default().to_string_lossy().to_string());
                     }
                 }
                 
@@ -1061,10 +1064,14 @@ fn handle_add_remote_keys(
                 app.mode = AppMode::Normal;
                 app.input.clear();
                 
-                // Report any auto-fixes
+                // Report any auto-fixes or warnings
                 if !fixed_keys.is_empty() {
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                         format!("Fixed key permissions for: {}", fixed_keys.join(", "))
+                    ));
+                } else if !failed_fixes.is_empty() {
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Warning: Key permissions too open for: {}. Run: chmod 600 <key>", failed_fixes.join(", "))
                     ));
                 }
             }
