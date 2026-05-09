@@ -2729,6 +2729,23 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             }
         }
     }
+
+    // Render search bar at bottom
+    if is_searching {
+        let search_spans = vec![
+            Span::styled(" 󰈲 ", Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD)),
+            Span::styled(
+                app.input.value.clone(),
+                Style::default().fg(Color::White).add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(" _", Style::default().fg(Color::Cyan)),
+        ];
+        f.render_widget(
+            Paragraph::new(Line::from(search_spans))
+                .style(Style::default().bg(Color::Rgb(30, 30, 40))),
+            search_area,
+        );
+    }
 }
 
 fn draw_file_view(
