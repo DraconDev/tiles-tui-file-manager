@@ -1459,7 +1459,17 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
                     if was_expanded {
                         app.expanded_folders.remove(&path);
                     } else {
-                        app.expanded_folders.insert(path.clone());
+                        // Check if folder is empty before expanding
+                        let is_empty = if fs.remote_session.is_some() {
+                            false // Can't easily check remote, allow expansion
+                        } else {
+                            std::fs::read_dir(&path).map(|mut d| d.next().is_none()).unwrap_or(true)
+                        };
+                        if is_empty {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Folder is empty".to_string()));
+                        } else {
+                            app.expanded_folders.insert(path.clone());
+                        }
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 } else {
