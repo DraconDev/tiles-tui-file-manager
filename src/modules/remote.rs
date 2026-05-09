@@ -621,6 +621,69 @@ pub fn show_file_diff(
     }
 }
 
+pub fn git_stage(remote: &RemoteSession, repo_path: &Path, file_path: &str) -> std::io::Result<()> {
+    let repo_str = repo_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let file_safe = file_path.replace('\'', "'\"'\"'");
+    let out = exec_program(remote, "sh", &[
+        "-c",
+        &format!("cd '{}' && git add '{}'", repo_str, file_safe),
+    ])?;
+    if out.contains("error") || out.contains("fatal") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, out));
+    }
+    Ok(())
+}
+
+pub fn git_unstage(remote: &RemoteSession, repo_path: &Path, file_path: &str) -> std::io::Result<()> {
+    let repo_str = repo_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let file_safe = file_path.replace('\'', "'\"'\"'");
+    let out = exec_program(remote, "sh", &[
+        "-c",
+        &format!("cd '{}' && git reset HEAD '{}'", repo_str, file_safe),
+    ])?;
+    if out.contains("error") || out.contains("fatal") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, out));
+    }
+    Ok(())
+}
+
+pub fn git_stage_all(remote: &RemoteSession, repo_path: &Path) -> std::io::Result<()> {
+    let repo_str = repo_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let out = exec_program(remote, "sh", &[
+        "-c",
+        &format!("cd '{}' && git add .", repo_str),
+    ])?;
+    if out.contains("error") || out.contains("fatal") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, out));
+    }
+    Ok(())
+}
+
+pub fn git_unstage_all(remote: &RemoteSession, repo_path: &Path) -> std::io::Result<()> {
+    let repo_str = repo_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let out = exec_program(remote, "sh", &[
+        "-c",
+        &format!("cd '{}' && git reset HEAD", repo_str),
+    ])?;
+    if out.contains("error") || out.contains("fatal") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, out));
+    }
+    Ok(())
+}
+
+pub fn git_commit(remote: &RemoteSession, repo_path: &Path, message: &str) -> std::io::Result<()> {
+    let repo_str = repo_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let msg_safe = message.replace('\'', "'\"'\"'");
+    let out = exec_program(remote, "sh", &[
+        "-c",
+        &format!("cd '{}' && git commit -m '{}'", repo_str, msg_safe),
+    ])?;
+    if out.contains("error") || out.contains("fatal") {
+        return Err(std::io::Error::new(std::io::ErrorKind::Other, out));
+    }
+    Ok(())
+}
+
 fn to_connection(remote: &RemoteSession) -> RemoteConnection {
     RemoteConnection {
         name: remote.name.clone(),
