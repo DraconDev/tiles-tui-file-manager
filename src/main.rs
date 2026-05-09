@@ -1369,6 +1369,21 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     needs_draw = true;
                 }
+                AppEvent::GitDiffFetched(p_idx, t_idx, diff) => {
+                    let mut app_guard = app.lock();
+                    if let Some(pane) = app_guard.panes.get_mut(p_idx) {
+                        let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
+                        if let Some(fs) = pane.tabs.get_mut(tab_idx) {
+                            fs.git_pending_diff = Some(diff);
+                            if let Some(pending_idx) = fs.git_pending_state.selected() {
+                                if let Some(change) = fs.git_pending.get(pending_idx) {
+                                    fs.git_diff_for_path = Some(change.path.clone());
+                                }
+                            }
+                        }
+                    }
+                    needs_draw = true;
+                }
                 AppEvent::TaskProgress(id, progress, status) => {
                     let mut app_guard = app.lock();
                     if let Some(task) = app_guard.background_tasks.iter_mut().find(|t| t.id == id) {
