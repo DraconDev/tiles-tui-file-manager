@@ -220,7 +220,7 @@ fn fetch_git_graph(repo_path: &Path) -> HashMap<String, String> {
         // 
         // We need to find where the hash starts and extract graph prefix
         let trimmed = line.trim_start();
-        let indent = line.len() - trimmed.len();
+        let _indent = line.len() - trimmed.len();
         
         // Try to find a 40-char hex hash in the line
         if let Some(hash_pos) = line.find(|c: char| c.is_ascii_hexdigit()) {
