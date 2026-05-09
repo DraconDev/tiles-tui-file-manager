@@ -2448,8 +2448,9 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     let main_area = content_chunks[0];
     let search_area = content_chunks[1];
 
-    // Build status line
-    let mut status_spans = vec![
+    // Build status line with stable layout
+    // Left side: branch, ahead/behind, stash
+    let mut left_spans = vec![
         Span::styled(
             "  ",
             Style::default().fg(crate::ui::theme::accent_primary()),
@@ -2463,15 +2464,15 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     ];
 
     if tab.git_ahead > 0 || tab.git_behind > 0 {
-        status_spans.push(Span::raw("  " ));
+        left_spans.push(Span::raw("  " ));
         if tab.git_ahead > 0 {
-            status_spans.push(Span::styled(
+            left_spans.push(Span::styled(
                 format!("↑{} ", tab.git_ahead),
                 Style::default().fg(Color::Green),
             ));
         }
         if tab.git_behind > 0 {
-            status_spans.push(Span::styled(
+            left_spans.push(Span::styled(
                 format!("↓{} ", tab.git_behind),
                 Style::default().fg(Color::Red),
             ));
@@ -2479,56 +2480,69 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     }
 
     if !tab.git_stashes.is_empty() {
-        status_spans.push(Span::styled(
+        left_spans.push(Span::styled(
             format!(" 󰆓 {} ", tab.git_stashes.len()),
             Style::default().fg(Color::Magenta),
         ));
     }
 
-    if !tab.git_remotes.is_empty() {
-        let platforms: std::collections::HashSet<&str> = tab.git_remotes.iter()
-            .filter_map(|r| {
-                // Format: "origin  https://github.com/... (fetch)"
-                let parts: Vec<&str> = r.split_whitespace().collect();
-                if parts.len() >= 2 {
-                    let url = parts[1];
-                    if url.contains("github.com") {
-                        Some("github")
-                    } else if url.contains("gitlab.com") {
-                        Some("gitlab")
-                    } else if url.contains("codeberg.org") {
-                        Some("codeberg")
-                    } else {
-                        None
-                    }
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        if !platforms.is_empty() {
-            let mut platform_spans = Vec::new();
-            for platform in platforms {
-                let (icon, color) = match platform {
-                    "github" => ("", Color::White),
-                    "gitlab" => ("", Color::Rgb(226, 67, 41)), // GitLab orange
-                    "codeberg" => ("󰚾", Color::Rgb(30, 160, 90)), // Codeberg green
-                    _ => ("󰒍", Color::Cyan),
-                };
-                if !platform_spans.is_empty() {
-                    platform_spans.push(Span::raw(" "));
-                }
-                platform_spans.push(Span::styled(icon, Style::default().fg(color)));
+    // Right side: platform icons (always rendered in fixed positions)
+    let mut right_spans = Vec::new();
+    
+    // Detect platforms from remotes
+    let mut has_github = false;
+    let mut has_gitlab = false;
+    let mut has_codeberg = false;
+    
+    for remote in &tab.git_remotes {
+        let parts: Vec<&str> = remote.split_whitespace().collect();
+        if parts.len() >= 2 {
+            let url = parts[1];
+            if url.contains("github.com") {
+                has_github = true;
+            } else if url.contains("gitlab.com") {
+                has_gitlab = true;
+            } else if url.contains("codeberg.org") {
+                has_codeberg = true;
             }
-            status_spans.push(Span::raw(" "));
-            status_spans.extend(platform_spans);
         }
     }
+    
+    // Always render icons in fixed order with consistent spacing
+    if has_github {
+        right_spans.push(Span::styled("", Style::default().fg(Color::White)));
+    } else {
+        right_spans.push(Span::raw("  ")); // Reserve space
+    }
+    right_spans.push(Span::raw(" "));
+    
+    if has_gitlab {
+        right_spans.push(Span::styled("", Style::default().fg(Color::Rgb(226, 67, 41))));
+    } else {
+        right_spans.push(Span::raw("  ")); // Reserve space
+    }
+    right_spans.push(Span::raw(" "));
+    
+    if has_codeberg {
+        right_spans.push(Span::styled("󰚾", Style::default().fg(Color::Rgb(30, 160, 90))));
+    } else {
+        right_spans.push(Span::raw("  ")); // Reserve space
+    }
+
+    // Render in a horizontal layout: left | right
+    let status_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Fill(1), Constraint::Length(8)])
+        .split(status_area);
 
     f.render_widget(
-        Paragraph::new(Line::from(status_spans)),
-        status_area,
+        Paragraph::new(Line::from(left_spans)),
+        status_chunks[0],
+    );
+    
+    f.render_widget(
+        Paragraph::new(Line::from(right_spans)).alignment(Alignment::Right),
+        status_chunks[1],
     );
 
     // Check if we have an inline diff to show
