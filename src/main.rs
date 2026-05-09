@@ -55,10 +55,15 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
+    eprintln!("[TILES-DEBUG] run_tty starting...");
     crate::app::log_debug("run_tty start");
+    eprintln!("[TILES-DEBUG] Creating backend...");
     let backend = EngineBackend::new(std::io::stdout())?;
+    eprintln!("[TILES-DEBUG] Backend created successfully");
     let tile_queue = backend.tile_queue();
+    eprintln!("[TILES-DEBUG] Creating terminal...");
     let mut terminal = Terminal::new(backend)?;
+    eprintln!("[TILES-DEBUG] Terminal created successfully");
 
     let (app, event_tx, mut event_rx) = setup_app(tile_queue);
 
