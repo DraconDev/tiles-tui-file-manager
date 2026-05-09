@@ -757,6 +757,42 @@ fn parse_git_shortstat(line: &str) -> (usize, usize, usize) {
     (files_changed, insertions, deletions)
 }
 
+/// Fetch ASCII graph characters for each commit hash from remote.
+fn fetch_git_graph_remote(remote: &RemoteSession, repo_path: &Path) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    let repo_str = repo_path.to_string_lossy().replace('\'', "'\"'\"'");
+    let out = exec_program(
+        remote,
+        "sh",
+        &["-c", &format!("cd '{}' && git --no-pager log --graph --pretty=format:%H -n 100", repo_str)],
+    );
+    
+    let stdout = match out {
+        Ok(s) => s,
+        Err(_) => return map,
+    };
+    
+    for line in stdout.lines() {
+        // Lines look like:
+        // * abc1234def5678... (full hash after graph chars)
+        // *   abc1234def5678...
+        // |\  
+        // | * abc1234def5678...
+        if let Some(hash_pos) = line.find(|c: char| c.is_ascii_hexdigit()) {
+            let potential_hash = &line[hash_pos..];
+            if potential_hash.len() >= 40 {
+                let hash = &potential_hash[..40];
+                if hash.chars().all(|c| c.is_ascii_hexdigit()) {
+                    let graph = line[..hash_pos].to_string();
+                    map.insert(hash.to_string(), graph);
+                }
+            }
+        }
+    }
+    
+    map
+}
+
 fn shell_quote_path(path: &Path) -> String {
     escape_shell_single_quoted(&path.to_string_lossy())
 }
