@@ -199,12 +199,12 @@ pub fn fetch_git_data(path: &Path) -> Option<GitData> {
 }
 
 /// Fetch ASCII graph characters for each commit hash.
-/// Runs `git log --graph --oneline --decorate -n 100` and parses the graph prefix.
+/// Runs `git log --graph --pretty=format:%H` and parses the graph prefix before each hash.
 fn fetch_git_graph(repo_path: &Path) -> HashMap<String, String> {
     let mut map = HashMap::new();
     let output = std::process::Command::new("git")
         .current_dir(repo_path)
-        .args(&["--no-pager", "log", "--graph", "--oneline", "--decorate", "-n", "100"])
+        .args(&["--no-pager", "log", "--graph", "--pretty=format:%H", "-n", "100"])
         .output();
     
     let stdout = match output {
@@ -213,26 +213,25 @@ fn fetch_git_graph(repo_path: &Path) -> HashMap<String, String> {
     };
     
     for line in stdout.lines() {
-        // Graph lines look like:
-        // * abc1234 Commit message
-        // *   abc1234 Merge commit
+        // Lines look like:
+        // * abc1234def5678... (full hash after graph chars)
+        // *   abc1234def5678...
         // |\  
-        // | * abc5678 Another commit
+        // | * abc1234def5678...
         // 
-        // We need to extract the graph prefix and the hash
+        // We need to find where the hash starts and extract graph prefix
         let trimmed = line.trim_start();
-        let prefix_len = line.len() - trimmed.len();
-        let prefix = &line[..prefix_len];
+        let indent = line.len() - trimmed.len();
         
-        // Check if this line has a commit hash (starts with * or contains hash after graph chars)
-        if let Some(hash_start) = trimmed.find(|c: char| c.is_ascii_alphanumeric()) {
-            let after_graph = &trimmed[hash_start..];
-            if let Some(hash_end) = after_graph.find(|c: char| c.is_whitespace()) {
-                let hash = &after_graph[..hash_end];
-                if hash.len() >= 7 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
-                    // This is a valid short hash
-                    let graph_chars = prefix.to_string() + &trimmed[..hash_start];
-                    map.insert(hash.to_string(), graph_chars);
+        // Try to find a 40-char hex hash in the line
+        if let Some(hash_pos) = line.find(|c: char| c.is_ascii_hexdigit()) {
+            let potential_hash = &line[hash_pos..];
+            if potential_hash.len() >= 40 {
+                let hash = &potential_hash[..40];
+                if hash.chars().all(|c| c.is_ascii_hexdigit()) {
+                    // Extract graph characters (everything before the hash)
+                    let graph = line[..hash_pos].to_string();
+                    map.insert(hash.to_string(), graph);
                 }
             }
         }
