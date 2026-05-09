@@ -2525,38 +2525,81 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
         if pending_len > 0 {
             let active_title = format!(" ACTIVE ({} Affected) ", pending_len);
-            let pending_rows: Vec<_> = app
-                .panes
-                .get(pane_idx)
-                .and_then(|p| p.tabs.get(tab_idx))
-                .map(|t| {
-                    t.git_pending
-                        .iter()
-                        .map(|p| {
-                            let status_color = match p.status.as_str() {
-                                "M" => Color::Yellow,
-                                "A" | "??" => Color::Green,
-                                "D" => Color::Red,
-                                "R" => Color::Cyan,
-                                _ => Color::White,
-                            };
 
-                            let mut stats_spans = Vec::new();
-                            if p.insertions > 0 {
-                                stats_spans.push(Span::styled(
-                                    format!(" +{}", p.insertions),
-                                    Style::default().fg(Color::Green),
-                                ));
-                            }
-                            if p.deletions > 0 {
-                                stats_spans.push(Span::styled(
-                                    format!(" -{}", p.deletions),
-                                    Style::default().fg(Color::Red),
-                                ));
-                            }
+            // Build tree-structured rows
+            let mut pending_rows: Vec<Row> = Vec::new();
+            let mut last_dir: Option<String> = None;
 
-                            Row::new(vec![
-                                Cell::from(format!(" {} ", p.status)).style(
+            if let Some(t) = app.panes.get(pane_idx).and_then(|p| p.tabs.get(tab_idx)) {
+                // Sort by path for tree grouping
+                let mut sorted: Vec<_> = t.git_pending.iter().collect();
+                sorted.sort_by_key(|p| &p.path);
+
+                for p in sorted {
+                    let status_color = match p.status.as_str() {
+                        "M" => Color::Yellow,
+                        "A" | "??" => Color::Green,
+                        "D" => Color::Red,
+                        "R" => Color::Cyan,
+                        _ => Color::White,
+                    };
+
+                    // Split path into dir and filename
+                    let path_obj = std::path::Path::new(&p.path);
+                    let parent = path_obj.parent()
+                        .map(|d| d.to_string_lossy().to_string())
+                        .filter(|d| !d.is_empty());
+                    let filename = path_obj.file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or_else(|| p.path.clone());
+
+                    // Show directory header when it changes
+                    if let Some(ref dir) = parent {
+                        if last_dir.as_ref() != Some(dir) {
+                            pending_rows.push(Row::new(vec![
+                                Cell::from(""),
+                                Cell::from(Line::from(vec![
+                                    Span::styled(" ", Style::default().fg(Color::DarkGray)),
+                                    Span::styled(dir.clone(), Style::default().fg(Color::DarkGray).add_modifier(Modifier::BOLD)),
+                                ])),
+                                Cell::from(""),
+                            ]));
+                            last_dir = Some(dir.clone());
+                        }
+                    } else if last_dir.is_some() {
+                        // Root-level file after directory files
+                        last_dir = None;
+                    }
+
+                    let mut stats_spans = Vec::new();
+                    if p.insertions > 0 {
+                        stats_spans.push(Span::styled(
+                            format!(" +{}", p.insertions),
+                            Style::default().fg(Color::Green),
+                        ));
+                    }
+                    if p.deletions > 0 {
+                        stats_spans.push(Span::styled(
+                            format!(" -{}", p.deletions),
+                            Style::default().fg(Color::Red),
+                        ));
+                    }
+
+                    pending_rows.push(Row::new(vec![
+                        Cell::from(format!(" {} ", p.status)).style(
+                            Style::default()
+                                .bg(status_color)
+                                .fg(Color::Black)
+                                .add_modifier(Modifier::BOLD),
+                        ),
+                        Cell::from(Line::from(vec![
+                            Span::styled("  ", Style::default()),
+                            Span::styled(filename, Style::default().fg(THEME.fg)),
+                        ])),
+                        Cell::from(Line::from(stats_spans)),
+                    ]));
+                }
+            }
                                     Style::default()
                                         .bg(status_color)
                                         .fg(Color::Black)
