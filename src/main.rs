@@ -2136,6 +2136,13 @@ paired = new_paired;
 
         // Constant sleep for consistent frame rate (~30fps)
         tokio::time::sleep(Duration::from_millis(33)).await;
+        
+        // Diagnostic logging every 5 seconds
+        if last_event_count_log.elapsed() >= Duration::from_secs(5) {
+            let _ = std::fs::write("/tmp/tiles_diag.log", 
+                format!("events={} draw={}\n", event_count, needs_draw));
+            last_event_count_log = std::time::Instant::now();
+        }
     }
 
     Ok(())
