@@ -2740,6 +2740,18 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                                     Span::styled("Enter ", Style::default().fg(Color::Cyan)),
                                     Span::styled("Full preview", Style::default().fg(Color::DarkGray)),
                                 ]),
+                                Line::from(vec![
+                                    Span::styled(" s ", Style::default().fg(Color::Green)),
+                                    Span::styled("Stage  ", Style::default().fg(Color::DarkGray)),
+                                    Span::styled("u ", Style::default().fg(Color::Red)),
+                                    Span::styled("Unstage  ", Style::default().fg(Color::DarkGray)),
+                                    Span::styled("S ", Style::default().fg(Color::Green)),
+                                    Span::styled("Stage all", Style::default().fg(Color::DarkGray)),
+                                ]),
+                                Line::from(vec![
+                                    Span::styled(" U ", Style::default().fg(Color::Red)),
+                                    Span::styled("Unstage all", Style::default().fg(Color::DarkGray)),
+                                ]),
                             ]
                         };
                         let diff_block = Block::default()
