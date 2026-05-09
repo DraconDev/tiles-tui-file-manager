@@ -340,6 +340,17 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     }
 
     crate::app::log_debug("Entering main loop");
+    eprintln!("[TILES-DEBUG] About to draw initial frame...");
+
+    // Draw initial frame BEFORE entering the event loop
+    {
+        let mut app_guard = app.lock();
+        match terminal.draw(|f| ui::draw(f, &mut app_guard)) {
+            Ok(_) => eprintln!("[TILES-DEBUG] Initial frame drawn successfully"),
+            Err(e) => eprintln!("[TILES-DEBUG] Initial frame draw FAILED: {}", e),
+        }
+    }
+    eprintln!("[TILES-DEBUG] Entering main event loop");
 
     let mut panes_needing_refresh = std::collections::HashSet::new();
     let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64)> =
