@@ -2151,13 +2151,8 @@ paired = new_paired;
             // Diagnostic: log when no draw happens to check if events are being processed
         }
 
-        // Adaptive sleep: 50ms when active, 100ms when idle
-        let sleep_ms = if last_activity.elapsed() >= Duration::from_millis(IDLE_THRESHOLD_MS) {
-            100
-        } else {
-            50
-        };
-        tokio::time::sleep(Duration::from_millis(sleep_ms)).await;
+        // Constant sleep for consistent frame rate (~30fps)
+        tokio::time::sleep(Duration::from_millis(33)).await;
     }
 
     Ok(())
