@@ -238,6 +238,10 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
                             .split_whitespace()
                             .next()?;
                         let file_str = path.to_string_lossy();
+                        crate::app::log_debug(&format!(
+                            "get_run_command: shebang detected for {} -> interpreter={}",
+                            path.display(), interpreter
+                        ));
                         return Some((work_dir, interpreter.to_string(), vec![file_str.to_string()]));
                     }
                 }
@@ -259,21 +263,37 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
     }
 
     // Extension-based interpreter mapping
-    let (program, args) = match ext {
-        Some("sh") | Some("bash") => ("bash".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("zsh") => ("zsh".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("py") => ("python3".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("js") | Some("mjs") => ("node".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("rb") => ("ruby".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("pl") => ("perl".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("php") => ("php".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("lua") => ("lua".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("r") => ("Rscript".to_string(), vec![path.to_string_lossy().to_string()]),
-        Some("go") => ("go".to_string(), vec!["run".to_string(), path.to_string_lossy().to_string()]),
-        _ => return None,
+    let result = match ext {
+        Some("sh") | Some("bash") => Some(("bash".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("zsh") => Some(("zsh".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("py") => Some(("python3".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("js") | Some("mjs") => Some(("node".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("rb") => Some(("ruby".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("pl") => Some(("perl".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("php") => Some(("php".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("lua") => Some(("lua".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("r") => Some(("Rscript".to_string(), vec![path.to_string_lossy().to_string()])),
+        Some("go") => Some(("go".to_string(), vec!["run".to_string(), path.to_string_lossy().to_string()])),
+        _ => {
+            crate::app::log_debug(&format!(
+                "get_run_command: no handler for extension={:?} path={}",
+                ext,
+                path.display()
+            ));
+            return None;
+        }
     };
-
-    Some((work_dir, program, args))
+    
+    if let Some((program, args)) = result {
+        crate::app::log_debug(&format!(
+            "get_run_command: extension={:?} -> program={} args={:?}",
+            ext, program, args
+        ));
+        Some((work_dir, program, args))
+    } else {
+        None
+    }
+}
 }
 
 pub fn show_commit_patch(repo_path: &Path, hash: &str) -> std::io::Result<String> {
