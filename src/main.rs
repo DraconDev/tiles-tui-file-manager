@@ -1325,9 +1325,34 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         )
                     });
                     let cmd_str = remote_cmd.as_deref().or(command.as_deref());
-                    crate::terminal::spawn_terminal_at(&path, new_tab, cmd_str);
+                    
+                    crate::app::log_debug(&format!(
+                        "SpawnTerminal: path={}, new_tab={}, remote={}, command={}",
+                        path.display(),
+                        new_tab,
+                        remote.is_some(),
+                        cmd_str.unwrap_or("(none)")
+                    ));
+                    
+                    let success = crate::terminal::spawn_terminal_at(&path, new_tab, cmd_str);
+                    
+                    if !success {
+                        let err_msg = format!(
+                            "Failed to open terminal for: {} (command: {})",
+                            path.display(),
+                            cmd_str.unwrap_or("(none)")
+                        );
+                        crate::app::log_debug(&err_msg);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(err_msg));
+                    } else {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                            "Opened terminal: {}",
+                            cmd_str.unwrap_or("(shell)")
+                        )));
+                    }
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
+                    crate::app::log_debug(&format!("SpawnDetached: cmd={}, args={:?}", cmd, args));
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);
                 }
                 AppEvent::KillProcess(pid) => {
