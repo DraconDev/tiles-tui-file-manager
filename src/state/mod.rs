@@ -53,6 +53,11 @@ pub enum AppEvent {
         Vec<String>, // Stashes
     ),
     GitDiffFetched(usize, usize, String),
+    GitStageFile(usize, usize, String),
+    GitUnstageFile(usize, usize, String),
+    GitStageAll(usize, usize),
+    GitUnstageAll(usize, usize),
+    GitCommit(usize, usize, String),
     TaskProgress(uuid::Uuid, f32, String),
     TaskFinished(uuid::Uuid),
     GlobalSearchUpdated(usize, Vec<PathBuf>, HashMap<PathBuf, FileMetadata>),
