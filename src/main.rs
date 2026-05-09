@@ -2140,7 +2140,9 @@ paired = new_paired;
                 shutdown.store(true, Ordering::Release);
                 break;
             }
-            let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
+            if let Err(e) = terminal.draw(|f| ui::draw(f, &mut app_guard)) {
+                let _ = std::fs::write("/tmp/tiles_draw_errors.log", format!("Draw error: {}\n", e));
+            }
         }
 
         // Constant sleep for consistent frame rate (~30fps)
