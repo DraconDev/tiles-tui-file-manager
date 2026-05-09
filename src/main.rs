@@ -2122,7 +2122,18 @@ paired = new_paired;
                 shutdown.store(true, Ordering::Release);
                 break;
             }
+            crate::app::log_debug("DRAW: calling terminal.draw()");
             terminal.draw(|f| ui::draw(f, &mut app_guard))?;
+            crate::app::log_debug("DRAW: terminal.draw() completed");
+        } else {
+            // Diagnostic: log when no draw happens to check if events are being processed
+            static mut SKIP_COUNT: u32 = 0;
+            unsafe {
+                SKIP_COUNT += 1;
+                if SKIP_COUNT % 100 == 0 {
+                    crate::app::log_debug(&format!("DRAW_SKIP: skipped {} iterations without draw", SKIP_COUNT));
+                }
+            }
         }
 
         // Adaptive sleep: 50ms when active, 100ms when idle
