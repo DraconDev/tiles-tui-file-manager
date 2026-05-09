@@ -2701,7 +2701,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         )
         .block(
             Block::default()
-                .title(" HISTORY ")
+                .title(title)
                 .borders(Borders::TOP)
                 .border_style(Style::default().fg(Color::Rgb(40, 45, 55))),
         )
