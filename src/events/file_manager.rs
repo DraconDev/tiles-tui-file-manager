@@ -1128,12 +1128,13 @@ pub fn handle_file_mouse(
                             let clicked_on_arrow = is_dir && column >= arrow_start && column < arrow_end;
                             if clicked_on_arrow {
                                 if is_dir {
+                                    let is_remote = fs.remote_session.is_some();
                                     let was_expanded = app.expanded_folders.contains(&p);
                                     if was_expanded {
                                         app.expanded_folders.remove(&p);
                                     } else {
                                         // Check if folder is empty before expanding
-                                        let is_empty = if fs.remote_session.is_some() {
+                                        let is_empty = if is_remote {
                                             false // Can't easily check remote, allow expansion
                                         } else {
                                             std::fs::read_dir(&p).map(|mut d| d.next().is_none()).unwrap_or(true)
