@@ -2843,6 +2843,9 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                         }
 
                         let mut row_cells = vec![
+                            Cell::from(act.graph.clone()).style(
+                                Style::default().fg(Color::DarkGray)
+                            ),
                             Cell::from(format_relative_time(&act.date))
                                 .style(Style::default().fg(Color::DarkGray)),
                             Cell::from(h_short).style(
