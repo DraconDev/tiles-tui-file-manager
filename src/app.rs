@@ -327,6 +327,13 @@ editor: ViewPreferences {
             .and_then(|p| p.current_state())
     }
 
+    pub fn current_tab_index(&self) -> usize {
+        self.panes
+            .get(self.focused_pane_index)
+            .map(|p| p.active_tab_index)
+            .unwrap_or(0)
+    }
+
     pub fn current_file_state_mut(&mut self) -> Option<&mut FileState> {
         self.panes
             .get_mut(self.focused_pane_index)
