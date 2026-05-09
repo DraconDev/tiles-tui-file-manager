@@ -2532,7 +2532,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     );
 
     // Check if we have an inline diff to show
-    let (has_inline_diff, diff_content) = app
+    let (diff_loaded, diff_content) = app
         .panes
         .get(pane_idx)
         .and_then(|p| p.tabs.get(tab_idx))
@@ -2550,13 +2550,11 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         })
         .unwrap_or((false, None));
 
-    // Only show ACTIVE (pending) changes at top, no INFO panel
+    // Stable layout: always use split when there are pending changes
     let top_h = if pending_len == 0 {
         0
-    } else if has_inline_diff {
-        (pending_len as u16 + 2).max(14).min(main_area.height / 2)
     } else {
-        (pending_len as u16 + 2).min(main_area.height / 3)
+        (pending_len as u16 + 2).max(10).min(main_area.height / 3)
     };
 
     let main_chunks = Layout::default()
