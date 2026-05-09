@@ -458,6 +458,8 @@ impl FileState {
             git_remotes: Vec::new(),
             git_stashes: Vec::new(),
             git_search_filter: String::new(),
+            git_pending_diff: None,
+            git_diff_for_path: None,
             git_cache_until: None,
             last_folder_size_calc: None,
             search_debounce_until: None,
