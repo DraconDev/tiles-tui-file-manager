@@ -344,6 +344,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     let mut last_activity = std::time::Instant::now();
     const IDLE_THRESHOLD_MS: u64 = 500;
 
+    // Send an initial draw event to render the UI immediately on startup
+    {
+        let tx = event_tx.clone();
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            let _ = tx.send(AppEvent::Tick).await;
+        });
+    }
+
     loop {
         let mut needs_draw = false;
 
