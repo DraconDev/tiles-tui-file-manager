@@ -387,6 +387,81 @@ pub async fn create_archive(paths: &[PathBuf], dest: &Path, format: usize) -> st
     Ok(())
 }
 
+/// Stage a file in git
+pub fn git_stage(repo_path: &Path, file_path: &str) -> std::io::Result<()> {
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(&["add", file_path])
+        .output()?;
+    if !output.status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr),
+        ));
+    }
+    Ok(())
+}
+
+/// Unstage a file in git
+pub fn git_unstage(repo_path: &Path, file_path: &str) -> std::io::Result<()> {
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(&["reset", "HEAD", file_path])
+        .output()?;
+    if !output.status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr),
+        ));
+    }
+    Ok(())
+}
+
+/// Stage all changes
+pub fn git_stage_all(repo_path: &Path) -> std::io::Result<()> {
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(&["add", "."])
+        .output()?;
+    if !output.status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr),
+        ));
+    }
+    Ok(())
+}
+
+/// Unstage all changes
+pub fn git_unstage_all(repo_path: &Path) -> std::io::Result<()> {
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(&["reset", "HEAD"])
+        .output()?;
+    if !output.status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr),
+        ));
+    }
+    Ok(())
+}
+
+/// Commit changes with a message
+pub fn git_commit(repo_path: &Path, message: &str) -> std::io::Result<()> {
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(&["commit", "-m", message])
+        .output()?;
+    if !output.status.success() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            String::from_utf8_lossy(&output.stderr),
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
