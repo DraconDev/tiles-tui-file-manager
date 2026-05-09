@@ -350,6 +350,21 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     loop {
         let mut needs_draw = false;
+        
+        // Heartbeat counter for diagnostics
+        {
+            use std::sync::atomic::{AtomicU64, Ordering};
+            static LOOP_COUNT: AtomicU64 = AtomicU64::new(0);
+            static LAST_LOG: std::sync::Mutex<u64> = std::sync::Mutex::new(0);
+            let count = LOOP_COUNT.fetch_add(1, Ordering::Relaxed);
+            if count % 30 == 0 {
+                let mut last = LAST_LOG.lock().unwrap();
+                if count > *last + 20 {
+                    let _ = std::fs::write("/tmp/tiles_heartbeat.log", format!("loop={} events={}", count, needs_draw));
+                    *last = count;
+                }
+            }
+        }
 
         while let Ok(event) = event_rx.try_recv() {
             match event {
