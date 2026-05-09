@@ -177,6 +177,15 @@ pub fn fetch_git_data(path: &Path) -> Option<GitData> {
         })
         .collect();
 
+    // Fetch ASCII graph data separately and merge with history
+    let graph_map = fetch_git_graph(path);
+    let mut history: Vec<CommitInfo> = history.into_iter().map(|mut c| {
+        if let Some(g) = graph_map.get(&c.hash) {
+            c.graph = g.clone();
+        }
+        c
+    }).collect();
+
     Some((
         history,
         pending,
@@ -187,6 +196,49 @@ pub fn fetch_git_data(path: &Path) -> Option<GitData> {
         snapshot.remotes,
         snapshot.stashes,
     ))
+}
+
+/// Fetch ASCII graph characters for each commit hash.
+/// Runs `git log --graph --oneline --decorate -n 100` and parses the graph prefix.
+fn fetch_git_graph(repo_path: &Path) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+    let output = std::process::Command::new("git")
+        .current_dir(repo_path)
+        .args(&["--no-pager", "log", "--graph", "--oneline", "--decorate", "-n", "100"])
+        .output();
+    
+    let stdout = match output {
+        Ok(o) => String::from_utf8_lossy(&o.stdout).to_string(),
+        Err(_) => return map,
+    };
+    
+    for line in stdout.lines() {
+        // Graph lines look like:
+        // * abc1234 Commit message
+        // *   abc1234 Merge commit
+        // |\  
+        // | * abc5678 Another commit
+        // 
+        // We need to extract the graph prefix and the hash
+        let trimmed = line.trim_start();
+        let prefix_len = line.len() - trimmed.len();
+        let prefix = &line[..prefix_len];
+        
+        // Check if this line has a commit hash (starts with * or contains hash after graph chars)
+        if let Some(hash_start) = trimmed.find(|c: char| c.is_ascii_alphanumeric()) {
+            let after_graph = &trimmed[hash_start..];
+            if let Some(hash_end) = after_graph.find(|c: char| c.is_whitespace()) {
+                let hash = &after_graph[..hash_end];
+                if hash.len() >= 7 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
+                    // This is a valid short hash
+                    let graph_chars = prefix.to_string() + &trimmed[..hash_start];
+                    map.insert(hash.to_string(), graph_chars);
+                }
+            }
+        }
+    }
+    
+    map
 }
 
 pub fn global_search(root: &Path, query: &str) -> (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) {
