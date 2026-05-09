@@ -3249,7 +3249,7 @@ fn draw_file_view(
                                     };
                                     
                                     let marker = if is_dir {
-                                        if is_expanded { "▾ " } else if has_children || depth == 0 { "▸ " } else { "  " }
+                                        if is_expanded && has_children { "▾ " } else if has_children || (depth == 0 && !is_expanded) { "▸ " } else { "  " }
                                     } else {
                                         "  "
                                     };
