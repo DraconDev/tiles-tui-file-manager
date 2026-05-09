@@ -2508,13 +2508,13 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     let top_h = if pending_len == 0 {
         0
     } else {
-        (pending_len as u16 + 2).min(content_area.height / 3)
+        (pending_len as u16 + 2).min(main_area.height / 3)
     };
 
     let main_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(top_h), Constraint::Min(0)])
-        .split(content_area);
+        .split(main_area);
 
     let top_area = main_chunks[0];
     let history_area = main_chunks[1];
