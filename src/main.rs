@@ -2152,13 +2152,6 @@ paired = new_paired;
             }
         } else {
             // Diagnostic: log when no draw happens to check if events are being processed
-            static mut SKIP_COUNT: u32 = 0;
-            unsafe {
-                SKIP_COUNT += 1;
-                if SKIP_COUNT % 100 == 0 {
-                    eprintln!("[TILES-DEBUG] Skipped {} iterations without draw", SKIP_COUNT);
-                }
-            }
         }
 
         // Adaptive sleep: 50ms when active, 100ms when idle
