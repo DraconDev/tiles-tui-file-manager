@@ -2130,7 +2130,6 @@ paired = new_paired;
         }
 
         if needs_draw {
-            last_activity = std::time::Instant::now();
             let mut app_guard = app.lock();
             if !app_guard.running {
                 shutdown.store(true, Ordering::Release);
