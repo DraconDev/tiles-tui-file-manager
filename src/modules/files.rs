@@ -150,7 +150,7 @@ pub fn fetch_git_data(path: &Path) -> Option<GitData> {
     let provider = CliGitSnapshotProvider;
     let snapshot = provider.fetch_snapshot(path).ok().flatten()?;
 
-    let history = snapshot
+    let mut history: Vec<CommitInfo> = snapshot
         .history
         .into_iter()
         .map(|c| CommitInfo {
@@ -179,12 +179,11 @@ pub fn fetch_git_data(path: &Path) -> Option<GitData> {
 
     // Fetch ASCII graph data separately and merge with history
     let graph_map = fetch_git_graph(path);
-    let mut history: Vec<CommitInfo> = history.into_iter().map(|mut c| {
-        if let Some(g) = graph_map.get(&c.hash) {
-            c.graph = g.clone();
+    for commit in &mut history {
+        if let Some(g) = graph_map.get(&commit.hash) {
+            commit.graph = g.clone();
         }
-        c
-    }).collect();
+    }
 
     Some((
         history,
