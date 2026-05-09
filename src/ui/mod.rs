@@ -2600,18 +2600,6 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                     ]));
                 }
             }
-                                    Style::default()
-                                        .bg(status_color)
-                                        .fg(Color::Black)
-                                        .add_modifier(Modifier::BOLD),
-                                ),
-                                Cell::from(p.path.clone()).style(Style::default().fg(THEME.fg)),
-                                Cell::from(Line::from(stats_spans)),
-                            ])
-                        })
-                        .collect::<Vec<_>>()
-                })
-                .unwrap_or_default();
 
             let pending_table = Table::new(
                 pending_rows,
