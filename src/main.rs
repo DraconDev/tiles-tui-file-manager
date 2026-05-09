@@ -360,6 +360,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     loop {
         let mut needs_draw = false;
+        static mut LOOP_COUNT: u32 = 0;
+        unsafe {
+            LOOP_COUNT += 1;
+            if LOOP_COUNT % 100 == 1 {
+                eprintln!("[TILES-DEBUG] Main loop iteration {}", LOOP_COUNT);
+            }
+        }
 
         while let Ok(event) = event_rx.try_recv() {
             match event {
