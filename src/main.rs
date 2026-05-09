@@ -1384,6 +1384,141 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     needs_draw = true;
                 }
+                AppEvent::GitStageFile(p_idx, t_idx, file_path) => {
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_stage(&remote, &repo_path.unwrap_or_default(), &file_path)
+                        } else {
+                            crate::modules::files::git_stage(&repo_path.unwrap_or_default(), &file_path)
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => format!("Staged: {}", file_path),
+                            Err(e) => format!("Failed to stage {}: {}", file_path, e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitUnstageFile(p_idx, t_idx, file_path) => {
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_unstage(&remote, &repo_path.unwrap_or_default(), &file_path)
+                        } else {
+                            crate::modules::files::git_unstage(&repo_path.unwrap_or_default(), &file_path)
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => format!("Unstaged: {}", file_path),
+                            Err(e) => format!("Failed to unstage {}: {}", file_path, e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitStageAll(p_idx, t_idx) => {
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_stage_all(&remote, &repo_path.unwrap_or_default())
+                        } else {
+                            crate::modules::files::git_stage_all(&repo_path.unwrap_or_default())
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => "Staged all changes".to_string(),
+                            Err(e) => format!("Failed to stage all: {}", e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitUnstageAll(p_idx, t_idx) => {
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_unstage_all(&remote, &repo_path.unwrap_or_default())
+                        } else {
+                            crate::modules::files::git_unstage_all(&repo_path.unwrap_or_default())
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => "Unstaged all changes".to_string(),
+                            Err(e) => format!("Failed to unstage all: {}", e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitCommit(p_idx, t_idx, message) => {
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_commit(&remote, &repo_path.unwrap_or_default(), &message)
+                        } else {
+                            crate::modules::files::git_commit(&repo_path.unwrap_or_default(), &message)
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => format!("Committed: {}", message),
+                            Err(e) => format!("Failed to commit: {}", e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                    });
+                }
                 AppEvent::TaskProgress(id, progress, status) => {
                     let mut app_guard = app.lock();
                     if let Some(task) = app_guard.background_tasks.iter_mut().find(|t| t.id == id) {
