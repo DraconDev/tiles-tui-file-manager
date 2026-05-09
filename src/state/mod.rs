@@ -580,6 +580,7 @@ pub struct CommitInfo {
     pub files_changed: usize,
     pub insertions: usize,
     pub deletions: usize,
+    pub graph: String,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
