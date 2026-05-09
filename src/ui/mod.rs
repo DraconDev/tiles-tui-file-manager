@@ -2664,30 +2664,30 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
             if let Some(pane) = app.panes.get_mut(pane_idx) {
                 if let Some(tab) = pane.tabs.get_mut(tab_idx) {
-                    if has_inline_diff {
-                        // Split active area: file list | diff preview
-                        let h_chunks = Layout::default()
-                            .direction(Direction::Horizontal)
-                            .constraints([Constraint::Percentage(38), Constraint::Percentage(62)])
-                            .split(active_area);
+                    // Always split: file list (38%) | diff/placeholder (62%)
+                    let h_chunks = Layout::default()
+                        .direction(Direction::Horizontal)
+                        .constraints([Constraint::Percentage(38), Constraint::Percentage(62)])
+                        .split(active_area);
 
-                        let file_list_area = h_chunks[0];
-                        let diff_area = h_chunks[1];
+                    let file_list_area = h_chunks[0];
+                    let diff_area = h_chunks[1];
 
-                        // File list with title and right border
-                        let file_list_block = Block::default()
-                            .title(active_title)
-                            .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
-                            .borders(Borders::RIGHT);
-                        let file_list_inner = file_list_block.inner(file_list_area);
-                        f.render_widget(file_list_block, file_list_area);
-                        f.render_stateful_widget(
-                            pending_table,
-                            file_list_inner,
-                            &mut tab.git_pending_state,
-                        );
+                    // File list with title and right border
+                    let file_list_block = Block::default()
+                        .title(active_title)
+                        .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
+                        .borders(Borders::RIGHT);
+                    let file_list_inner = file_list_block.inner(file_list_area);
+                    f.render_widget(file_list_block, file_list_area);
+                    f.render_stateful_widget(
+                        pending_table,
+                        file_list_inner,
+                        &mut tab.git_pending_state,
+                    );
 
-                        // Diff preview
+                    // Diff preview or placeholder
+                    if diff_loaded {
                         let diff_lines: Vec<Line> = diff_content
                             .unwrap_or_default()
                             .lines()
@@ -2720,17 +2720,38 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                             diff_inner,
                         );
                     } else {
-                        // Full-width file list (original behavior)
-                        let file_list_block = Block::default()
-                            .title(active_title)
+                        // Placeholder: stable empty state
+                        let placeholder = if tab.git_pending_state.selected().is_some() {
+                            vec![Line::from(vec![
+                                Span::styled("󰔚 ", Style::default().fg(Color::DarkGray)),
+                                Span::styled("Loading diff...", Style::default().fg(Color::DarkGray)),
+                            ])]
+                        } else {
+                            vec![
+                                Line::from(""),
+                                Line::from(vec![
+                                    Span::styled("󰈈 ", Style::default().fg(Color::DarkGray)),
+                                    Span::styled("Select a file to view diff", Style::default().fg(Color::DarkGray)),
+                                ]),
+                                Line::from(""),
+                                Line::from(vec![
+                                    Span::styled(" ↑/↓ ", Style::default().fg(Color::Cyan)),
+                                    Span::styled("Navigate  ", Style::default().fg(Color::DarkGray)),
+                                    Span::styled("Enter ", Style::default().fg(Color::Cyan)),
+                                    Span::styled("Full preview", Style::default().fg(Color::DarkGray)),
+                                ]),
+                            ]
+                        };
+                        let diff_block = Block::default()
+                            .title(" DIFF ")
                             .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
-                            .borders(Borders::RIGHT);
-                        let file_list_inner = file_list_block.inner(active_area);
-                        f.render_widget(file_list_block, active_area);
-                        f.render_stateful_widget(
-                            pending_table,
-                            file_list_inner,
-                            &mut tab.git_pending_state,
+                            .borders(Borders::LEFT);
+                        let diff_inner = diff_block.inner(diff_area);
+                        f.render_widget(diff_block, diff_area);
+                        f.render_widget(
+                            Paragraph::new(placeholder)
+                                .alignment(Alignment::Center),
+                            diff_inner,
                         );
                     }
                 }
