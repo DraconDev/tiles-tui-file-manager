@@ -2599,6 +2599,15 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             history_area,
         );
     } else {
+        let (search_filter, is_searching) = app
+            .panes
+            .get(pane_idx)
+            .and_then(|p| p.tabs.get(tab_idx))
+            .map(|t| (t.git_search_filter.clone(), !t.git_search_filter.is_empty()))
+            .unwrap_or_default();
+
+        let filter_lower = search_filter.to_lowercase();
+
         let rows: Vec<_> = app
             .panes
             .get(pane_idx)
@@ -2606,6 +2615,15 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             .map(|t| {
                 t.git_history
                     .iter()
+                    .filter(|act| {
+                        if filter_lower.is_empty() {
+                            true
+                        } else {
+                            act.message.to_lowercase().contains(&filter_lower)
+                                || act.author.to_lowercase().contains(&filter_lower)
+                                || act.hash.to_lowercase().starts_with(&filter_lower)
+                        }
+                    })
                     .map(|act| {
                         let h_short = act.hash.chars().take(7).collect::<String>();
                         let refs = parse_commit_refs(&act.decorations);
@@ -2650,6 +2668,12 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                     .collect::<Vec<_>>()
             })
             .unwrap_or_default();
+
+        let title = if is_searching {
+            format!(" HISTORY ({} / {}) — 󰈲 '{}' ", rows.len(), history_len, search_filter)
+        } else {
+            " HISTORY ".to_string()
+        };
 
         let table = Table::new(
             rows,
