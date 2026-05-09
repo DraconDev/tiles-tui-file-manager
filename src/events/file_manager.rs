@@ -1132,7 +1132,17 @@ pub fn handle_file_mouse(
                                     if was_expanded {
                                         app.expanded_folders.remove(&p);
                                     } else {
-                                        app.expanded_folders.insert(p.clone());
+                                        // Check if folder is empty before expanding
+                                        let is_empty = if fs.remote_session.is_some() {
+                                            false // Can't easily check remote, allow expansion
+                                        } else {
+                                            std::fs::read_dir(&p).map(|mut d| d.next().is_none()).unwrap_or(true)
+                                        };
+                                        if is_empty {
+                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Folder is empty".to_string()));
+                                        } else {
+                                            app.expanded_folders.insert(p.clone());
+                                        }
                                     }
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 }
