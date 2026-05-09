@@ -1857,7 +1857,65 @@ paired = new_paired;
                             }
 
                             // Tree order from walk_tree is already sorted (folders-first, alphabetical).
-                            // Do NOT re-sort here — it would scatter children away from parent folders.
+                            // Only skip sorting when folders are expanded (tree view) —
+                            // for flat lists, honor the user's column sort preference.
+                            let has_expanded_subdirs = paired.iter().any(|(_, depth)| *depth > 0);
+                            if !has_expanded_subdirs {
+                                let sort_col = fs.sort_column;
+                                let sort_asc = fs.sort_ascending;
+                                paired.sort_by(|(a, _), (b, _)| {
+                                    let meta_a = metadata.get(a);
+                                    let meta_b = metadata.get(b);
+                                    let is_dir_a = meta_a.map(|m| m.is_dir).unwrap_or(false);
+                                    let is_dir_b = meta_b.map(|m| m.is_dir).unwrap_or(false);
+                                    if is_dir_a != is_dir_b {
+                                        return if is_dir_a {
+                                            std::cmp::Ordering::Less
+                                        } else {
+                                            std::cmp::Ordering::Greater
+                                        };
+                                    }
+
+                                    let ord = match sort_col {
+                                        crate::app::FileColumn::Name => {
+                                            let na = a.file_name()
+                                                .and_then(|s| s.to_str())
+                                                .unwrap_or("")
+                                                .to_lowercase();
+                                            let nb = b.file_name()
+                                                .and_then(|s| s.to_str())
+                                                .unwrap_or("")
+                                                .to_lowercase();
+                                            na.cmp(&nb)
+                                        }
+                                        crate::app::FileColumn::Size => {
+                                            let sa = meta_a.map(|m| m.size).unwrap_or(0);
+                                            let sb = meta_b.map(|m| m.size).unwrap_or(0);
+                                            sa.cmp(&sb)
+                                        }
+                                        crate::app::FileColumn::Modified => {
+                                            let da = meta_a.map(|m| m.modified)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            let db = meta_b.map(|m| m.modified)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            da.cmp(&db)
+                                        }
+                                        crate::app::FileColumn::Created => {
+                                            let da = meta_a.map(|m| m.created)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            let db = meta_b.map(|m| m.created)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            da.cmp(&db)
+                                        }
+                                        crate::app::FileColumn::Permissions => {
+                                            let pa = meta_a.map(|m| m.permissions).unwrap_or(0);
+                                            let pb = meta_b.map(|m| m.permissions).unwrap_or(0);
+                                            pa.cmp(&pb)
+                                        }
+                                    };
+                                    if sort_asc { ord } else { ord.reverse() }
+                                });
+                            }
 
                             fs.local_count = paired.len();
 
