@@ -2874,6 +2874,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         let table = Table::new(
             rows,
             [
+                Constraint::Length(12),
                 Constraint::Length(6),
                 Constraint::Length(8),
                 Constraint::Length(20),
@@ -2886,7 +2887,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         )
         .header(
             Row::new(vec![
-                "DATE", "HASH", "REFS", "AUTHOR", "MESSAGE", "FILES", "ADD", "DEL",
+                "GRAPH", "DATE", "HASH", "REFS", "AUTHOR", "MESSAGE", "FILES", "ADD", "DEL",
             ])
             .style(
                 Style::default()
