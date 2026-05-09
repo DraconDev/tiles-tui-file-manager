@@ -724,6 +724,7 @@ fn parse_git_log_record(line: &str) -> Option<CommitInfo> {
         files_changed: 0,
         insertions: 0,
         deletions: 0,
+        graph: String::new(),
     })
 }
 
