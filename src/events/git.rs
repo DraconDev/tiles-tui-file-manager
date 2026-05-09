@@ -46,6 +46,7 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                                 let idx = fs.git_pending_state.selected().unwrap_or(0);
                                 if idx > 0 {
                                     fs.git_pending_state.select(Some(idx - 1));
+                                    trigger_git_diff_fetch(app, event_tx);
                                 }
                             } else {
                                 // Navigate history
@@ -65,6 +66,7 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                                 let len = fs.git_pending.len();
                                 if idx + 1 < len {
                                     fs.git_pending_state.select(Some(idx + 1));
+                                    trigger_git_diff_fetch(app, event_tx);
                                 }
                             } else {
                                 // Navigate history
@@ -90,6 +92,7 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                                 // Switch to pending
                                 fs.git_history_state.select(None);
                                 fs.git_pending_state.select(Some(0));
+                                trigger_git_diff_fetch(app, event_tx);
                             }
                         }
                         return true;
@@ -197,10 +200,7 @@ pub fn handle_git_mouse(
 
                                 if button == MouseButton::Left {
                                     if let Some(change) = tab.git_pending.get(idx) {
-                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
-                                            app.focused_pane_index,
-                                            std::path::PathBuf::from(format!("git-diff://{}", change.path)),
-                                        ));
+                                        trigger_git_diff_fetch(app, event_tx);
                                     }
                                 }
                                 return true;
