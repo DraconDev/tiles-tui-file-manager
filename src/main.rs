@@ -373,6 +373,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         sync_watches(&app_guard, &mut debouncer);
                         last_watch_sync = std::time::Instant::now();
                     }
+                    needs_draw = true;
                 }
                 AppEvent::Raw(raw) => {
                     {
