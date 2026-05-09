@@ -67,12 +67,32 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
                                 // Run command in new session if provided
                                 if let Some(cmd_str) = command {
                                     let session_path = format!("/Sessions/{}", session_id);
-                                    let _ = std::process::Command::new("busctl")
+                                    log(&format!("Running command in session: {}", cmd_str));
+                                    match std::process::Command::new("busctl")
                                         .args([
                                             "--user", "call", &service, &session_path,
                                             "org.kde.konsole.Session", "runCommand", "s", cmd_str,
                                         ])
-                                        .spawn();
+                                        .output() {
+                                        Ok(run_output) => {
+                                            let run_stdout = String::from_utf8_lossy(&run_output.stdout).trim().to_string();
+                                            let run_stderr = String::from_utf8_lossy(&run_output.stderr).trim().to_string();
+                                            if !run_stdout.is_empty() {
+                                                log(&format!("runCommand stdout: '{}'", run_stdout));
+                                            }
+                                            if !run_stderr.is_empty() {
+                                                log(&format!("runCommand stderr (ERROR): '{}'", run_stderr));
+                                            }
+                                            if !run_output.status.success() {
+                                                log(&format!("runCommand FAILED with status: {:?}", run_output.status));
+                                                return false; // Signal failure so caller knows
+                                            }
+                                        }
+                                        Err(e) => {
+                                            log(&format!("runCommand execution failed: {:?}", e));
+                                            return false;
+                                        }
+                                    }
                                 }
                                 return true;
                             }
