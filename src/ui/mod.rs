@@ -2486,16 +2486,43 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     }
 
     if !tab.git_remotes.is_empty() {
-        let remote_names: Vec<&str> = tab.git_remotes.iter()
-            .filter_map(|r| r.split_whitespace().next())
-            .collect::<std::collections::HashSet<_>>()
-            .into_iter()
+        let platforms: std::collections::HashSet<&str> = tab.git_remotes.iter()
+            .filter_map(|r| {
+                // Format: "origin  https://github.com/... (fetch)"
+                let parts: Vec<&str> = r.split_whitespace().collect();
+                if parts.len() >= 2 {
+                    let url = parts[1];
+                    if url.contains("github.com") {
+                        Some("github")
+                    } else if url.contains("gitlab.com") {
+                        Some("gitlab")
+                    } else if url.contains("codeberg.org") {
+                        Some("codeberg")
+                    } else {
+                        None
+                    }
+                } else {
+                    None
+                }
+            })
             .collect();
-        if !remote_names.is_empty() {
-            status_spans.push(Span::styled(
-                format!(" 󰒍 {} ", remote_names.join(", ")),
-                Style::default().fg(Color::Cyan),
-            ));
+
+        if !platforms.is_empty() {
+            let mut platform_spans = Vec::new();
+            for platform in platforms {
+                let (icon, color) = match platform {
+                    "github" => ("", Color::White),
+                    "gitlab" => ("", Color::Rgb(226, 67, 41)), // GitLab orange
+                    "codeberg" => ("󰚾", Color::Rgb(30, 160, 90)), // Codeberg green
+                    _ => ("󰒍", Color::Cyan),
+                };
+                if !platform_spans.is_empty() {
+                    platform_spans.push(Span::raw(" "));
+                }
+                platform_spans.push(Span::styled(icon, Style::default().fg(color)));
+            }
+            status_spans.push(Span::raw(" "));
+            status_spans.extend(platform_spans);
         }
     }
 
