@@ -3237,8 +3237,19 @@ fn draw_file_view(
                                     let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
                                     let indent = "  ".repeat(depth);
                                     let is_expanded = is_dir && app.expanded_folders.contains(path);
+                                    
+                                    // Check if folder actually has children (tree view only)
+                                    let has_children = if is_dir {
+                                        let my_depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0);
+                                        file_state.tree_file_depths.get(file_idx + 1)
+                                            .map(|&d| d > my_depth)
+                                            .unwrap_or(false)
+                                    } else {
+                                        false
+                                    };
+                                    
                                     let marker = if is_dir {
-                                        if is_expanded { "▾ " } else { "▸ " }
+                                        if is_expanded { "▾ " } else if has_children || depth == 0 { "▸ " } else { "  " }
                                     } else {
                                         "  "
                                     };
