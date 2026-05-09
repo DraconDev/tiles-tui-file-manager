@@ -199,7 +199,7 @@ pub fn handle_git_mouse(
                                 tab.git_history_state.select(None);
 
                                 if button == MouseButton::Left {
-                                    if let Some(change) = tab.git_pending.get(idx) {
+                                    if let Some(_change) = tab.git_pending.get(idx) {
                                         trigger_git_diff_fetch(app, event_tx);
                                     }
                                 }
