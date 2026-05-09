@@ -2007,6 +2007,11 @@ paired = new_paired;
                                     *fs.table_state.offset_mut() = fs.clamped_scroll(pending_scroll);
                                 }
                             }
+                            
+                            crate::app::log_debug(&format!(
+                                "[REFRESH] pane={} path={:?} files={} sel={:?} expanded_folders={}",
+                                pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, app_clone.lock().expanded_folders.len()
+                            ));
                         }
                     }
                 }
