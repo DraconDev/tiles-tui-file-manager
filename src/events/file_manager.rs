@@ -1455,12 +1455,13 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
                     return true;
                 }
                 if path.is_dir() {
+                    let is_remote = app.current_file_state().map(|fs| fs.remote_session.is_some()).unwrap_or(false);
                     let was_expanded = app.expanded_folders.contains(&path);
                     if was_expanded {
                         app.expanded_folders.remove(&path);
                     } else {
                         // Check if folder is empty before expanding
-                        let is_empty = if fs.remote_session.is_some() {
+                        let is_empty = if is_remote {
                             false // Can't easily check remote, allow expansion
                         } else {
                             std::fs::read_dir(&path).map(|mut d| d.next().is_none()).unwrap_or(true)
