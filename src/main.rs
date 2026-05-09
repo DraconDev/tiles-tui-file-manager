@@ -55,15 +55,10 @@ async fn main() -> color_eyre::Result<()> {
 }
 
 async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
-    eprintln!("[TILES-DEBUG] run_tty starting...");
     crate::app::log_debug("run_tty start");
-    eprintln!("[TILES-DEBUG] Creating backend...");
     let backend = EngineBackend::new(std::io::stdout())?;
-    eprintln!("[TILES-DEBUG] Backend created successfully");
     let tile_queue = backend.tile_queue();
-    eprintln!("[TILES-DEBUG] Creating terminal...");
     let mut terminal = Terminal::new(backend)?;
-    eprintln!("[TILES-DEBUG] Terminal created successfully");
 
     let (app, event_tx, mut event_rx) = setup_app(tile_queue);
 
@@ -340,17 +335,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     }
 
     crate::app::log_debug("Entering main loop");
-    eprintln!("[TILES-DEBUG] About to draw initial frame...");
 
     // Draw initial frame BEFORE entering the event loop
     {
         let mut app_guard = app.lock();
         match terminal.draw(|f| ui::draw(f, &mut app_guard)) {
-            Ok(_) => eprintln!("[TILES-DEBUG] Initial frame drawn successfully"),
-            Err(e) => eprintln!("[TILES-DEBUG] Initial frame draw FAILED: {}", e),
         }
     }
-    eprintln!("[TILES-DEBUG] Entering main event loop");
 
     let mut panes_needing_refresh = std::collections::HashSet::new();
     let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64)> =
@@ -2135,13 +2126,10 @@ paired = new_paired;
                 shutdown.store(true, Ordering::Release);
                 break;
             }
-            eprintln!("[TILES-DEBUG] Drawing frame...");
             match terminal.draw(|f| ui::draw(f, &mut app_guard)) {
                 Ok(_) => {
-                    eprintln!("[TILES-DEBUG] Frame drawn successfully");
                 }
                 Err(e) => {
-                    eprintln!("[TILES-DEBUG] Frame draw FAILED: {}", e);
                 }
             }
         } else {
