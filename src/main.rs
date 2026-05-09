@@ -1327,20 +1327,25 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let cmd_str = remote_cmd.as_deref().or(command.as_deref());
                     
                     crate::app::log_debug(&format!(
-                        "SpawnTerminal: path={}, new_tab={}, remote={}, command={}",
+                        "SpawnTerminal: path={}, new_tab={}, is_remote={}, has_command={}",
                         path.display(),
                         new_tab,
                         remote.is_some(),
-                        cmd_str.unwrap_or("(none)")
+                        cmd_str.is_some()
                     ));
                     
                     let success = crate::terminal::spawn_terminal_at(&path, new_tab, cmd_str);
                     
                     if !success {
+                        let err_detail = if remote.is_some() {
+                            "remote terminal spawn failed"
+                        } else {
+                            "local terminal spawn failed (check debug.log for details)"
+                        };
                         let err_msg = format!(
-                            "Failed to open terminal for: {} (command: {})",
-                            path.display(),
-                            cmd_str.unwrap_or("(none)")
+                            "Failed to open terminal: {} ({})",
+                            cmd_str.unwrap_or("(shell)"),
+                            err_detail
                         );
                         crate::app::log_debug(&err_msg);
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(err_msg));
