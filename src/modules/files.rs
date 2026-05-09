@@ -162,6 +162,7 @@ pub fn fetch_git_data(path: &Path) -> Option<GitData> {
             files_changed: c.files_changed,
             insertions: c.insertions,
             deletions: c.deletions,
+            graph: String::new(),
         })
         .collect();
 
