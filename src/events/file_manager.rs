@@ -1554,6 +1554,15 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     }
     if let Some(p) = navigate_to {
         let restore = app.folder_memory.get(&p).copied();
+        
+        crate::app::log_debug(&format!(
+            "[NAVIGATE] current_path={:?} current_sel={:?} target={:?} restore={:?} folder_memory_len={}",
+            app.current_file_state().map(|fs| fs.current_path.clone()),
+            app.current_file_state().and_then(|fs| fs.selection.selected),
+            p,
+            restore,
+            app.folder_memory.len()
+        ));
 
         if let Some(fs) = app.current_file_state() {
             let path = fs.current_path.clone();
@@ -1568,10 +1577,18 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 fs.selection.selected = Some(restore_sel);
                 fs.selection.anchor = Some(restore_sel);
                 *fs.table_state.offset_mut() = fs.clamped_scroll(restore_scroll);
+                crate::app::log_debug(&format!(
+                    "[NAVIGATE] restored sel={} scroll={} for {:?}",
+                    restore_sel, restore_scroll, p
+                ));
             } else {
                 fs.selection.selected = Some(0);
                 fs.selection.anchor = Some(0);
                 *fs.table_state.offset_mut() = 0;
+                crate::app::log_debug(&format!(
+                    "[NAVIGATE] set sel=0 for {:?}",
+                    p
+                ));
             }
             fs.selection.clear_multi();
             fs.search_filter.clear();
