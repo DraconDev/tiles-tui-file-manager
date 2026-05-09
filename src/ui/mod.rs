@@ -2437,6 +2437,17 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
     let status_area = status_chunks[0];
     let content_area = status_chunks[1];
 
+    // Reserve space for search bar when in Search mode
+    let is_searching = matches!(app.mode, crate::state::AppMode::Search);
+    let search_h = if is_searching { 1u16 } else { 0u16 };
+    let content_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Min(0), Constraint::Length(search_h)])
+        .split(content_area);
+
+    let main_area = content_chunks[0];
+    let search_area = content_chunks[1];
+
     // Build status line
     let mut status_spans = vec![
         Span::styled(
