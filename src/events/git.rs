@@ -137,6 +137,38 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                         app.input.clear();
                         return true;
                     }
+                    KeyCode::Char('s') if matches!(app.mode, AppMode::Normal) => {
+                        if let Some(fs) = app.current_file_state() {
+                            if let Some(idx) = fs.git_pending_state.selected() {
+                                if let Some(change) = fs.git_pending.get(idx) {
+                                    let _ = event_tx.send(AppEvent::GitStageFile(app.focused_pane_index, app.current_tab_index(), change.path.clone()));
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    KeyCode::Char('u') if matches!(app.mode, AppMode::Normal) => {
+                        if let Some(fs) = app.current_file_state() {
+                            if let Some(idx) = fs.git_pending_state.selected() {
+                                if let Some(change) = fs.git_pending.get(idx) {
+                                    let _ = event_tx.send(AppEvent::GitUnstageFile(app.focused_pane_index, app.current_tab_index(), change.path.clone()));
+                                    return true;
+                                }
+                            }
+                        }
+                    }
+                    KeyCode::Char('S') if matches!(app.mode, AppMode::Normal) => {
+                        let _ = event_tx.send(AppEvent::GitStageAll(app.focused_pane_index, app.current_tab_index()));
+                        return true;
+                    }
+                    KeyCode::Char('U') if matches!(app.mode, AppMode::Normal) => {
+                        let _ = event_tx.send(AppEvent::GitUnstageAll(app.focused_pane_index, app.current_tab_index()));
+                        return true;
+                    }
+                    KeyCode::Char('c') if matches!(app.mode, AppMode::Normal) => {
+                        // TODO: Open commit message modal
+                        return true;
+                    }
                     KeyCode::Esc if matches!(app.mode, AppMode::Search) => {
                         if let Some(fs) = app.current_file_state_mut() {
                             fs.git_search_filter.clear();
