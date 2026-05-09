@@ -2125,14 +2125,7 @@ paired = new_paired;
                 shutdown.store(true, Ordering::Release);
                 break;
             }
-            match terminal.draw(|f| ui::draw(f, &mut app_guard)) {
-                Ok(_) => {
-                }
-                Err(e) => {
-                }
-            }
-        } else {
-            // Diagnostic: log when no draw happens to check if events are being processed
+            let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
         }
 
         // Constant sleep for consistent frame rate (~30fps)
