@@ -1386,6 +1386,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::GitStageFile(p_idx, t_idx, file_path) => {
                     let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
                     tokio::spawn(async move {
                         let guard = app_clone.lock();
                         let repo_path = guard.panes.get(p_idx)
@@ -1407,12 +1408,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             Err(e) => format!("Failed to stage {}: {}", file_path, e),
                         };
                         
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
                     });
                 }
                 AppEvent::GitUnstageFile(p_idx, t_idx, file_path) => {
                     let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
                     tokio::spawn(async move {
                         let guard = app_clone.lock();
                         let repo_path = guard.panes.get(p_idx)
@@ -1434,12 +1436,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             Err(e) => format!("Failed to unstage {}: {}", file_path, e),
                         };
                         
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
                     });
                 }
                 AppEvent::GitStageAll(p_idx, t_idx) => {
                     let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
                     tokio::spawn(async move {
                         let guard = app_clone.lock();
                         let repo_path = guard.panes.get(p_idx)
@@ -1461,12 +1464,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             Err(e) => format!("Failed to stage all: {}", e),
                         };
                         
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
                     });
                 }
                 AppEvent::GitUnstageAll(p_idx, t_idx) => {
                     let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
                     tokio::spawn(async move {
                         let guard = app_clone.lock();
                         let repo_path = guard.panes.get(p_idx)
@@ -1488,12 +1492,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             Err(e) => format!("Failed to unstage all: {}", e),
                         };
                         
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
                     });
                 }
                 AppEvent::GitCommit(p_idx, t_idx, message) => {
                     let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
                     tokio::spawn(async move {
                         let guard = app_clone.lock();
                         let repo_path = guard.panes.get(p_idx)
@@ -1515,8 +1520,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             Err(e) => format!("Failed to commit: {}", e),
                         };
                         
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(status));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::GitHistory);
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
                     });
                 }
                 AppEvent::TaskProgress(id, progress, status) => {
