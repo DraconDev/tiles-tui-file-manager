@@ -2531,9 +2531,30 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         status_area,
     );
 
+    // Check if we have an inline diff to show
+    let (has_inline_diff, diff_content) = app
+        .panes
+        .get(pane_idx)
+        .and_then(|p| p.tabs.get(tab_idx))
+        .map(|t| {
+            if let Some(pending_idx) = t.git_pending_state.selected() {
+                if let Some(change) = t.git_pending.get(pending_idx) {
+                    if t.git_diff_for_path.as_ref() == Some(&change.path) {
+                        if let Some(diff) = &t.git_pending_diff {
+                            return (true, Some(diff.clone()));
+                        }
+                    }
+                }
+            }
+            (false, None)
+        })
+        .unwrap_or((false, None));
+
     // Only show ACTIVE (pending) changes at top, no INFO panel
     let top_h = if pending_len == 0 {
         0
+    } else if has_inline_diff {
+        (pending_len as u16 + 2).max(14).min(main_area.height / 2)
     } else {
         (pending_len as u16 + 2).min(main_area.height / 3)
     };
@@ -2636,12 +2657,6 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                     Constraint::Length(15),
                 ],
             )
-            .block(
-                Block::default()
-                    .title(active_title)
-                    .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
-                    .borders(Borders::RIGHT),
-            )
             .row_highlight_style(
                 Style::default()
                     .bg(Color::Rgb(40, 40, 50))
@@ -2651,11 +2666,75 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
             if let Some(pane) = app.panes.get_mut(pane_idx) {
                 if let Some(tab) = pane.tabs.get_mut(tab_idx) {
-                    f.render_stateful_widget(
-                        pending_table,
-                        active_area,
-                        &mut tab.git_pending_state,
-                    );
+                    if has_inline_diff {
+                        // Split active area: file list | diff preview
+                        let h_chunks = Layout::default()
+                            .direction(Direction::Horizontal)
+                            .constraints([Constraint::Percentage(38), Constraint::Percentage(62)])
+                            .split(active_area);
+
+                        let file_list_area = h_chunks[0];
+                        let diff_area = h_chunks[1];
+
+                        // File list with title and right border
+                        let file_list_block = Block::default()
+                            .title(active_title)
+                            .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
+                            .borders(Borders::RIGHT);
+                        let file_list_inner = file_list_block.inner(file_list_area);
+                        f.render_widget(file_list_block, file_list_area);
+                        f.render_stateful_widget(
+                            pending_table,
+                            file_list_inner,
+                            &mut tab.git_pending_state,
+                        );
+
+                        // Diff preview
+                        let diff_lines: Vec<Line> = diff_content
+                            .unwrap_or_default()
+                            .lines()
+                            .take(diff_area.height as usize)
+                            .map(|line| {
+                                let style = if line.starts_with('+') && !line.starts_with("+++") {
+                                    Style::default().fg(Color::Green)
+                                } else if line.starts_with('-') && !line.starts_with("---") {
+                                    Style::default().fg(Color::Red)
+                                } else if line.starts_with("@@") {
+                                    Style::default().fg(Color::Cyan)
+                                } else if line.starts_with("diff ") || line.starts_with("index ") || line.starts_with("--- ") || line.starts_with("+++ ") {
+                                    Style::default().fg(Color::DarkGray)
+                                } else {
+                                    Style::default().fg(THEME.fg)
+                                };
+                                Line::from(Span::styled(line.to_string(), style))
+                            })
+                            .collect();
+
+                        let diff_block = Block::default()
+                            .title(" DIFF ")
+                            .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
+                            .borders(Borders::LEFT);
+                        let diff_inner = diff_block.inner(diff_area);
+                        f.render_widget(diff_block, diff_area);
+                        f.render_widget(
+                            Paragraph::new(diff_lines)
+                                .wrap(ratatui::widgets::Wrap { trim: false }),
+                            diff_inner,
+                        );
+                    } else {
+                        // Full-width file list (original behavior)
+                        let file_list_block = Block::default()
+                            .title(active_title)
+                            .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
+                            .borders(Borders::RIGHT);
+                        let file_list_inner = file_list_block.inner(active_area);
+                        f.render_widget(file_list_block, active_area);
+                        f.render_stateful_widget(
+                            pending_table,
+                            file_list_inner,
+                            &mut tab.git_pending_state,
+                        );
+                    }
                 }
             }
         }
