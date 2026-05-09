@@ -294,7 +294,6 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
         None
     }
 }
-}
 
 pub fn show_commit_patch(repo_path: &Path, hash: &str) -> std::io::Result<String> {
     // Bypass dracon-git's buggy implementation which incorrectly passes `--` before the hash,
