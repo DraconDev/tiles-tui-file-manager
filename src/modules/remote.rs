@@ -523,6 +523,14 @@ pub fn fetch_git_data(remote: &RemoteSession, path: &Path) -> Option<GitData> {
         }
     }
 
+    // Fetch ASCII graph data and merge with history
+    let graph_map = fetch_git_graph_remote(remote, path);
+    for commit in &mut history {
+        if let Some(g) = graph_map.get(&commit.hash) {
+            commit.graph = g.clone();
+        }
+    }
+
     let mut pending = Vec::new();
     let mut stats_map: HashMap<String, (usize, usize)> = HashMap::new();
     if let Ok(raw) = exec_program(remote, "sh", &[ "-c", &format!("{}git diff --numstat", cd_cmd) ]) {
