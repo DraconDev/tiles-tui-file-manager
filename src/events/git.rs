@@ -2,6 +2,38 @@ use crate::app::{App, AppEvent, AppMode, CurrentView};
 use dracon_terminal_engine::contracts::{InputEvent as Event, KeyCode, MouseButton, MouseEventKind};
 use tokio::sync::mpsc;
 
+fn trigger_git_diff_fetch(app: &App, event_tx: &mpsc::Sender<AppEvent>) {
+    let pane_idx = app.focused_pane_index;
+    let Some(pane) = app.panes.get(pane_idx) else { return };
+    let tab_idx = pane.active_tab_index;
+    let Some(tab) = pane.tabs.get(tab_idx) else { return };
+    let Some(pending_idx) = tab.git_pending_state.selected() else { return };
+    let Some(change) = tab.git_pending.get(pending_idx) else { return };
+    
+    let file_path = change.path.clone();
+    let current_dir = tab.current_path.clone();
+    let remote_session = tab.remote_session.clone();
+    let tx = event_tx.clone();
+    
+    tokio::spawn(async move {
+        let diff = if let Some(remote) = &remote_session {
+            match crate::modules::remote::show_file_diff(remote, &current_dir, &file_path) {
+                Ok(content) => content,
+                Err(e) => format!("Error: {}", e),
+            }
+        } else {
+            match tokio::task::spawn_blocking(move || {
+                crate::modules::files::show_file_diff(&current_dir, &file_path)
+            }).await {
+                Ok(Ok(content)) => content,
+                Ok(Err(e)) => format!("Error: {}", e),
+                Err(_) => "Error: task failed".to_string(),
+            }
+        };
+        let _ = crate::app::try_send_event(&tx, AppEvent::GitDiffFetched(pane_idx, tab_idx, diff));
+    });
+}
+
 pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     if let CurrentView::Git = app.current_view {
         if let Event::Key(key) = evt {
