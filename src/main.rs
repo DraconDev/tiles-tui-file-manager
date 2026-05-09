@@ -350,6 +350,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         while let Ok(event) = event_rx.try_recv() {
             match event {
                 AppEvent::Tick => {
+                    crate::app::log_debug("EVENT: Tick received");
                     // Sync file watches periodically (every 5 seconds) to catch new/removed paths
                     // without doing it on every Tick event
                     if last_watch_sync.elapsed() >= Duration::from_millis(WATCH_SYNC_INTERVAL_MS) {
@@ -359,6 +360,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 AppEvent::Raw(raw) => {
+                    crate::app::log_debug(&format!("EVENT: Raw received: {:?}", raw));
                     {
                         let mut app_guard = app.lock();
                         if handle_event(
@@ -367,8 +369,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             event_tx.clone(),
                             &mut panes_needing_refresh,
                         ) {
+                            crate::app::log_debug("EVENT: Raw handled, needs_draw=true");
                             needs_draw = true;
                             last_activity = std::time::Instant::now();
+                        } else {
+                            crate::app::log_debug("EVENT: Raw handled, needs_draw=false");
                         }
                         // Note: ui::draw already calls f.render_widget(Clear, f.area())
                         // so terminal.clear() is redundant and can cause flicker/black screen
