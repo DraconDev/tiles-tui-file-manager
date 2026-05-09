@@ -52,6 +52,7 @@ pub enum AppEvent {
         Vec<String>, // Remotes
         Vec<String>, // Stashes
     ),
+    GitDiffFetched(usize, usize, String),
     TaskProgress(uuid::Uuid, f32, String),
     TaskFinished(uuid::Uuid),
     GlobalSearchUpdated(usize, Vec<PathBuf>, HashMap<PathBuf, FileMetadata>),
@@ -390,6 +391,10 @@ pub struct FileState {
     pub git_stashes: Vec<String>,
     #[serde(skip)]
     pub git_search_filter: String,
+    #[serde(skip)]
+    pub git_pending_diff: Option<String>,
+    #[serde(skip)]
+    pub git_diff_for_path: Option<String>,
     #[serde(skip)]
     pub git_cache_until: Option<Instant>,
     #[serde(skip)]
