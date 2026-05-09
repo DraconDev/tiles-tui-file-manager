@@ -339,8 +339,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     // Draw initial frame BEFORE entering the event loop
     {
         let mut app_guard = app.lock();
-        match terminal.draw(|f| ui::draw(f, &mut app_guard)) {
-        }
+        let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
     }
 
     let mut panes_needing_refresh = std::collections::HashSet::new();
