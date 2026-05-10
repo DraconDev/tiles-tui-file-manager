@@ -378,10 +378,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     loop {
         let mut needs_draw = false;
-        let mut event_count = 0u32;
+        let mut _event_count = 0u32;
 
         while let Ok(event) = event_rx.try_recv() {
-            event_count += 1;
+            _event_count += 1;
             match event {
                 AppEvent::Tick => {
                     // Sync file watches periodically (every 5 seconds) to catch new/removed paths
