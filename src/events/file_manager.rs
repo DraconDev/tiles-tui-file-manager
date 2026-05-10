@@ -1597,7 +1597,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 
         if let Some(fs) = app.current_file_state_mut() {
             fs.current_path = p.clone();
-            fs.remote_session = None;
+            fs.files.clear();
             if let Some((restore_sel, restore_scroll)) = restore {
                 fs.selection.selected = Some(restore_sel);
                 fs.selection.anchor = Some(restore_sel);
