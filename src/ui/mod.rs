@@ -4665,8 +4665,6 @@ fn draw_edit_permissions_modal(f: &mut Frame, app: &App) {
 fn draw_settings_modal(f: &mut Frame, app: &App) {
     let area = f.area();
 
-    f.render_widget(Clear, area);
-
     let block = Block::default()
         .title_top(Line::from(vec![Span::styled(
             " SETTINGS ",
