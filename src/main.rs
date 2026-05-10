@@ -2203,7 +2203,6 @@ paired = new_paired;
         }
 
         if needs_draw {
-            let _ = std::fs::write("/tmp/tiles_main_loop", format!("DRAW_{}\n", loop_iter));
             let mut app_guard = app.lock();
             if !app_guard.running {
                 shutdown.store(true, Ordering::Release);
@@ -2212,24 +2211,15 @@ paired = new_paired;
             if let Ok(size) = terminal.size() {
                 if size.width > 0 && size.height > 0 {
                     if let Err(e) = terminal.draw(|f| ui::draw(f, &mut app_guard)) {
-                        let _ = std::fs::write("/tmp/tiles_draw_errors.log", format!("Draw error: {}\n", e));
+                        crate::app::log_debug(&format!("Draw error: {}", e));
                     }
                 }
             }
-            let _ = std::fs::write("/tmp/tiles_main_loop", format!("DRAW_DONE_{}\n", loop_iter));
         }
 
         // Constant sleep for consistent frame rate (~30fps)
-        let _ = std::fs::write("/tmp/tiles_main_loop", format!("SLEEP_{}\n", loop_iter));
         tokio::time::sleep(Duration::from_millis(33)).await;
-        let _ = std::fs::write("/tmp/tiles_main_loop", format!("WAKE_{}\n", loop_iter));
-        
-        // Diagnostic logging every 5 seconds
-        if last_event_count_log.elapsed() >= Duration::from_secs(5) {
-            let _ = std::fs::write("/tmp/tiles_diag.log", 
-                format!("events={} draw={}\n", event_count, needs_draw));
-            last_event_count_log = std::time::Instant::now();
-        }
+    }
     }
 
     Ok(())
