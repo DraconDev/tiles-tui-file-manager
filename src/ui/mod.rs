@@ -3239,19 +3239,21 @@ fn draw_file_view(
                                     let indent = "  ".repeat(depth);
                                     let is_expanded = is_dir && app.expanded_folders.contains(path);
                                     
-                                    // Check if folder has children (tree view: from depths, flat view: check filesystem)
+                                    // Check if folder has children
+                                    // Expanded: children are visible in tree_file_depths
+                                    // Collapsed: need to check filesystem
                                     let has_children = if is_dir {
-                                        let my_depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0);
-                                        if my_depth > 0 || is_expanded {
-                                            // Tree view: next entry deeper means children exist
+                                        if is_expanded {
+                                            // Tree view expanded: next entry deeper means children exist
+                                            let my_depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0);
                                             file_state.tree_file_depths.get(file_idx + 1)
                                                 .map(|&d| d > my_depth)
                                                 .unwrap_or(false)
                                         } else if file_state.remote_session.is_some() {
-                                            // Remote flat view: assume folder has contents (can't check without SSH round-trip)
+                                            // Remote: assume non-empty (can't check without round-trip)
                                             true
                                         } else {
-                                            // Local flat view: check if directory is actually empty
+                                            // Local: check if directory actually has any items
                                             !std::fs::read_dir(path)
                                                 .map(|mut d| d.next().is_none())
                                                 .unwrap_or(true)
