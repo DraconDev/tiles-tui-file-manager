@@ -149,26 +149,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             let fd = stdin.as_raw_fd();
             let mut buffer = [0; 1024];
             let mut error_count = 0u32;
-            let mut loop_count = 0u32;
-            
-            // CRITICAL: Log thread startup info
-            let startup_msg = format!("INPUT_THREAD_START fd={} pid={}", fd, std::process::id());
-            let _ = std::fs::write("/tmp/tiles_input_startup", &startup_msg);
-            crate::app::log_debug(&startup_msg);
             
             while !shutdown_input.load(Ordering::Relaxed) {
-                loop_count += 1;
-                
-                // Log first few iterations for debugging
-                if loop_count <= 5 {
-                    let _ = std::fs::write("/tmp/tiles_input_loop", 
-                        format!("loop={} fd={} err={}", loop_count, fd, error_count));
-                }
-                
                 let polled = if fd < 0 {
-                    let msg = format!("stdin fd is invalid ({}), breaking input loop", fd);
-                    let _ = std::fs::write("/tmp/tiles_input_exit", &msg);
-                    crate::app::log_debug(&msg);
+                    crate::app::log_debug("stdin fd is invalid (< 0), breaking input loop");
                     break;
                 } else {
                     unsafe {
@@ -176,23 +160,14 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 };
                 
-                if loop_count <= 5 {
-                    let _ = std::fs::write("/tmp/tiles_input_poll", 
-                        format!("loop={} poll={:?}", loop_count, polled));
-                }
-                
                 match polled {
                     Ok(true) => match stdin.read(&mut buffer) {
                         Ok(0) => {
-                            let msg = "stdin read returned 0, breaking input loop";
-                            let _ = std::fs::write("/tmp/tiles_input_exit", msg);
-                            crate::app::log_debug(msg);
+                            crate::app::log_debug("stdin read returned 0, breaking input loop");
                             break;
                         }
                         Ok(n) => {
                             error_count = 0;
-                            let _ = std::fs::write("/tmp/tiles_input_read", 
-                                format!("loop={} read={} bytes", loop_count, n));
                             for byte in buffer.iter().take(n) {
                                 if let Some(evt) = parser.advance(*byte) {
                                     if let Some(converted) = crate::event::convert_event(evt) {
@@ -206,13 +181,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                         Err(e) => {
                             error_count += 1;
-                            let msg = format!("stdin read error: {:?} (count={})", e, error_count);
-                            let _ = std::fs::write("/tmp/tiles_input_error", &msg);
-                            crate::app::log_debug(&msg);
+                            crate::app::log_debug(&format!("stdin read error: {:?} (count={})", e, error_count));
                             if error_count > 10 {
-                                let msg = "Too many stdin errors, breaking input loop";
-                                let _ = std::fs::write("/tmp/tiles_input_exit", msg);
-                                crate::app::log_debug(msg);
+                                crate::app::log_debug("Too many stdin errors, breaking input loop");
                                 break;
                             }
                             std::thread::sleep(std::time::Duration::from_millis(10));
@@ -231,22 +202,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     Err(e) => {
                         error_count += 1;
-                        let msg = format!("poll_input error: {:?} (count={})", e, error_count);
-                        let _ = std::fs::write("/tmp/tiles_input_error", &msg);
-                        crate::app::log_debug(&msg);
+                        crate::app::log_debug(&format!("poll_input error: {:?} (count={})", e, error_count));
                         if error_count > 10 {
-                            let msg = "Too many poll errors, breaking input loop";
-                            let _ = std::fs::write("/tmp/tiles_input_exit", msg);
-                            crate::app::log_debug(msg);
+                            crate::app::log_debug("Too many poll errors, breaking input loop");
                             break;
                         }
                         std::thread::sleep(std::time::Duration::from_millis(10));
                     }
                 }
             }
-            let msg = format!("Input thread exited after {} loops", loop_count);
-            let _ = std::fs::write("/tmp/tiles_input_exit", &msg);
-            crate::app::log_debug(&msg);
+            crate::app::log_debug("Input thread exited");
         });
     }
 
