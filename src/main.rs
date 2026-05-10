@@ -2173,7 +2173,7 @@ paired = new_paired;
         let draw_start = std::time::Instant::now();
 
         if needs_draw {
-            let _ = std::fs::write("/tmp/tiles_loop.log", format!("before_draw frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+            trace_log(&format!("before_draw frame={}", frame_counter));
             let size = terminal.size();
             let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={:?} needs={}\n", size, needs_draw));
             let lock_start = std::time::Instant::now();
@@ -2183,7 +2183,7 @@ paired = new_paired;
                 let _ = std::fs::write("/tmp/tiles_slow_lock.log", format!("SLOW LOCK: {}ms at frame={}\n", lock_elapsed, frame_counter));
             }
             if !app_guard.running {
-                let _ = std::fs::write("/tmp/tiles_loop.log", format!("RUNNING_FALSE frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+                trace_log(&format!("RUNNING_FALSE frame={}", frame_counter));
                 shutdown.store(true, Ordering::Release);
                 break;
             }
@@ -2206,10 +2206,10 @@ paired = new_paired;
         }
 
         let draw_time = draw_start.elapsed().as_millis();
-        let _ = std::fs::write("/tmp/tiles_loop.log", format!("before_sleep frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+        trace_log(&format!("before_sleep frame={}", frame_counter));
         let sleep_start = std::time::Instant::now();
         tokio::time::sleep(Duration::from_millis(33)).await;
-        let _ = std::fs::write("/tmp/tiles_loop.log", format!("after_sleep frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+        trace_log(&format!("after_sleep frame={}", frame_counter));
         let sleep_time = sleep_start.elapsed().as_millis();
         let total_time = loop_start.elapsed().as_millis();
         
