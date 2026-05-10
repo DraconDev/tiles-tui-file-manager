@@ -406,11 +406,14 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     }
 
     crate::app::log_debug("Entering main loop");
+    let _ = std::fs::write("/tmp/tiles_main_loop", "START\n");
 
     // Draw initial frame BEFORE entering the event loop
     {
         let mut app_guard = app.lock();
+        let _ = std::fs::write("/tmp/tiles_main_loop", "DRAW_INIT\n");
         let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
+        let _ = std::fs::write("/tmp/tiles_main_loop", "DRAW_INIT_DONE\n");
     }
 
     let mut panes_needing_refresh = std::collections::HashSet::new();
@@ -420,13 +423,18 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     const WATCH_SYNC_INTERVAL_MS: u64 = 5000;
 
     let mut last_event_count_log = std::time::Instant::now();
+    let mut loop_iter = 0u64;
 
     loop {
+        loop_iter += 1;
+        let _ = std::fs::write("/tmp/tiles_main_loop", format!("LOOP_{}\n", loop_iter));
+        
         let mut needs_draw = false;
         let mut event_count = 0u32;
 
         while let Ok(event) = event_rx.try_recv() {
             event_count += 1;
+            let _ = std::fs::write("/tmp/tiles_main_loop", format!("EVENT_{}_{:?}\n", loop_iter, std::mem::discriminant(&event)));
             match event {
                 AppEvent::Tick => {
                     // Sync file watches periodically (every 5 seconds) to catch new/removed paths
