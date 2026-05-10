@@ -148,6 +148,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             let mut stdin = std::io::stdin();
             let fd = stdin.as_raw_fd();
             let mut buffer = [0; 1024];
+            let mut error_count = 0u32;
             while !shutdown_input.load(Ordering::Relaxed) {
                 // SAFETY: poll_input takes a borrowed file descriptor (BorrowedFd) and only
                 // checks for input availability (returns bool). The fd must be valid at this point.
@@ -166,8 +167,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 };
                 match polled {
                     Ok(true) => match stdin.read(&mut buffer) {
-                        Ok(0) => break,
+                        Ok(0) => {
+                            crate::app::log_debug("stdin read returned 0, breaking input loop");
+                            break;
+                        }
                         Ok(n) => {
+                            error_count = 0;
                             for byte in buffer.iter().take(n) {
                                 if let Some(evt) = parser.advance(*byte) {
                                     if let Some(converted) = crate::event::convert_event(evt) {
@@ -179,9 +184,18 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 }
                             }
                         }
-                        Err(_) => break,
+                        Err(e) => {
+                            error_count += 1;
+                            crate::app::log_debug(&format!("stdin read error: {:?} (count={})", e, error_count));
+                            if error_count > 10 {
+                                crate::app::log_debug("Too many stdin errors, breaking input loop");
+                                break;
+                            }
+                            std::thread::sleep(std::time::Duration::from_millis(10));
+                        }
                     },
                     Ok(false) => {
+                        error_count = error_count.saturating_sub(1);
                         if let Some(evt) = parser.check_timeout() {
                             if let Some(converted) = crate::event::convert_event(evt) {
                                 if let Some(ui_event) = to_ui_event(&converted) {
@@ -191,9 +205,18 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
                         }
                     }
-                    Err(_) => break,
+                    Err(e) => {
+                        error_count += 1;
+                        crate::app::log_debug(&format!("poll_input error: {:?} (count={})", e, error_count));
+                        if error_count > 10 {
+                            crate::app::log_debug("Too many poll errors, breaking input loop");
+                            break;
+                        }
+                        std::thread::sleep(std::time::Duration::from_millis(10));
+                    }
                 }
             }
+            crate::app::log_debug("Input thread exited");
         });
     }
 
