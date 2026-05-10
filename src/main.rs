@@ -400,7 +400,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             last_frame_log = std::time::Instant::now();
         }
 
+        trace_log(&format!("before_try_recv frame={}", frame_counter));
         while let Ok(event) = event_rx.try_recv() {
+            trace_log(&format!("got_event frame={} type={:?}", frame_counter, std::mem::discriminant(&event)));
             _event_count += 1;
             let event_start = std::time::Instant::now();
             match event {
