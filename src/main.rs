@@ -391,7 +391,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let mut app_guard = app.lock();
         app_guard.running = true;
         if let Ok(size) = terminal.size() {
-            app_guard.terminal_size = (size.width, size.height);
+            if size.width > 0 && size.height > 0 {
+                app_guard.terminal_size = (size.width, size.height);
+            } else {
+                app_guard.terminal_size = (80, 24);
+            }
         }
         app_guard.panes.len()
     };
