@@ -412,7 +412,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     {
         let mut app_guard = app.lock();
         let _ = std::fs::write("/tmp/tiles_main_loop", "DRAW_INIT\n");
-        let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
+        if let Ok(size) = terminal.size() {
+            if size.width > 0 && size.height > 0 {
+                let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
+            }
+        }
         let _ = std::fs::write("/tmp/tiles_main_loop", "DRAW_INIT_DONE\n");
     }
 
