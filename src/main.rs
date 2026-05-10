@@ -2213,8 +2213,12 @@ paired = new_paired;
                 shutdown.store(true, Ordering::Release);
                 break;
             }
-            if let Err(e) = terminal.draw(|f| ui::draw(f, &mut app_guard)) {
-                let _ = std::fs::write("/tmp/tiles_draw_errors.log", format!("Draw error: {}\n", e));
+            if let Ok(size) = terminal.size() {
+                if size.width > 0 && size.height > 0 {
+                    if let Err(e) = terminal.draw(|f| ui::draw(f, &mut app_guard)) {
+                        let _ = std::fs::write("/tmp/tiles_draw_errors.log", format!("Draw error: {}\n", e));
+                    }
+                }
             }
             let _ = std::fs::write("/tmp/tiles_main_loop", format!("DRAW_DONE_{}\n", loop_iter));
         }
