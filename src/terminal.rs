@@ -29,112 +29,80 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
     log(&format!("spawn_terminal_at new_tab={} path={}", new_tab, path_str));
 
     if new_tab {
-        // Try busctl D-Bus first (reliable, no Qt crash)
-        if let (Ok(service), Ok(window)) = (
-            std::env::var("KONSOLE_DBUS_SERVICE"),
-            std::env::var("KONSOLE_DBUS_WINDOW"),
-        ) {
-            if command_exists("busctl") {
-                log(&format!("Trying busctl D-Bus: service={}, window={}", service, window));
-
-                // Call newSession with profile and directory args
-                // Signature: newSession(s profile, s directory) -> i session_id
-                let args = vec![
-                    "--user".to_string(),
-                    "call".to_string(),
-                    service.clone(),
-                    window.clone(),
-                    "org.kde.konsole.Window".to_string(),
-                    "newSession".to_string(),
-                    "ss".to_string(),
-                    "".to_string(),
-                    path_str.clone(),
-                ];
-
-                match std::process::Command::new("busctl").args(&args).output() {
-                    Ok(output) => {
-                        let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
-                        let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
-                        log(&format!("busctl stdout: '{}'", stdout));
-                        if !stderr.is_empty() {
-                            log(&format!("busctl stderr: '{}'", stderr));
-                        }
-
-                        if output.status.success() && stdout.starts_with("i ") {
-                            if let Some(session_id) = stdout.split_whitespace().nth(1) {
-                                log(&format!("D-Bus newSession created session: {}", session_id));
-
-                                // Run command in new session if provided
-                                if let Some(cmd_str) = command {
-                                    let session_path = format!("/Sessions/{}", session_id);
-                                    log(&format!("Running command in session: {}", cmd_str));
-                                    
-                                    // Try runCommand first (direct execution)
-                                    let run_cmd_result = std::process::Command::new("busctl")
-                                        .args([
-                                            "--user", "call", &service, &session_path,
-                                            "org.kde.konsole.Session", "runCommand", "s", cmd_str,
-                                        ])
-                                        .output();
-                                    
-                                    match run_cmd_result {
-                                        Ok(run_output) => {
-                                            let run_stdout = String::from_utf8_lossy(&run_output.stdout).trim().to_string();
-                                            let run_stderr = String::from_utf8_lossy(&run_output.stderr).trim().to_string();
-                                            if !run_stdout.is_empty() {
-                                                log(&format!("runCommand stdout: '{}'", run_stdout));
-                                            }
-                                            if !run_stderr.is_empty() {
-                                                log(&format!("runCommand stderr: '{}'", run_stderr));
-                                            }
-                                            if !run_output.status.success() {
-                                                log(&format!("runCommand FAILED with status: {:?}, trying sendText fallback", run_output.status));
-                                                // Fallback: send text + Enter
-                                                let text_cmd = format!("{}\n", cmd_str);
-                                                let send_result = std::process::Command::new("busctl")
-                                                    .args([
-                                                        "--user", "call", &service, &session_path,
-                                                        "org.kde.konsole.Session", "sendText", "s", &text_cmd,
-                                                    ])
-                                                    .output();
-                                                match send_result {
-                                                    Ok(send_output) => {
-                                                        if !send_output.status.success() {
-                                                            log(&format!("sendText also failed: {:?}", send_output.stderr));
-                                                        } else {
-                                                            log("sendText fallback succeeded");
-                                                        }
-                                                    }
-                                                    Err(e) => {
-                                                        log(&format!("sendText execution failed: {:?}", e));
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        Err(e) => {
-                                            log(&format!("runCommand execution failed: {:?}, trying sendText fallback", e));
-                                            // Fallback: send text + Enter
-                                            let text_cmd = format!("{}\n", cmd_str);
-                                            let _ = std::process::Command::new("busctl")
-                                                .args([
-                                                    "--user", "call", &service, &session_path,
-                                                    "org.kde.konsole.Session", "sendText", "s", &text_cmd,
-                                                ])
-                                                .output();
-                                        }
-                                    }
-                                }
-                                return true;
-                            }
-                        }
-                        log("busctl call failed or returned unexpected output");
+        // When we have a command to run, use konsole --new-tab -e directly
+        // D-Bus runCommand/sendText are broken in Konsole 26.04+ ("Access denied")
+        if command.is_some() && command_exists("konsole") {
+            log("Command provided, using konsole --new-tab -e");
+            let mut cmd = std::process::Command::new("konsole");
+            cmd.arg("--new-tab")
+               .arg("--workdir")
+               .arg(&path_str);
+            if let Some(cmd_str) = command {
+                cmd.arg("-e").arg(cmd_str);
+            }
+            match cmd.output() {
+                Ok(output) => {
+                    if output.status.success() {
+                        log("konsole --new-tab -e succeeded");
+                        return true;
                     }
-                    Err(e) => {
-                        log(&format!("busctl command failed: {:?}", e));
-                    }
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    log(&format!("konsole --new-tab -e failed: {}", stderr));
                 }
-            } else {
-                log("busctl not found, skipping D-Bus");
+                Err(e) => {
+                    log(&format!("konsole --new-tab -e execution failed: {:?}", e));
+                }
+            }
+            // Fall through to other methods if konsole fails
+        }
+
+        // Try busctl D-Bus for opening empty tabs (no command, or konsole -e failed)
+        // Note: runCommand/sendText are broken in Konsole 26.04+, so we only use this
+        // for opening tabs without commands
+        if command.is_none() {
+            if let (Ok(service), Ok(window)) = (
+                std::env::var("KONSOLE_DBUS_SERVICE"),
+                std::env::var("KONSOLE_DBUS_WINDOW"),
+            ) {
+                if command_exists("busctl") {
+                    log(&format!("Trying busctl D-Bus: service={}, window={}", service, window));
+
+                    let args = vec![
+                        "--user".to_string(),
+                        "call".to_string(),
+                        service.clone(),
+                        window.clone(),
+                        "org.kde.konsole.Window".to_string(),
+                        "newSession".to_string(),
+                        "ss".to_string(),
+                        "".to_string(),
+                        path_str.clone(),
+                    ];
+
+                    match std::process::Command::new("busctl").args(&args).output() {
+                        Ok(output) => {
+                            let stdout = String::from_utf8_lossy(&output.stdout).trim().to_string();
+                            let stderr = String::from_utf8_lossy(&output.stderr).trim().to_string();
+                            log(&format!("busctl stdout: '{}'", stdout));
+                            if !stderr.is_empty() {
+                                log(&format!("busctl stderr: '{}'", stderr));
+                            }
+
+                            if output.status.success() && stdout.starts_with("i ") {
+                                if let Some(session_id) = stdout.split_whitespace().nth(1) {
+                                    log(&format!("D-Bus newSession created session: {}", session_id));
+                                    return true;
+                                }
+                            }
+                            log("busctl call failed or returned unexpected output");
+                        }
+                        Err(e) => {
+                            log(&format!("busctl command failed: {:?}", e));
+                        }
+                    }
+                } else {
+                    log("busctl not found, skipping D-Bus");
+                }
             }
         }
 
@@ -158,16 +126,13 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
             log("Kitty tab failed");
         }
 
-        // Try konsole --new-tab (requires single-process mode)
-        if command_exists("konsole") {
-            log("Trying konsole --new-tab");
+        // Try konsole --new-tab without command (fallback for empty tabs)
+        if command.is_none() && command_exists("konsole") {
+            log("Trying konsole --new-tab (no command)");
             let mut cmd = std::process::Command::new("konsole");
             cmd.arg("--new-tab")
                .arg("--workdir")
                .arg(&path_str);
-            if let Some(cmd_str) = command {
-                cmd.arg("-e").arg(cmd_str);
-            }
             if cmd.spawn().is_ok() {
                 log("konsole --new-tab succeeded");
                 return true;
