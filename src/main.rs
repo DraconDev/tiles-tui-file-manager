@@ -2041,9 +2041,10 @@ paired = new_paired;
                                 }
                             }
                             
+                            let expanded_folders_len = app_guard.expanded_folders.len();
                             crate::app::log_debug(&format!(
                                 "[REFRESH] pane={} path={:?} files={} sel={:?} expanded_folders={}",
-                                pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, app_guard.expanded_folders.len()
+                                pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, expanded_folders_len
                             ));
                         }
                     }
