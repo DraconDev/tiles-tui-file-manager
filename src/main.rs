@@ -1416,11 +1416,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 AppEvent::FolderSizesUpdated(pane_idx, sizes) => {
+                    trace_log(&format!("FolderSizesUpdated START pane={}", pane_idx));
                     let mut app_guard = app.lock();
+                    trace_log(&format!("FolderSizesUpdated got lock"));
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
-                            fs.folder_sizes.extend(sizes);
+                            fs.folder_sizes = sizes;
                         }
+                    }
+                    trace_log(&format!("FolderSizesUpdated END"));
+                }
                     }
                     needs_draw = true;
                 }
