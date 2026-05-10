@@ -380,54 +380,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let mut _event_count = 0u32;
 
         while let Ok(event) = event_rx.try_recv() {
-            let event_name = match &event {
-                AppEvent::Tick => "Tick",
-                AppEvent::RefreshFiles(_) => "RefreshFiles",
-                AppEvent::CreateFile(_) => "CreateFile",
-                AppEvent::CreateFolder(_) => "CreateFolder",
-                AppEvent::Rename(_, _) => "Rename",
-                AppEvent::Delete(_) => "Delete",
-                AppEvent::TrashFile(_) => "TrashFile",
-                AppEvent::Chmod(_, _) => "Chmod",
-                AppEvent::CreateArchive(_, _, _) => "CreateArchive",
-                AppEvent::ComputeChecksums(_) => "ComputeChecksums",
-                AppEvent::Copy(_, _) => "Copy",
-                AppEvent::UploadToRemote(_, _) => "UploadToRemote",
-                AppEvent::FolderSizesUpdated(_, _) => "FolderSizesUpdated",
-                AppEvent::CompareFiles(_, _) => "CompareFiles",
-                AppEvent::Symlink(_, _) => "Symlink",
-                AppEvent::Raw(_) => "Raw",
-                AppEvent::Ui(_) => "Ui",
-                AppEvent::SystemUpdated(_) => "SystemUpdated",
-                AppEvent::ServersTomlChanged => "ServersTomlChanged",
-                AppEvent::ConnectToRemote(_, _) => "ConnectToRemote",
-                AppEvent::ReconnectRemote(_) => "ReconnectRemote",
-                AppEvent::RemoteConnected(_, _, _) => "RemoteConnected",
-                AppEvent::StatusMsg(_) => "StatusMsg",
-                AppEvent::FilesChangedOnDisk(_) => "FilesChangedOnDisk",
-                AppEvent::PreviewRequested(_, _) => "PreviewRequested",
-                AppEvent::SaveFile(_, _) => "SaveFile",
-                AppEvent::GitHistory => "GitHistory",
-                AppEvent::SystemMonitor => "SystemMonitor",
-                AppEvent::AddToFavorites(_) => "AddToFavorites",
-                AppEvent::KillProcess(_) => "KillProcess",
-                AppEvent::GitHistoryUpdated(_, _, _, _, _, _, _, _, _, _) => "GitHistoryUpdated",
-                AppEvent::GitDiffFetched(_, _, _) => "GitDiffFetched",
-                AppEvent::GitStageFile(_, _, _) => "GitStageFile",
-                AppEvent::GitUnstageFile(_, _, _) => "GitUnstageFile",
-                AppEvent::GitStageAll(_, _) => "GitStageAll",
-                AppEvent::GitUnstageAll(_, _) => "GitUnstageAll",
-                AppEvent::GitCommit(_, _, _) => "GitCommit",
-                AppEvent::TaskProgress(_, _, _) => "TaskProgress",
-                AppEvent::TaskFinished(_) => "TaskFinished",
-                AppEvent::GlobalSearchUpdated(_, _, _) => "GlobalSearchUpdated",
-                AppEvent::SpawnTerminal { .. } => "SpawnTerminal",
-                AppEvent::SpawnDetached { .. } => "SpawnDetached",
-                AppEvent::Editor => "Editor",
-            };
-            trace_log(&format!("got_event frame={} type={}", frame_counter, event_name));
             _event_count += 1;
-            let event_start = std::time::Instant::now();
             match event {
                 AppEvent::Tick => {
                     // Sync file watches periodically (every 5 seconds) to catch new/removed paths
@@ -2222,17 +2175,9 @@ paired = new_paired;
             }
             if let Ok(size) = size {
                 if size.width > 0 && size.height > 0 {
-                    let before_draw = std::time::Instant::now();
                     let draw_result = terminal.draw(|f| ui::draw(f, &mut app_guard));
-                    let draw_elapsed = before_draw.elapsed().as_millis();
-                    let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={}x{} draw_ms={} result={:?} at={:?}\n", 
-                        size.width, size.height, draw_elapsed, draw_result.is_ok(), std::time::Instant::now()));
                     if let Err(e) = draw_result {
                         crate::app::log_debug(&format!("Draw error: {}", e));
-                    }
-                    // Log if draw is suspiciously slow (> 500ms might indicate hang)
-                    if draw_elapsed > 500 {
-                        let _ = std::fs::write("/tmp/tiles_slow_draw.log", format!("SLOW DRAW: {}ms at frame={}\n", draw_elapsed, frame_counter));
                     }
                 }
             }
