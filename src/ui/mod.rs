@@ -3247,8 +3247,11 @@ fn draw_file_view(
                                             file_state.tree_file_depths.get(file_idx + 1)
                                                 .map(|&d| d > my_depth)
                                                 .unwrap_or(false)
+                                        } else if file_state.remote_session.is_some() {
+                                            // Remote flat view: assume folder has contents (can't check without SSH round-trip)
+                                            true
                                         } else {
-                                            // Flat view: check if directory is actually empty
+                                            // Local flat view: check if directory is actually empty
                                             !std::fs::read_dir(path)
                                                 .map(|mut d| d.next().is_none())
                                                 .unwrap_or(true)
