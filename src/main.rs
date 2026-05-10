@@ -452,6 +452,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 fs.bookmark_idx = Some(bookmark_idx);
                                 fs.retry_count = 0;
                                 fs.current_path = PathBuf::from("/");
+                                fs.files.clear();
                             }
                         }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -516,6 +517,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session = Some(session);
                             fs.current_path = PathBuf::from("/");
                             fs.retry_count = 0;
+                            fs.files.clear();
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                         }
                     }
