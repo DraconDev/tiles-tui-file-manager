@@ -2173,22 +2173,9 @@ paired = new_paired;
         let sleep_time = sleep_start.elapsed().as_millis();
         let total_time = loop_start.elapsed().as_millis();
         
-        static mut LAST_LOG: Option<std::time::Instant> = None;
-        let should_log = unsafe {
-            let now = std::time::Instant::now();
-            if LAST_LOG.is_none() || now.duration_since(LAST_LOG.unwrap()) >= Duration::from_secs(2) {
-                LAST_LOG = Some(now);
-                true
-            } else {
-                false
-            }
-        };
-        
-        if should_log {
-            let _ = std::fs::write("/tmp/tiles_timing.log", 
-                format!("events={}ms draw={}ms sleep={}ms total={}ms needs_draw={}\n", 
-                    event_time, draw_time, sleep_time, total_time, needs_draw));
-        }
+        let _ = std::fs::write("/tmp/tiles_timing.log", 
+            format!("events={}ms draw={}ms sleep={}ms total={}ms needs_draw={}\n", 
+                event_time, draw_time, sleep_time, total_time, needs_draw));
     }
 
     Ok(())
