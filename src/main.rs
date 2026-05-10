@@ -56,6 +56,15 @@ async fn main() -> color_eyre::Result<()> {
 
 async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     crate::app::log_debug("run_tty start");
+    
+    // Helper for append-mode trace logging
+    fn trace_log(msg: &str) {
+        use std::io::Write;
+        if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/tiles_loop.log") {
+            let _ = writeln!(f, "[{:?}] {}", std::time::Instant::now(), msg);
+        }
+    }
+    
     let backend = EngineBackend::new(std::io::stdout())?;
     let tile_queue = backend.tile_queue();
     let mut terminal = Terminal::new(backend)?;
@@ -378,11 +387,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     loop {
         // TRACE: Loop iteration start
-        {
-            use std::io::Write;
-            let mut f = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/tiles_loop.log").unwrap();
-            let _ = writeln!(f, "loop_start frame={} at={:?}", frame_counter, std::time::Instant::now());
-        }
+        trace_log(&format!("loop_start frame={}", frame_counter));
         
         let loop_start = std::time::Instant::now();
         let mut needs_draw = false;
