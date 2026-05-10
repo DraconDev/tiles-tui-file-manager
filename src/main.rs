@@ -2216,10 +2216,11 @@ paired = new_paired;
         let _ = std::fs::write("/tmp/tiles_timing.log", 
             format!("events={}ms draw={}ms sleep={}ms total={}ms needs_draw={}\n", 
                 event_time, draw_time, sleep_time, total_time, needs_draw));
-        let _ = std::fs::write("/tmp/tiles_loop.log", format!("loop_end frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+        trace_log(&format!("loop_end frame={}", frame_counter));
     }
 
-    let _ = std::fs::write("/tmp/tiles_loop.log", "LOOP_EXITED\n");
+    trace_log("LOOP_EXITED");
+    Ok(())
 }
 
 fn setup_app(
