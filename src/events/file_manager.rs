@@ -1019,6 +1019,7 @@ pub fn handle_file_mouse(
                         }
 
                         fs.current_path = target_path.clone();
+                        fs.files.clear();
                         fs.selection.clear();
                         fs.search_filter.clear();
                         *fs.table_state.offset_mut() = 0;
