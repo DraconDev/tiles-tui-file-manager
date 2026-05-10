@@ -2173,10 +2173,14 @@ paired = new_paired;
                     let before_draw = std::time::Instant::now();
                     let draw_result = terminal.draw(|f| ui::draw(f, &mut app_guard));
                     let draw_elapsed = before_draw.elapsed().as_millis();
-                    let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={}x{} draw_ms={} result={:?}\n", 
-                        size.width, size.height, draw_elapsed, draw_result.is_ok()));
+                    let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={}x{} draw_ms={} result={:?} at={:?}\n", 
+                        size.width, size.height, draw_elapsed, draw_result.is_ok(), std::time::Instant::now()));
                     if let Err(e) = draw_result {
                         crate::app::log_debug(&format!("Draw error: {}", e));
+                    }
+                    // Log if draw is suspiciously slow (> 500ms might indicate hang)
+                    if draw_elapsed > 500 {
+                        let _ = std::fs::write("/tmp/tiles_slow_draw.log", format!("SLOW DRAW: {}ms at frame={}\n", draw_elapsed, frame_counter));
                     }
                 }
             }
