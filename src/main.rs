@@ -377,6 +377,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     let mut last_frame_log = std::time::Instant::now();
 
     loop {
+        // TRACE: Loop iteration start
+        let _ = std::fs::write("/tmp/tiles_loop.log", format!("loop_start frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+        
         let loop_start = std::time::Instant::now();
         let mut needs_draw = false;
         let mut _event_count = 0u32;
@@ -2161,6 +2164,7 @@ paired = new_paired;
         let draw_start = std::time::Instant::now();
 
         if needs_draw {
+            let _ = std::fs::write("/tmp/tiles_loop.log", format!("before_draw frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
             let size = terminal.size();
             let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={:?} needs={}\n", size, needs_draw));
             let lock_start = std::time::Instant::now();
@@ -2170,6 +2174,7 @@ paired = new_paired;
                 let _ = std::fs::write("/tmp/tiles_slow_lock.log", format!("SLOW LOCK: {}ms at frame={}\n", lock_elapsed, frame_counter));
             }
             if !app_guard.running {
+                let _ = std::fs::write("/tmp/tiles_loop.log", format!("RUNNING_FALSE frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
                 shutdown.store(true, Ordering::Release);
                 break;
             }
