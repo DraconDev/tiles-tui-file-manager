@@ -2167,7 +2167,6 @@ paired = new_paired;
         // Constant sleep for consistent frame rate (~30fps)
         tokio::time::sleep(Duration::from_millis(33)).await;
     }
-    }
 
     Ok(())
 }
