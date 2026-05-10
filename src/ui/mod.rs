@@ -4295,19 +4295,19 @@ fn draw_save_as_modal(f: &mut Frame, app: &App) {
 }
 
 fn draw_delete_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(40, 10, f.area());
+    let area = centered_rect(50, 12, f.area());
     f.render_widget(Clear, area);
 
-    let (title, message) = match &app.mode {
+    let (title, message, item_name) = match &app.mode {
         AppMode::DeleteFile(ref path) => {
-            let name = path.file_name().unwrap_or_default().to_string_lossy();
-            (format!(" Delete {}? ", name), "Confirm deletion? [Y/n]: ".to_string())
+            let name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
+            (" Delete File ".to_string(), "This file will be permanently deleted:", name)
         }
         AppMode::Delete(ref mode) if mode == "trash" => {
-            (" Trash selected items? ".to_string(), "Move to trash? [Y/n]: ".to_string())
+            (" Trash Items ".to_string(), "Selected items will be moved to trash:", "Multiple items".to_string())
         }
         _ => {
-            (" Delete selected items? ".to_string(), "Permanently delete? [Y/n]: ".to_string())
+            (" Delete Items ".to_string(), "Selected items will be permanently deleted:", "Multiple items".to_string())
         }
     };
 
@@ -4325,24 +4325,43 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    // Message
+    // Warning icon + message
+    let warning_icon = Icon::Delete.get(app.icon_mode);
+    let header_lines = vec![
+        Line::from(vec![
+            Span::styled(warning_icon, Style::default().fg(border_color).add_modifier(Modifier::BOLD)),
+            Span::raw(" "),
+            Span::styled(message, Style::default().fg(THEME.fg)),
+        ]),
+    ];
     f.render_widget(
-        Paragraph::new(format!("{}{}", message, app.input.value))
-            .alignment(Alignment::Center),
-        inner,
+        Paragraph::new(header_lines).alignment(Alignment::Center),
+        Rect::new(inner.x, inner.y + 1, inner.width, 1),
+    );
+
+    // Item name (highlighted)
+    f.render_widget(
+        Paragraph::new(format!("'{}'", item_name))
+            .alignment(Alignment::Center)
+            .style(Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Rect::new(inner.x, inner.y + 3, inner.width, 1),
+    );
+
+    // Confirm prompt
+    f.render_widget(
+        Paragraph::new("Press [Y] to confirm or [N]/Esc to cancel")
+            .alignment(Alignment::Center)
+            .style(Style::default().fg(Color::DarkGray)),
+        Rect::new(inner.x, inner.y + 5, inner.width, 1),
     );
 
     // Buttons
     let (mx, my) = app.mouse_pos;
     let button_y = inner.y + inner.height.saturating_sub(2);
 
-    let is_hover =
-        |bx: u16, len: u16| mx >= inner.x + bx && mx < inner.x + bx + len && my == button_y;
+    let is_hover = |bx: u16, len: u16| mx >= inner.x + bx && mx < inner.x + bx + len && my == button_y;
 
-    // [ NO ]  at x=5 (width 8)  - LEFT (negative)
-    // [ YES ] at x=25 (width 9) - RIGHT (positive)
-
-    let no_style = if is_hover(5, 8) {
+    let no_style = if is_hover(8, 8) {
         Style::default()
             .bg(Color::White)
             .fg(Color::Black)
@@ -4351,23 +4370,23 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
         Style::default().fg(Color::White)
     };
 
-    let yes_style = if is_hover(25, 9) {
+    let yes_style = if is_hover(28, 9) {
         Style::default()
-            .bg(Color::Red)
+            .bg(border_color)
             .fg(Color::Black)
             .add_modifier(Modifier::BOLD)
     } else {
-        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+        Style::default().fg(border_color).add_modifier(Modifier::BOLD)
     };
 
     f.render_widget(
         Paragraph::new(" [ NO ] ").style(no_style),
-        Rect::new(inner.x + 5, button_y, 8, 1),
+        Rect::new(inner.x + 8, button_y, 8, 1),
     );
 
     f.render_widget(
         Paragraph::new(" [ YES ] ").style(yes_style),
-        Rect::new(inner.x + 25, button_y, 9, 1),
+        Rect::new(inner.x + 28, button_y, 9, 1),
     );
 }
 
