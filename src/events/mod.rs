@@ -580,7 +580,6 @@ fn handle_sidebar_mouse(
                                     // Name click: navigate to folder (and expand if collapsed)
                                     if let Some(fs) = app.current_file_state_mut() {
                                         fs.current_path = path_ref.clone();
-                                        fs.files.clear();
                                         fs.remote_session = None;
                                         fs.selection.selected = Some(0);
                                         fs.selection.anchor = Some(0);
