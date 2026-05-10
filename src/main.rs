@@ -240,7 +240,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 let data = {
                     let sys_mod = sys_mod.clone();
                     tokio::task::spawn_blocking(move || {
-                        sys_mod.lock().map(|guard| guard.get_data()).ok()
+                        sys_mod.lock().map(|mut guard| guard.get_data()).ok()
                     })
                     .await
                     .ok()
