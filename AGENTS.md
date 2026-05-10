@@ -161,10 +161,26 @@ UploadToRemote event → upload_file_with_progress() →
 
 ## Extension Points
 
-1. **Native SFTP**: Replace scp/base64 with libssh2 SFTP for uploads
-2. **Process tree view**: Requires upstream PPID in dracon-system
-3. **Multi-server sync**: Compare files across different remote servers
-4. **Remote editing**: Direct file editing via SFTP instead of download/upload
+1. **Process tree view**: Requires upstream PPID in dracon-system
+2. **Multi-server sync**: Compare files across different remote servers
+3. **Remote editing**: Direct file editing via SFTP instead of download/upload
+
+## Known Issues & Recent Fixes
+
+### Recursive Lock Deadlock (Fixed v10.146.200+)
+**Problem**: Main loop froze after first iteration  
+**Root cause**: `app_clone.lock()` called inside block already holding `app_clone.lock()` via `parking_lot::Mutex` (non-reentrant)  
+**Location**: `src/main.rs` refresh handler (line ~2132)  
+**Fix**: Read `expanded_folders.len()` from existing guard instead of re-locking
+
+### Zero-Size Terminal Crash (Fixed v10.146.200+)
+**Problem**: App crashed with "index outside of buffer" on startup  
+**Root cause**: Terminal reported size (0, 0), causing ratatui to panic during draw  
+**Fix**: Skip draw when size is zero, default to 80×24
+
+### Empty Folder Arrows (Fixed v10.146.200+)
+**Problem**: Empty folders showed `▸` arrows suggesting they could be expanded  
+**Fix**: Check `std::fs::read_dir` for local folders, show arrows only for non-empty directories
 
 ## Version History
 
@@ -172,4 +188,6 @@ UploadToRemote event → upload_file_with_progress() →
 - v10.104.0: SSH config import, duplicate detection
 - v10.120.0: Connection health, key auto-fix
 - v10.135.0: SFTP upload, folder sizes, file comparison, checksums
+- v10.146.0+: Process monitor redesign, connection pooling, archive creation, server aliases
+- v10.146.200+: Frozen UI fix (recursive lock deadlock), zero-size terminal fix, empty folder arrow fix
 - v10.146.0+: Process monitor redesign, connection pooling, archive creation, server aliases
