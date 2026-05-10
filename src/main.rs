@@ -274,24 +274,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         });
     }
 
-    // Heartbeat diagnostic - writes timestamp every second to verify async runtime health
-    {
-        let shutdown_hb = shutdown.clone();
-        tokio::spawn(async move {
-            loop {
-                if shutdown_hb.load(Ordering::Relaxed) {
-                    break;
-                }
-                let now = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs();
-                let _ = std::fs::write("/tmp/tiles_heartbeat", format!("{}", now));
-                tokio::time::sleep(Duration::from_secs(1)).await;
-            }
-        });
-    }
-
     // 4. Servers.toml Watcher (notify crate) — auto-reload when edited externally
     {
         let tx = event_tx.clone();
