@@ -3239,12 +3239,20 @@ fn draw_file_view(
                                     let indent = "  ".repeat(depth);
                                     let is_expanded = is_dir && app.expanded_folders.contains(path);
                                     
-                                    // Check if folder actually has children (tree view only)
+                                    // Check if folder has children (tree view: from depths, flat view: check filesystem)
                                     let has_children = if is_dir {
                                         let my_depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0);
-                                        file_state.tree_file_depths.get(file_idx + 1)
-                                            .map(|&d| d > my_depth)
-                                            .unwrap_or(false)
+                                        if my_depth > 0 || is_expanded {
+                                            // Tree view: next entry deeper means children exist
+                                            file_state.tree_file_depths.get(file_idx + 1)
+                                                .map(|&d| d > my_depth)
+                                                .unwrap_or(false)
+                                        } else {
+                                            // Flat view: check if directory is actually empty
+                                            !std::fs::read_dir(path)
+                                                .map(|mut d| d.next().is_none())
+                                                .unwrap_or(true)
+                                        }
                                     } else {
                                         false
                                     };
