@@ -374,8 +374,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     let mut last_watch_sync = std::time::Instant::now();
     const WATCH_SYNC_INTERVAL_MS: u64 = 5000;
 
-    let mut last_event_count_log = std::time::Instant::now();
-
     loop {
         let mut needs_draw = false;
         let mut _event_count = 0u32;
