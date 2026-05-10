@@ -1342,8 +1342,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.folder_sizes = sizes;
                         }
                     }
-                }
-                    }
                     needs_draw = true;
                 }
                 AppEvent::SpawnTerminal {
