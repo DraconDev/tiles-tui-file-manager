@@ -378,15 +378,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let loop_start = std::time::Instant::now();
         let mut needs_draw = false;
         let mut _event_count = 0u32;
-        frame_counter += 1;
-        trace_log(&format!("after_increment frame={}", frame_counter));
-        
-        if last_frame_log.elapsed() >= Duration::from_secs(2) {
-            let _ = std::fs::write("/tmp/tiles_frames.log", format!("frame={} time={:?}\n", frame_counter, std::time::Instant::now()));
-            last_frame_log = std::time::Instant::now();
-        }
 
-        trace_log(&format!("before_try_recv frame={}", frame_counter));
         while let Ok(event) = event_rx.try_recv() {
             let event_name = match &event {
                 AppEvent::Tick => "Tick",
@@ -2223,13 +2215,7 @@ paired = new_paired;
 
         if needs_draw {
             let size = terminal.size();
-            let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={:?} needs={}\n", size, needs_draw));
-            let lock_start = std::time::Instant::now();
             let mut app_guard = app.lock();
-            let lock_elapsed = lock_start.elapsed().as_millis();
-            if lock_elapsed > 100 {
-                let _ = std::fs::write("/tmp/tiles_slow_lock.log", format!("SLOW LOCK: {}ms at frame={}\n", lock_elapsed, frame_counter));
-            }
             if !app_guard.running {
                 shutdown.store(true, Ordering::Release);
                 break;
