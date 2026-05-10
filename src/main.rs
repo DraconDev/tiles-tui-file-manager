@@ -373,8 +373,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
     const WATCH_SYNC_INTERVAL_MS: u64 = 5000;
-    let mut frame_counter: u64 = 0;
-    let mut last_frame_log = std::time::Instant::now();
 
     loop {
         let loop_start = std::time::Instant::now();
@@ -1404,15 +1402,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 AppEvent::FolderSizesUpdated(pane_idx, sizes) => {
-                    trace_log(&format!("FolderSizesUpdated START pane={}", pane_idx));
                     let mut app_guard = app.lock();
-                    trace_log(&format!("FolderSizesUpdated got lock"));
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.folder_sizes = sizes;
                         }
                     }
-                    trace_log(&format!("FolderSizesUpdated END"));
                 }
                     }
                     needs_draw = true;
