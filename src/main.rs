@@ -468,6 +468,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 if let Some(fs) = pane.current_state_mut() {
                                     fs.bookmark_idx = Some(bookmark_idx);
                                     fs.retry_count = 0;
+                                    fs.files.clear();
                                 }
                             }
                         }
