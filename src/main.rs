@@ -378,7 +378,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     loop {
         // TRACE: Loop iteration start
-        let _ = std::fs::write("/tmp/tiles_loop.log", format!("loop_start frame={} at={:?}\n", frame_counter, std::time::Instant::now()));
+        {
+            use std::io::Write;
+            let mut f = std::fs::OpenOptions::new().create(true).append(true).open("/tmp/tiles_loop.log").unwrap();
+            let _ = writeln!(f, "loop_start frame={} at={:?}", frame_counter, std::time::Instant::now());
+        }
         
         let loop_start = std::time::Instant::now();
         let mut needs_draw = false;
