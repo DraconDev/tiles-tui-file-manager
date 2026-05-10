@@ -68,12 +68,16 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
                                 if let Some(cmd_str) = command {
                                     let session_path = format!("/Sessions/{}", session_id);
                                     log(&format!("Running command in session: {}", cmd_str));
-                                    match std::process::Command::new("busctl")
+                                    
+                                    // Try runCommand first (direct execution)
+                                    let run_cmd_result = std::process::Command::new("busctl")
                                         .args([
                                             "--user", "call", &service, &session_path,
                                             "org.kde.konsole.Session", "runCommand", "s", cmd_str,
                                         ])
-                                        .output() {
+                                        .output();
+                                    
+                                    match run_cmd_result {
                                         Ok(run_output) => {
                                             let run_stdout = String::from_utf8_lossy(&run_output.stdout).trim().to_string();
                                             let run_stderr = String::from_utf8_lossy(&run_output.stderr).trim().to_string();
@@ -81,16 +85,42 @@ pub fn spawn_terminal_at(path: &Path, new_tab: bool, command: Option<&str>) -> b
                                                 log(&format!("runCommand stdout: '{}'", run_stdout));
                                             }
                                             if !run_stderr.is_empty() {
-                                                log(&format!("runCommand stderr (ERROR): '{}'", run_stderr));
+                                                log(&format!("runCommand stderr: '{}'", run_stderr));
                                             }
                                             if !run_output.status.success() {
-                                                log(&format!("runCommand FAILED with status: {:?}", run_output.status));
-                                                return false; // Signal failure so caller knows
+                                                log(&format!("runCommand FAILED with status: {:?}, trying sendText fallback", run_output.status));
+                                                // Fallback: send text + Enter
+                                                let text_cmd = format!("{}\n", cmd_str);
+                                                let send_result = std::process::Command::new("busctl")
+                                                    .args([
+                                                        "--user", "call", &service, &session_path,
+                                                        "org.kde.konsole.Session", "sendText", "s", &text_cmd,
+                                                    ])
+                                                    .output();
+                                                match send_result {
+                                                    Ok(send_output) => {
+                                                        if !send_output.status.success() {
+                                                            log(&format!("sendText also failed: {:?}", send_output.stderr));
+                                                        } else {
+                                                            log("sendText fallback succeeded");
+                                                        }
+                                                    }
+                                                    Err(e) => {
+                                                        log(&format!("sendText execution failed: {:?}", e));
+                                                    }
+                                                }
                                             }
                                         }
                                         Err(e) => {
-                                            log(&format!("runCommand execution failed: {:?}", e));
-                                            return false;
+                                            log(&format!("runCommand execution failed: {:?}, trying sendText fallback", e));
+                                            // Fallback: send text + Enter
+                                            let text_cmd = format!("{}\n", cmd_str);
+                                            let _ = std::process::Command::new("busctl")
+                                                .args([
+                                                    "--user", "call", &service, &session_path,
+                                                    "org.kde.konsole.Session", "sendText", "s", &text_cmd,
+                                                ])
+                                                .output();
                                         }
                                     }
                                 }
