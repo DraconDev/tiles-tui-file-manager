@@ -1510,6 +1510,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 SidebarTarget::Favorite(path) | SidebarTarget::Recent(path) => {
                     if let Some(fs) = app.current_file_state_mut() {
                         fs.current_path = path.clone();
+                        fs.files.clear();
                         fs.remote_session = None;
                         fs.selection.selected = Some(0);
                         fs.selection.anchor = Some(0);
@@ -1530,6 +1531,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         let was_expanded = app.tree_expanded_folders.contains(&path_ref);
                         if let Some(fs) = app.current_file_state_mut() {
                             fs.current_path = path.clone();
+                            fs.files.clear();
                             fs.remote_session = None;
                             fs.selection.selected = Some(0);
                             fs.selection.anchor = Some(0);
