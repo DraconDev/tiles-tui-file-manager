@@ -700,7 +700,6 @@ fn draw_drag_drop_modal(
     target_is_remote: bool,
 ) {
     let area = centered_rect(60, 20, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Choice Action ")
         .borders(Borders::ALL)
@@ -834,7 +833,6 @@ fn draw_create_archive_modal(
     format_idx: usize,
 ) {
     let area = centered_rect(50, 18, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Create Archive ")
         .borders(Borders::ALL)
@@ -901,7 +899,6 @@ fn draw_create_archive_modal(
 
 fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
     let area = centered_rect(70, 80, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -1018,7 +1015,6 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
 
 fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
     let area = centered_rect(60, 60, f.area()); // Increased height
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Open With... ")
         .borders(Borders::ALL)
@@ -2364,7 +2360,6 @@ fn author_color(author: &str) -> Color {
 }
 
 fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
-    f.render_widget(Clear, area);
     let pane_idx = app.focused_pane_index;
     let tab_idx = if let Some(pane) = app.panes.get(pane_idx) {
         pane.active_tab_index
@@ -2578,7 +2573,6 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
     if top_h > 0 {
         let active_area = top_area;
-        f.render_widget(Clear, active_area);
 
         if pending_len > 0 {
             let active_title = format!(" ACTIVE ({} Affected) ", pending_len);
@@ -3963,7 +3957,6 @@ fn draw_context_menu(
 
     let area = Rect::new(draw_x, draw_y, menu_width, menu_height);
 
-    f.render_widget(Clear, area);
     let menu_block = Block::default()
         .title(title)
         .borders(Borders::ALL)
@@ -3985,7 +3978,6 @@ fn draw_context_menu(
 
 fn draw_import_servers_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(60, 20, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -4045,7 +4037,6 @@ port = 22"#;
 
 fn draw_import_ssh_config_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(65, 22, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -4105,7 +4096,6 @@ Host myserver
 
 fn draw_command_palette(f: &mut Frame, app: &mut App) {
     let area = centered_rect(60, 40, f.area());
-    f.render_widget(Clear, area);
     let inner = Block::default()
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
@@ -4151,7 +4141,6 @@ fn draw_command_palette(f: &mut Frame, app: &mut App) {
 
 fn draw_rename_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(40, 10, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Rename ")
         .borders(Borders::ALL)
@@ -4198,7 +4187,6 @@ fn draw_rename_modal(f: &mut Frame, app: &App) {
 
 fn draw_new_folder_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(40, 10, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" New Folder ")
         .borders(Borders::ALL)
@@ -4211,7 +4199,6 @@ fn draw_new_folder_modal(f: &mut Frame, app: &App) {
 
 fn draw_new_file_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(40, 10, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" New File ")
         .borders(Borders::ALL)
@@ -4224,7 +4211,6 @@ fn draw_new_file_modal(f: &mut Frame, app: &App) {
 
 fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(60, 20, f.area());
-    f.render_widget(Clear, area);
 
     let block = Block::default()
         .title(" Bulk Rename ")
@@ -4283,7 +4269,6 @@ fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
 
 fn draw_save_as_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(50, 10, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Save As ")
         .borders(Borders::ALL)
@@ -4296,7 +4281,6 @@ fn draw_save_as_modal(f: &mut Frame, app: &App) {
 
 fn draw_delete_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(50, 12, f.area());
-    f.render_widget(Clear, area);
 
     let (title, message, item_name) = match &app.mode {
         AppMode::DeleteFile(ref path) => {
@@ -4395,7 +4379,6 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
 
 fn draw_kill_process_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(50, 12, f.area());
-    f.render_widget(Clear, area);
 
     let (pid, name) = match &app.mode {
         AppMode::KillProcessConfirm(pid, name) => (*pid, name.clone()),
@@ -4463,7 +4446,6 @@ fn draw_kill_process_modal(f: &mut Frame, app: &App) {
 
 fn draw_properties_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(50, 50, f.area());
-    f.render_widget(Clear, area);
 
     let mut text = Vec::new();
 
@@ -4618,7 +4600,6 @@ fn draw_properties_modal(f: &mut Frame, app: &App) {
 
 fn draw_edit_permissions_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(40, 20, f.area());
-    f.render_widget(Clear, area);
 
     let mut text = Vec::new();
     text.push(Line::from(vec![
@@ -5301,7 +5282,6 @@ fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_style_color_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(64, 9, f.area());
-    f.render_widget(Clear, area);
 
     const STYLE_COLOR_START_INDEX: usize = 7;
     let field_name = match app.settings_index.saturating_sub(STYLE_COLOR_START_INDEX) {
@@ -5387,7 +5367,6 @@ fn draw_style_color_modal(f: &mut Frame, app: &App) {
 
 fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(56, 12, f.area());
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Reset All Settings ")
         .borders(Borders::ALL)
@@ -5596,7 +5575,6 @@ fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
 
 fn draw_add_remote_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(60, 50, f.area());
-    f.render_widget(Clear, area);
     
     let is_editing = app.open_with_index != usize::MAX && app.open_with_index < app.servers.len();
     let title = if is_editing { " Edit Remote Server " } else { " Add Remote Server " };
@@ -5697,7 +5675,6 @@ fn draw_highlight_modal(f: &mut Frame, _app: &App) {
         5,
     );
 
-    f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Highlight ")
         .borders(Borders::ALL)
@@ -5800,7 +5777,6 @@ fn draw_drag_ghost(f: &mut Frame, app: &App) {
 
         let area = Rect::new(x, y, width, 1);
 
-        f.render_widget(Clear, area);
         f.render_widget(
             Paragraph::new(Span::styled(
                 text,
