@@ -808,6 +808,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     if let Some(fs) = app.current_file_state_mut() {
                         if let Some(home) = dirs::home_dir() {
                             fs.current_path = home.clone();
+                            fs.files.clear();
                             fs.selection.selected = Some(0);
                             fs.selection.anchor = Some(0);
                             fs.selection.clear_multi();
