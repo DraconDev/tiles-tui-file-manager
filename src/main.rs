@@ -2153,14 +2153,21 @@ paired = new_paired;
         let draw_start = std::time::Instant::now();
 
         if needs_draw {
+            let size = terminal.size();
+            let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={:?} needs={}\n", size, needs_draw));
             let mut app_guard = app.lock();
             if !app_guard.running {
                 shutdown.store(true, Ordering::Release);
                 break;
             }
-            if let Ok(size) = terminal.size() {
+            if let Ok(size) = size {
                 if size.width > 0 && size.height > 0 {
-                    if let Err(e) = terminal.draw(|f| ui::draw(f, &mut app_guard)) {
+                    let before_draw = std::time::Instant::now();
+                    let draw_result = terminal.draw(|f| ui::draw(f, &mut app_guard));
+                    let draw_elapsed = before_draw.elapsed().as_millis();
+                    let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={}x{} draw_ms={} result={:?}\n", 
+                        size.width, size.height, draw_elapsed, draw_result.is_ok()));
+                    if let Err(e) = draw_result {
                         crate::app::log_debug(&format!("Draw error: {}", e));
                     }
                 }
