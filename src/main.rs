@@ -2172,8 +2172,6 @@ paired = new_paired;
     }
 
     Ok(())
-
-    Ok(())
 }
 
 fn setup_app(
