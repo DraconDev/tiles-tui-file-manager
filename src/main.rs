@@ -2163,7 +2163,12 @@ paired = new_paired;
         if needs_draw {
             let size = terminal.size();
             let _ = std::fs::write("/tmp/tiles_draw.log", format!("size={:?} needs={}\n", size, needs_draw));
+            let lock_start = std::time::Instant::now();
             let mut app_guard = app.lock();
+            let lock_elapsed = lock_start.elapsed().as_millis();
+            if lock_elapsed > 100 {
+                let _ = std::fs::write("/tmp/tiles_slow_lock.log", format!("SLOW LOCK: {}ms at frame={}\n", lock_elapsed, frame_counter));
+            }
             if !app_guard.running {
                 shutdown.store(true, Ordering::Release);
                 break;
