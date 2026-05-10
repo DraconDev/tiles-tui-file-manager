@@ -4427,12 +4427,12 @@ fn draw_kill_process_modal(f: &mut Frame, app: &App) {
     let (mx, my) = app.mouse_pos;
     let button_y = inner.y + inner.height.saturating_sub(2);
 
-    let is_hover = |bx: u16, len: u16| mx >= inner.x + bx && mx < inner.x + bx + len && my == button_y;
+    let no_x = inner.x + 2;
+    let yes_x = inner.x + inner.width.saturating_sub(11);
 
-    // [ NO ]  at x=5 (width 8)  - LEFT (negative)
-    // [ YES ] at x=25 (width 9) - RIGHT (positive)
+    let is_hover = |bx: u16, len: u16| mx >= bx && mx < bx + len && my == button_y;
 
-    let no_style = if is_hover(5, 8) {
+    let no_style = if is_hover(no_x, 8) {
         Style::default()
             .bg(Color::White)
             .fg(Color::Black)
@@ -4441,7 +4441,7 @@ fn draw_kill_process_modal(f: &mut Frame, app: &App) {
         Style::default().fg(Color::White)
     };
 
-    let yes_style = if is_hover(25, 9) {
+    let yes_style = if is_hover(yes_x, 9) {
         Style::default()
             .bg(Color::Red)
             .fg(Color::Black)
@@ -4452,12 +4452,12 @@ fn draw_kill_process_modal(f: &mut Frame, app: &App) {
 
     f.render_widget(
         Paragraph::new(" [ NO ] ").style(no_style),
-        Rect::new(inner.x + 5, button_y, 8, 1),
+        Rect::new(no_x, button_y, 8, 1),
     );
 
     f.render_widget(
         Paragraph::new(" [ YES ] ").style(yes_style),
-        Rect::new(inner.x + 25, button_y, 9, 1),
+        Rect::new(yes_x, button_y, 9, 1),
     );
 }
 
