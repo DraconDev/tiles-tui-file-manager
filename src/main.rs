@@ -402,7 +402,42 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
         trace_log(&format!("before_try_recv frame={}", frame_counter));
         while let Ok(event) = event_rx.try_recv() {
-            trace_log(&format!("got_event frame={} type={:?}", frame_counter, std::mem::discriminant(&event)));
+            let event_name = match &event {
+                AppEvent::Tick => "Tick",
+                AppEvent::RefreshFiles(_) => "RefreshFiles",
+                AppEvent::Raw(_) => "Raw",
+                AppEvent::Ui(_) => "Ui",
+                AppEvent::SystemUpdated(_) => "SystemUpdated",
+                AppEvent::ServersTomlChanged => "ServersTomlChanged",
+                AppEvent::ConnectToRemote(_, _) => "ConnectToRemote",
+                AppEvent::ReconnectRemote(_) => "ReconnectRemote",
+                AppEvent::RemoteConnected(_, _, _) => "RemoteConnected",
+                AppEvent::StatusMsg(_) => "StatusMsg",
+                AppEvent::FilesChangedOnDisk(_) => "FilesChangedOnDisk",
+                AppEvent::PreviewRequested(_, _) => "PreviewRequested",
+                AppEvent::SaveFile(_, _) => "SaveFile",
+                AppEvent::GitHistory => "GitHistory",
+                AppEvent::SystemMonitor => "SystemMonitor",
+                AppEvent::AddToFavorites(_) => "AddToFavorites",
+                AppEvent::KillProcess(_) => "KillProcess",
+                AppEvent::GitHistoryUpdated(_, _, _, _, _, _, _, _, _, _) => "GitHistoryUpdated",
+                AppEvent::GitDiffFetched(_, _, _) => "GitDiffFetched",
+                AppEvent::GitStageFile(_, _, _) => "GitStageFile",
+                AppEvent::GitUnstageFile(_, _, _) => "GitUnstageFile",
+                AppEvent::GitStageAll(_, _) => "GitStageAll",
+                AppEvent::GitUnstageAll(_, _) => "GitUnstageAll",
+                AppEvent::GitCommit(_, _, _) => "GitCommit",
+                AppEvent::TaskProgress(_, _, _) => "TaskProgress",
+                AppEvent::TaskFinished(_) => "TaskFinished",
+                AppEvent::GlobalSearchUpdated(_, _, _) => "GlobalSearchUpdated",
+                AppEvent::SpawnTerminal { .. } => "SpawnTerminal",
+                AppEvent::SpawnDetached { .. } => "SpawnDetached",
+                AppEvent::Editor => "Editor",
+                AppEvent::FilesListed(_, _, _, _, _, _) => "FilesListed",
+                AppEvent::FolderSizesUpdated(_, _) => "FolderSizesUpdated",
+                _ => "Other",
+            };
+            trace_log(&format!("got_event frame={} type={}", frame_counter, event_name));
             _event_count += 1;
             let event_start = std::time::Instant::now();
             match event {
