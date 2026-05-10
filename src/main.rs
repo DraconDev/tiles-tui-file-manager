@@ -373,11 +373,19 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
     const WATCH_SYNC_INTERVAL_MS: u64 = 5000;
+    let mut frame_counter: u64 = 0;
+    let mut last_frame_log = std::time::Instant::now();
 
     loop {
         let loop_start = std::time::Instant::now();
         let mut needs_draw = false;
         let mut _event_count = 0u32;
+        frame_counter += 1;
+        
+        if last_frame_log.elapsed() >= Duration::from_secs(2) {
+            let _ = std::fs::write("/tmp/tiles_frames.log", format!("frame={} time={:?}\n", frame_counter, std::time::Instant::now()));
+            last_frame_log = std::time::Instant::now();
+        }
 
         while let Ok(event) = event_rx.try_recv() {
             _event_count += 1;
