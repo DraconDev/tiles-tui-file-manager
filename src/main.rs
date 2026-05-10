@@ -1834,6 +1834,7 @@ let list_path_for_filter = path.clone();
                     let t_apply = std::time::Instant::now();
                     let mut app_guard = app_clone.lock();
                     crate::app::log_debug(&format!("apply lock took {:?}", t_apply.elapsed()));
+                    let expanded_folders_len = app_guard.expanded_folders.len();
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                             if let Some(fs) = pane.current_state_mut() {
                                 // RACE CONDITION CHECK:
@@ -2041,7 +2042,6 @@ paired = new_paired;
                                 }
                             }
                             
-                            let expanded_folders_len = app_guard.expanded_folders.len();
                             crate::app::log_debug(&format!(
                                 "[REFRESH] pane={} path={:?} files={} sel={:?} expanded_folders={}",
                                 pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, expanded_folders_len
