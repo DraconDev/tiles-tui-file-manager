@@ -405,6 +405,19 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             let event_name = match &event {
                 AppEvent::Tick => "Tick",
                 AppEvent::RefreshFiles(_) => "RefreshFiles",
+                AppEvent::CreateFile(_) => "CreateFile",
+                AppEvent::CreateFolder(_) => "CreateFolder",
+                AppEvent::Rename(_, _) => "Rename",
+                AppEvent::Delete(_) => "Delete",
+                AppEvent::TrashFile(_) => "TrashFile",
+                AppEvent::Chmod(_, _) => "Chmod",
+                AppEvent::CreateArchive(_, _, _) => "CreateArchive",
+                AppEvent::ComputeChecksums(_) => "ComputeChecksums",
+                AppEvent::Copy(_, _) => "Copy",
+                AppEvent::UploadToRemote(_, _) => "UploadToRemote",
+                AppEvent::FolderSizesUpdated(_, _) => "FolderSizesUpdated",
+                AppEvent::CompareFiles(_, _) => "CompareFiles",
+                AppEvent::Symlink(_, _) => "Symlink",
                 AppEvent::Raw(_) => "Raw",
                 AppEvent::Ui(_) => "Ui",
                 AppEvent::SystemUpdated(_) => "SystemUpdated",
@@ -433,9 +446,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::SpawnTerminal { .. } => "SpawnTerminal",
                 AppEvent::SpawnDetached { .. } => "SpawnDetached",
                 AppEvent::Editor => "Editor",
-                AppEvent::FilesListed(_, _, _, _, _, _) => "FilesListed",
-                AppEvent::FolderSizesUpdated(_, _) => "FolderSizesUpdated",
-                _ => "Other",
             };
             trace_log(&format!("got_event frame={} type={}", frame_counter, event_name));
             _event_count += 1;
