@@ -393,6 +393,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let mut needs_draw = false;
         let mut _event_count = 0u32;
         frame_counter += 1;
+        trace_log(&format!("after_increment frame={}", frame_counter));
         
         if last_frame_log.elapsed() >= Duration::from_secs(2) {
             let _ = std::fs::write("/tmp/tiles_frames.log", format!("frame={} time={:?}\n", frame_counter, std::time::Instant::now()));
@@ -1695,6 +1696,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
             }
         }
+        trace_log(&format!("after_events frame={} count={}", frame_counter, _event_count));
 
         // Handle Refreshes
         for pane_idx in panes_needing_refresh.drain() {
@@ -2168,6 +2170,7 @@ paired = new_paired;
                 }
             });
         }
+        trace_log(&format!("after_refresh frame={}", frame_counter));
 
         let event_time = loop_start.elapsed().as_millis();
         let draw_start = std::time::Instant::now();
