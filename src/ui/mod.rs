@@ -3244,8 +3244,8 @@ fn draw_file_view(
                                                 .map(|&d| d > my_depth)
                                                 .unwrap_or(false)
                                         } else if file_state.remote_session.is_some() {
-                                            // Remote: assume non-empty (can't check without round-trip)
-                                            true
+                                            // Remote: can't check without round-trip; don't mislead with arrows
+                                            false
                                         } else {
                                             // Local: check if directory actually has any items
                                             !std::fs::read_dir(path)
