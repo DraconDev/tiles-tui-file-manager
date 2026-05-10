@@ -522,7 +522,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                         }
                     }
-                    needs_draw = true;
+                    // Note: don't set needs_draw = true here; let the async refresh completion trigger the draw
                 }
                 AppEvent::ReconnectRemote(pane_idx) => {
                     let bookmark_idx = {
