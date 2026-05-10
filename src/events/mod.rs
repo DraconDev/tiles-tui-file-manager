@@ -553,7 +553,6 @@ fn handle_sidebar_mouse(
                         SidebarTarget::Favorite(path) => {
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.current_path = path.clone();
-                                fs.files.clear();
                                 fs.remote_session = None;
                                 fs.selection.clear();
                                 crate::event_helpers::push_history(fs, path.clone());
