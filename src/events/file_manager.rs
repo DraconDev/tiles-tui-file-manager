@@ -1217,6 +1217,7 @@ pub fn handle_file_mouse(
                         if is_dir {
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.current_path = path.clone();
+                                fs.files.clear();
                                 fs.selection.clear();
                                 fs.git_cache_until = None;
                                 crate::event_helpers::push_history(fs, path);
