@@ -623,14 +623,20 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     panes_needing_refresh.insert(pane_idx);
                 }
                 AppEvent::FilesChangedOnDisk(path) => {
+                    trace_log(&format!("FilesChangedOnDisk START path={:?}", path));
                     crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
                     
                     // Check if this was a self-save by comparing file mtime and size
+                    trace_log(&format!("FilesChangedOnDisk checking self-save"));
                     if let Some((saved_mtime, saved_size)) = last_self_save.get(&path) {
+                        trace_log(&format!("FilesChangedOnDisk found in last_self_save"));
                         if let Ok(meta) = std::fs::metadata(&path) {
+                            trace_log(&format!("FilesChangedOnDisk got metadata"));
                             if let Ok(mtime) = meta.modified() {
+                                trace_log(&format!("FilesChangedOnDisk got mtime"));
                                 let size: u64 = meta.len();
                                 if mtime == *saved_mtime && size == *saved_size {
+                                    trace_log(&format!("FilesChangedOnDisk self-save match, skipping"));
                                     last_self_save.remove(&path);
                                     continue; // Skip refreshing/reloading for our own saves
                                 }
@@ -638,7 +644,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     }
 
+                    trace_log(&format!("FilesChangedOnDisk acquiring app.lock()"));
                     let app_guard = app.lock();
+                    trace_log(&format!("FilesChangedOnDisk got app.lock()"));
                     let mut needs_reload = Vec::new();
 
                     for (i, pane) in app_guard.panes.iter().enumerate() {
@@ -682,10 +690,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     }
 
+                    trace_log(&format!("FilesChangedOnDisk before drop lock"));
                     drop(app_guard);
+                    trace_log(&format!("FilesChangedOnDisk after drop lock, needs_reload={}", needs_reload.len()));
                     for (p_idx, p_path) in needs_reload {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(p_idx, p_path));
                     }
+                    trace_log(&format!("FilesChangedOnDisk END"));
                     needs_draw = true;
                 }
                 AppEvent::PreviewRequested(pane_idx, path) => {
