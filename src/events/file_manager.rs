@@ -1529,6 +1529,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         let was_expanded = app.tree_expanded_folders.contains(&path_ref);
                         if let Some(fs) = app.current_file_state_mut() {
                             fs.current_path = path.clone();
+                            fs.remote_session = None;
                             fs.selection.selected = Some(0);
                             fs.selection.anchor = Some(0);
                             fs.selection.clear_multi();
@@ -1596,6 +1597,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 
         if let Some(fs) = app.current_file_state_mut() {
             fs.current_path = p.clone();
+            fs.remote_session = None;
             if let Some((restore_sel, restore_scroll)) = restore {
                 fs.selection.selected = Some(restore_sel);
                 fs.selection.anchor = Some(restore_sel);
