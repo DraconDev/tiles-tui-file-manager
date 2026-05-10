@@ -2163,16 +2163,12 @@ paired = new_paired;
         }
         trace_log(&format!("after_refresh frame={}", frame_counter));
 
-        let event_time = loop_start.elapsed().as_millis();
-        let draw_start = std::time::Instant::now();
-
-        if needs_draw {
-            let size = terminal.size();
-            let mut app_guard = app.lock();
-            if !app_guard.running {
-                shutdown.store(true, Ordering::Release);
-                break;
-            }
+        let draw_time = draw_start.elapsed().as_millis();
+        let sleep_start = std::time::Instant::now();
+        tokio::time::sleep(Duration::from_millis(33)).await;
+        let sleep_time = sleep_start.elapsed().as_millis();
+        let total_time = loop_start.elapsed().as_millis();
+    }
             if let Ok(size) = size {
                 if size.width > 0 && size.height > 0 {
                     let draw_result = terminal.draw(|f| ui::draw(f, &mut app_guard));
