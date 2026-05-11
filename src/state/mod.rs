@@ -407,6 +407,7 @@ pub struct FileState {
     #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
     pub tree_file_depths: Vec<u16>,
+    pub loading: bool,
 }
 
 impl FileState {
@@ -469,6 +470,7 @@ impl FileState {
             last_folder_size_calc: None,
             search_debounce_until: None,
             tree_file_depths: Vec::new(),
+            loading: false,
         }
     }
 }
