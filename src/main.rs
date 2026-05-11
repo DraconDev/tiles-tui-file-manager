@@ -452,8 +452,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 fs.bookmark_idx = Some(bookmark_idx);
                                 fs.retry_count = 0;
                                 fs.current_path = PathBuf::from("/");
-                                // Note: don't clear fs.files here — old files stay visible
-                                // until async refresh overwrites them. Clearing causes black flash.
+                                fs.files.clear();
+                                fs.metadata.clear();
+                                fs.loading = true;
                             }
                         }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -469,7 +470,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 if let Some(fs) = pane.current_state_mut() {
                                     fs.bookmark_idx = Some(bookmark_idx);
                                     fs.retry_count = 0;
-                                    // Note: don't clear fs.files here — see cached path comment above
+                                    fs.files.clear();
+                                    fs.metadata.clear();
+                                    fs.loading = true;
                                 }
                             }
                         }
@@ -519,10 +522,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session = Some(session);
                             fs.current_path = PathBuf::from("/");
                             fs.retry_count = 0;
-                            // Note: don't clear fs.files — old files stay visible until async refresh
+                            fs.files.clear();
+                            fs.metadata.clear();
+                            fs.loading = true;
                         }
                     }
-                    needs_draw = true;
+                    drop(app_guard);
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                 }
                 AppEvent::ReconnectRemote(pane_idx) => {
                     let bookmark_idx = {
@@ -2006,7 +2012,8 @@ paired = new_paired;
                             fs.tree_file_depths = tree_file_depths;
                             fs.files = files;
                             fs.metadata = metadata.clone();
-                            fs.folder_sizes.clear(); // Clear stale folder sizes
+                            fs.folder_sizes.clear();
+                            fs.loading = false;
 
                             // Calculate folder sizes with rate limiting (max once per 5 seconds)
                             // to avoid recursive directory walks on every navigation
