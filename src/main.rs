@@ -519,11 +519,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session = Some(session);
                             fs.current_path = PathBuf::from("/");
                             fs.retry_count = 0;
-                            fs.files.clear();
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                            // Note: don't clear fs.files — old files stay visible until async refresh
                         }
                     }
-                    // Note: don't set needs_draw = true here; let the async refresh completion trigger the draw
+                    needs_draw = true;
                 }
                 AppEvent::ReconnectRemote(pane_idx) => {
                     let bookmark_idx = {
