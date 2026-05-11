@@ -3015,8 +3015,8 @@ fn draw_file_view(
                 } else {
                     Style::default().fg(crate::ui::theme::border_inactive())
                 });
-            f.render_widget(block, area);
             let inner = block.inner(area);
+            f.render_widget(block, area);
             let loading_area = centered_rect(40, 3, inner);
             let loading_text = Paragraph::new(
                 Line::from(vec![
