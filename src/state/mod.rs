@@ -580,6 +580,20 @@ pub struct GitPendingChange {
     pub deletions: usize,
 }
 
+#[derive(Clone, Debug)]
+pub struct GitHistoryData {
+    pub pane_idx: usize,
+    pub tab_idx: usize,
+    pub history: Vec<CommitInfo>,
+    pub pending: Vec<GitPendingChange>,
+    pub branch: Option<String>,
+    pub ahead: usize,
+    pub behind: usize,
+    pub summary: Option<String>,
+    pub remotes: Vec<String>,
+    pub stashes: Vec<String>,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum MonitorSubview {
     Overview,
