@@ -35,11 +35,14 @@ pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
     if pattern.is_empty() {
         return true;
     }
-    let text_lower = text.to_lowercase();
-    let pattern_lower = pattern.to_lowercase();
-    let mut pattern_chars = pattern_lower.chars().peekable();
-    for c in text_lower.chars() {
-        if Some(&c) == pattern_chars.peek() {
+    let mut pattern_chars = pattern.chars().peekable();
+    for c in text.chars() {
+        if pattern_chars.peek().map(|p| p.eq_ignore_ascii_case(&c)).unwrap_or(false)
+            || pattern_chars
+                .peek()
+                .map(|p| p.to_lowercase().next() == c.to_lowercase().next())
+                .unwrap_or(false)
+        {
             pattern_chars.next();
             if pattern_chars.peek().is_none() {
                 return true;
@@ -190,7 +193,11 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         *last = Some((now, json.clone()));
     }
 
-    fs::write(state_path, json)?;
+    // Atomic write: write to temp file, then rename to avoid corruption
+    // if the process is killed mid-write.
+    let tmp_path = state_path.with_extension("json.tmp");
+    fs::write(&tmp_path, json)?;
+    fs::rename(&tmp_path, state_path)?;
     Ok(())
 }
 
