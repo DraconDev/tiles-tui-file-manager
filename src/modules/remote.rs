@@ -712,6 +712,8 @@ fn map_metadata(meta: RemoteEntryMetadata) -> FileMetadata {
         created: meta.created,
         permissions: meta.permissions,
         is_dir: meta.is_dir,
+        is_symlink: false,
+        link_target: None,
     }
 }
 

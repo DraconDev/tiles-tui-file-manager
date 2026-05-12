@@ -3226,8 +3226,14 @@ fn draw_file_view(
                                     let name =
                                     path.file_name().and_then(|n| n.to_str()).unwrap_or("..");
                                     let is_dir = metadata.map(|m| m.is_dir).unwrap_or(false);
+                                    let is_symlink = metadata.map(|m| m.is_symlink).unwrap_or(false);
+                                    let link_target = metadata.and_then(|m| m.link_target.as_ref());
                                     let cat = crate::modules::files::get_file_category(path);
-                                    let icon_str = Icon::get_for_path(path, cat, is_dir, app.icon_mode);
+                                    let icon_str = if is_symlink {
+                                        "🔗 ".to_string()
+                                    } else {
+                                        Icon::get_for_path(path, cat, is_dir, app.icon_mode)
+                                    };
 
                                     let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
                                     let indent = "  ".repeat(depth);
