@@ -88,13 +88,9 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             let show_favorites = app.sidebar_favorites;
             let show_recent = app.sidebar_recent;
             let show_storage = app.sidebar_storage;
-    let show_remotes = app.sidebar_remotes;
-    eprintln!("[SIDEBAR-DEBUG] servers.len={} show_remotes={} sidebar_remotes={}", app.servers.len(), show_remotes, app.sidebar_remotes);
-    for s in &app.servers {
-        eprintln!("[SIDEBAR-DEBUG]  SERVER: name={} display={}", s.name, s.display_name());
-    }
+            let show_remotes = app.sidebar_remotes;
 
-    // === FOLDERS Section (Tree) ===
+            // === FOLDERS Section (Tree) ===
             if show_folders {
                 let folder_header_idx = sidebar_items.len();
                 let folders_icon = Icon::Folder.get(app.icon_mode);

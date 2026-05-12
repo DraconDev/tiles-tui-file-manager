@@ -2249,20 +2249,10 @@ fn setup_app(
         }
         app.starred = loaded_starred;
 
-        // Load servers from servers.toml (new primary storage)
         // Migrate legacy remote_bookmarks from state.json if servers.toml doesn't exist
         crate::servers::maybe_migrate_legacy_bookmarks(&state.remote_bookmarks);
-    app.servers = crate::servers::load_servers();
-    eprintln!("[MAIN-DEBUG] Loaded {} servers into app.servers", app.servers.len());
-    for s in &app.servers {
-        eprintln!("[MAIN-DEBUG]  app.server: name={} host={} user={}", s.name, s.host, s.user);
-    }
-    crate::app::log_debug(&format!("INIT: loaded {} servers from servers.toml", app.servers.len()));
-    for s in &app.servers {
-        crate::app::log_debug(&format!("  SERVER: name={} host={} user={}", s.name, s.host, s.user));
-    }
 
-    app.path_colors = state.path_colors;
+        app.path_colors = state.path_colors;
         app.external_tools = state.external_tools;
         if let Some(mode) = state.icon_mode {
             app.icon_mode = mode;
@@ -2293,6 +2283,14 @@ fn setup_app(
                 crate::ui::theme::set_style_settings(theme_style);
             }
         }
+    }
+
+    // Load servers from servers.toml (new primary storage)
+    // This runs unconditionally so servers are available even if state.json fails to load
+    app.servers = crate::servers::load_servers();
+    crate::app::log_debug(&format!("INIT: loaded {} servers from servers.toml", app.servers.len()));
+    for s in &app.servers {
+        crate::app::log_debug(&format!("  SERVER: name={} host={} user={}", s.name, s.host, s.user));
     }
 
     // Prime visible tabs synchronously so startup never renders as empty while waiting
