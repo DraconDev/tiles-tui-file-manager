@@ -382,9 +382,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let _loop_start = std::time::Instant::now();
         let mut needs_draw = false;
         let mut _event_count = 0u32;
+        const MAX_EVENTS_PER_FRAME: u32 = 100;
 
         while let Ok(event) = event_rx.try_recv() {
             _event_count += 1;
+            if _event_count > MAX_EVENTS_PER_FRAME {
+                // Too many events — defer remaining to next frame to maintain responsiveness
+                crate::app::log_debug(&format!("Event loop capped at {} events, deferring rest", MAX_EVENTS_PER_FRAME));
+                break;
+            }
             match event {
                 AppEvent::Tick => {
                     // Sync file watches periodically (every 5 seconds) to catch new/removed paths
