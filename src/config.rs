@@ -1,5 +1,4 @@
 use crate::app::{App, CurrentView, Pane};
-use crate::state::RemoteBookmark;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -37,15 +36,22 @@ pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
     }
     let mut pattern_chars = pattern.chars().peekable();
     for c in text.chars() {
-        if pattern_chars.peek().map(|p| p.eq_ignore_ascii_case(&c)).unwrap_or(false)
-            || pattern_chars
-                .peek()
-                .map(|p| p.to_lowercase().next() == c.to_lowercase().next())
-                .unwrap_or(false)
-        {
-            pattern_chars.next();
-            if pattern_chars.peek().is_none() {
-                return true;
+        if let Some(&p) = pattern_chars.peek() {
+            if p.eq_ignore_ascii_case(&c) {
+                pattern_chars.next();
+                if pattern_chars.peek().is_none() {
+                    return true;
+                }
+            } else if !p.is_ascii() || !c.is_ascii() {
+                // Unicode-aware case-insensitive comparison (rare path)
+                let mut p_lower = p.to_lowercase();
+                let mut c_lower = c.to_lowercase();
+                if p_lower.eq(&mut c_lower) {
+                    pattern_chars.next();
+                    if pattern_chars.peek().is_none() {
+                        return true;
+                    }
+                }
             }
         }
     }
@@ -63,8 +69,6 @@ pub struct PersistentState {
     pub panes: Vec<Pane>,
     pub focused_pane_index: usize,
     pub starred: Vec<PathBuf>,
-    #[serde(default)]
-    pub remote_bookmarks: Vec<RemoteBookmark>,
     pub current_view: CurrentView,
     pub window_size: Option<(u16, u16)>,
     pub path_colors: HashMap<PathBuf, u8>,
@@ -139,7 +143,6 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         },
         focused_pane_index: app.focused_pane_index,
         starred: app.starred.clone(),
-        remote_bookmarks: Vec::new(),
         current_view: app.current_view.clone(),
         window_size: if app.terminal_size.0 > 0 && app.terminal_size.1 > 0 {
             Some(app.terminal_size)
