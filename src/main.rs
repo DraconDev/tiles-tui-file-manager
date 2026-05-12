@@ -22,6 +22,7 @@ mod event;
 mod event_helpers;
 mod events;
 mod icons;
+mod keybindings;
 mod modules;
 mod servers;
 mod state;
