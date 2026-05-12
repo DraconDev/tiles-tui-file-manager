@@ -198,7 +198,9 @@ pub fn upload_file(remote: &RemoteSession, local_path: &Path, remote_path: &Path
 }
 
 /// Upload a file via SFTP using native libssh2 SFTP protocol.
-/// This is the preferred method as it doesn't require external scp binary.
+/// NOTE: This creates a full SSH session (TCP connect + handshake + auth) for EVERY file.
+/// Batch uploads are expensive. Consider scp or tar+ssh for bulk transfers.
+/// True fix requires connection pooling at the dracon_system provider level.
 pub fn upload_via_sftp(
     remote: &RemoteSession,
     local_path: &Path,
