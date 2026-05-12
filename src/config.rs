@@ -70,6 +70,8 @@ pub struct PersistentState {
     pub panes: Vec<Pane>,
     pub focused_pane_index: usize,
     pub starred: Vec<PathBuf>,
+    #[serde(default, skip_serializing)]
+    pub remote_bookmarks: Vec<RemoteBookmark>,
     pub current_view: CurrentView,
     pub window_size: Option<(u16, u16)>,
     pub path_colors: HashMap<PathBuf, u8>,
@@ -144,6 +146,7 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         },
         focused_pane_index: app.focused_pane_index,
         starred: app.starred.clone(),
+        remote_bookmarks: Vec::new(),
         current_view: app.current_view.clone(),
         window_size: if app.terminal_size.0 > 0 && app.terminal_size.1 > 0 {
             Some(app.terminal_size)
