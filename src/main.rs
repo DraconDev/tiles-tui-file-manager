@@ -513,24 +513,21 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 AppEvent::RemoteConnected(pane_idx, session, remote_name) => {
-                    let last_path = {
-                        let mut app_guard = app.lock();
-                        // Cache the session for reuse
-                        app_guard.remote_session_pool.insert(remote_name.clone(), (session.clone(), std::time::Instant::now()));
-                        // Clean up stale sessions (older than 5 minutes)
-                        let stale_threshold = std::time::Duration::from_secs(300);
-                        let now = std::time::Instant::now();
-                        app_guard.remote_session_pool.retain(|_, (_, last_used)| now.duration_since(*last_used) < stale_threshold);
-                        app_guard.servers.iter()
-                            .find(|s| s.name == remote_name)
-                            .map(|s| s.last_path.clone())
-                    };
                     let mut app_guard = app.lock();
+                    // Cache the session for reuse
+                    app_guard.remote_session_pool.insert(remote_name.clone(), (session.clone(), std::time::Instant::now()));
+                    // Clean up stale sessions (older than 5 minutes)
+                    let stale_threshold = std::time::Duration::from_secs(300);
+                    let now = std::time::Instant::now();
+                    app_guard.remote_session_pool.retain(|_, (_, last_used)| now.duration_since(*last_used) < stale_threshold);
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
                             // Use last_path if available, otherwise default to /
-                            fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
+                            fs.current_path = app_guard.servers.iter()
+                                .find(|s| s.name == remote_name)
+                                .map(|s| s.last_path.clone())
+                                .unwrap_or_else(|| PathBuf::from("/"));
                             fs.retry_count = 0;
                             // Note: don't clear fs.files — old files stay visible until async refresh
                         }
