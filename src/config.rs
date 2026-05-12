@@ -45,9 +45,9 @@ pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
                 }
             } else if !p.is_ascii() || !c.is_ascii() {
                 // Unicode-aware case-insensitive comparison (rare path)
-                let mut p_lower = p.to_lowercase();
-                let mut c_lower = c.to_lowercase();
-                if p_lower.eq(&mut c_lower) {
+                let p_lower = p.to_lowercase();
+                let c_lower = c.to_lowercase();
+                if p_lower == c_lower {
                     pattern_chars.next();
                     if pattern_chars.peek().is_none() {
                         return true;
