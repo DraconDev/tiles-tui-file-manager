@@ -2253,6 +2253,10 @@ fn setup_app(
         // Migrate legacy remote_bookmarks from state.json if servers.toml doesn't exist
         crate::servers::maybe_migrate_legacy_bookmarks(&state.remote_bookmarks);
     app.servers = crate::servers::load_servers();
+    eprintln!("[MAIN-DEBUG] Loaded {} servers into app.servers", app.servers.len());
+    for s in &app.servers {
+        eprintln!("[MAIN-DEBUG]  app.server: name={} host={} user={}", s.name, s.host, s.user);
+    }
     crate::app::log_debug(&format!("INIT: loaded {} servers from servers.toml", app.servers.len()));
     for s in &app.servers {
         crate::app::log_debug(&format!("  SERVER: name={} host={} user={}", s.name, s.host, s.user));
