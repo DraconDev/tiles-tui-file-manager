@@ -3232,7 +3232,7 @@ fn draw_file_view(
                                     let icon_str = if is_symlink {
                                         "🔗 ".to_string()
                                     } else {
-                                        Icon::get_for_path(path, cat, is_dir, app.icon_mode)
+                                        Icon::get_for_path(path, cat, is_dir, app.icon_mode).to_string()
                                     };
 
                                     let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
