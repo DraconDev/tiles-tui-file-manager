@@ -112,6 +112,15 @@ pub fn read_dir_recursive_meta(paths: &[PathBuf]) -> (Vec<PathBuf>, HashMap<Path
                 .map(|tm| tm.is_dir())
                 .or_else(|| symlink_meta.as_ref().map(|sm| sm.file_type().is_dir()))
                 .unwrap_or(false);
+            let is_symlink = symlink_meta
+                .as_ref()
+                .map(|sm| sm.file_type().is_symlink())
+                .unwrap_or(false);
+            let link_target = if is_symlink {
+                std::fs::read_link(&p).ok().map(|t| t.to_string_lossy().to_string())
+            } else {
+                None
+            };
             metadata.insert(
                 p,
                 FileMetadata {
@@ -120,6 +129,8 @@ pub fn read_dir_recursive_meta(paths: &[PathBuf]) -> (Vec<PathBuf>, HashMap<Path
                     created: m.created().unwrap_or(SystemTime::UNIX_EPOCH),
                     permissions: permissions_bits(m),
                     is_dir,
+                    is_symlink,
+                    link_target,
                 },
             );
         }
