@@ -480,7 +480,6 @@ if app.sidebar_tree_cache_key != cache_key {
 
             // REMOTE Section
             if show_remotes {
-                eprintln!("[SIDEBAR-DEBUG] Rendering REMOTES header");
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let current_header_idx = sidebar_items.len();
