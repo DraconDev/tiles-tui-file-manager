@@ -83,27 +83,17 @@ pub fn servers_toml_path() -> Option<PathBuf> {
 pub fn load_servers() -> Vec<ServerConfig> {
     let path = match servers_toml_path() {
         Some(p) => p,
-        None => {
-            eprintln!("[SERVERS-DEBUG] servers_toml_path() returned None");
-            return Vec::new();
-        }
+        None => return Vec::new(),
     };
-    eprintln!("[SERVERS-DEBUG] loading from {:?}", path);
 
     if !path.exists() {
-        eprintln!("[SERVERS-DEBUG] path does not exist");
         return Vec::new();
     }
 
     match fs::read_to_string(&path) {
         Ok(content) => {
-            eprintln!("[SERVERS-DEBUG] read {} bytes", content.len());
             match toml::from_str::<ServersFile>(&content) {
                 Ok(mut file) => {
-                    eprintln!("[SERVERS-DEBUG] parsed {} servers", file.server.len());
-                    for s in &file.server {
-                        eprintln!("[SERVERS-DEBUG]  loaded: name={} host={}", s.name, s.host);
-                    }
                     // Expand ~ in key_paths (ssh config files can use ~ paths)
                     for server in &mut file.server {
                         if let Some(ref kp) = server.key_path {
@@ -116,14 +106,12 @@ pub fn load_servers() -> Vec<ServerConfig> {
                     file.server
                 }
                 Err(e) => {
-                    eprintln!("[SERVERS-DEBUG] failed to parse: {}", e);
                     crate::app::log_debug(&format!("Failed to parse servers.toml: {}", e));
                     Vec::new()
                 }
             }
         }
         Err(e) => {
-            eprintln!("[SERVERS-DEBUG] failed to read: {}", e);
             crate::app::log_debug(&format!("Failed to read servers.toml: {}", e));
             Vec::new()
         }
