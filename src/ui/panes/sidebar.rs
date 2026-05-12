@@ -89,16 +89,9 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             let show_recent = app.sidebar_recent;
             let show_storage = app.sidebar_storage;
     let show_remotes = app.sidebar_remotes;
-    static SIDEBAR_LOG_ONCE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-    if !SIDEBAR_LOG_ONCE.load(std::sync::atomic::Ordering::Relaxed) {
-        SIDEBAR_LOG_ONCE.store(true, std::sync::atomic::Ordering::Relaxed);
-        crate::app::log_debug(&format!(
-            "SIDEBAR: servers.len={}, show_remotes={}, sidebar_remotes={}",
-            app.servers.len(), show_remotes, app.sidebar_remotes
-        ));
-        for s in &app.servers {
-            crate::app::log_debug(&format!("  SIDEBAR SERVER: name={} display={}", s.name, s.display_name()));
-        }
+    eprintln!("[SIDEBAR-DEBUG] servers.len={} show_remotes={} sidebar_remotes={}", app.servers.len(), show_remotes, app.sidebar_remotes);
+    for s in &app.servers {
+        eprintln!("[SIDEBAR-DEBUG]  SERVER: name={} display={}", s.name, s.display_name());
     }
 
     // === FOLDERS Section (Tree) ===
