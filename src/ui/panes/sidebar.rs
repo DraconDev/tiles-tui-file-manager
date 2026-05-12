@@ -484,6 +484,7 @@ if app.sidebar_tree_cache_key != cache_key {
 
             // REMOTE Section
             if show_remotes {
+                eprintln!("[SIDEBAR-DEBUG] Rendering REMOTES header");
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let current_header_idx = sidebar_items.len();
@@ -516,9 +517,12 @@ if app.sidebar_tree_cache_key != cache_key {
             }
             for (i, bookmark) in app.servers.iter().enumerate() {
                 if !show_remotes {
+                    eprintln!("[SIDEBAR-DEBUG] show_remotes=false, breaking server loop");
                     break;
                 }
+                eprintln!("[SIDEBAR-DEBUG] Rendering server {}: {}", i, bookmark.display_name());
                 if !matches_filter(bookmark.display_name()) {
+                    eprintln!("[SIDEBAR-DEBUG]  server filtered out by search");
                     continue;
                 }
 
