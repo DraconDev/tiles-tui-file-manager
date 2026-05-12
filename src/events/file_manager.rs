@@ -209,6 +209,262 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
 
         if app.mode == AppMode::Normal {
             crate::app::log_debug(&format!("[FM] mode=Normal, sidebar_focus={}, key={:?}", app.sidebar_focus, key.code));
+
+            // Check user-defined keybindings first (overrides defaults)
+            if let Some(action) = app.keybindings.lookup(&key.code, &key.modifiers) {
+                use crate::keybindings::KeyAction;
+                match action {
+                    KeyAction::Quit => {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Quit);
+                        return true;
+                    }
+                    KeyAction::ToggleHidden => {
+                        let idx = app.toggle_hidden();
+                        if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
+                            app.default_show_hidden = fs.show_hidden;
+                        }
+                        crate::config::save_state_quiet(app);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
+                        return true;
+                    }
+                    KeyAction::Properties => {
+                        app.mode = AppMode::Properties;
+                        return true;
+                    }
+                    KeyAction::Settings => {
+                        app.mode = AppMode::Settings;
+                        app.settings_scroll = 0;
+                        return true;
+                    }
+                    KeyAction::NewTab => {
+                        if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
+                            if let Some(fs) = pane.current_state() {
+                                let new_fs = fs.clone();
+                                pane.open_tab(new_fs);
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::CloseTab => {
+                        let pane_idx = app.focused_pane_index;
+                        if let Some(pane) = app.panes.get_mut(pane_idx) {
+                            if pane.tabs.len() > 1 {
+                                let removed = pane.tabs.remove(pane.active_tab_index);
+                                if pane.active_tab_index >= pane.tabs.len() {
+                                    pane.active_tab_index = pane.tabs.len() - 1;
+                                }
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                    "Closed: {}",
+                                    removed.current_path.file_name()
+                                        .map(|n| n.to_string_lossy().to_string())
+                                        .unwrap_or_default()
+                                )));
+                            } else {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Cannot close last tab".to_string()));
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Copy => {
+                        if let Some(fs) = app.current_file_state() {
+                            if let Some(idx) = fs.selection.selected {
+                                if let Some(path) = fs.files.get(idx) {
+                                    app.clipboard = Some((path.clone(), crate::app::ClipboardOp::Copy));
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Cut => {
+                        if let Some(fs) = app.current_file_state() {
+                            if let Some(idx) = fs.selection.selected {
+                                if let Some(path) = fs.files.get(idx) {
+                                    app.clipboard = Some((path.clone(), crate::app::ClipboardOp::Cut));
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Paste => {
+                        if let Some((src, op)) = app.clipboard.clone() {
+                            if let Some(fs) = app.current_file_state() {
+                                let dest = fs.current_path.join(
+                                    src.file_name()
+                                        .unwrap_or_else(|| std::ffi::OsStr::new("root")),
+                                );
+                                match op {
+                                    crate::app::ClipboardOp::Copy => {
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
+                                    }
+                                    crate::app::ClipboardOp::Cut => {
+                                        let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
+                                        if result {
+                                            app.clipboard = None;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Search => {
+                        app.mode = AppMode::Search;
+                        app.input = app
+                            .current_file_state()
+                            .map(|s| s.search_filter.clone())
+                            .unwrap_or_default();
+                        return true;
+                    }
+                    KeyAction::CommandPalette => {
+                        app.input.clear();
+                        app.mode = AppMode::CommandPalette;
+                        crate::event_helpers::update_commands(app);
+                        return true;
+                    }
+                    KeyAction::Undo => {
+                        if execute_undo(app, event_tx).is_none() {
+                            if let Some(fs) = app.current_file_state_mut() {
+                                if !fs.search_filter.is_empty() {
+                                    fs.search_filter.clear();
+                                    fs.search_generation += 1;
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Redo => {
+                        execute_redo(app, event_tx);
+                        return true;
+                    }
+                    KeyAction::SelectAll => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.selection.select_all(fs.files.len());
+                        }
+                        return true;
+                    }
+                    KeyAction::Delete => {
+                        if let Some(path) = app.current_file_state().and_then(|fs| fs.selection.selected.and_then(|i| fs.files.get(i).cloned())) {
+                            if app.confirm_delete {
+                                app.mode = AppMode::ConfirmDelete(path);
+                            } else {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(path));
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Rename => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            if let Some(path) = fs.selection.selected.and_then(|i| fs.files.get(i).cloned()) {
+                                fs.selection.set_rename_target(path.clone());
+                                fs.selection.start_renaming();
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::NewFolder => {
+                        if let Some(fs) = app.current_file_state() {
+                            let new_folder_path = fs.current_path.join("New Folder");
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFolder(new_folder_path));
+                        }
+                        return true;
+                    }
+                    KeyAction::Up => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.selection.move_up(1);
+                        }
+                        return true;
+                    }
+                    KeyAction::Down => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.selection.move_down(1, fs.files.len());
+                        }
+                        return true;
+                    }
+                    KeyAction::Left => {
+                        if let Some(fs) = app.current_file_state() {
+                            let parent = fs.current_path.parent().map(|p| p.to_path_buf());
+                            if let Some(parent) = parent {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::NavigateTo(parent));
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Right | KeyAction::Enter => {
+                        if let Some(path) = app.current_file_state().and_then(|fs| fs.selection.selected.and_then(|i| fs.files.get(i).cloned())) {
+                            if path.is_dir() {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::NavigateTo(path));
+                            } else {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::OpenFile(path));
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::Back => {
+                        if let Some(fs) = app.current_file_state() {
+                            let parent = fs.current_path.parent().map(|p| p.to_path_buf());
+                            if let Some(parent) = parent {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::NavigateTo(parent));
+                            }
+                        }
+                        return true;
+                    }
+                    KeyAction::TogglePreview => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.preview = if fs.preview.is_some() { None } else { Some(crate::app::PreviewState::default()) };
+                        }
+                        return true;
+                    }
+                    KeyAction::ToggleZoom => {
+                        app.toggle_zoom();
+                        return true;
+                    }
+                    KeyAction::NextPane => {
+                        app.move_to_other_pane();
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
+                        return true;
+                    }
+                    KeyAction::PrevPane => {
+                        app.move_to_other_pane();
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
+                        return true;
+                    }
+                    KeyAction::ToggleSidebar => {
+                        app.sidebar_focus = !app.sidebar_focus;
+                        return true;
+                    }
+                    KeyAction::ToggleMultiSelect => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.selection.toggle_multi();
+                        }
+                        return true;
+                    }
+                    KeyAction::Star => {
+                        if let Some(path) = app.current_file_state().and_then(|fs| fs.selection.selected.and_then(|i| fs.files.get(i).cloned())) {
+                            if app.starred.contains(&path) {
+                                app.starred.retain(|p| p != &path);
+                            } else {
+                                app.starred.push(path);
+                            }
+                            crate::config::save_state_quiet(app);
+                        }
+                        return true;
+                    }
+                    KeyAction::SortToggle => {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.sort_asc = !fs.sort_asc;
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                        }
+                        return true;
+                    }
+                    _ => {}
+                }
+            }
+
             // Global Shortcuts
             match key.code {
                 KeyCode::Char('i') | KeyCode::Char('I') if has_control => {
