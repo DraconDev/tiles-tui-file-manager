@@ -2073,13 +2073,22 @@ paired = new_paired;
                                     if server.last_path != fs.current_path {
                                         server.last_path = fs.current_path.clone();
                                         // Persist last_path changes asynchronously
-                                        let servers = app_guard.servers.clone();
-                                        tokio::spawn(async move {
-                                            crate::servers::save_servers_quiet(&servers);
-                                        });
-                                    }
+                    if let Some(ref remote_name) = remote_name {
+                        let last_path: Option<PathBuf> = {
+                            let app_guard = app.lock();
+                            app_guard.servers.iter()
+                                .find(|s| s.name == *remote_name)
+                                .map(|s| s.last_path.clone())
+                        };
+                        if let Some(last_path) = last_path {
+                            let mut app_guard = app.lock();
+                            if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                                if let Some(fs) = pane.current_state_mut() {
+                                    fs.current_path = last_path;
                                 }
                             }
+                        }
+                    }
                         }
                     }
                 }
