@@ -451,16 +451,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     
                     if let Some(session) = cached_session {
                         // Reuse cached connection
-                        let mut app_guard = app.lock();
+                        let last_path = app_guard.servers.get(bookmark_idx)
+                            .map(|s| s.last_path.clone());
                         if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                             if let Some(fs) = pane.current_state_mut() {
                                 fs.remote_session = Some(session);
                                 fs.bookmark_idx = Some(bookmark_idx);
                                 fs.retry_count = 0;
                                 // Use last_path if available, otherwise default to /
-                                fs.current_path = app_guard.servers.get(bookmark_idx)
-                                    .map(|s| s.last_path.clone())
-                                    .unwrap_or_else(|| PathBuf::from("/"));
+                                fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
                             }
                         }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
