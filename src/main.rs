@@ -451,6 +451,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     
                     if let Some(session) = cached_session {
                         // Reuse cached connection
+                        let mut app_guard = app.lock();
                         let last_path = app_guard.servers.get(bookmark_idx)
                             .map(|s| s.last_path.clone());
                         if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
