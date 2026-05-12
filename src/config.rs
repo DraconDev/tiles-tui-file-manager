@@ -1,4 +1,5 @@
 use crate::app::{App, CurrentView, Pane};
+use crate::state::RemoteBookmark;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
