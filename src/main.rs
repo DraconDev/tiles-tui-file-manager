@@ -451,7 +451,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 fs.remote_session = Some(session);
                                 fs.bookmark_idx = Some(bookmark_idx);
                                 fs.retry_count = 0;
-                                fs.current_path = PathBuf::from("/");
+                                // Use last_path if available, otherwise default to /
+                                fs.current_path = app_guard.servers.get(bookmark_idx)
+                                    .map(|s| s.last_path.clone())
+                                    .unwrap_or_else(|| PathBuf::from("/"));
                             }
                         }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -2052,6 +2055,13 @@ paired = new_paired;
                                 "[REFRESH] pane={} path={:?} files={} sel={:?} expanded_folders={}",
                                 pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, expanded_folders_len
                             ));
+
+                            // Update last_path for remote servers so reconnections land at the same directory
+                            if let Some(bm_idx) = fs.bookmark_idx {
+                                if bm_idx < app_guard.servers.len() {
+                                    app_guard.servers[bm_idx].last_path = fs.current_path.clone();
+                                }
+                            }
                         }
                     }
                 }
