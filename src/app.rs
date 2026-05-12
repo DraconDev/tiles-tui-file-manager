@@ -312,6 +312,7 @@ editor: ViewPreferences {
             tile_queue,
             saved_pane: None,
             remote_session_pool: HashMap::new(),
+            keybindings: crate::keybindings::Keybindings::load(),
         }
     }
 
