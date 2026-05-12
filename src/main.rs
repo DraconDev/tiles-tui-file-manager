@@ -520,14 +520,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let stale_threshold = std::time::Duration::from_secs(300);
                     let now = std::time::Instant::now();
                     app_guard.remote_session_pool.retain(|_, (_, last_used)| now.duration_since(*last_used) < stale_threshold);
+                    // Read last_path before mutable pane borrow
+                    let last_path = app_guard.servers.iter()
+                        .find(|s| s.name == remote_name)
+                        .map(|s| s.last_path.clone());
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
                             // Use last_path if available, otherwise default to /
-                            fs.current_path = app_guard.servers.iter()
-                                .find(|s| s.name == remote_name)
-                                .map(|s| s.last_path.clone())
-                                .unwrap_or_else(|| PathBuf::from("/"));
+                            fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
                             fs.retry_count = 0;
                             // Note: don't clear fs.files — old files stay visible until async refresh
                         }
@@ -2065,21 +2066,28 @@ paired = new_paired;
                                 "[REFRESH] pane={} path={:?} files={} sel={:?} expanded_folders={}",
                                 pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, expanded_folders_len
                             ));
+                        }
+                    }
+                }
 
-                            // Update last_path for remote servers so reconnections land at the same directory
-                            if let Some(bm_idx) = fs.bookmark_idx {
-                                if bm_idx < app_guard.servers.len() {
-                                    let server = &mut app_guard.servers[bm_idx];
-                                    if server.last_path != fs.current_path {
-                                        server.last_path = fs.current_path.clone();
-                                        // Persist last_path changes asynchronously
-                                        let servers = app_guard.servers.clone();
-                                        tokio::spawn(async move {
-                                            crate::servers::save_servers_quiet(&servers);
-                                        });
-                                    }
+                // Update last_path for remote servers so reconnections land at the same directory
+                {
+                    let app_guard = app_clone.lock();
+                    let (bm_idx, current_path) = app_guard.panes.get(pane_idx)
+                        .and_then(|pane| pane.current_state())
+                        .and_then(|fs| fs.bookmark_idx.map(|bm| (bm, fs.current_path.clone())))
+                        .unwrap_or((0, PathBuf::new()));
+                    if !current_path.as_os_str().is_empty() && bm_idx < app_guard.servers.len() {
+                        let server = &app_guard.servers[bm_idx];
+                        if server.last_path != current_path {
+                            let servers = app_guard.servers.clone();
+                            tokio::spawn(async move {
+                                let mut servers = servers;
+                                if let Some(s) = servers.get_mut(bm_idx) {
+                                    s.last_path = current_path;
                                 }
-                            }
+                                crate::servers::save_servers_quiet(&servers);
+                            });
                         }
                     }
                 }
