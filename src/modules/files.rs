@@ -27,6 +27,8 @@ fn map_metadata(meta: dracon_files::EntryMetadata) -> FileMetadata {
         created: meta.created,
         permissions: meta.permissions,
         is_dir: meta.is_dir,
+        is_symlink: false,
+        link_target: None,
     }
 }
 
