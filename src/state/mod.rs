@@ -273,6 +273,10 @@ pub struct FileMetadata {
     pub created: std::time::SystemTime,
     pub permissions: u32,
     pub is_dir: bool,
+    #[serde(default)]
+    pub is_symlink: bool,
+    #[serde(default)]
+    pub link_target: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
