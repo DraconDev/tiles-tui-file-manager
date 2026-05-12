@@ -467,9 +467,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 if let Some(fs) = pane.current_state_mut() {
                                     fs.bookmark_idx = Some(bookmark_idx);
                                     fs.retry_count = 0;
-                                    fs.files.clear();
-                                    fs.metadata.clear();
-                                    fs.loading = true;
                                 }
                             }
                         }
@@ -519,13 +516,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session = Some(session);
                             fs.current_path = PathBuf::from("/");
                             fs.retry_count = 0;
-                            fs.files.clear();
-                            fs.metadata.clear();
-                            fs.loading = true;
+                            // Note: don't clear fs.files — old files stay visible until async refresh
                         }
                     }
-                    drop(app_guard);
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                    needs_draw = true;
                 }
                 AppEvent::ReconnectRemote(pane_idx) => {
                     let bookmark_idx = {
