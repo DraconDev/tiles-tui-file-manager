@@ -1414,26 +1414,37 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::KillProcess(pid) => {
                     let _ = crate::modules::system::SystemModule::kill_process(pid);
                 }
-                AppEvent::GitHistoryUpdated(data) => {
+                AppEvent::GitHistoryUpdated(
+                    p_idx,
+                    t_idx,
+                    history,
+                    pending,
+                    branch,
+                    ahead,
+                    behind,
+                    summary,
+                    remotes,
+                    stashes,
+                ) => {
                     let mut app_guard = app.lock();
-                    if data.pane_idx >= app_guard.panes.len() {
+                    if p_idx >= app_guard.panes.len() {
                         crate::app::log_debug(&format!(
                             "GitHistoryUpdated: pane_idx {} out of bounds (panes: {})",
-                            data.pane_idx,
+                            p_idx,
                             app_guard.panes.len()
                         ));
-                    } else if let Some(pane) = app_guard.panes.get_mut(data.pane_idx) {
+                    } else if let Some(pane) = app_guard.panes.get_mut(p_idx) {
                         // Store git data in the specified tab, or active tab as fallback
-                        let tab_idx = if data.tab_idx < pane.tabs.len() { data.tab_idx } else { pane.active_tab_index };
+                        let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
                         if let Some(fs) = pane.tabs.get_mut(tab_idx) {
-                            fs.git_history = data.history;
-                            fs.git_pending = data.pending;
-                            fs.git_branch = data.branch;
-                            fs.git_ahead = data.ahead;
-                            fs.git_behind = data.behind;
-                            fs.git_summary = data.summary;
-                            fs.git_remotes = data.remotes;
-                            fs.git_stashes = data.stashes;
+                            fs.git_history = history;
+                            fs.git_pending = pending;
+                            fs.git_branch = branch;
+                            fs.git_ahead = ahead;
+                            fs.git_behind = behind;
+                            fs.git_summary = summary;
+                            fs.git_remotes = remotes;
+                            fs.git_stashes = stashes;
                             fs.git_cache_until = Some(Instant::now() + Duration::from_secs(GIT_CACHE_TTL_SECONDS));
                         }
                     }
