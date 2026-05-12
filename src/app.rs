@@ -2,7 +2,7 @@ use ratatui::widgets::TableState;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
 use dracon_terminal_engine::compositor::engine::TilePlacement;
 use dracon_terminal_engine::widgets::TextInput;

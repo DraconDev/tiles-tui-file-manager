@@ -1097,7 +1097,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 let file_name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
                                 {
                                     let mut app_guard = app_clone.lock();
-                                    app_guard.checksum_cache.insert(path.clone(), (md5, sha256));
+                                    app_guard.insert_checksum(path.clone(), md5, sha256);
                                 }
                                 let _ = tx.send(AppEvent::StatusMsg(format!(
                                     "Checksums computed for {}", file_name
@@ -1723,6 +1723,7 @@ let list_path_for_filter = path.clone();
                                 Ok((files, meta)) => {
                                     // Mark connection as healthy
                                     let mut app_guard = app_clone_for_health.lock();
+                                    app_guard.prune_remote_health();
                                     app_guard.remote_health.insert(session.name.clone(), (true, std::time::Instant::now()));
                                     drop(app_guard);
                                     
@@ -1743,6 +1744,7 @@ let list_path_for_filter = path.clone();
                                 Err(e) => {
                                     // Mark connection as unhealthy
                                     let mut app_guard = app_clone_for_health.lock();
+                                    app_guard.prune_remote_health();
                                     app_guard.remote_health.insert(session.name.clone(), (false, std::time::Instant::now()));
                                     let retry_count = app_guard.panes.get(pane_idx)
                                         .and_then(|p| p.current_state())
