@@ -118,6 +118,7 @@ pub struct App {
     pub command_index: usize,
     pub filtered_commands: Vec<CommandItem>,
     pub view_prefs: ViewStatePersistence,
+    pub keybindings: crate::keybindings::Keybindings,
     pub settings_index: usize,
     pub settings_section: SettingsSection,
     pub settings_target: SettingsTarget,
