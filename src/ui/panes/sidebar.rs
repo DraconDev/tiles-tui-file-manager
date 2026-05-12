@@ -88,9 +88,20 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             let show_favorites = app.sidebar_favorites;
             let show_recent = app.sidebar_recent;
             let show_storage = app.sidebar_storage;
-            let show_remotes = app.sidebar_remotes;
+    let show_remotes = app.sidebar_remotes;
+    static SIDEBAR_LOG_ONCE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    if !SIDEBAR_LOG_ONCE.load(std::sync::atomic::Ordering::Relaxed) {
+        SIDEBAR_LOG_ONCE.store(true, std::sync::atomic::Ordering::Relaxed);
+        crate::app::log_debug(&format!(
+            "SIDEBAR: servers.len={}, show_remotes={}, sidebar_remotes={}",
+            app.servers.len(), show_remotes, app.sidebar_remotes
+        ));
+        for s in &app.servers {
+            crate::app::log_debug(&format!("  SIDEBAR SERVER: name={} display={}", s.name, s.display_name()));
+        }
+    }
 
-            // === FOLDERS Section (Tree) ===
+    // === FOLDERS Section (Tree) ===
             if show_folders {
                 let folder_header_idx = sidebar_items.len();
                 let folders_icon = Icon::Folder.get(app.icon_mode);
