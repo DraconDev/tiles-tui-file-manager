@@ -40,18 +40,7 @@ pub enum AppEvent {
     SystemUpdated(dracon_system::SystemSnapshot),
 
     KillProcess(u32),
-    GitHistoryUpdated(
-        usize,
-        usize,
-        Vec<CommitInfo>,
-        Vec<GitPendingChange>,
-        Option<String>,
-        usize,
-        usize,
-        Option<String>,
-        Vec<String>, // Remotes
-        Vec<String>, // Stashes
-    ),
+    GitHistoryUpdated(Box<GitHistoryData>),
     GitDiffFetched(usize, usize, String),
     GitStageFile(usize, usize, String),
     GitUnstageFile(usize, usize, String),
