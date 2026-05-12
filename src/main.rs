@@ -524,7 +524,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         if let Some(fs) = pane.current_state_mut() {
                             fs.remote_session = Some(session);
                             // Use last_path if available, otherwise default to /
-                            fs.current_path = app_guard.servers.get(bookmark_idx)
+                            fs.current_path = app_guard.servers.iter()
+                                .find(|s| s.name == remote_name)
                                 .map(|s| s.last_path.clone())
                                 .unwrap_or_else(|| PathBuf::from("/"));
                             fs.retry_count = 0;
