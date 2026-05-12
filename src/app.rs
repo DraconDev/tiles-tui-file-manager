@@ -129,13 +129,12 @@ pub struct App {
     #[allow(dead_code)]
     pub tile_queue: Arc<StdMutex<Vec<TilePlacement>>>,
     pub saved_pane: Option<Pane>,
-    /// SSH connection pool: bookmark name -> (RemoteSession, last_used_time)
-    /// Allows multiple tabs to reuse the same SSH connection.
+    /// Remote connection metadata cache: bookmark name -> (RemoteSession, last_used_time).
+    /// NOTE: This caches connection PARAMETERS (host, user, port, key_path) — NOT an actual
+    /// SSH session handle. Every remote operation (read_dir, exec, upload, etc.) still creates
+    /// a fresh TCP connection + SSH handshake through the dracon_system providers. True
+    /// connection pooling would require caching ssh2::Session objects at the provider level.
     /// Stale entries are cleaned up after 5 minutes of inactivity.
-    /// Stores remote connection parameters for reuse. NOTE: This caches metadata
-    /// (host, user, port, key_path) — NOT an actual SSH session handle. Each remote
-    /// operation still creates a fresh TCP connection + SSH handshake. True connection
-    /// pooling would require caching ssh2::Session objects at the dracon_system level.
     pub remote_session_pool: HashMap<String, (RemoteSession, Instant)>,
 }
 
