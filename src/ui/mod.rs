@@ -3282,7 +3282,9 @@ fn draw_file_view(
                                         && !is_hovered_drop
                                         && app.semantic_coloring
                                     {
-                                        if is_dir {
+                                        if is_symlink {
+                                            cell_style = cell_style.fg(Color::Cyan);
+                                        } else if is_dir {
                                             cell_style =
                                                 cell_style.fg(crate::ui::theme::accent_secondary());
                                         } else {
@@ -3311,8 +3313,15 @@ fn draw_file_view(
                                     };
                                     let display_name = squarify(&display_name);
 
+                                    // Append symlink target if there's room
+                                    let name_with_link = if let Some(target) = link_target {
+                                        format!("{} -> {}", display_name, target)
+                                    } else {
+                                        display_name.clone()
+                                    };
+
                                     let truncated_name =
-                                        truncate_to_width(&display_name, available_width, "..");
+                                        truncate_to_width(&name_with_link, available_width, "..");
                                     let cell_text = if depth_indent.is_empty() {
                                         format!(" {} {}{}", icon_str, truncated_name, suffix)
                                     } else {
