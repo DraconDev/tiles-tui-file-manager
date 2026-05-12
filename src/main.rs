@@ -2068,7 +2068,15 @@ paired = new_paired;
                             // Update last_path for remote servers so reconnections land at the same directory
                             if let Some(bm_idx) = fs.bookmark_idx {
                                 if bm_idx < app_guard.servers.len() {
-                                    app_guard.servers[bm_idx].last_path = fs.current_path.clone();
+                                    let server = &mut app_guard.servers[bm_idx];
+                                    if server.last_path != fs.current_path {
+                                        server.last_path = fs.current_path.clone();
+                                        // Persist last_path changes asynchronously
+                                        let servers = app_guard.servers.clone();
+                                        tokio::spawn(async move {
+                                            crate::servers::save_servers_quiet(&servers);
+                                        });
+                                    }
                                 }
                             }
                         }

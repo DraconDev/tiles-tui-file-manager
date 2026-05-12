@@ -132,6 +132,10 @@ pub struct App {
     /// SSH connection pool: bookmark name -> (RemoteSession, last_used_time)
     /// Allows multiple tabs to reuse the same SSH connection.
     /// Stale entries are cleaned up after 5 minutes of inactivity.
+    /// Stores remote connection parameters for reuse. NOTE: This caches metadata
+    /// (host, user, port, key_path) — NOT an actual SSH session handle. Each remote
+    /// operation still creates a fresh TCP connection + SSH handshake. True connection
+    /// pooling would require caching ssh2::Session objects at the dracon_system level.
     pub remote_session_pool: HashMap<String, (RemoteSession, Instant)>,
 }
 
