@@ -2003,8 +2003,7 @@ paired = new_paired;
                             fs.tree_file_depths = tree_file_depths;
                             fs.files = files;
                             fs.metadata = metadata.clone();
-                            fs.folder_sizes.clear();
-                            fs.loading = false;
+                            fs.folder_sizes.clear(); // Clear stale folder sizes
 
                             // Calculate folder sizes with rate limiting (max once per 5 seconds)
                             // to avoid recursive directory walks on every navigation

@@ -2998,38 +2998,6 @@ fn draw_file_view(
         }
     }
 
-    // Show loading state for remote connections
-    {
-        use crate::state::FileState;
-        let is_loading = app.panes.get(pane_idx)
-            .and_then(|p| p.current_state())
-            .map(|fs: &FileState| fs.loading)
-            .unwrap_or(false);
-        if is_loading {
-            use dracon_terminal_engine::layout::centered_rect;
-            let block = Block::default()
-                .borders(borders)
-                .border_type(BorderType::Rounded)
-                .border_style(if is_focused {
-                    Style::default().fg(crate::ui::theme::border_active())
-                } else {
-                    Style::default().fg(crate::ui::theme::border_inactive())
-                });
-            let inner = block.inner(area);
-            f.render_widget(block, area);
-            let loading_area = centered_rect(40, 3, inner);
-            let loading_text = Paragraph::new(
-                Line::from(vec![
-                    Span::styled("󰒍 ", Style::default().fg(Color::Cyan)),
-                    Span::styled("Connecting...", Style::default().fg(Color::DarkGray)),
-                ])
-            )
-            .alignment(Alignment::Center);
-            f.render_widget(loading_text, loading_area);
-            return;
-        }
-    }
-
     // --- BORDER & BACKGROUND (Rendered FIRST to create base) ---
 
     let border_style = if is_focused {
