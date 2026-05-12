@@ -207,7 +207,13 @@ pub fn load_state() -> Option<PersistentState> {
         return None;
     }
     let json = fs::read_to_string(state_path).ok()?;
-    serde_json::from_str(&json).ok()
+    match serde_json::from_str::<PersistentState>(&json) {
+        Ok(state) => Some(state),
+        Err(e) => {
+            eprintln!("[STATE-DEBUG] Failed to deserialize state.json: {}", e);
+            None
+        }
+    }
 }
 
 #[cfg(test)]
