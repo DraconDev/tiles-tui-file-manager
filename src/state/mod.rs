@@ -406,7 +406,9 @@ pub struct FileState {
     pub last_folder_size_calc: Option<Instant>,
     #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
+    #[serde(default)]
     pub tree_file_depths: Vec<u16>,
+    #[serde(default)]
     pub loading: bool,
 }
 
