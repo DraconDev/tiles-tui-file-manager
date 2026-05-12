@@ -418,6 +418,41 @@ editor: ViewPreferences {
         self.sidebar_width_percent = val as u16;
     }
 
+    /// Insert a checksum into the cache, capping at 100 entries.
+    /// When full, removes an arbitrary entry to make room.
+    pub fn insert_checksum(&mut self, path: PathBuf, md5: String, sha256: String) {
+        const MAX_CHECKSUM_CACHE: usize = 100;
+        if self.checksum_cache.len() >= MAX_CHECKSUM_CACHE && !self.checksum_cache.contains_key(&path) {
+            if let Some(first_key) = self.checksum_cache.keys().next().cloned() {
+                self.checksum_cache.remove(&first_key);
+            }
+        }
+        self.checksum_cache.insert(path, (md5, sha256));
+    }
+
+    /// Insert folder memory, capping at 100 entries.
+    /// When full, clears half the entries to avoid repeated churn.
+    pub fn insert_folder_memory(&mut self, path: PathBuf, idx: usize, scroll: usize) {
+        const MAX_FOLDER_MEMORY: usize = 100;
+        if self.folder_memory.len() >= MAX_FOLDER_MEMORY && !self.folder_memory.contains_key(&path) {
+            // Remove half the entries to amortize cost
+            let to_remove: Vec<_> = self.folder_memory.keys().take(MAX_FOLDER_MEMORY / 2).cloned().collect();
+            for key in to_remove {
+                self.folder_memory.remove(&key);
+            }
+        }
+        self.folder_memory.insert(path, (idx, scroll));
+    }
+
+    /// Prune remote health entries older than 1 hour.
+    pub fn prune_remote_health(&mut self) {
+        const STALE_HEALTH_THRESHOLD: Duration = Duration::from_secs(3600);
+        let now = std::time::Instant::now();
+        self.remote_health.retain(|_, (_, last_check)| {
+            now.duration_since(*last_check) < STALE_HEALTH_THRESHOLD
+        });
+    }
+
     pub fn move_up(&mut self, shift: bool) {
         if let Some(fs) = self.current_file_state_mut() {
             if let Some(sel) = fs.selection.selected {
