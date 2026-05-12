@@ -577,6 +577,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 current_y += 1;
             }
             if app.servers.is_empty() {
+                eprintln!("[SIDEBAR-DEBUG] servers.is_empty() - showing '(No remotes)'");
                 sidebar_items.push(
                     ListItem::new("(No remotes)").style(Style::default().fg(Color::DarkGray)),
                 );
@@ -592,6 +593,7 @@ if app.sidebar_tree_cache_key != cache_key {
             // Apply scroll offset: slice visible items and adjust bounds
             let visible_height = inner.height as usize;
             let total_items = sidebar_items.len();
+            eprintln!("[SIDEBAR-DEBUG] total_items={} visible_height={} scroll_offset={}", total_items, visible_height, app.sidebar_scroll_offset);
 
             // Auto-scroll to keep selected item in view
             if app.sidebar_index < app.sidebar_scroll_offset {
