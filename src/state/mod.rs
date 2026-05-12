@@ -356,9 +356,6 @@ pub struct FileState {
     #[serde(skip)]
     pub folder_sizes: HashMap<PathBuf, u64>,
     #[serde(skip)]
-    #[allow(dead_code)]
-    pub path_colors: HashMap<PathBuf, u8>,
-    #[serde(skip)]
     pub preview: Option<PreviewState>,
     #[serde(skip)]
     pub view_height: usize,
@@ -445,7 +442,6 @@ impl FileState {
             sort_ascending: sort_asc,
             metadata: HashMap::new(),
             folder_sizes: HashMap::new(),
-            path_colors: HashMap::new(),
             preview: None,
             view_height: 0,
             table_state: ratatui::widgets::TableState::default(),
