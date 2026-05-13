@@ -4387,8 +4387,8 @@ fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     let label_style = Style::default().fg(Color::DarkGray);
     let input_style = Style::default().fg(THEME.fg);
 
-    let file_count = if let AppMode::BulkRename { ref files, .. } = app.mode {
-        files.len()
+    let file_count = if let AppMode::BulkRename(ref state) = app.mode {
+        state.files.len()
     } else {
         0
     };
@@ -4402,20 +4402,20 @@ fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     content.push(Line::from(vec![Span::styled("Preview (first 5):", label_style)]));
 
     let mut preview_lines: Vec<String> = Vec::new();
-    if let AppMode::BulkRename { ref files, ref pattern, ref replacement, .. } = app.mode {
-        let re = regex::Regex::new(pattern);
-        for (i, f) in files.iter().take(5).enumerate() {
+    if let AppMode::BulkRename(ref state) = app.mode {
+        let re = regex::Regex::new(&state.pattern);
+        for (i, f) in state.files.iter().take(5).enumerate() {
             let name_str = f.file_name().unwrap_or_default().to_string_lossy().into_owned();
             let new_name = if let Ok(ref re) = re {
-                re.replace_all(&name_str, replacement.as_str()).to_string()
+                re.replace_all(&name_str, state.replacement.as_str()).to_string()
             } else {
                 name_str.clone()
             };
             let changed = if new_name != name_str { " → " } else { "   " };
             preview_lines.push(format!("  {} {}{}{}", i + 1, name_str, changed, new_name));
         }
-        if files.len() > 5 {
-            preview_lines.push(format!("  ... and {} more", files.len() - 5));
+        if state.files.len() > 5 {
+            preview_lines.push(format!("  ... and {} more", state.files.len() - 5));
         }
     }
     for line in preview_lines {
