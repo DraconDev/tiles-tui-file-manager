@@ -17,6 +17,7 @@ use crate::app::{App, AppEvent, CurrentView, PreviewState};
 use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use image::GenericImageView;
 mod app;
+mod clipboard;
 mod config;
 mod event;
 mod event_helpers;
