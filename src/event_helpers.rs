@@ -105,6 +105,10 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
         }
+        CommandAction::ContentSearch => {
+            app.mode = AppMode::ContentSearch;
+            app.input.clear();
+        }
     }
 }
 
