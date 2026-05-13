@@ -2293,7 +2293,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                         let mut stats_cells = Vec::new();
                         if act.files_changed > 0 {
                             stats_cells.push(
-                                Cell::from(format!("{}", act.files_changed))
+                                Cell::from(act.files_changed.to_string())
                                     .style(Style::default().fg(Color::Cyan)),
                             );
                             stats_cells.push(

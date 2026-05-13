@@ -58,11 +58,13 @@ pub fn handle_monitor_events(
                     }
                 }
                 KeyCode::Char('k') => {
-                    if app.monitor_subview == MonitorSubview::Processes {
-                        if let Some(idx) = app.process_table_state.selected() {
-                            if let Some(p) = app.system_state.processes.get(idx) {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::KillProcess(p.pid));
-                            }
+                    if app.monitor_subview == MonitorSubview::Processes
+                        && app.process_table_state.selected().is_some()
+                    {
+                        if let Some(p) = app.system_state.processes.get(
+                            app.process_table_state.selected().unwrap(),
+                        ) {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::KillProcess(p.pid));
                         }
                         return true;
                     }

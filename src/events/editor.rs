@@ -577,11 +577,8 @@ fn handle_text_editor_mouse(
             }
         }
         MouseEventKind::ScrollDown => {
-            if me.modifiers.contains(KeyModifiers::CONTROL) {
-                if !editor.lines.is_empty() {
-                    editor.scroll_row =
-                        (editor.scroll_row + 5).min(editor.lines.len().saturating_sub(1));
-                }
+            if me.modifiers.contains(KeyModifiers::CONTROL) && !editor.lines.is_empty() {
+                editor.scroll_row = (editor.scroll_row + 5).min(editor.lines.len().saturating_sub(1));
             } else {
                 editor.handle_mouse_event(to_runtime_mouse(*me), area);
             }

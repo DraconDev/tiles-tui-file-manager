@@ -494,7 +494,7 @@ pub fn log_debug(msg: &str) {
         let path = "debug.log";
         if let Ok(meta) = std::fs::metadata(path) {
             if meta.len() > MAX_LOG_SIZE_BYTES {
-                let _ = std::fs::rename(path, format!("debug.log.1"));
+                let _ = std::fs::rename(path, "debug.log.1");
                 let _ = std::fs::remove_file("debug.log.2");
                 let _ = std::fs::rename("debug.log.1", "debug.log.2");
             }
@@ -525,6 +525,7 @@ pub fn debug_logging_enabled() -> bool {
 
 use tokio::sync::mpsc::Sender;
 
+#[allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops, clippy::type_complexity)]
 pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
     if tx.try_send(evt).is_err() {
         log_debug("Channel send failed — event dropped");
