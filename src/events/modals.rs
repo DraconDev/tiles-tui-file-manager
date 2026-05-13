@@ -395,12 +395,14 @@ fn handle_quick_filter_keys(
         KeyCode::Esc => {
             app.mode = AppMode::Normal;
             app.quick_filter_input.clear();
+            let prev_selection = app.quick_filter_prev_selection;
+            let pane_idx = app.focused_pane_index;
             if let Some(fs) = app.current_file_state_mut() {
                 fs.search_filter.clear();
                 fs.search_generation += 1;
-                fs.selection.selected = app.quick_filter_prev_selection;
+                fs.selection.selected = prev_selection;
             }
-            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
             true
         }
         KeyCode::Enter => {
