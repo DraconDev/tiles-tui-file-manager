@@ -1670,21 +1670,21 @@ fn handle_input_modals_keys(
                             }
                         }
                     }
-                    AppMode::BulkRename { ref files, ref replacement, .. } => {
+                    AppMode::BulkRename(ref state) => {
                         if !input.is_empty() {
                             let re = regex::Regex::new(&input);
                             if let Ok(re) = re {
-                                for f in files {
+                                for f in &state.files {
                                     if let Some(parent) = f.parent() {
                                         let old_name = f.file_name().unwrap_or_default().to_string_lossy();
-                                        let new_name = re.replace_all(&old_name, replacement.as_str()).to_string();
+                                        let new_name = re.replace_all(&old_name, state.replacement.as_str()).to_string();
                                         if new_name != old_name {
                                             let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(f.clone(), parent.join(&new_name)));
                                         }
                                     }
                                 }
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                    "Bulk renamed {} files", files.len()
+                                    "Bulk renamed {} files", state.files.len()
                                 )));
                             } else {
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(

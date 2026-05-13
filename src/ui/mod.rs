@@ -353,7 +353,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if matches!(app.mode, AppMode::Rename) {
         draw_rename_modal(f, app);
     }
-    if matches!(app.mode, AppMode::BulkRename { .. }) {
+    if matches!(app.mode, AppMode::BulkRename(_)) {
         draw_bulk_rename_modal(f, app);
     }
     if matches!(app.mode, AppMode::Delete(_) | AppMode::DeleteFile(_)) {
