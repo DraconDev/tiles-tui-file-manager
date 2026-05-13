@@ -343,6 +343,7 @@ editor: ViewPreferences {
             command_output: Vec::new(),
             command_output_scroll: 0,
             command_output_status: None,
+            user_commands: Vec::new(),
         }
     }
 
