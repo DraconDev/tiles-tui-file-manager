@@ -147,7 +147,7 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
             let maybe_path = app.current_file_state().and_then(|fs| {
                 fs.selection.selected
                     .and_then(|idx| fs.files.get(idx))
-                    .map(|f| fs.current_path.join(&f.name))
+                    .map(|f| fs.current_path.join(f))
             });
             if let Some(path) = maybe_path {
                 match crate::clipboard::copy_path_to_clipboard(&path) {
