@@ -426,22 +426,26 @@ fn handle_quick_filter_keys(
         }
         KeyCode::Backspace => {
             app.quick_filter_input.pop();
+            let filter = app.quick_filter_input.clone();
+            let pane_idx = app.focused_pane_index;
             if let Some(fs) = app.current_file_state_mut() {
-                fs.search_filter = app.quick_filter_input.clone();
+                fs.search_filter = filter;
                 fs.search_generation += 1;
                 fs.selection.selected = Some(0);
             }
-            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
             true
         }
         KeyCode::Char(c) => {
             app.quick_filter_input.push(c);
+            let filter = app.quick_filter_input.clone();
+            let pane_idx = app.focused_pane_index;
             if let Some(fs) = app.current_file_state_mut() {
-                fs.search_filter = app.quick_filter_input.clone();
+                fs.search_filter = filter;
                 fs.search_generation += 1;
                 fs.selection.selected = Some(0);
             }
-            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
             true
         }
         _ => false,
