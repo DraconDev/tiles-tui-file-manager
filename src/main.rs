@@ -514,17 +514,24 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         // Reuse cached connection
                         let mut app_guard = app.lock();
                         let last_path = app_guard.servers.get(bookmark_idx)
-                            .map(|s| s.last_path.clone());
+                            .and_then(|s| if s.last_path.to_string_lossy().is_empty() { None } else { Some(s.last_path.clone()) });
                         if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                             if let Some(fs) = pane.current_state_mut() {
                                 fs.remote_session = Some(session);
                                 fs.bookmark_idx = Some(bookmark_idx);
                                 // Don't reset retry_count here — preserves the retry counter
                                 // across ReconnectRemote → ConnectToRemote cycles
-                                // Use last_path if available, otherwise default to /
-                                fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
+                                // Use last_path only if non-empty; otherwise default to remote root
+                                fs.current_path = last_path.clone().unwrap_or_else(|| PathBuf::from("/"));
                             }
                         }
+                        let server_name = app_guard.servers.get(bookmark_idx).map(|s| s.name.clone()).unwrap_or_default();
+                        crate::app::log_debug(&format!(
+                            "ConnectToRemote(cached): pane={} server={} current_path={}",
+                            pane_idx,
+                            server_name,
+                            last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
+                        ));
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Connected to {} (cached)",
                             remote_opt.as_ref().map(|r| r.display_name()).unwrap_or_default()
