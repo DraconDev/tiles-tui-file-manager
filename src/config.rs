@@ -31,6 +31,16 @@ pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
 pub const GIT_CACHE_TTL_SECONDS: u64 = 30;
 pub const FUZZY_SEARCH: bool = false;
 
+/// Fuzzy substring search: checks if `pattern` appears as a case-insensitive
+/// subsequence in `text`.
+///
+/// ## Performance
+/// - **ASCII-only paths** (common case): zero allocation. Characters are compared
+///   directly with `eq_ignore_ascii_case()`.
+/// - **Unicode characters** (rare): falls back to `to_lowercase()` allocation for
+///   both pattern and text chars. This is unavoidable for non-ASCII case folding
+///   (e.g., accented letters, CJK, Cyrillic) and is rare in practice since most
+///   filenames on Linux/macOS are ASCII.
 pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
     if pattern.is_empty() {
         return true;
