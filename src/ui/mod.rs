@@ -4446,16 +4446,35 @@ fn draw_save_as_modal(f: &mut Frame, app: &App) {
 fn draw_delete_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(50, 12, f.area());
 
+    // Compute actual selected count from current file state
+    let sel_count = app.current_file_state()
+        .map(|fs| {
+            if !fs.selection.is_empty() {
+                fs.selection.multi.len()
+            } else if fs.selection.selected.is_some() {
+                1
+            } else {
+                0
+            }
+        })
+        .unwrap_or(0);
+
+    let item_label = if sel_count <= 1 {
+        "1 item".to_string()
+    } else {
+        format!("{} items", sel_count)
+    };
+
     let (title, message, item_name) = match &app.mode {
         AppMode::DeleteFile(ref path) => {
             let name = path.file_name().unwrap_or_default().to_string_lossy().to_string();
             (" Delete File ".to_string(), "This file will be permanently deleted:", name)
         }
         AppMode::Delete(ref mode) if mode == "trash" => {
-            (" Trash Items ".to_string(), "Selected items will be moved to trash:", "Multiple items".to_string())
+            (" Trash Items ".to_string(), "Selected items will be moved to trash:", item_label)
         }
         _ => {
-            (" Delete Items ".to_string(), "Selected items will be permanently deleted:", "Multiple items".to_string())
+            (" Delete Items ".to_string(), "Selected items will be permanently deleted:", item_label)
         }
     };
 
