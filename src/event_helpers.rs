@@ -59,6 +59,11 @@ pub fn update_commands(app: &mut App) {
             desc: "Search in Files (ripgrep)".to_string(),
             action: CommandAction::ContentSearch,
         },
+        CommandItem {
+            key: "!".to_string(),
+            desc: "Run Command".to_string(),
+            action: CommandAction::RunCommand,
+        },
     ];
 
     for (i, bookmark) in app.servers.iter().enumerate() {
