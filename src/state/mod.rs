@@ -259,8 +259,8 @@ pub enum SidebarTarget {
     Recent(PathBuf),
     Remote(usize),
     Storage(usize),
-    Project(PathBuf),
-    Header(String),
+    Undo,
+    Redo,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -273,8 +273,8 @@ pub enum CommandAction {
     CommandPalette,
     CollapseFolders,
     ContentSearch,
+    RunCommand,
 }
-
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileMetadata {
     pub size: u64,
