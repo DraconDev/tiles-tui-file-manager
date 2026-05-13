@@ -21,7 +21,17 @@ pub struct PendingImageRender {
     pub area: ratatui::layout::Rect,
 }
 
-/// Detect the best available terminal graphics protocol.
+/// Clear all terminal-native image placements.
+/// Should be called before each `terminal.draw()` to prevent stale images.
+pub fn clear_images(protocol: GraphicsProtocol) {
+    if protocol == GraphicsProtocol::Kitty {
+        let mut stdout = std::io::stdout();
+        let _ = stdout.write_all(b"\x1b_Ga=d,d=A\x1b\\");
+        let _ = stdout.flush();
+    }
+    // iTerm2 images are inline and get overwritten by text rendering;
+    // no explicit clear is needed.
+}
 pub fn detect_protocol() -> GraphicsProtocol {
     // Check for Kitty
     if std::env::var("KITTY_WINDOW_ID").is_ok() {
