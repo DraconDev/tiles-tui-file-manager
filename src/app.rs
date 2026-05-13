@@ -141,6 +141,11 @@ pub struct App {
     pub graphics_protocol: crate::term_graphics::GraphicsProtocol,
     /// Image queued for rendering after the next terminal.draw() call.
     pub pending_image_render: Option<crate::term_graphics::PendingImageRender>,
+    /// Active content search query and results.
+    pub content_search_query: String,
+    pub content_search_results: Vec<crate::modules::rg::ContentSearchResult>,
+    pub content_search_selected: usize,
+    pub content_search_scroll: usize,
 }
 
 impl App {
@@ -319,6 +324,10 @@ editor: ViewPreferences {
             keybindings: crate::keybindings::Keybindings::load(),
             graphics_protocol: crate::term_graphics::detect_protocol(),
             pending_image_render: None,
+            content_search_query: String::new(),
+            content_search_results: Vec::new(),
+            content_search_selected: 0,
+            content_search_scroll: 0,
         }
     }
 
