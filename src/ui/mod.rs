@@ -276,7 +276,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         draw_settings_modal(f, app);
     } else if matches!(
         app.current_view,
-        CurrentView::Processes | CurrentView::Git | CurrentView::Debug
+        CurrentView::Processes | CurrentView::Git | CurrentView::Debug | CurrentView::Trash | CurrentView::DiskUsage
     ) {
         f.render_widget(
             Block::default().style(Style::default().bg(Color::Black)),
@@ -286,6 +286,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             CurrentView::Processes => draw_monitor_page(f, f.area(), app),
             CurrentView::Git => draw_git_page(f, f.area(), app),
             CurrentView::Debug => draw_debug_page(f, f.area(), app),
+            CurrentView::Trash => draw_trash_page(f, f.area(), app),
+            CurrentView::DiskUsage => draw_disk_usage_page(f, f.area(), app),
             _ => {}
         }
     } else {
