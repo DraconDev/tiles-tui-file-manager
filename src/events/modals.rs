@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+
 use std::path::PathBuf;
 use crate::app::{App, AppEvent, AppMode, ContextMenuAction, ContextMenuTarget, CurrentView, SettingsSection};
 use crate::state::IconMode;

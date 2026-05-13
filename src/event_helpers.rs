@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+
 use crate::app::{
     App, AppEvent, AppMode, CommandAction, CommandItem, ContextMenuAction, ContextMenuTarget,
     CurrentView, FileState,

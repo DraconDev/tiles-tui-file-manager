@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+
 use crate::app::{App, AppEvent, MonitorSubview};
 use dracon_terminal_engine::contracts::{InputEvent as Event, KeyCode};
 use tokio::sync::mpsc;
@@ -34,28 +36,24 @@ pub fn handle_monitor_events(
                     app.monitor_subview = MonitorSubview::Network;
                     return true;
                 }
-                KeyCode::Up => {
-                    if app.monitor_subview == MonitorSubview::Processes {
-                        app.process_table_state.select(
-                            app.process_table_state
-                                .selected()
-                                .map(|s| s.saturating_sub(1))
-                                .or(Some(0)),
-                        );
-                        return true;
-                    }
+                KeyCode::Up if app.monitor_subview == MonitorSubview::Processes => {
+                    app.process_table_state.select(
+                        app.process_table_state
+                            .selected()
+                            .map(|s| s.saturating_sub(1))
+                            .or(Some(0)),
+                    );
+                    return true;
                 }
-                KeyCode::Down => {
-                    if app.monitor_subview == MonitorSubview::Processes {
-                        let len = app.system_state.processes.len();
-                        app.process_table_state.select(
-                            app.process_table_state
-                                .selected()
-                                .map(|s| (s + 1).min(len.saturating_sub(1)))
-                                .or(Some(0)),
-                        );
-                        return true;
-                    }
+                KeyCode::Down if app.monitor_subview == MonitorSubview::Processes => {
+                    let len = app.system_state.processes.len();
+                    app.process_table_state.select(
+                        app.process_table_state
+                            .selected()
+                            .map(|s| (s + 1).min(len.saturating_sub(1)))
+                            .or(Some(0)),
+                    );
+                    return true;
                 }
                 KeyCode::Char('k') => {
                     if app.monitor_subview == MonitorSubview::Processes

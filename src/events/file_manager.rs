@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+
 use dracon_terminal_engine::contracts::{
     InputEvent as Event, KeyCode, KeyModifiers, MouseButton, MouseEventKind,
 };
