@@ -525,13 +525,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
                             }
                         }
-                        let server_name = app_guard.servers.get(bookmark_idx).map(|s| s.name.clone()).unwrap_or_default();
-                        crate::app::log_debug(&format!(
-                            "ConnectToRemote(cached): pane={} server={} current_path={}",
-                            pane_idx,
-                            server_name,
-                            last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
-                        ));
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Connected to {} (cached)",
                             remote_opt.as_ref().map(|r| r.display_name()).unwrap_or_default()
