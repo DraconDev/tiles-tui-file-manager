@@ -2136,26 +2136,32 @@ paired = new_paired;
                     }
                 }
 
-                // Update last_path for remote servers so reconnections land at the same directory
-                {
+                // Update last_path for remote servers so reconnections land at the same directory.
+                // We MUST read and drop the lock BEFORE spawning, to avoid holding the mutex across await.
+                let (bm_idx, current_path) = {
                     let app_guard = app_clone.lock();
-                    let (bm_idx, current_path) = app_guard.panes.get(pane_idx)
+                    app_guard.panes.get(pane_idx)
                         .and_then(|pane| pane.current_state())
                         .and_then(|fs| fs.bookmark_idx.map(|bm| (bm, fs.current_path.clone())))
-                        .unwrap_or((0, PathBuf::new()));
-                    if !current_path.as_os_str().is_empty() && bm_idx < app_guard.servers.len() {
-                        let server = &app_guard.servers[bm_idx];
-                        if server.last_path != current_path {
-                            let servers = app_guard.servers.clone();
-                            tokio::spawn(async move {
-                                let mut servers = servers;
-                                if let Some(s) = servers.get_mut(bm_idx) {
-                                    s.last_path = current_path;
-                                }
-                                crate::servers::save_servers_quiet(&servers);
-                            });
+                        .unwrap_or((0, PathBuf::new()))
+                };
+                if !current_path.as_os_str().is_empty() && bm_idx < {
+                    let app_guard = app_clone.lock();
+                    app_guard.servers.len()
+                } {
+                    let servers = {
+                        let app_guard = app_clone.lock();
+                        app_guard.servers.clone()
+                    };
+                    let bm_idx_final = bm_idx;
+                    let current_path_final = current_path;
+                    tokio::spawn(async move {
+                        let mut servers = servers;
+                        if let Some(s) = servers.get_mut(bm_idx_final) {
+                            s.last_path = current_path_final;
                         }
-                    }
+                        crate::servers::save_servers_quiet(&servers);
+                    });
                 }
                 let _ = tx.send(AppEvent::Tick).await;
 
