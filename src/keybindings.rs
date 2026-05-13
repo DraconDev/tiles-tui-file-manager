@@ -154,16 +154,59 @@ impl KeyAction {
             "toggle_multi_select" => Some(Self::ToggleMultiSelect),
             "star" => Some(Self::Star),
             "sort_toggle" => Some(Self::SortToggle),
+            "quick_filter" => Some(Self::QuickFilter),
             _ => None,
         }
     }
 }
 
 /// User-configurable keybindings loaded from `~/.config/tiles/keybindings.toml`.
-#[derive(Clone, Debug, Default, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Keybindings {
     #[serde(default)]
     pub bindings: HashMap<String, String>,
+}
+
+impl Default for Keybindings {
+    fn default() -> Self {
+        let mut bindings = HashMap::new();
+        bindings.insert("quit".to_string(), "q".to_string());
+        bindings.insert("toggle_hidden".to_string(), "h".to_string());
+        bindings.insert("properties".to_string(), "i".to_string());
+        bindings.insert("settings".to_string(), ",".to_string());
+        bindings.insert("new_tab".to_string(), "t".to_string());
+        bindings.insert("close_tab".to_string(), "w".to_string());
+        bindings.insert("copy".to_string(), "y".to_string());
+        bindings.insert("cut".to_string(), "x".to_string());
+        bindings.insert("paste".to_string(), "p".to_string());
+        bindings.insert("search".to_string(), "/".to_string());
+        bindings.insert("command_palette".to_string(), "Ctrl+Shift+P".to_string());
+        bindings.insert("undo".to_string(), "u".to_string());
+        bindings.insert("redo".to_string(), "Ctrl+r".to_string());
+        bindings.insert("select_all".to_string(), "a".to_string());
+        bindings.insert("delete".to_string(), "d".to_string());
+        bindings.insert("rename".to_string(), "r".to_string());
+        bindings.insert("new_folder".to_string(), "n".to_string());
+        bindings.insert("up".to_string(), "up".to_string());
+        bindings.insert("down".to_string(), "down".to_string());
+        bindings.insert("left".to_string(), "left".to_string());
+        bindings.insert("right".to_string(), "right".to_string());
+        bindings.insert("enter".to_string(), "enter".to_string());
+        bindings.insert("back".to_string(), "backspace".to_string());
+        bindings.insert("toggle_preview".to_string(), ".".to_string());
+        bindings.insert("toggle_zoom".to_string(), "z".to_string());
+        bindings.insert("next_pane".to_string(), "tab".to_string());
+        bindings.insert("prev_pane".to_string(), "Shift+Tab".to_string());
+        bindings.insert("toggle_sidebar".to_string(), "b".to_string());
+        bindings.insert("sidebar_up".to_string(), "Ctrl+Up".to_string());
+        bindings.insert("sidebar_down".to_string(), "Ctrl+Down".to_string());
+        bindings.insert("sidebar_enter".to_string(), "Ctrl+Enter".to_string());
+        bindings.insert("toggle_multi_select".to_string(), "space".to_string());
+        bindings.insert("star".to_string(), "*".to_string());
+        bindings.insert("sort_toggle".to_string(), "s".to_string());
+        bindings.insert("quick_filter".to_string(), "Ctrl+f".to_string());
+        Self { bindings }
+    }
 }
 
 impl Keybindings {

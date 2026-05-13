@@ -320,6 +320,14 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         crate::event_helpers::update_commands(app);
                         return true;
                     }
+                    KeyAction::QuickFilter => {
+                        app.mode = AppMode::QuickFilter;
+                        app.quick_filter_input.clear();
+                        if let Some(fs) = app.current_file_state() {
+                            app.quick_filter_prev_selection = fs.selection.selected;
+                        }
+                        return true;
+                    }
                     KeyAction::Undo => {
                         if execute_undo(app, event_tx).is_none() {
                             if let Some(fs) = app.current_file_state_mut() {
