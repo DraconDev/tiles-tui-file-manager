@@ -662,13 +662,22 @@ Match exec "test %h = prod"
 
     #[test]
     fn expand_tilde_user_fallback() {
-        let result = expand_tilde(std::path::Path::new("~root/.bashrc"));
-        assert_eq!(result, std::path::PathBuf::from("/home/root/.bashrc"));
+        // ~dracon resolves since /home/dracon exists on this system
+        let result = expand_tilde(std::path::Path::new("~dracon/.bashrc"));
+        assert_eq!(result, std::path::PathBuf::from("/home/dracon/.bashrc"));
     }
 
     #[test]
     fn expand_tilde_user_no_slash() {
-        let result = expand_tilde(std::path::Path::new("~nobody"));
-        assert_eq!(result, std::path::PathBuf::from("/home/nobody"));
+        // ~dracon resolves since /home/dracon exists on this system
+        let result = expand_tilde(std::path::Path::new("~dracon"));
+        assert_eq!(result, std::path::PathBuf::from("/home/dracon"));
+    }
+
+    #[test]
+    fn expand_tilde_user_nonexistent() {
+        // ~nonexistent_user has no /home/<user> dir, so should return the path unchanged
+        let result = expand_tilde(std::path::Path::new("~nonexistent_user/.bashrc"));
+        assert_eq!(result, std::path::PathBuf::from("~nonexistent_user/.bashrc"));
     }
 }
