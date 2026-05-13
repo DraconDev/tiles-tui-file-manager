@@ -1654,6 +1654,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     app_guard.background_tasks.retain(|t| t.id != id);
                     needs_draw = true;
                 }
+                AppEvent::CommandOutputLine(line) => {
+                    let mut app_guard = app.lock();
+                    app_guard.command_output.push(line);
+                    needs_draw = true;
+                }
+                AppEvent::CommandOutputDone(status) => {
+                    let mut app_guard = app.lock();
+                    app_guard.command_output_status = Some(status);
+                    needs_draw = true;
+                }
                 AppEvent::GlobalSearchUpdated(pane_idx, files, _meta) => {
                     let mut app_guard = app.lock();
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
