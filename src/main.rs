@@ -300,9 +300,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
                     // Check for cached session first — preserves retry_count across reconnects
                     {
-                        let app_guard = app.lock();
-                        if let Some(pane) = app_guard.panes.get(pane_idx) {
-                            if let Some(fs) = pane.current_state() {
+                        let mut app_guard = app.lock();
+                        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                            if let Some(fs) = pane.current_state_mut() {
                                 if fs.remote_session.is_some() {
                                     // Reuse cached session
                                     fs.current_path = PathBuf::from("/");
