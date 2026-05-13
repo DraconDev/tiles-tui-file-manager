@@ -169,4 +169,19 @@ mod tests {
         let parts = expand_command_template("code {path}", &path);
         assert_eq!(parts, vec!["code", "/home/user/my documents/file.txt"]);
     }
+
+    #[test]
+    fn test_expand_unknown_placeholder_replaced() {
+        // Unknown {unknown} should be replaced with empty string, not left as-is
+        let path = PathBuf::from("/tmp/file.txt");
+        let parts = expand_command_template("script --file {path} --verbose {unknown}", &path);
+        assert_eq!(parts, vec!["script", "--file", "/tmp/file.txt", "--verbose"]);
+    }
+
+    #[test]
+    fn test_expand_multiple_known_placeholders() {
+        let path = PathBuf::from("/tmp/file.txt");
+        let parts = expand_command_template("script --file {path} --verbose", &path);
+        assert_eq!(parts, vec!["script", "--file", "/tmp/file.txt", "--verbose"]);
+    }
 }
