@@ -450,8 +450,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
                         crate::app::log_debug(&format!(
                             "RemoteConnected: pane={} host={} current_path={}",
-                        crate::app::log_debug(&format!(
-                            "RemoteConnected: pane={} host={} current_path={}",
                             pane_idx,
                             remote_name,
                             last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
