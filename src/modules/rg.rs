@@ -88,7 +88,7 @@ mod tests {
 
     #[test]
     fn parse_sample_rg_json() {
-        let json = r#"{"type":"match","data":{"path":{"text":"src/main.rs"},"lines":{"text":"fn main() {\\n"},"line_number":10,"absolute_offset":120}}"#;
+        let json = r#"{"type":"match","data":{"path":{"text":"src/main.rs"},"lines":{"text":"fn main() {\n"},"line_number":10,"absolute_offset":120}}"#;
         let results = parse_json_lines(json);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].path, PathBuf::from("src/main.rs"));
