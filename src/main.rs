@@ -592,7 +592,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 fs.remote_session = Some(session);
                                 // Use last_path only if non-empty and non-home; otherwise default to remote root
                                 // Note: last_path is the LAST VISITED remote path, not a local path
-                                fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
+                                fs.current_path = PathBuf::from("/"); // Always start at root for new connections
                                 fs.retry_count = 0;
                                 // Note: don't clear fs.files — old files stay visible until async refresh
                             }
