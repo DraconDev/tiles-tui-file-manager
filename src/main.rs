@@ -198,26 +198,29 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     // 2. System Stats Loop (Tokio) — polls every 3s; fast enough for the Monitor view
     //    without burning CPU when the user is in Files/Editor/Git.
     {
-        let tx = event_tx.clone();
-        let shutdown_stats = shutdown.clone();
-        tokio::spawn(async move {
-            loop {
-                if shutdown_stats.load(Ordering::Relaxed) {
-                    break;
-                }
-                let data = tokio::task::spawn_blocking({
-                    let mut sys_mod = crate::modules::system::SystemModule::new();
-                    move || sys_mod.get_data()
-                })
-                .await
-                .ok()
-                .and_then(|r| r.ok());
-                if let Some(data) = data {
-                    let _ = tx.send(AppEvent::SystemUpdated(data)).await;
-                }
-                tokio::time::sleep(Duration::from_secs(3)).await;
+    let tx = event_tx.clone();
+    let shutdown_stats = shutdown.clone();
+    tokio::spawn(async move {
+        let sys_mod = std::sync::Arc::new(std::sync::Mutex::new(
+            crate::modules::system::SystemModule::new(),
+        ));
+        loop {
+            if shutdown_stats.load(Ordering::Relaxed) {
+                break;
             }
-        });
+            let sys_mod_clone = sys_mod.clone();
+            let data = tokio::task::spawn_blocking(move || {
+                sys_mod_clone.lock().ok()?.get_data().ok()
+            })
+            .await
+            .ok()
+            .and_then(|r| r);
+            if let Some(data) = data {
+                let _ = tx.send(AppEvent::SystemUpdated(data)).await;
+            }
+            tokio::time::sleep(Duration::from_secs(3)).await;
+        }
+    });
     }
 
     // 3. Tick Loop (Tokio)
@@ -292,11 +295,30 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 AppEvent::Ui(_ui_event) => {}
-                AppEvent::SystemUpdated(data) => {
-                    let mut app_guard = app.lock();
-                    crate::modules::system::SystemModule::update_app_state(&mut app_guard, data);
-                    needs_draw = true;
+            AppEvent::SystemUpdated(data) => {
+                let mut app_guard = app.lock();
+                crate::modules::system::SystemModule::update_app_state(&mut app_guard, data);
+                let proc_len = app_guard.system_state.processes.len();
+                if let Some(idx) = app_guard.process_table_state.selected() {
+                    if idx >= proc_len {
+                        app_guard.process_table_state.select(if proc_len > 0 {
+                            Some(proc_len - 1)
+                        } else {
+                            None
+                        });
+                    }
                 }
+                if let Some(idx) = app_guard.process_selected_idx {
+                    if idx >= proc_len {
+                        app_guard.process_selected_idx = if proc_len > 0 {
+                            Some(proc_len - 1)
+                        } else {
+                            None
+                        };
+                    }
+                }
+                needs_draw = true;
+            }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
                     let remote_opt = {
                         let app_guard = app.lock();
@@ -456,25 +478,28 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     tokio::spawn(async move {
                         let path_str = path.to_string_lossy();
                         let content = if let Some(hash) = path_str.strip_prefix("git://") {
-                            match crate::modules::files::show_commit_patch(&current_dir, hash) {
-                                Ok(c) => c,
-                                Err(e) => format!("Error fetching commit data: {}", e),
+                            let hash = hash.to_string();
+                            match tokio::task::spawn_blocking(move || crate::modules::files::show_commit_patch(&current_dir, &hash)).await {
+                                Ok(Ok(c)) => c,
+                                Ok(Err(e)) => format!("Error fetching commit data: {}", e),
+                                Err(_) => "<Internal error>".to_string(),
                             }
                         } else if let Some(file_path) = path_str.strip_prefix("git-diff://") {
+                            let file_path = file_path.to_string();
                             if let Some(remote) = &remote_session {
                                 match crate::modules::remote::show_file_diff(
                                     remote,
                                     &current_dir,
-                                    file_path,
+                                    &file_path,
                                 ) {
                                     Ok(content) => content,
                                     Err(e) => format!("Error fetching diff data: {}", e),
                                 }
                             } else {
-                                match crate::modules::files::show_file_diff(&current_dir, file_path)
-                                {
-                                    Ok(content) => content,
-                                    Err(e) => format!("Error fetching diff data: {}", e),
+                                match tokio::task::spawn_blocking(move || crate::modules::files::show_file_diff(&current_dir, &file_path)).await {
+                                    Ok(Ok(content)) => content,
+                                    Ok(Err(e)) => format!("Error fetching diff data: {}", e),
+                                    Err(_) => "<Internal error>".to_string(),
                                 }
                             }
                         } else if let Some(remote) = &remote_session {
@@ -546,7 +571,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
 
                         let mut editor = dracon_terminal_engine::widgets::TextEditor::with_content(&content);
-                        if path_str.starts_with("git://") || path_str.starts_with("git-diff://") {
+                        if content.starts_with("<Error ") {
+                            editor.read_only = true;
+                        } else if path_str.starts_with("git://") || path_str.starts_with("git-diff://") {
                             editor.language = "diff".to_string();
                             editor.read_only = true;
                         } else if let Some(rs) = &remote_session {
@@ -594,6 +621,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     });
                 }
                 AppEvent::SaveFile(path, content) => {
+                    if content.starts_with("<Error ") {
+                        continue;
+                    }
                     let remote_for_save = {
                         let app_guard = app.lock();
                         app_guard
@@ -618,26 +648,46 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let save_res = if let Some(remote) = &remote_for_save {
                         crate::modules::remote::write_string(remote, &path, &content)
                     } else {
-                        let tmp_path = path.with_extension(format!("{}.tmp", std::process::id()));
-                        let res = std::fs::write(&tmp_path, &content).and_then(|_| std::fs::rename(&tmp_path, &path));
-                        if res.is_err() {
-                            let _ = std::fs::remove_file(&tmp_path);
+                        let path = path.clone();
+                        let content = content.clone();
+                        match tokio::task::spawn_blocking(move || {
+                            let tmp_path = path.with_extension(format!("{}.tmp", std::process::id()));
+                            let res = std::fs::write(&tmp_path, &content).and_then(|_| std::fs::rename(&tmp_path, &path));
+                            if res.is_err() {
+                                let _ = std::fs::remove_file(&tmp_path);
+                            }
+                            res
+                        }).await {
+                            Ok(Ok(())) => Ok(()),
+                            Ok(Err(e)) => Err(e),
+                            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn blocking failed")),
                         }
-                        res
                     };
 
                     match save_res {
                         Ok(_) => {
-                            if remote_for_save.is_none() {
-                                if let Ok(meta) = std::fs::metadata(&path) {
-                                    if let Ok(mtime) = meta.modified() {
-                                        let size: u64 = meta.len();
-                                        if last_self_save.len() > 100 {
-                                            last_self_save.clear();
-                                        }
-                                        last_self_save.insert(path.clone(), (mtime, size));
+                            let path_for_meta = path.clone();
+                            let mtime_size = if remote_for_save.is_none() {
+                                match tokio::task::spawn_blocking(move || {
+                                    std::fs::metadata(&path_for_meta).ok().and_then(|meta| {
+                                        meta.modified().ok().map(|mtime| (mtime, meta.len()))
+                                    })
+                                }).await {
+                                    Ok(Some(v)) => Some(v),
+                                    Ok(None) => None,
+                                    Err(_) => {
+                                        crate::app::log_debug("Metadata spawn_blocking task failed");
+                                        None
                                     }
                                 }
+                            } else {
+                                None
+                            };
+                            if let Some((mtime, size)) = mtime_size {
+                                if last_self_save.len() > 100 {
+                                    last_self_save.clear();
+                                }
+                                last_self_save.insert(path.clone(), (mtime, size));
                             }
                             let mut app_guard = app.lock();
                             if let Some(ref mut preview) = app_guard.editor_state {
@@ -690,10 +740,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
-                    let result: Result<(), std::io::Error> = if let Some(remote) = remote {
+                    let result = if let Some(remote) = remote {
                         crate::modules::remote::create_file(&remote, &path).map_err(|e| e)
                     } else {
-                        std::fs::File::create(&path).map(|_| ())
+                        let path = path.clone();
+                        match tokio::task::spawn_blocking(move || std::fs::File::create(&path)).await {
+                            Ok(Ok(_)) => Ok(()),
+                            Ok(Err(e)) => Err(e),
+                            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn blocking failed")),
+                        }
                     };
                     if let Err(e) = result {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Failed to create file: {}", e)));
@@ -710,10 +765,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
-                    let result: Result<(), std::io::Error> = if let Some(remote) = remote {
+                    let result = if let Some(remote) = remote {
                         crate::modules::remote::create_dir_all(&remote, &path)
                     } else {
-                        std::fs::create_dir_all(&path).map_err(|e| e)
+                        let path = path.clone();
+                        match tokio::task::spawn_blocking(move || std::fs::create_dir_all(&path)).await {
+                            Ok(Ok(())) => Ok(()),
+                            Ok(Err(e)) => Err(e),
+                            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn blocking failed")),
+                        }
                     };
                     if let Err(e) = result {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Failed to create folder: {}", e)));
@@ -733,7 +793,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let rename_res = if let Some(remote) = &remote {
                         crate::modules::remote::rename(remote, &old, &new)
                     } else {
-                        std::fs::rename(&old, &new)
+                        let old = old.clone();
+                        let new = new.clone();
+                        match tokio::task::spawn_blocking(move || std::fs::rename(&old, &new)).await {
+                            Ok(Ok(())) => Ok(()),
+                            Ok(Err(e)) => Err(e),
+                            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn blocking failed")),
+                        }
                     };
                     match rename_res {
                         Ok(_) => {
@@ -757,12 +823,21 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
-                    let result: Result<(), std::io::Error> = if let Some(remote) = remote {
+                    let result = if let Some(remote) = remote {
                         crate::modules::remote::remove_path(&remote, &path)
-                    } else if path.is_dir() {
-                        std::fs::remove_dir_all(&path)
                     } else {
-                        std::fs::remove_file(&path)
+                        let path = path.clone();
+                        match tokio::task::spawn_blocking(move || {
+                            if path.is_dir() {
+                                std::fs::remove_dir_all(&path)
+                            } else {
+                                std::fs::remove_file(&path)
+                            }
+                        }).await {
+                            Ok(Ok(())) => Ok(()),
+                            Ok(Err(e)) => Err(e),
+                            Err(_) => Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn blocking failed")),
+                        }
                     };
                     let focused = app.lock().focused_pane_index;
                     if let Err(e) = result {
@@ -788,18 +863,26 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             "Remote files cannot be trashed. Use Delete for permanent removal.".to_string()
                         ));
                     } else {
-                        match trash::delete(&path) {
-                            Ok(_) => {
+                        let path = path.clone();
+                        let path_for_msg = path.clone();
+                        let trash_result = tokio::task::spawn_blocking(move || trash::delete(&path)).await;
+                        match trash_result {
+                            Ok(Ok(_)) => {
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Trashed: {}",
-                                    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
+                                    path_for_msg.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
                                 )));
                             }
-                            Err(e) => {
+                            Ok(Err(e)) => {
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                     "Trash failed: {} - {}",
-                                    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                                    path_for_msg.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
                                     e
+                                )));
+                            }
+                            Err(_) => {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                    "Trash failed: spawn blocking failed"
                                 )));
                             }
                         }
@@ -874,22 +957,26 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         continue;
                     }
                     let result = {
+                        let src = src.clone();
+                        let dest = dest.clone();
                         #[cfg(unix)]
                         {
-                            std::os::unix::fs::symlink(&src, &dest)
+                            tokio::task::spawn_blocking(move || std::os::unix::fs::symlink(&src, &dest)).await
                         }
                         #[cfg(windows)]
                         {
-                            if src.is_dir() {
-                                std::os::windows::fs::symlink_dir(&src, &dest)
-                            } else {
-                                std::os::windows::fs::symlink_file(&src, &dest)
-                            }
+                            tokio::task::spawn_blocking(move || {
+                                if src.is_dir() {
+                                    std::os::windows::fs::symlink_dir(&src, &dest)
+                                } else {
+                                    std::os::windows::fs::symlink_file(&src, &dest)
+                                }
+                            }).await
                         }
                     };
 
                     match result {
-                        Ok(_) => {
+                        Ok(Ok(())) => {
                             if let Some(parent) = dest.parent() {
                                 let app_guard = app.lock();
                                 for (i, pane) in app_guard.panes.iter().enumerate() {
@@ -906,8 +993,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 src.display()
                             )));
                         }
-                        Err(e) => {
+                        Ok(Err(e)) => {
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Symlink failed: {}", e)));
+                        }
+                        Err(_) => {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Symlink failed: spawn blocking failed".to_string()));
                         }
                     }
                 }
@@ -930,9 +1020,14 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::SpawnDetached { cmd, args } => {
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);
                 }
-                AppEvent::KillProcess(pid) => {
-                    let _ = crate::modules::system::SystemModule::kill_process(pid);
-                }
+            AppEvent::KillProcess(pid, name) => {
+                let result = crate::modules::system::SystemModule::kill_process(pid);
+                let msg = match result {
+                    Ok(()) => format!("Killed {} (PID {})", name, pid),
+                    Err(e) => format!("Failed to kill {} (PID {}): {}", name, pid, e),
+                };
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(msg));
+            }
                 AppEvent::GitHistoryUpdated(
                     p_idx,
                     t_idx,
@@ -958,6 +1053,17 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         if let Some(fs) = pane.tabs.get_mut(tab_idx) {
                             fs.git_history = history;
                             fs.git_pending = pending;
+                            // Validate selections are still in bounds after refresh
+                            if let Some(idx) = fs.git_history_state.selected() {
+                                if idx >= fs.git_history.len() {
+                                    fs.git_history_state.select(None);
+                                }
+                            }
+                            if let Some(idx) = fs.git_pending_state.selected() {
+                                if idx >= fs.git_pending.len() {
+                                    fs.git_pending_state.select(None);
+                                }
+                            }
                             fs.git_branch = branch;
                             fs.git_ahead = ahead;
                             fs.git_behind = behind;
@@ -1285,13 +1391,15 @@ paired = new_paired;
                             fs.metadata = metadata;
 
                             // Apply pending selection and scroll (e.g., after navigate_up)
-                            if let Some((pending_path, pending_scroll)) = fs.pending_select_path.take() {
-                                if let Some(idx) = fs.files.iter().position(|p| p == &pending_path)
-                                {
+                            // Clamp scroll AFTER fs.files is populated so clamped_scroll uses correct file list
+                            let pending_select = fs.pending_select_path.take();
+
+                            if let Some((pending_path, pending_scroll)) = pending_select {
+                                if let Some(idx) = fs.files.iter().position(|p| p == &pending_path) {
                                     fs.selection.selected = Some(idx);
                                     fs.table_state.select(Some(idx));
-                                    *fs.table_state.offset_mut() = fs.clamped_scroll(pending_scroll);
                                 }
+                                *fs.table_state.offset_mut() = fs.clamped_scroll(pending_scroll);
                             }
                         }
                     }
@@ -1320,6 +1428,13 @@ paired = new_paired;
                     if !should_fetch {
                         return;
                     }
+
+                    // Capture tab index BEFORE async spawn — prevents race where tab changes while fetch runs
+                    let active_tab_idx = {
+                        let app_guard = app_for_git.lock();
+                        app_guard.panes.get(pane_idx).map(|p| p.active_tab_index).unwrap_or(0)
+                    };
+
                     tokio::spawn(async move {
                     let git_fetch_path = git_path.clone();
                     let git_data = tokio::task::spawn_blocking(move || {
@@ -1345,16 +1460,6 @@ paired = new_paired;
                     if !path_still_active {
                         return;
                     }
-
-                    // Get the active tab index for this pane so git data lands in the right place
-                    let active_tab_idx = {
-                        let app_guard = app_for_git.lock();
-                        app_guard
-                            .panes
-                            .get(pane_idx)
-                            .map(|p| p.active_tab_index)
-                            .unwrap_or(0)
-                    };
 
                     let (history, pending, branch, ahead, behind, summary, remotes, stashes) =
                         git_data.unwrap_or_else(|| {
