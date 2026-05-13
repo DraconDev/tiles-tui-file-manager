@@ -349,6 +349,41 @@ fn handle_search_keys(
     }
 }
 
+fn handle_content_search_keys(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+) -> bool {
+    match key.code {
+        KeyCode::Esc => {
+            app.mode = AppMode::Normal;
+            app.input.clear();
+            true
+        }
+        KeyCode::Enter => {
+            let query = app.input.value.clone();
+            if !query.is_empty() {
+                let path = app
+                    .panes
+                    .get(app.focused_pane_index)
+                    .and_then(|p| p.current_state())
+                    .map(|fs| fs.current_path.clone())
+                    .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+                let _ = crate::app::try_send_event(
+                    &event_tx,
+                    AppEvent::ContentSearchStart(query, path),
+                );
+            }
+            app.mode = AppMode::Normal;
+            app.input.clear();
+            true
+        }
+        _ => {
+            app.input.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(&Event::Key(*key)))
+        }
+    }
+}
+
 fn handle_path_input_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
