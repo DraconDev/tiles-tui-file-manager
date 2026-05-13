@@ -450,6 +450,32 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         needs_draw = true;
                     }
                 }
+                AppEvent::ContentSearchStart(query, path) => {
+                    let tx = event_tx.clone();
+                    tokio::spawn(async move {
+                        let results = crate::modules::rg::search(&query, &path).await;
+                        let _ = tx.send(AppEvent::ContentSearchResults(results)).await;
+                    });
+                    {
+                        let mut app_guard = app.lock();
+                        app_guard.content_search_query = query;
+                        app_guard.content_search_results.clear();
+                        app_guard.content_search_selected = 0;
+                        app_guard.content_search_scroll = 0;
+                    }
+                    needs_draw = true;
+                }
+                AppEvent::ContentSearchResults(results) => {
+                    let mut app_guard = app.lock();
+                    app_guard.content_search_results = results;
+                    let count = app_guard.content_search_results.len();
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                        "Found {} matches for '{}'",
+                        count,
+                        app_guard.content_search_query
+                    )));
+                    needs_draw = true;
+                }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
                     let (remote_opt, cached_session) = {
                         let app_guard = app.lock();

@@ -266,6 +266,7 @@ pub enum CommandAction {
     ConnectToRemote(usize),
     CommandPalette,
     CollapseFolders,
+    ContentSearch,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
