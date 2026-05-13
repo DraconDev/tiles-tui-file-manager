@@ -273,6 +273,7 @@ fn handle_modal_keys(
         AppMode::EditPermissions(_) => handle_edit_permissions_keys(key, app, event_tx),
         AppMode::Search => handle_search_keys(key, app, event_tx),
         AppMode::ContentSearch => handle_content_search_keys(key, app, event_tx),
+        AppMode::QuickFilter => handle_quick_filter_keys(key, app, event_tx),
         AppMode::OpenWith(path) => {
             match key.code {
                 KeyCode::Esc => {
