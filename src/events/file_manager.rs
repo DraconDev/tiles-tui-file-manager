@@ -215,7 +215,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 use crate::keybindings::KeyAction;
                 match action {
                     KeyAction::Quit => {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::Quit);
+                        app.running = false;
                         return true;
                     }
                     KeyAction::ToggleHidden => {
@@ -311,10 +311,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     }
                     KeyAction::Search => {
                         app.mode = AppMode::Search;
-                        app.input = app
-                            .current_file_state()
-                            .map(|s| s.search_filter.clone())
-                            .unwrap_or_default();
+                        app.input.clear();
                         return true;
                     }
                     KeyAction::CommandPalette => {
@@ -346,58 +343,52 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         return true;
                     }
                     KeyAction::Delete => {
-                        if let Some(path) = app.current_file_state().and_then(|fs| fs.selection.selected.and_then(|i| fs.files.get(i).cloned())) {
-                            if app.confirm_delete {
-                                app.mode = AppMode::ConfirmDelete(path);
-                            } else {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(path));
-                            }
-                        }
+                        handle_trash_key(app, event_tx);
                         return true;
                     }
                     KeyAction::Rename => {
-                        if let Some(fs) = app.current_file_state_mut() {
-                            if let Some(path) = fs.selection.selected.and_then(|i| fs.files.get(i).cloned()) {
-                                fs.selection.set_rename_target(path.clone());
-                                fs.selection.start_renaming();
-                            }
-                        }
+                        handle_rename_shortcut(app);
                         return true;
                     }
                     KeyAction::NewFolder => {
-                        if let Some(fs) = app.current_file_state() {
-                            let new_folder_path = fs.current_path.join("New Folder");
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFolder(new_folder_path));
-                        }
+                        app.mode = AppMode::NewFolder;
+                        app.input.clear();
                         return true;
                     }
                     KeyAction::Up => {
-                        if let Some(fs) = app.current_file_state_mut() {
-                            fs.selection.move_up(1);
-                        }
+                        app.move_up(false);
                         return true;
                     }
                     KeyAction::Down => {
-                        if let Some(fs) = app.current_file_state_mut() {
-                            fs.selection.move_down(1, fs.files.len());
-                        }
+                        app.move_down(false);
                         return true;
                     }
                     KeyAction::Left => {
-                        if let Some(fs) = app.current_file_state() {
-                            let parent = fs.current_path.parent().map(|p| p.to_path_buf());
-                            if let Some(parent) = parent {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::NavigateTo(parent));
-                            }
+                        if app.panes.len() > 1 && app.focused_pane_index > 0 {
+                            app.focused_pane_index -= 1;
+                        } else {
+                            app.sidebar_focus = true;
                         }
                         return true;
                     }
                     KeyAction::Right | KeyAction::Enter => {
                         if let Some(path) = app.current_file_state().and_then(|fs| fs.selection.selected.and_then(|i| fs.files.get(i).cloned())) {
                             if path.is_dir() {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::NavigateTo(path));
+                                if let Some(fs) = app.current_file_state_mut() {
+                                    fs.current_path = path.clone();
+                                    fs.selection.selected = Some(0);
+                                    fs.selection.anchor = Some(0);
+                                    fs.selection.clear_multi();
+                                    *fs.table_state.offset_mut() = 0;
+                                    crate::event_helpers::push_history(fs, path);
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                                }
                             } else {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::OpenFile(path));
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Opening: {}", path.display())));
+                                dracon_terminal_engine::utils::spawn_detached(
+                                    "xdg-open",
+                                    vec![path.to_string_lossy().to_string()],
+                                );
                             }
                         }
                         return true;
@@ -406,29 +397,45 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         if let Some(fs) = app.current_file_state() {
                             let parent = fs.current_path.parent().map(|p| p.to_path_buf());
                             if let Some(parent) = parent {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::NavigateTo(parent));
+                                if let Some(fs) = app.current_file_state_mut() {
+                                    fs.current_path = parent.clone();
+                                    fs.selection.selected = Some(0);
+                                    fs.selection.anchor = Some(0);
+                                    fs.selection.clear_multi();
+                                    *fs.table_state.offset_mut() = 0;
+                                    crate::event_helpers::push_history(fs, parent);
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                                }
                             }
                         }
                         return true;
                     }
                     KeyAction::TogglePreview => {
                         if let Some(fs) = app.current_file_state_mut() {
-                            fs.preview = if fs.preview.is_some() { None } else { Some(crate::app::PreviewState::default()) };
+                            if fs.preview.is_some() {
+                                fs.preview = None;
+                            } else if let Some(path) = fs.selection.selected.and_then(|i| fs.files.get(i).cloned()) {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(app.focused_pane_index, path));
+                            }
                         }
                         return true;
                     }
                     KeyAction::ToggleZoom => {
-                        app.toggle_zoom();
+                        app.toggle_split();
                         return true;
                     }
                     KeyAction::NextPane => {
-                        app.move_to_other_pane();
+                        if app.panes.len() > 1 && app.focused_pane_index < app.panes.len() - 1 {
+                            app.focused_pane_index += 1;
+                        }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
                         return true;
                     }
                     KeyAction::PrevPane => {
-                        app.move_to_other_pane();
+                        if app.focused_pane_index > 0 {
+                            app.focused_pane_index -= 1;
+                        }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
                         return true;
@@ -438,8 +445,11 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         return true;
                     }
                     KeyAction::ToggleMultiSelect => {
-                        if let Some(fs) = app.current_file_state_mut() {
-                            fs.selection.toggle_multi();
+                        app.selection_mode = !app.selection_mode;
+                        if !app.selection_mode {
+                            if let Some(fs) = app.current_file_state_mut() {
+                                fs.selection.clear_multi();
+                            }
                         }
                         return true;
                     }
@@ -456,7 +466,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     }
                     KeyAction::SortToggle => {
                         if let Some(fs) = app.current_file_state_mut() {
-                            fs.sort_asc = !fs.sort_asc;
+                            fs.sort_ascending = !fs.sort_ascending;
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                         return true;
