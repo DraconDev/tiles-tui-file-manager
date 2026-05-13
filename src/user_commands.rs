@@ -94,12 +94,46 @@ pub fn maybe_create_default_commands_toml() {
     let _ = std::fs::write(&path, create_default_commands_toml());
 }
 
+/// Expand a command template, replacing `{path}` with the given path.
+///
+/// Unlike a simple `split_whitespace()`, this handles paths with spaces
+/// by substituting first, then splitting on whitespace only for parts
+/// that don't contain `{path}`. Parts containing `{path}` are kept as
+/// single arguments even if the resulting path has spaces.
 pub fn expand_command_template(template: &str, path: &std::path::Path) -> Vec<String> {
     let path_str = path.to_string_lossy().to_string();
-    template
-        .split_whitespace()
-        .map(|part| part.replace("{path}", &path_str))
-        .collect()
+
+    // Split on whitespace, but preserve {path} as a single token
+    let mut parts = Vec::new();
+    let mut current = String::new();
+    let mut in_brace = false;
+
+    for ch in template.chars() {
+        if ch == '{' {
+            in_brace = true;
+            current.push(ch);
+        } else if ch == '}' {
+            in_brace = false;
+            current.push(ch);
+        } else if ch.is_whitespace() && !in_brace {
+            if !current.is_empty() {
+                parts.push(current.clone());
+                current.clear();
+            }
+        } else {
+            current.push(ch);
+        }
+    }
+    if !current.is_empty() {
+        parts.push(current);
+    }
+
+    // Now substitute {path} in each part
+    for part in &mut parts {
+        *part = part.replace("{path}", &path_str);
+    }
+
+    parts
 }
 
 #[cfg(test)]
@@ -118,5 +152,12 @@ mod tests {
         let path = PathBuf::from("/tmp/test");
         let parts = expand_command_template("cp {path} {path}.bak", &path);
         assert_eq!(parts, vec!["cp", "/tmp/test", "/tmp/test.bak"]);
+    }
+
+    #[test]
+    fn test_expand_path_with_spaces() {
+        let path = PathBuf::from("/home/user/my documents/file.txt");
+        let parts = expand_command_template("code {path}", &path);
+        assert_eq!(parts, vec!["code", "/home/user/my documents/file.txt"]);
     }
 }
