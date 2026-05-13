@@ -64,6 +64,8 @@ pub enum AppEvent {
     Ui(UiEvent),
     Raw(dracon_terminal_engine::contracts::InputEvent),
     ServersTomlChanged,
+    ContentSearchStart(String, PathBuf),
+    ContentSearchResults(Vec<crate::modules::rg::ContentSearchResult>),
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
