@@ -446,16 +446,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 // Note: last_path is the LAST VISITED remote path, not a local path
                                 fs.current_path = PathBuf::from("/"); // Always start at root for new connections
                                 fs.retry_count = 0;
-                                // Note: don't clear fs.files — old files stay visible until async refresh
                             }
-                        crate::app::log_debug(&format!(
-                            "RemoteConnected: pane={} host={} current_path={}",
-                            pane_idx,
-                            remote_name,
-                            last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
-                        ));
-                    }
-                    // Trigger initial file listing for the remote session
+                                }
+                                crate::app::log_debug(&format!(
+                                "RemoteConnected: pane={} host={} current_path={}",
+                                pane_idx,
+                                remote_name,
+                                last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
+                                ));
+                                }
+                        }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                     needs_draw = true;
                 }
