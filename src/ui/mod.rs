@@ -5881,6 +5881,171 @@ fn draw_highlight_modal(f: &mut Frame, _app: &App) {
     );
 }
 
+fn draw_trash_page(f: &mut Frame, area: Rect, app: &App) {
+    let block = Block::default()
+        .title_top(Line::from(vec![Span::styled(
+            " TRASH ",
+            Style::default()
+                .fg(Color::Black)
+                .bg(crate::ui::theme::accent_primary())
+                .add_modifier(Modifier::BOLD),
+        )]))
+        .title_top(
+            Line::from(vec![
+                Span::styled(
+                    " Esc ",
+                    Style::default()
+                        .fg(Color::Black)
+                        .bg(Color::Red)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(" Back ", Style::default().fg(Color::Red)),
+            ])
+            .alignment(Alignment::Right),
+        )
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(crate::ui::theme::border_inactive()))
+        .style(Style::default().bg(Color::Rgb(8, 8, 12)));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let items = match trash::os_limited::list() {
+        Ok(items) => items,
+        Err(e) => {
+            let lines = vec![
+                Line::from("Failed to list trash items").style(Style::default().fg(Color::Red)),
+                Line::from(format!("Error: {}", e)).style(Style::default().fg(Color::DarkGray)),
+            ];
+            f.render_widget(Paragraph::new(lines), inner);
+            return;
+        }
+    };
+
+    if items.is_empty() {
+        let lines = vec![
+            Line::from("Trash is empty").style(Style::default().fg(Color::DarkGray)),
+        ];
+        f.render_widget(Paragraph::new(lines), inner);
+        return;
+    }
+
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(vec![
+        Span::styled(" NAME ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" SIZE ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" DELETED ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+    ]));
+
+    for item in &items {
+        let name = item.name.clone();
+        let size = format_size(item.size);
+        let time = format_time(item.time_deleted);
+        lines.push(Line::from(vec![
+            Span::raw(format!(" {} ", truncate_to_width(&name, 40, "..."))),
+            Span::raw(format!(" {} ", size)),
+            Span::raw(format!(" {} ", time)),
+        ]));
+    }
+
+    f.render_widget(
+        Paragraph::new(lines).style(Style::default().fg(Color::Rgb(190, 190, 200))),
+        inner,
+    );
+}
+
+fn draw_disk_usage_page(f: &mut Frame, area: Rect, app: &App) {
+    let block = Block::default()
+        .title_top(Line::from(vec![Span::styled(
+            " DISK USAGE ",
+            Style::default()
+                .fg(Color::Black)
+                .bg(crate::ui::theme::accent_secondary())
+                .add_modifier(Modifier::BOLD),
+        )]))
+        .title_top(
+            Line::from(vec![
+                Span::styled(
+                    " Esc ",
+                    Style::default()
+                        .fg(Color::Black)
+                        .bg(Color::Red)
+                        .add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(" Back ", Style::default().fg(Color::Red)),
+            ])
+            .alignment(Alignment::Right),
+        )
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(crate::ui::theme::border_inactive()))
+        .style(Style::default().bg(Color::Rgb(8, 8, 12)));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let scan_path = app.current_file_state()
+        .map(|fs| fs.current_path.clone())
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+
+    // Simple disk usage: top-level items with sizes
+    let mut entries: Vec<(PathBuf, u64)> = Vec::new();
+    if let Ok(reader) = std::fs::read_dir(&scan_path) {
+        for entry in reader.flatten() {
+            let path = entry.path();
+            let size = if path.is_dir() {
+                crate::modules::files::folder_size(&path)
+            } else {
+                std::fs::metadata(&path).map(|m| m.len()).unwrap_or(0)
+            };
+            entries.push((path, size));
+        }
+    }
+
+    entries.sort_by(|a, b| b.1.cmp(&a.1));
+
+    if entries.is_empty() {
+        let lines = vec![
+            Line::from("No entries found").style(Style::default().fg(Color::DarkGray)),
+        ];
+        f.render_widget(Paragraph::new(lines), inner);
+        return;
+    }
+
+    let total: u64 = entries.iter().map(|(_, s)| s).sum();
+
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(vec![
+        Span::styled(format!(" {} ", scan_path.display()), Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(format!(" Total: {} ", format_size(total)), Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+    ]));
+    lines.push(Line::from(""));
+    lines.push(Line::from(vec![
+        Span::styled(" NAME ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" SIZE ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" % ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" BAR ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+    ]));
+
+    let bar_width = (inner.width as usize).saturating_sub(50).max(10);
+    for (path, size) in &entries {
+        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("..");
+        let pct = if total > 0 { (*size as f64 / total as f64) * 100.0 } else { 0.0 };
+        let filled = if total > 0 { ((*size as f64 / total as f64) * bar_width as f64) as usize } else { 0 };
+        let bar = format!("{:=<filled$}{: <width$}", "", "", filled = filled, width = bar_width - filled);
+        lines.push(Line::from(vec![
+            Span::raw(format!(" {} ", truncate_to_width(name, 20, "..."))),
+            Span::raw(format!(" {:>8} ", format_size(*size))),
+            Span::raw(format!(" {:>5.1}% ", pct)),
+            Span::styled(bar, Style::default().fg(crate::ui::theme::accent_primary())),
+        ]));
+    }
+
+    f.render_widget(
+        Paragraph::new(lines).style(Style::default().fg(Color::Rgb(190, 190, 200))),
+        inner,
+    );
+}
+
 fn format_modified_time(time: SystemTime, smart: bool) -> String {
     use chrono::{DateTime, Local};
     let dt: DateTime<Local> = time.into();
