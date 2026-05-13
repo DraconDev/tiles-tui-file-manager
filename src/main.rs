@@ -2279,9 +2279,11 @@ paired = new_paired;
                 let tiles_dir = config_dir.join("tiles");
                 let _ = std::fs::create_dir_all(&tiles_dir);
                 let last_dir_file = tiles_dir.join("last_dir");
-                let _ = std::fs::write(&last_dir_file, last_dir.as_os_str().as_encoded_bytes());
+                let _ = std::fs::write(&last_dir_file, last_dir.to_string_lossy().as_ref());
             }
         }
+        // Persist server last_path values back to servers.toml
+        crate::servers::save_servers_quiet(&app_guard.servers);
     }
 
     Ok(())

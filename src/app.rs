@@ -61,7 +61,7 @@ pub struct App {
     /// Stores per-folder state: (selected_index, scroll_offset).
     /// When re-entering a folder, both selection and scroll are restored.
     pub folder_memory: HashMap<PathBuf, (usize, usize)>,
-
+    pub path_colors: HashMap<PathBuf, u8>,
     pub confirm_delete: bool,
     pub smart_date: bool,
     pub semantic_coloring: bool,
@@ -260,7 +260,7 @@ impl App {
             hovered_drop_target: None,
             last_action_msg: None,
             folder_memory: HashMap::new(),
-
+            path_colors: HashMap::new(),
             confirm_delete: true,
             smart_date: true,
             semantic_coloring: true,
