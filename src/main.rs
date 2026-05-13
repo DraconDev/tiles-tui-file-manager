@@ -17,14 +17,20 @@ use crate::app::{App, AppEvent, CurrentView, PreviewState};
 use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use image::GenericImageView;
 mod app;
+mod clipboard;
 mod config;
 mod event;
 mod event_helpers;
 mod events;
 mod icons;
+mod keybindings;
 mod modules;
+mod servers;
 mod state;
+mod terminal;
+mod term_graphics;
 mod ui;
+mod user_commands;
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
@@ -73,143 +79,41 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                 }
                 Err(e) => {
-                    crate::app::log_debug(&format!("File watch error: {:?}", e));
-                    let _ = crate::app::try_send_event(&tx_clone, AppEvent::StatusMsg(format!(
-                        "File watch error: {}",
-                        e
-                    )));
-                }
-            }
-        },
-    )?;
-    let mut watched_paths: std::collections::HashSet<PathBuf> =
-        std::collections::HashSet::new();
-
-    // Helper to sync watched paths with current pane paths
-    let mut last_synced_paths: std::collections::HashSet<PathBuf> = std::collections::HashSet::new();
-
-    let mut sync_watches = |app: &App, debouncer: &mut notify_debouncer_mini::Debouncer<notify::RecommendedWatcher>| {
-        let mut current_paths = std::collections::HashSet::new();
-        
-        // Collect all paths from panes
-        for pane in &app.panes {
-            for tab in &pane.tabs {
-                current_paths.insert(tab.current_path.clone());
-            }
-        }
-        
-        // Also watch expanded folders in sidebar for editor view
-        for path in &app.expanded_folders {
-            current_paths.insert(path.clone());
-        }
-
-        // Fast bail-out: skip if nothing changed since last sync
-        if current_paths == last_synced_paths {
-            return;
-        }
-        last_synced_paths = current_paths.clone();
-
-        // Add paths that aren't being watched yet
-        for path in &current_paths {
-            if !watched_paths.contains(path) {
-                crate::app::log_debug(&format!("Starting file watch for: {:?}", path));
-                if let Ok(()) = debouncer.watcher().watch(path, notify::RecursiveMode::NonRecursive) {
-                    watched_paths.insert(path.clone());
-                    crate::app::log_debug(&format!("Now watching: {:?}", path));
-                } else {
-                    crate::app::log_debug(&format!("Failed to watch: {:?}", path));
-                }
-            }
-        }
-
-        // Remove paths that are no longer current
-        let to_remove: Vec<_> = watched_paths
-            .iter()
-            .filter(|p| !current_paths.contains(*p))
-            .cloned()
-            .collect();
-        for path in to_remove {
-            // Note: notify_debouncer_mini doesn't support unwatch
-            // The watch will just be inactive when path is no longer accessed
-            watched_paths.remove(&path);
-        }
-    };
-
-    // 1. Input Loop (Thread)
-    {
-        let tx = event_tx.clone();
-        let shutdown_input = shutdown.clone();
-        std::thread::spawn(move || {
-            use std::io::Read;
-            use std::os::fd::AsRawFd;
-            let mut parser = TuiParser::new();
-            let mut stdin = std::io::stdin();
-            let fd = stdin.as_raw_fd();
-            let mut buffer = [0; 1024];
-            while !shutdown_input.load(Ordering::Relaxed) {
-                // SAFETY: poll_input takes a borrowed file descriptor (BorrowedFd) and only
-                // checks for input availability (returns bool). The fd must be valid at this point.
-                // If stdin was closed or redirected such that the fd became invalid, the poll
-                // would return an error (not UB). We validate fd < 0 before the unsafe call to
-                // break cleanly on obviously invalid fds, but a stale fd in poll is safe since
-                // poll returns an error. We hold the only reference to stdin here, so there are
-                // no aliasing issues.
-                let polled = if fd < 0 {
-                    crate::app::log_debug("stdin fd is invalid (< 0), breaking input loop");
-                    break;
-                } else {
-                    unsafe {
-                        dracon_terminal_engine::backend::tty::poll_input(std::os::fd::BorrowedFd::borrow_raw(fd), 20)
-                    }
-                };
-                match polled {
-                    Ok(true) => match stdin.read(&mut buffer) {
-                        Ok(0) => break,
-                        Ok(n) => {
-                            for byte in buffer.iter().take(n) {
-                                if let Some(evt) = parser.advance(*byte) {
-                                    if let Some(converted) = crate::event::convert_event(evt) {
-                                        if let Some(ui_event) = to_ui_event(&converted) {
-                                            let _ = tx.blocking_send(AppEvent::Ui(ui_event));
-                                        }
-                                        let _ = tx.blocking_send(AppEvent::Raw(converted));
-                                    }
-                                }
-                            }
-                        }
-                        Err(_) => break,
-                    },
-                    Ok(false) => {
-                        if let Some(evt) = parser.check_timeout() {
-                            if let Some(converted) = crate::event::convert_event(evt) {
-                                if let Some(ui_event) = to_ui_event(&converted) {
-                                    let _ = tx.blocking_send(AppEvent::Ui(ui_event));
-                                }
-                                let _ = tx.blocking_send(AppEvent::Raw(converted));
-                            }
-                        }
-                    }
-                    Err(_) => break,
-                }
-            }
-        });
-    }
-
-    // 2. System Stats Loop (Tokio) — polls every 3s; fast enough for the Monitor view
-    //    without burning CPU when the user is in Files/Editor/Git.
-    {
-        let tx = event_tx.clone();
-        let shutdown_stats = shutdown.clone();
         tokio::spawn(async move {
-            let mut sys_mod = crate::modules::system::SystemModule::new();
             loop {
                 if shutdown_stats.load(Ordering::Relaxed) {
                     break;
                 }
-                if let Ok(data) = sys_mod.get_data() {
+                
+                // Collect stats at different rates based on active view
+                // Always collect so sparkline history stays current
+                let is_monitor_active = {
+                    let app_guard = app_for_stats.lock();
+                    app_guard.current_view == CurrentView::Processes
+                };
+                
+                let data = {
+                    let sys_mod = sys_mod.clone();
+                    match tokio::task::spawn_blocking(move || {
+                        if let Ok(mut guard) = sys_mod.lock() {
+                            guard.get_data().ok()
+                        } else {
+                            None
+                        }
+                    }).await {
+                        Ok(data) => data,
+                        Err(_) => None,
+                    }
+                };
+                if let Some(data) = data {
                     let _ = tx.send(AppEvent::SystemUpdated(data)).await;
                 }
-                tokio::time::sleep(Duration::from_secs(3)).await;
+                
+                if is_monitor_active {
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                } else {
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                }
             }
         });
     }
@@ -229,12 +133,75 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         });
     }
 
+    // 4. Servers.toml Watcher (notify crate) — auto-reload when edited externally
+    {
+        let tx = event_tx.clone();
+        let shutdown_watch = shutdown.clone();
+        tokio::spawn(async move {
+            use notify::{Config, RecommendedWatcher, RecursiveMode, Watcher};
+            use std::sync::mpsc::channel;
+
+            let Some(toml_path) = crate::servers::servers_toml_path() else {
+                return;
+            };
+            let Some(parent) = toml_path.parent() else {
+                return;
+            };
+
+            let (watch_tx, watch_rx) = channel::<notify::Result<notify::Event>>();
+            let mut watcher = match RecommendedWatcher::new(
+                move |res| {
+                    let _ = watch_tx.send(res);
+                },
+                Config::default(),
+            ) {
+                Ok(w) => w,
+                Err(e) => {
+                    crate::app::log_debug(&format!("Failed to create servers.toml watcher: {}", e));
+                    return;
+                }
+            };
+
+            if let Err(e) = watcher.watch(parent, RecursiveMode::NonRecursive) {
+                crate::app::log_debug(&format!("Failed to watch servers.toml dir: {}", e));
+                return;
+            }
+
+            let mut last_modified = std::time::Instant::now();
+            loop {
+                if shutdown_watch.load(Ordering::Relaxed) {
+                    break;
+                }
+                // Poll with timeout so we can check shutdown flag
+                match watch_rx.recv_timeout(std::time::Duration::from_millis(500)) {
+                    Ok(Ok(event)) => {
+                        if event.paths.iter().any(|p| p == &toml_path) {
+                            // Debounce: ignore events within 500ms of each other
+                            if last_modified.elapsed() > std::time::Duration::from_millis(500) {
+                                last_modified = std::time::Instant::now();
+                                let _ = tx.send(AppEvent::ServersTomlChanged).await;
+                            }
+                        }
+                    }
+                    Ok(Err(e)) => {
+                        crate::app::log_debug(&format!("servers.toml watch error: {}", e));
+                    }
+                    Err(_) => {} // Timeout — check shutdown flag next loop
+                }
+            }
+        });
+    }
+
     // Initial State Setup
     let pane_count = {
         let mut app_guard = app.lock();
         app_guard.running = true;
         if let Ok(size) = terminal.size() {
-            app_guard.terminal_size = (size.width, size.height);
+            if size.width > 0 && size.height > 0 {
+                app_guard.terminal_size = (size.width, size.height);
+            } else {
+                app_guard.terminal_size = (80, 24);
+            }
         }
         app_guard.panes.len()
     };
@@ -250,24 +217,65 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     crate::app::log_debug("Entering main loop");
 
+    // Draw initial frame BEFORE entering the event loop
+    {
+        let mut app_guard = app.lock();
+        if let Ok(size) = terminal.size() {
+            if size.width > 0 && size.height > 0 {
+                crate::term_graphics::clear_images(app_guard.graphics_protocol);
+                let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
+                if let Some(render) = app_guard.pending_image_render.take() {
+                    crate::term_graphics::render_image(
+                        app_guard.graphics_protocol,
+                        &render.rgba,
+                        render.width,
+                        render.height,
+                        render.area.width,
+                        render.area.height,
+                    );
+                }
+            }
+        }
+    }
+
     let mut panes_needing_refresh = std::collections::HashSet::new();
     let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64)> =
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
-    const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
+    const WATCH_SYNC_INTERVAL_MS: u64 = 5000;
 
     loop {
+        let _loop_start = std::time::Instant::now();
         let mut needs_draw = false;
+        let mut _event_count = 0u32;
+        const MAX_EVENTS_PER_FRAME: u32 = 100;
 
         while let Ok(event) = event_rx.try_recv() {
+            _event_count += 1;
+            if _event_count > MAX_EVENTS_PER_FRAME {
+                // Too many events — defer remaining to next frame to maintain responsiveness
+                crate::app::log_debug(&format!("Event loop capped at {} events, deferring rest", MAX_EVENTS_PER_FRAME));
+                break;
+            }
             match event {
                 AppEvent::Tick => {
-                    needs_draw = true;
+                    // Sync file watches periodically (every 5 seconds) to catch new/removed paths
+                    // without doing it on every Tick event
                     if last_watch_sync.elapsed() >= Duration::from_millis(WATCH_SYNC_INTERVAL_MS) {
                         let app_guard = app.lock();
                         sync_watches(&app_guard, &mut debouncer);
                         last_watch_sync = std::time::Instant::now();
+
+                        // Also prune remote health and stale sessions periodically
+                        drop(app_guard);
+                        let mut app_guard = app.lock();
+                        app_guard.prune_remote_health();
+                        let stale_threshold = Duration::from_secs(300);
+                        app_guard.remote_session_pool.retain(|_, (_, last_used)| {
+                            last_used.elapsed() < stale_threshold
+                        });
                     }
+                    needs_draw = true;
                 }
                 AppEvent::Raw(raw) => {
                     {
@@ -291,17 +299,106 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     crate::modules::system::SystemModule::update_app_state(&mut app_guard, data);
                     needs_draw = true;
                 }
+                AppEvent::ServersTomlChanged => {
+                    let mut app_guard = app.lock();
+                    let new_servers = crate::servers::load_servers();
+                    if new_servers != app_guard.servers {
+                        let count = new_servers.len();
+                        app_guard.servers = new_servers;
+                        crate::app::log_debug(&format!(
+                            "servers.toml changed externally, reloaded {} servers",
+                            count
+                        ));
+                        needs_draw = true;
+                    }
+                }
+                AppEvent::ContentSearchStart(query, path) => {
+                    let tx = event_tx.clone();
+                    let query_clone = query.clone();
+                    tokio::spawn(async move {
+                        let results = crate::modules::rg::search(&query_clone, &path).await;
+                        let _ = tx.send(AppEvent::ContentSearchResults(results)).await;
+                    });
+                    {
+                        let mut app_guard = app.lock();
+                        app_guard.content_search_query = query;
+                        app_guard.content_search_results.clear();
+                        app_guard.content_search_selected = 0;
+                        app_guard.content_search_scroll = 0;
+                    }
+                    needs_draw = true;
+                }
+                AppEvent::ContentSearchResults(results) => {
+                    let mut app_guard = app.lock();
+                    match results {
+                        Some(r) => {
+                            app_guard.content_search_results = r;
+                            let count = app_guard.content_search_results.len();
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "Found {} matches for '{}'",
+                                count,
+                                app_guard.content_search_query
+                            )));
+                        }
+                        None => {
+                            app_guard.content_search_results.clear();
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                                "ripgrep (rg) is not installed. Install it to enable content search.".to_string()
+                            ));
+                        }
+                    }
+                    needs_draw = true;
+                }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
-                    let remote_opt = {
+                    let (remote_opt, cached_session) = {
                         let app_guard = app.lock();
-                        app_guard.remote_bookmarks.get(bookmark_idx).cloned()
+                        let remote_opt = app_guard.servers.get(bookmark_idx)
+                            .cloned()
+                            .map(crate::state::RemoteBookmark::from);
+                        let cached = remote_opt.as_ref()
+                            .and_then(|r| app_guard.remote_session_pool.get(&r.name))
+                            .map(|(session, _last_used)| session.clone());
+                        (remote_opt, cached)
                     };
-                    if let Some(remote) = remote_opt {
+                    
+                    if let Some(session) = cached_session {
+                        // Reuse cached connection
+                        let mut app_guard = app.lock();
+                        let last_path = app_guard.servers.get(bookmark_idx)
+                            .and_then(|s| if s.last_path.to_string_lossy().is_empty() { None } else { Some(s.last_path.clone()) });
+                        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                            if let Some(fs) = pane.current_state_mut() {
+                                fs.remote_session = Some(session);
+                                fs.bookmark_idx = Some(bookmark_idx);
+                                // Don't reset retry_count here — preserves the retry counter
+                                // across ReconnectRemote → ConnectToRemote cycles
+                                // Use last_path only if non-empty; otherwise default to remote root
+                        crate::app::log_debug(&format!("ConnectToRemote cached: pane={} path={:?}", pane_idx, fs.current_path));
+                                fs.current_path = PathBuf::from("/"); // Always start at root for cached connections too
+                            }
+                        }
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                            "Connected to {} (cached)",
+                            remote_opt.as_ref().map(|r| r.display_name()).unwrap_or_default()
+                        )));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                    } else if let Some(remote) = remote_opt {
+                        // Store bookmark_idx for potential reconnection
+                        {
+                            let mut app_guard = app.lock();
+                            if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                                if let Some(fs) = pane.current_state_mut() {
+                                    fs.bookmark_idx = Some(bookmark_idx);
+                                    fs.retry_count = 0;
+                                }
+                            }
+                        }
                         let tx = event_tx.clone();
                         let p_idx = pane_idx;
+                        let remote_name = remote.name.clone();
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                             "Connecting to {} ({})...",
-                            remote.name, remote.host
+                            remote.display_name(), remote.host
                         )));
 
                         tokio::spawn(async move {
@@ -313,7 +410,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             match connect_result {
                                 Ok(Ok(session)) => {
                                     let _ =
-                                        tx.send(AppEvent::RemoteConnected(p_idx, session)).await;
+                                        tx.send(AppEvent::RemoteConnected(p_idx, session, remote_name)).await;
                                 }
                                 Ok(Err(e)) => {
                                     let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
@@ -329,14 +426,60 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         });
                     }
                 }
-                AppEvent::RemoteConnected(pane_idx, session) => {
-                    let mut app_guard = app.lock();
-                    if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
-                        if let Some(fs) = pane.current_state_mut() {
-                            fs.remote_session = Some(session);
-                            fs.current_path = PathBuf::from("/");
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                AppEvent::RemoteConnected(pane_idx, session, remote_name) => {
+                    {
+                        let mut app_guard = app.lock();
+                        // Cache the session for reuse
+                        app_guard.remote_session_pool.insert(remote_name.clone(), (session.clone(), std::time::Instant::now()));
+                        // Clean up stale sessions (older than 5 minutes)
+                        let stale_threshold = std::time::Duration::from_secs(300);
+                        let now = std::time::Instant::now();
+                        app_guard.remote_session_pool.retain(|_, (_, last_used)| now.duration_since(*last_used) < stale_threshold);
+                        // Read last_path before mutable pane borrow
+                        let last_path = app_guard.servers.iter()
+                            .find(|s| s.name == remote_name)
+                            .and_then(|s| if s.last_path.to_string_lossy().is_empty() { None } else { Some(s.last_path.clone()) });
+                        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                            if let Some(fs) = pane.current_state_mut() {
+                                fs.remote_session = Some(session);
+                                // Use last_path only if non-empty and non-home; otherwise default to remote root
+                                // Note: last_path is the LAST VISITED remote path, not a local path
+                                fs.current_path = PathBuf::from("/"); // Always start at root for new connections
+                                fs.retry_count = 0;
+                                // Note: don't clear fs.files — old files stay visible until async refresh
+                            }
+                        crate::app::log_debug(&format!(
+                            "RemoteConnected: pane={} host={} current_path={}",
+                            pane_idx,
+                            remote_name,
+                            last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
+                        ));
+                    }
+                    // Trigger initial file listing for the remote session
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                    needs_draw = true;
+                }
+                AppEvent::ReconnectRemote(pane_idx) => {
+                    let bookmark_idx = {
+                        let mut app_guard = app.lock();
+                        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                            if let Some(fs) = pane.current_state_mut() {
+                                fs.retry_count += 1;
+                            }
                         }
+                        app_guard.panes.get(pane_idx)
+                            .and_then(|p| p.current_state())
+                            .and_then(|fs| fs.bookmark_idx)
+                    };
+                    if let Some(idx) = bookmark_idx {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            "Connection lost. Reconnecting...".to_string()
+                        ));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(pane_idx, idx));
+                    } else {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            "Connection lost. Cannot auto-reconnect (no bookmark).".to_string()
+                        ));
                     }
                     needs_draw = true;
                 }
@@ -402,7 +545,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             if let Some(ref preview) = fs.preview {
                                 if preview.path == path {
                                     if let Some(editor) = &preview.editor {
-                                        if !editor.modified {
+                                        let skip_because_active_editor = app_guard
+                                            .editor_state
+                                            .as_ref()
+                                            .map(|e| e.path == path)
+                                            .unwrap_or(false);
+                                        if !skip_because_active_editor && !editor.modified {
                                             needs_reload.push((i, path.clone()));
                                         }
                                     }
@@ -413,11 +561,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
                     if let Some(preview) = &app_guard.editor_state {
                         if preview.path == path {
-                            if let Some(editor) = &preview.editor {
-                                if !editor.modified {
-                                    needs_reload.push((app_guard.focused_pane_index, path.clone()));
-                                }
-                            }
+                            needs_reload.retain(|(idx, _)| *idx != app_guard.focused_pane_index);
                         }
                     }
 
@@ -429,6 +573,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::PreviewRequested(pane_idx, path) => {
                     let tx = event_tx.clone();
+                    let path_clone = path.clone();
                     let app_clone = app.clone();
                     let (current_dir, preview_limit_mb, remote_session) = {
                         let app_guard = app.lock();
@@ -448,27 +593,31 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     };
 
                     tokio::spawn(async move {
+                        let path = path_clone;
                         let path_str = path.to_string_lossy();
                         let content = if let Some(hash) = path_str.strip_prefix("git://") {
-                            match crate::modules::files::show_commit_patch(&current_dir, hash) {
-                                Ok(c) => c,
-                                Err(e) => format!("Error fetching commit data: {}", e),
+                            let hash_owned = hash.to_string();
+                            match tokio::task::spawn_blocking(move || crate::modules::files::show_commit_patch(&current_dir, &hash_owned)).await {
+                                Ok(Ok(c)) => c,
+                                Ok(Err(e)) => format!("Error fetching commit data: {}", e),
+                                Err(_) => "<Internal error>".to_string(),
                             }
                         } else if let Some(file_path) = path_str.strip_prefix("git-diff://") {
+                            let file_path_owned = file_path.to_string();
                             if let Some(remote) = &remote_session {
                                 match crate::modules::remote::show_file_diff(
                                     remote,
                                     &current_dir,
-                                    file_path,
+                                    &file_path_owned,
                                 ) {
                                     Ok(content) => content,
                                     Err(e) => format!("Error fetching diff data: {}", e),
                                 }
                             } else {
-                                match crate::modules::files::show_file_diff(&current_dir, file_path)
-                                {
-                                    Ok(content) => content,
-                                    Err(e) => format!("Error fetching diff data: {}", e),
+                                match tokio::task::spawn_blocking(move || crate::modules::files::show_file_diff(&current_dir, &file_path_owned)).await {
+                                    Ok(Ok(content)) => content,
+                                    Ok(Err(e)) => format!("Error fetching diff data: {}", e),
+                                    Err(_) => "<Internal error>".to_string(),
                                 }
                             }
                         } else if let Some(remote) = &remote_session {
@@ -479,8 +628,40 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                         .map(|n| n.to_string_lossy().to_string())
                                         .unwrap_or_else(|| "/".to_string())
                                 ),
-                                Ok(false) => crate::modules::remote::read_to_string(remote, &path)
-                                    .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
+                                Ok(false) => {
+                                    match crate::modules::remote::is_binary_file(remote, &path) {
+                                        Ok((true, size_mb)) => {
+                                            if size_mb < 50 {
+                                                let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                                    "Downloading {} MB binary from remote...", size_mb
+                                                )));
+                                                match crate::modules::remote::download_remote_file(remote, &path) {
+                                                    Ok(local_path) => {
+                                                        dracon_terminal_engine::utils::spawn_detached(
+                                                            "xdg-open",
+                                                            vec![local_path.to_string_lossy().to_string()],
+                                                        );
+                                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                                            "Opened {} ({} MB) locally", path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default(), size_mb
+                                                        )));
+                                                        format!("<Binary file: {} MB - opened locally>", size_mb)
+                                                    }
+                                                    Err(e) => {
+                                                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                                                            "Download failed: {}", e
+                                                        )));
+                                                        format!("<Binary file: {} MB - download failed: {}>", size_mb, e)
+                                                    }
+                                                }
+                                            } else {
+                                                format!("<Binary file: {} MB - too large for auto-download>", size_mb)
+                                            }
+                                        }
+                                        Ok((false, _)) => crate::modules::remote::read_to_string(remote, &path)
+                                            .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
+                                        Err(e) => format!("Error checking remote file: {e}"),
+                                    }
+                                }
                                 Err(e) => format!("Error probing remote path: {e}"),
                             }
                         } else if path.is_dir() {
@@ -518,8 +699,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                     format!("<Binary file: {} MB>", size_mb)
                                 }
                             } else {
-                                std::fs::read_to_string(&path)
-                                    .unwrap_or_else(|e| format!("Error reading file: {}", e))
+                                std::fs::read_to_string(&path).unwrap_or_else(|e| format!("<Error reading file: {}>", e))
                             }
                         };
 
@@ -613,7 +793,12 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let save_res = if let Some(remote) = &remote_for_save {
                         crate::modules::remote::write_string(remote, &path, &content)
                     } else {
-                        std::fs::write(&path, &content)
+                        let tmp_path = path.with_extension(format!("{}.tmp", std::process::id()));
+                        let res = std::fs::write(&tmp_path, &content).and_then(|_| std::fs::rename(&tmp_path, &path));
+                        if res.is_err() {
+                            let _ = std::fs::remove_file(&tmp_path);
+                        }
+                        res
                     };
 
                     match save_res {
@@ -796,6 +981,74 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
                 }
+                AppEvent::Chmod(path, mode) => {
+                    let remote = {
+                        let app_guard = app.lock();
+                        app_guard
+                            .current_file_state()
+                            .and_then(|fs| fs.remote_session.clone())
+                    };
+                    let focused = app.lock().focused_pane_index;
+                    let result = if let Some(remote) = remote {
+                        crate::modules::remote::chmod(&remote, &path, mode)
+                    } else {
+                        use std::os::unix::fs::PermissionsExt;
+                        let mut perms = std::fs::metadata(&path)?.permissions();
+                        perms.set_mode(mode);
+                        std::fs::set_permissions(&path, perms)
+                    };
+                    match result {
+                        Ok(_) => {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "Permissions set to {:o} for {}",
+                                mode,
+                                path.file_name().map(|n| n.to_string_lossy()).unwrap_or_default()
+                            )));
+                        }
+                        Err(e) => {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "chmod failed: {}", e
+                            )));
+                        }
+                    }
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
+                }
+                AppEvent::ComputeChecksums(path) => {
+                    let tx = event_tx.clone();
+                    let app_clone = app.clone();
+                    tokio::spawn(async move {
+                        let remote = {
+                            let app_guard = app_clone.lock();
+                            app_guard
+                                .current_file_state()
+                                .and_then(|fs| fs.remote_session.clone())
+                        };
+                        
+                        let result = if let Some(remote) = &remote {
+                            crate::modules::remote::compute_checksums(remote, &path)
+                        } else {
+                            crate::modules::files::compute_checksums(&path)
+                        };
+                        
+                        match result {
+                            Ok((md5, sha256)) => {
+                                let file_name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+                                {
+                                    let mut app_guard = app_clone.lock();
+                                    app_guard.insert_checksum(path.clone(), md5, sha256);
+                                }
+                                let _ = tx.send(AppEvent::StatusMsg(format!(
+                                    "Checksums computed for {}", file_name
+                                ))).await;
+                            }
+                            Err(e) => {
+                                let _ = tx.send(AppEvent::StatusMsg(format!(
+                                    "Checksum failed: {}", e
+                                ))).await;
+                            }
+                        }
+                    });
+                }
                 AppEvent::Copy(src, dest) => {
                     let tx = event_tx.clone();
                     let app_clone = app.clone();
@@ -850,6 +1103,129 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     });
                 }
+                AppEvent::CompareFiles(path_a, path_b) => {
+                    let remote = {
+                        let app_guard = app.lock();
+                        app_guard
+                            .current_file_state()
+                            .and_then(|fs| fs.remote_session.clone())
+                    };
+                    
+                    let diff_content = if let Some(remote) = &remote {
+                        crate::modules::remote::diff_files(remote, &path_a, &path_b)
+                            .unwrap_or_else(|e| format!("Error computing diff: {}", e))
+                    } else {
+                        crate::modules::files::diff_files(&path_a, &path_b)
+                            .unwrap_or_else(|e| format!("Error computing diff: {}", e))
+                    };
+                    
+                    let mut editor = dracon_terminal_engine::widgets::TextEditor::with_content(&diff_content);
+                    editor.language = "diff".to_string();
+                    editor.read_only = true;
+                    
+                    let pane_idx = {
+                        let app_guard = app.lock();
+                        app_guard.focused_pane_index
+                    };
+                    let mut app_guard = app.lock();
+                    if let Some(fs) = app_guard.panes.get_mut(pane_idx).and_then(|p| p.current_state_mut()) {
+                        fs.preview = Some(crate::state::PreviewState {
+                            path: path_a.clone(),
+                            editor: Some(editor),
+                            content: diff_content,
+                            last_saved: None,
+                            image_data: None,
+                            highlighted_lines: None,
+                        });
+                    }
+                    needs_draw = true;
+                }
+                AppEvent::CreateArchive(paths, dest, format_idx) => {
+                    let remote = {
+                        let app_guard = app.lock();
+                        app_guard
+                            .current_file_state()
+                            .and_then(|fs| fs.remote_session.clone())
+                    };
+                    
+                    let tx = event_tx.clone();
+                    tokio::spawn(async move {
+                        let result = if let Some(remote) = &remote {
+                            tokio::task::spawn_blocking({
+                                let remote = remote.clone();
+                                let paths = paths.clone();
+                                let dest = dest.clone();
+                                let format_idx = format_idx;
+                                move || crate::modules::remote::create_archive(&remote, &paths, &dest, format_idx)
+                            }).await.unwrap_or(Err(std::io::Error::new(std::io::ErrorKind::Other, "spawn failed")))
+                        } else {
+                            crate::modules::files::create_archive(&paths, &dest, format_idx).await
+                        };
+                        
+                        match result {
+                            Ok(_) => {
+                                let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(
+                                    format!("Created archive: {}", dest.display())
+                                ));
+                            }
+                            Err(e) => {
+                                let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(
+                                    format!("Failed to create archive: {}", e)
+                                ));
+                            }
+                        }
+                    });
+                }
+                AppEvent::UploadToRemote(src, dest) => {
+                    let tx = event_tx.clone();
+                    let app_clone = app.clone();
+                    let src_name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "file".to_string());
+                    let task_id = uuid::Uuid::new_v4();
+                    let progress_tx = event_tx.clone();
+
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::TaskProgress(task_id, 0.0, format!("Uploading {}...", src_name)));
+
+                    tokio::spawn(async move {
+                        let remote = {
+                            let app_guard = app_clone.lock();
+                            app_guard
+                                .current_file_state()
+                                .and_then(|fs| fs.remote_session.clone())
+                        };
+
+                        let mut last_progress = 0.0f32;
+                        let progress_callback = |progress: f32| {
+                            // Only send updates when progress changes by at least 5%
+                            if progress - last_progress >= 5.0 || progress >= 100.0 {
+                                last_progress = progress;
+                                let _ = crate::app::try_send_event(&progress_tx, AppEvent::TaskProgress(
+                                    task_id, 
+                                    progress / 100.0, 
+                                    format!("Uploading {}... {:.0}%", src_name, progress)
+                                ));
+                            }
+                        };
+
+                        let uploaded = if let Some(remote) = &remote {
+                            crate::modules::remote::upload_file_with_progress(remote, &src, &dest, progress_callback).is_ok()
+                        } else {
+                            false
+                        };
+
+                        if uploaded {
+                            let _ = tx.send(AppEvent::StatusMsg(format!(
+                                "Uploaded {}", src_name
+                            ))).await;
+                        } else {
+                            let _ = tx.send(AppEvent::StatusMsg(format!(
+                                "Failed to upload {}", src_name
+                            ))).await;
+                        }
+
+                        let _ = tx.send(AppEvent::TaskFinished(task_id)).await;
+                        let _ = tx.send(AppEvent::RefreshFiles(0)).await;
+                    });
+                }
                 AppEvent::Symlink(src, dest) => {
                     let remote = {
                         let app_guard = app.lock();
@@ -901,6 +1277,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     }
                 }
+                AppEvent::FolderSizesUpdated(pane_idx, sizes) => {
+                    let mut app_guard = app.lock();
+                    if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                        if let Some(fs) = pane.current_state_mut() {
+                            fs.folder_sizes = sizes;
+                        }
+                    }
+                    needs_draw = true;
+                }
                 AppEvent::SpawnTerminal {
                     path,
                     new_tab,
@@ -915,49 +1300,223 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         )
                     });
                     let cmd_str = remote_cmd.as_deref().or(command.as_deref());
-                    dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
+                    
+                    crate::app::log_debug(&format!(
+                        "SpawnTerminal: path={}, new_tab={}, is_remote={}, has_command={}",
+                        path.display(),
+                        new_tab,
+                        remote.is_some(),
+                        cmd_str.is_some()
+                    ));
+                    
+                    let success = crate::terminal::spawn_terminal_at(&path, new_tab, cmd_str);
+                    
+                    if !success {
+                        let err_detail = if remote.is_some() {
+                            "remote terminal spawn failed"
+                        } else {
+                            "local terminal spawn failed (check debug.log for details)"
+                        };
+                        let err_msg = format!(
+                            "Failed to open terminal: {} ({})",
+                            cmd_str.unwrap_or("(shell)"),
+                            err_detail
+                        );
+                        crate::app::log_debug(&err_msg);
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(err_msg));
+                    } else {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                            "Opened terminal: {}",
+                            cmd_str.unwrap_or("(shell)")
+                        )));
+                    }
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
+                    crate::app::log_debug(&format!("SpawnDetached: cmd={}, args={:?}", cmd, args));
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);
                 }
                 AppEvent::KillProcess(pid) => {
                     let _ = crate::modules::system::SystemModule::kill_process(pid);
                 }
-                AppEvent::GitHistoryUpdated(
-                    p_idx,
-                    t_idx,
-                    history,
-                    pending,
-                    branch,
-                    ahead,
-                    behind,
-                    summary,
-                    remotes,
-                    stashes,
-                ) => {
+                AppEvent::GitHistoryUpdated(data) => {
                     let mut app_guard = app.lock();
-                    if p_idx >= app_guard.panes.len() {
+                    if data.pane_idx >= app_guard.panes.len() {
                         crate::app::log_debug(&format!(
                             "GitHistoryUpdated: pane_idx {} out of bounds (panes: {})",
-                            p_idx,
+                            data.pane_idx,
                             app_guard.panes.len()
                         ));
-                    } else if let Some(pane) = app_guard.panes.get_mut(p_idx) {
+                    } else if let Some(pane) = app_guard.panes.get_mut(data.pane_idx) {
                         // Store git data in the specified tab, or active tab as fallback
-                        let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
+                        let tab_idx = if data.tab_idx < pane.tabs.len() { data.tab_idx } else { pane.active_tab_index };
                         if let Some(fs) = pane.tabs.get_mut(tab_idx) {
-                            fs.git_history = history;
-                            fs.git_pending = pending;
-                            fs.git_branch = branch;
-                            fs.git_ahead = ahead;
-                            fs.git_behind = behind;
-                            fs.git_summary = summary;
-                            fs.git_remotes = remotes;
-                            fs.git_stashes = stashes;
+                            fs.git_history = data.history;
+                            fs.git_pending = data.pending;
+                            fs.git_branch = data.branch;
+                            fs.git_ahead = data.ahead;
+                            fs.git_behind = data.behind;
+                            fs.git_summary = data.summary;
+                            fs.git_remotes = data.remotes;
+                            fs.git_stashes = data.stashes;
                             fs.git_cache_until = Some(Instant::now() + Duration::from_secs(GIT_CACHE_TTL_SECONDS));
                         }
                     }
                     needs_draw = true;
+                }
+                AppEvent::GitDiffFetched(p_idx, t_idx, diff) => {
+                    let mut app_guard = app.lock();
+                    if let Some(pane) = app_guard.panes.get_mut(p_idx) {
+                        let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
+                        if let Some(fs) = pane.tabs.get_mut(tab_idx) {
+                            fs.git_pending_diff = Some(diff);
+                            if let Some(pending_idx) = fs.git_pending_state.selected() {
+                                if let Some(change) = fs.git_pending.get(pending_idx) {
+                                    fs.git_diff_for_path = Some(change.path.clone());
+                                }
+                            }
+                        }
+                    }
+                    needs_draw = true;
+                }
+                AppEvent::GitStageFile(p_idx, t_idx, file_path) => {
+                    let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_stage(&remote, &repo_path.unwrap_or_default(), &file_path)
+                        } else {
+                            crate::modules::files::git_stage(&repo_path.unwrap_or_default(), &file_path)
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => format!("Staged: {}", file_path),
+                            Err(e) => format!("Failed to stage {}: {}", file_path, e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitUnstageFile(p_idx, t_idx, file_path) => {
+                    let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_unstage(&remote, &repo_path.unwrap_or_default(), &file_path)
+                        } else {
+                            crate::modules::files::git_unstage(&repo_path.unwrap_or_default(), &file_path)
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => format!("Unstaged: {}", file_path),
+                            Err(e) => format!("Failed to unstage {}: {}", file_path, e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitStageAll(p_idx, t_idx) => {
+                    let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_stage_all(&remote, &repo_path.unwrap_or_default())
+                        } else {
+                            crate::modules::files::git_stage_all(&repo_path.unwrap_or_default())
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => "Staged all changes".to_string(),
+                            Err(e) => format!("Failed to stage all: {}", e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitUnstageAll(p_idx, t_idx) => {
+                    let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_unstage_all(&remote, &repo_path.unwrap_or_default())
+                        } else {
+                            crate::modules::files::git_unstage_all(&repo_path.unwrap_or_default())
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => "Unstaged all changes".to_string(),
+                            Err(e) => format!("Failed to unstage all: {}", e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
+                    });
+                }
+                AppEvent::GitCommit(p_idx, t_idx, message) => {
+                    let app_clone = app.clone();
+                    let event_tx_clone = event_tx.clone();
+                    tokio::spawn(async move {
+                        let guard = app_clone.lock();
+                        let repo_path = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .map(|t| t.current_path.clone());
+                        let remote = guard.panes.get(p_idx)
+                            .and_then(|p| p.tabs.get(t_idx))
+                            .and_then(|t| t.remote_session.clone());
+                        drop(guard);
+                        
+                        let result = if let Some(remote) = remote {
+                            crate::modules::remote::git_commit(&remote, &repo_path.unwrap_or_default(), &message)
+                        } else {
+                            crate::modules::files::git_commit(&repo_path.unwrap_or_default(), &message)
+                        };
+                        
+                        let status = match result {
+                            Ok(_) => format!("Committed: {}", message),
+                            Err(e) => format!("Failed to commit: {}", e),
+                        };
+                        
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::StatusMsg(status));
+                        let _ = crate::app::try_send_event(&event_tx_clone, AppEvent::GitHistory);
+                    });
                 }
                 AppEvent::TaskProgress(id, progress, status) => {
                     let mut app_guard = app.lock();
@@ -977,6 +1536,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::TaskFinished(id) => {
                     let mut app_guard = app.lock();
                     app_guard.background_tasks.retain(|t| t.id != id);
+                    needs_draw = true;
+                }
+                AppEvent::CommandOutputLine(line) => {
+                    let mut app_guard = app.lock();
+                    app_guard.command_output.push(line);
+                    needs_draw = true;
+                }
+                AppEvent::CommandOutputDone(status) => {
+                    let mut app_guard = app.lock();
+                    app_guard.command_output_status = Some(status);
                     needs_draw = true;
                 }
                 AppEvent::GlobalSearchUpdated(pane_idx, files, _meta) => {
@@ -1058,7 +1627,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session.clone(),
                             fs.search_filter.clone(),
                             fs.search_generation,
-                            matches!(app_guard.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
+                            matches!(app_guard.current_view, CurrentView::Git | CurrentView::Commit),
                             app_guard.expanded_folders.clone(),
                         )
                     } else {
@@ -1073,90 +1642,126 @@ let list_path_for_filter = path.clone();
 
             let tx = event_tx.clone();
             let app_clone = app.clone();
+            let app_clone_for_health = app.clone();
             let expanded_folders = tree_expanded;
             tokio::spawn(async move {
                 let list_path = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
                 let start_generation = current_generation;
+                let tx_retry = tx.clone();
                 let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
-                        if let Some(session) = &list_remote {
-                            let _ = crate::modules::remote::read_dir_with_metadata(session, &list_path);
-                        } else {
-                            let _ = crate::modules::files::read_dir_with_metadata(&list_path);
-                        }
 
-                        // Always walk expanded folders (Dolphin-style inline tree)
-                        // Keep files and depths as pairs throughout the entire pipeline
-                        // to avoid index misalignment after filtering/sorting
-                        let max_depth = MAX_TREE_DEPTH;
-                        let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
-                        fn walk_tree(
-                            path: &std::path::Path,
-                            depth: u16,
-                            max_depth: u16,
-                            expanded: &std::collections::HashSet<PathBuf>,
-                            hidden: bool,
-                            tree_files: &mut Vec<(PathBuf, u16)>,
-                        ) {
-                            if depth >= max_depth {
-                                return;
-                            }
-                            let Ok(entries) = std::fs::read_dir(path) else { return };
-                            let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
-                            sorted.sort_by(|a, b| {
-                                let a_is_dir = a.path().is_dir();
-                                let b_is_dir = b.path().is_dir();
-                                if a_is_dir != b_is_dir {
-                                    return if a_is_dir {
-                                        std::cmp::Ordering::Less
+                        if let Some(session) = &list_remote {
+                            // Remote: use SSH directory listing
+                            match crate::modules::remote::read_dir_with_metadata(session, &list_path) {
+                                Ok((files, meta)) => {
+                                    // Mark connection as healthy
+                                    let mut app_guard = app_clone_for_health.lock();
+                                    app_guard.prune_remote_health();
+                                    app_guard.remote_health.insert(session.name.clone(), (true, std::time::Instant::now()));
+                                    drop(app_guard);
+                                    
+                                    let tree_files: Vec<(PathBuf, u16)> = files.into_iter().map(|p| (p, 0)).collect();
+                                    let trimmed_filter = list_filter.trim();
+                                    let g_result = if trimmed_filter.len() > 3 {
+                                        crate::modules::remote::global_search(
+                                            session,
+                                            &list_path,
+                                            trimmed_filter,
+                                        )
                                     } else {
-                                        std::cmp::Ordering::Greater
+                                        (Vec::new(), std::collections::HashMap::new())
                                     };
+                                    crate::app::log_debug(&format!("remote read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
+                                    (tree_files, meta, g_result.0, g_result.1)
                                 }
-                                a.file_name().cmp(&b.file_name())
-                            });
-                            for entry in sorted {
-                                let p = entry.path();
-                                let name = p.file_name().unwrap_or_default().to_string_lossy();
-                                if !hidden && name.starts_with('.') {
-                                    continue;
-                                }
-                                tree_files.push((p.clone(), depth));
-                                if p.is_dir() && expanded.contains(&p) {
-                                    walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
+                                Err(e) => {
+                                    // Mark connection as unhealthy
+                                    let mut app_guard = app_clone_for_health.lock();
+                                    app_guard.prune_remote_health();
+                                    app_guard.remote_health.insert(session.name.clone(), (false, std::time::Instant::now()));
+                                    let retry_count = app_guard.panes.get(pane_idx)
+                                        .and_then(|p| p.current_state())
+                                        .map(|fs| fs.retry_count)
+                                        .unwrap_or(0);
+                                    drop(app_guard);
+                                    
+                                    crate::app::log_debug(&format!("remote read_dir failed for {:?}: {} (retry={})", list_path, e, retry_count));
+                                    
+                                    // Trigger reconnection if under retry limit
+                                    if retry_count < 3 {
+                                        let _ = crate::app::try_send_event(&tx_retry, AppEvent::ReconnectRemote(pane_idx));
+                                    } else {
+                                        let _ = crate::app::try_send_event(&tx_retry, AppEvent::StatusMsg(
+                                            format!("Connection to {} failed after 3 retries", session.name)
+                                        ));
+                                    }
+                                    (Vec::new(), std::collections::HashMap::new(), Vec::new(), std::collections::HashMap::new())
                                 }
                             }
-                        }
-                        walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
-                        // Collect metadata for all tree items
-                        let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                        let (files_meta, g_files, g_meta) = {
-                            let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
-                            // meta = (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) — we only need the HashMap
-                            let trimmed_filter = list_filter.trim();
-                            let g_result = if trimmed_filter.len() > 3 {
-                                if let Some(session) = &list_remote {
-                                    crate::modules::remote::global_search(
-                                        session,
-                                        &list_path,
-                                        trimmed_filter,
-                                    )
-                                } else {
+                        } else {
+                            // Local: walk expanded folders (Dolphin-style inline tree)
+                            let max_depth = MAX_TREE_DEPTH;
+                            let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
+                            fn walk_tree(
+                                path: &std::path::Path,
+                                depth: u16,
+                                max_depth: u16,
+                                expanded: &std::collections::HashSet<PathBuf>,
+                                hidden: bool,
+                                tree_files: &mut Vec<(PathBuf, u16)>,
+                            ) {
+                                if depth >= max_depth {
+                                    return;
+                                }
+                                let Ok(entries) = std::fs::read_dir(path) else { return };
+                                let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+                                sorted.sort_by(|a, b| {
+                                    let a_is_dir = a.path().is_dir();
+                                    let b_is_dir = b.path().is_dir();
+                                    if a_is_dir != b_is_dir {
+                                        return if a_is_dir {
+                                            std::cmp::Ordering::Less
+                                        } else {
+                                            std::cmp::Ordering::Greater
+                                        };
+                                    }
+                                    a.file_name().cmp(&b.file_name())
+                                });
+                                for entry in sorted {
+                                    let p = entry.path();
+                                    let name = p.file_name().unwrap_or_default().to_string_lossy();
+                                    if !hidden && name.starts_with('.') {
+                                        continue;
+                                    }
+                                    tree_files.push((p.clone(), depth));
+                                    if p.is_dir() && expanded.contains(&p) {
+                                        walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
+                                    }
+                                }
+                            }
+                            walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
+                            // Collect metadata for all tree items
+                            let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
+                            let (files_meta, g_files, g_meta) = {
+                                let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                                let trimmed_filter = list_filter.trim();
+                                let g_result = if trimmed_filter.len() > 3 {
                                     let search_root =
                                         dirs::home_dir().unwrap_or_else(|| list_path.clone());
                                     crate::modules::files::global_search(&search_root, trimmed_filter)
-                                }
-                            } else {
-                                (Vec::new(), std::collections::HashMap::new())
+                                } else {
+                                    (Vec::new(), std::collections::HashMap::new())
+                                };
+                                (meta.1, g_result.0, g_result.1)
                             };
-                            (meta.1, g_result.0, g_result.1)
-                        };
 
-                        crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-(tree_files, files_meta, g_files, g_meta)
+                            crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
+                            (tree_files, files_meta, g_files, g_meta)
+                        }
                     })
                     .await
                     .unwrap_or_else(|_| {
@@ -1172,6 +1777,7 @@ let list_path_for_filter = path.clone();
                     let t_apply = std::time::Instant::now();
                     let mut app_guard = app_clone.lock();
                     crate::app::log_debug(&format!("apply lock took {:?}", t_apply.elapsed()));
+                    let expanded_folders_len = app_guard.expanded_folders.len();
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                             if let Some(fs) = pane.current_state_mut() {
                                 // RACE CONDITION CHECK:
@@ -1184,6 +1790,11 @@ let list_path_for_filter = path.clone();
                                     return;
                                 }
 
+                            // Pre-compute search filter values to avoid repeated allocations
+                            let search_filter_lower = fs.search_filter.to_lowercase();
+                            let has_search_filter = !fs.search_filter.is_empty();
+                            let show_hidden = fs.show_hidden;
+                            
                             // tree_files is Vec<(PathBuf, u16)> — keep pairs intact through filter/sort
                             let mut paired: Vec<(PathBuf, u16)> = tree_files.into_iter().filter(|(p, _)| {
                                 let is_hidden = p
@@ -1192,11 +1803,11 @@ let list_path_for_filter = path.clone();
                                     .map(|s| s.starts_with('.'))
                                     .unwrap_or(false);
 
-                                if !fs.show_hidden && is_hidden {
+                                if !show_hidden && is_hidden {
                                     return false;
                                 }
 
-                                if !fs.search_filter.is_empty() {
+                                if has_search_filter {
                                     let name = p
                                         .file_name()
                                         .and_then(|n| n.to_str())
@@ -1204,7 +1815,7 @@ let list_path_for_filter = path.clone();
                                     let matches = if FUZZY_SEARCH {
                                         fuzzy_contains(name, &fs.search_filter)
                                     } else {
-                                        name.to_lowercase().contains(&fs.search_filter.to_lowercase())
+                                        name.to_lowercase().contains(&search_filter_lower)
                                     };
                                     if !matches {
                                         return false;
@@ -1215,7 +1826,7 @@ let list_path_for_filter = path.clone();
                             }).collect();
 
                             // Search filter: include ancestor folders so matching children are visible
-                            if !fs.search_filter.is_empty() {
+                            if has_search_filter {
                                 use std::collections::HashSet;
                                 let filter_lower = fs.search_filter.to_lowercase();
                                 let mut keep: HashSet<PathBuf> = HashSet::new();
@@ -1253,7 +1864,65 @@ paired = new_paired;
                             }
 
                             // Tree order from walk_tree is already sorted (folders-first, alphabetical).
-                            // Do NOT re-sort here — it would scatter children away from parent folders.
+                            // Only skip sorting when folders are expanded (tree view) —
+                            // for flat lists, honor the user's column sort preference.
+                            let has_expanded_subdirs = paired.iter().any(|(_, depth)| *depth > 0);
+                            if !has_expanded_subdirs {
+                                let sort_col = fs.sort_column;
+                                let sort_asc = fs.sort_ascending;
+                                paired.sort_by(|(a, _), (b, _)| {
+                                    let meta_a = metadata.get(a);
+                                    let meta_b = metadata.get(b);
+                                    let is_dir_a = meta_a.map(|m| m.is_dir).unwrap_or(false);
+                                    let is_dir_b = meta_b.map(|m| m.is_dir).unwrap_or(false);
+                                    if is_dir_a != is_dir_b {
+                                        return if is_dir_a {
+                                            std::cmp::Ordering::Less
+                                        } else {
+                                            std::cmp::Ordering::Greater
+                                        };
+                                    }
+
+                                    let ord = match sort_col {
+                                        crate::app::FileColumn::Name => {
+                                            let na = a.file_name()
+                                                .and_then(|s| s.to_str())
+                                                .unwrap_or("")
+                                                .to_lowercase();
+                                            let nb = b.file_name()
+                                                .and_then(|s| s.to_str())
+                                                .unwrap_or("")
+                                                .to_lowercase();
+                                            na.cmp(&nb)
+                                        }
+                                        crate::app::FileColumn::Size => {
+                                            let sa = meta_a.map(|m| m.size).unwrap_or(0);
+                                            let sb = meta_b.map(|m| m.size).unwrap_or(0);
+                                            sa.cmp(&sb)
+                                        }
+                                        crate::app::FileColumn::Modified => {
+                                            let da = meta_a.map(|m| m.modified)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            let db = meta_b.map(|m| m.modified)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            da.cmp(&db)
+                                        }
+                                        crate::app::FileColumn::Created => {
+                                            let da = meta_a.map(|m| m.created)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            let db = meta_b.map(|m| m.created)
+                                                .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
+                                            da.cmp(&db)
+                                        }
+                                        crate::app::FileColumn::Permissions => {
+                                            let pa = meta_a.map(|m| m.permissions).unwrap_or(0);
+                                            let pb = meta_b.map(|m| m.permissions).unwrap_or(0);
+                                            pa.cmp(&pb)
+                                        }
+                                    };
+                                    if sort_asc { ord } else { ord.reverse() }
+                                });
+                            }
 
                             fs.local_count = paired.len();
 
@@ -1272,7 +1941,40 @@ paired = new_paired;
 
                             fs.tree_file_depths = tree_file_depths;
                             fs.files = files;
-                            fs.metadata = metadata;
+                            fs.metadata = metadata.clone();
+                            fs.folder_sizes.clear(); // Clear stale folder sizes
+                            fs.retry_count = 0; // Reset retry counter on successful listing
+
+                            // Calculate folder sizes with rate limiting (max once per 5 seconds)
+                            // to avoid recursive directory walks on every navigation
+                            let should_calc_sizes = fs.last_folder_size_calc
+                                .map(|last| last.elapsed() >= Duration::from_secs(5))
+                                .unwrap_or(true);
+                            
+                            if should_calc_sizes {
+                                fs.last_folder_size_calc = Some(Instant::now());
+                                let dirs_to_size: Vec<PathBuf> = fs.files.iter()
+                                    .filter(|p| metadata.get(*p).map(|m| m.is_dir).unwrap_or(false))
+                                    .cloned()
+                                    .collect();
+                                if !dirs_to_size.is_empty() {
+                                    let size_remote = remote.clone();
+                                    let size_tx = tx.clone();
+                                    let size_pane_idx = pane_idx;
+                                    tokio::spawn(async move {
+                                        let mut sizes = std::collections::HashMap::new();
+                                        for dir_path in dirs_to_size {
+                                            let size = if let Some(ref session) = size_remote {
+                                                crate::modules::remote::folder_size(session, &dir_path).unwrap_or(0)
+                                            } else {
+                                                crate::modules::files::folder_size(&dir_path)
+                                            };
+                                            sizes.insert(dir_path, size);
+                                        }
+                                        let _ = size_tx.send(AppEvent::FolderSizesUpdated(size_pane_idx, sizes)).await;
+                                    });
+                                }
+                            }
 
                             // Apply pending selection and scroll (e.g., after navigate_up)
                             if let Some((pending_path, pending_scroll)) = fs.pending_select_path.take() {
@@ -1280,11 +1982,44 @@ paired = new_paired;
                                 {
                                     fs.selection.selected = Some(idx);
                                     fs.table_state.select(Some(idx));
-                                    *fs.table_state.offset_mut() = pending_scroll;
+                                    *fs.table_state.offset_mut() = fs.clamped_scroll(pending_scroll);
                                 }
                             }
+                            
+                            crate::app::log_debug(&format!(
+                                "[REFRESH] pane={} path={:?} files={} sel={:?} expanded_folders={}",
+                                pane_idx, fs.current_path, fs.files.len(), fs.selection.selected, expanded_folders_len
+                            ));
                         }
                     }
+                }
+
+                // Update last_path for remote servers so reconnections land at the same directory.
+                // We MUST read and drop the lock BEFORE spawning, to avoid holding the mutex across await.
+                let (bm_idx, current_path) = {
+                    let app_guard = app_clone.lock();
+                    app_guard.panes.get(pane_idx)
+                        .and_then(|pane| pane.current_state())
+                        .and_then(|fs| fs.bookmark_idx.map(|bm| (bm, fs.current_path.clone())))
+                        .unwrap_or((0, PathBuf::new()))
+                };
+                if !current_path.as_os_str().is_empty() && bm_idx < {
+                    let app_guard = app_clone.lock();
+                    app_guard.servers.len()
+                } {
+                    let servers = {
+                        let app_guard = app_clone.lock();
+                        app_guard.servers.clone()
+                    };
+                    let bm_idx_final = bm_idx;
+                    let current_path_final = current_path;
+                    tokio::spawn(async move {
+                        let mut servers = servers;
+                        if let Some(s) = servers.get_mut(bm_idx_final) {
+                            s.last_path = current_path_final;
+                        }
+                        crate::servers::save_servers_quiet(&servers);
+                    });
                 }
                 let _ = tx.send(AppEvent::Tick).await;
 
@@ -1368,34 +2103,70 @@ paired = new_paired;
                     };
 
                     let _ = tx_for_git
-                        .send(AppEvent::GitHistoryUpdated(
+                        .send(AppEvent::GitHistoryUpdated(Box::new(crate::state::GitHistoryData {
                             pane_idx,
-                            active_tab_idx,
+                            tab_idx: active_tab_idx,
                             history,
                             pending,
-                            branch_opt,
+                            branch: branch_opt,
                             ahead,
                             behind,
-                            summary_opt,
+                            summary: summary_opt,
                             remotes,
                             stashes,
-                        ))
+                        })))
                         .await;
                 });
                 }
             });
         }
 
+        // Draw
         if needs_draw {
-            let mut app_guard = app.lock();
-            if !app_guard.running {
-                shutdown.store(true, Ordering::Release);
-                break;
+            if let Ok(size) = terminal.size() {
+                if size.width > 0 && size.height > 0 {
+                    let mut app_guard = app.lock();
+                    if !app_guard.running {
+                        shutdown.store(true, Ordering::Release);
+                        break;
+                    }
+                    crate::term_graphics::clear_images(app_guard.graphics_protocol);
+                    let draw_result = terminal.draw(|f| ui::draw(f, &mut app_guard));
+                    if let Err(e) = draw_result {
+                        crate::app::log_debug(&format!("Draw error: {}", e));
+                    }
+                    if let Some(render) = app_guard.pending_image_render.take() {
+                        crate::term_graphics::render_image(
+                            app_guard.graphics_protocol,
+                            &render.rgba,
+                            render.width,
+                            render.height,
+                            render.area.width,
+                            render.area.height,
+                        );
+                    }
+                }
             }
-            terminal.draw(|f| ui::draw(f, &mut app_guard))?;
         }
 
+        // Sleep
         tokio::time::sleep(Duration::from_millis(33)).await;
+    }
+
+    // Write last directory for `cd` on quit support
+    {
+        let app_guard = app.lock();
+        if let Some(fs) = app_guard.current_file_state() {
+            let last_dir = fs.current_path.clone();
+            if let Some(config_dir) = dirs::config_dir() {
+                let tiles_dir = config_dir.join("tiles");
+                let _ = std::fs::create_dir_all(&tiles_dir);
+                let last_dir_file = tiles_dir.join("last_dir");
+                let _ = std::fs::write(&last_dir_file, last_dir.to_string_lossy().as_ref());
+            }
+        }
+        // Persist server last_path values back to servers.toml
+        crate::servers::save_servers_quiet(&app_guard.servers);
     }
 
     Ok(())
@@ -1420,6 +2191,7 @@ fn setup_app(
                 let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
                 pane.tabs.push(crate::state::FileState::new(
                     cwd,
+                    None,
                     None,
                     app.default_show_hidden,
                     app.single_columns.clone(),
@@ -1472,7 +2244,9 @@ fn setup_app(
         }
         app.starred = loaded_starred;
 
-        app.remote_bookmarks = state.remote_bookmarks;
+        // Migrate legacy remote_bookmarks from state.json if servers.toml doesn't exist
+        crate::servers::maybe_migrate_legacy_bookmarks(&state.remote_bookmarks);
+
         app.path_colors = state.path_colors;
         app.external_tools = state.external_tools;
         if let Some(mode) = state.icon_mode {
@@ -1505,6 +2279,18 @@ fn setup_app(
             }
         }
     }
+
+    // Load servers from servers.toml (new primary storage)
+    // This runs unconditionally so servers are available even if state.json fails to load
+    app.servers = crate::servers::load_servers();
+    crate::app::log_debug(&format!("INIT: loaded {} servers from servers.toml", app.servers.len()));
+    for s in &app.servers {
+        crate::app::log_debug(&format!("  SERVER: name={} host={} user={}", s.name, s.host, s.user));
+    }
+
+    // Load custom user commands
+    crate::user_commands::maybe_create_default_commands_toml();
+    app.user_commands = crate::user_commands::load_user_commands();
 
     // Prime visible tabs synchronously so startup never renders as empty while waiting
     // for async refresh/tick scheduling.
