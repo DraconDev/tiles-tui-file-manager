@@ -78,6 +78,8 @@ pub enum CurrentView {
     Git,
     Processes,
     Debug,
+    Trash,
+    DiskUsage,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -273,6 +275,11 @@ pub enum CommandAction {
     CollapseFolders,
     ContentSearch,
     RunCommand,
+    CopyPathToClipboard,
+    PastePathsFromClipboard,
+    TrashView,
+    DiskUsageView,
+    ZoxideJump,
 }
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileMetadata {
