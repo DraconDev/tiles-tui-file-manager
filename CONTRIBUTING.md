@@ -119,6 +119,19 @@ The editor uses a unified clipboard model:
   }
   ```
 
+## Merging Code
+
+### Merge Safety Rules
+**Never merge orphaned or divergent branches blindly.** When merging branches that have diverged significantly:
+1. Review ALL changes before merging
+2. Prefer `git cherry-pick` for specific commits rather than merging divergent histories
+3. Always run `cargo build && cargo test` before pushing merged code
+4. If merge conflicts occur on binary files (Cargo.lock, Cargo.toml), prefer `--ours` to keep your current dependency versions
+5. If structural conflicts occur in source files, do NOT use `--theirs` blindly — this causes catastrophic API mismatches
+
+### Why Cherry-Pick Over Merge?
+Branches that have been developed in isolation often have incompatible API versions, missing modules, or deleted features. A merge that looks clean can produce dozens of compilation errors. Cherry-picking specific commits lets you apply only the changes you actually need.
+
 ## Code Style
 
 - No comments in code unless specifically asked
