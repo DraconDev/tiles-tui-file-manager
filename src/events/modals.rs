@@ -455,6 +455,106 @@ fn handle_quick_filter_keys(
     }
 }
 
+fn handle_command_output_keys(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+    evt: &Event,
+) -> bool {
+    use dracon_terminal_engine::contracts::KeyCode;
+
+    // If we're in input phase (no command running yet), collect input
+    if app.command_output.is_empty() && app.command_output_status.is_none() {
+        match key.code {
+            KeyCode::Esc => {
+                app.mode = AppMode::Normal;
+                app.input.clear();
+                true
+            }
+            KeyCode::Enter => {
+                let cmd = app.input.value.clone();
+                if !cmd.is_empty() {
+                    app.command_output.clear();
+                    app.command_output_scroll = 0;
+                    app.command_output_status = Some("Running...".to_string());
+                    let tx = event_tx.clone();
+                    let working_dir = app
+                        .panes
+                        .get(app.focused_pane_index)
+                        .and_then(|p| p.current_state())
+                        .map(|fs| fs.current_path.clone())
+                        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+                    tokio::spawn(async move {
+                        let output = tokio::process::Command::new("sh")
+                            .arg("-c")
+                            .arg(&cmd)
+                            .current_dir(&working_dir)
+                            .output()
+                            .await;
+                        match output {
+                            Ok(out) => {
+                                let stdout = String::from_utf8_lossy(&out.stdout);
+                                let stderr = String::from_utf8_lossy(&out.stderr);
+                                for line in stdout.lines() {
+                                    let _ = tx.send(AppEvent::CommandOutputLine(line.to_string())).await;
+                                }
+                                for line in stderr.lines() {
+                                    let _ = tx.send(AppEvent::CommandOutputLine(format!("ERR: {}", line))).await;
+                                }
+                                let status = if out.status.success() {
+                                    format!("Done (exit {})", out.status.code().unwrap_or(0))
+                                } else {
+                                    format!("Failed (exit {})", out.status.code().unwrap_or(-1))
+                                };
+                                let _ = tx.send(AppEvent::CommandOutputDone(status)).await;
+                            }
+                            Err(e) => {
+                                let _ = tx.send(AppEvent::CommandOutputLine(format!("Error: {}", e))).await;
+                                let _ = tx.send(AppEvent::CommandOutputDone("Failed".to_string())).await;
+                            }
+                        }
+                    });
+                }
+                app.input.clear();
+                true
+            }
+            _ => {
+                app.input.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt))
+            }
+        }
+    } else {
+        // Output viewing phase
+        match key.code {
+            KeyCode::Esc | KeyCode::Char('q') => {
+                app.mode = AppMode::Normal;
+                app.command_output.clear();
+                app.command_output_scroll = 0;
+                app.command_output_status = None;
+                true
+            }
+            KeyCode::Up | KeyCode::PageUp => {
+                if app.command_output_scroll > 0 {
+                    app.command_output_scroll -= 1;
+                }
+                true
+            }
+            KeyCode::Down | KeyCode::PageDown => {
+                app.command_output_scroll += 1;
+                true
+            }
+            KeyCode::Home => {
+                app.command_output_scroll = 0;
+                true
+            }
+            KeyCode::End => {
+                app.command_output_scroll = app.command_output.len().saturating_sub(1);
+                true
+            }
+            _ => false,
+        }
+    }
+}
+
 fn handle_path_input_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
