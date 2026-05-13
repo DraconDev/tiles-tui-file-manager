@@ -259,8 +259,8 @@ pub enum SidebarTarget {
     Recent(PathBuf),
     Remote(usize),
     Storage(usize),
-    Undo,
-    Redo,
+    Project(PathBuf),
+    Header(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
