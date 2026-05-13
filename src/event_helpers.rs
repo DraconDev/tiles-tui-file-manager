@@ -1075,6 +1075,7 @@ mod tests {
     use super::*;
     use crate::state::FileState;
     use std::path::PathBuf;
+    use std::sync::{Arc, Mutex};
 
     fn make_fs(path: &str) -> FileState {
         FileState::new(
