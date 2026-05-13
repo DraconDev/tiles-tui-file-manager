@@ -919,7 +919,19 @@ fn draw_command_output_modal(f: &mut Frame, app: &App) {
         .split(inner);
 
     // Output area
-    if app.command_output.is_empty() && app.command_output_status.as_deref() == Some("Running...") {
+    if app.command_output.is_empty() && app.command_output_status.is_none() {
+        // Input phase: show prompt
+        let input_text = vec![
+            Line::from(""),
+            Line::from(""),
+            Line::from(vec![
+                Span::styled("$ ", Style::default().fg(Color::Green).add_modifier(Modifier::BOLD)),
+                Span::styled(&app.input.value, Style::default().fg(Color::White)),
+                Span::styled("▎", Style::default().fg(Color::White)),
+            ]),
+        ];
+        f.render_widget(Paragraph::new(input_text), chunks[0]);
+    } else if app.command_output.is_empty() && app.command_output_status.as_deref() == Some("Running...") {
         f.render_widget(
             Paragraph::new("Running...")
                 .style(Style::default().fg(Color::Yellow))
@@ -953,7 +965,7 @@ fn draw_command_output_modal(f: &mut Frame, app: &App) {
             format!(" {} | Lines: {} | Esc/q to close", status, app.command_output.len())
         }
     } else {
-        format!(" Type command | Lines: {} | Esc to cancel", app.command_output.len())
+        format!(" Type command, Enter to run | Esc to cancel")
     };
     f.render_widget(
         Paragraph::new(status_text)
