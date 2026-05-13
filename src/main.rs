@@ -500,7 +500,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             if let Some(fs) = pane.current_state_mut() {
                                 fs.remote_session = Some(session);
                                 fs.bookmark_idx = Some(bookmark_idx);
-                                fs.retry_count = 0;
+                                // Don't reset retry_count here — preserves the retry counter
+                                // across ReconnectRemote → ConnectToRemote cycles
                                 // Use last_path if available, otherwise default to /
                                 fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
                             }
@@ -2065,6 +2066,7 @@ paired = new_paired;
                             fs.files = files;
                             fs.metadata = metadata.clone();
                             fs.folder_sizes.clear(); // Clear stale folder sizes
+                            fs.retry_count = 0; // Reset retry counter on successful listing
 
                             // Calculate folder sizes with rate limiting (max once per 5 seconds)
                             // to avoid recursive directory walks on every navigation
