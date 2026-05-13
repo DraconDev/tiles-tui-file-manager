@@ -128,9 +128,18 @@ pub fn expand_command_template(template: &str, path: &std::path::Path) -> Vec<St
         parts.push(current);
     }
 
-    // Now substitute {path} in each part
+    // Now substitute known placeholders and replace any unknown ones with empty string
+    // to prevent accidental shell injection from malformed configs
     for part in &mut parts {
         *part = part.replace("{path}", &path_str);
+        // Replace any remaining {unknown} placeholders with empty string
+        while let Some(start) = part.find('{') {
+            if let Some(end) = part[start..].find('}') {
+                part.replace_range(start..start + end + 1, "");
+            } else {
+                break;
+            }
+        }
     }
 
     parts
