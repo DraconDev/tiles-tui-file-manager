@@ -681,7 +681,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
-                        crate::modules::remote::create_file(&remote, &path).map_err(|e| e)
+                        crate::modules::remote::create_file(&remote, &path)
                     } else {
                         std::fs::File::create(&path).map(|_| ())
                     };
@@ -703,7 +703,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
                         crate::modules::remote::create_dir_all(&remote, &path)
                     } else {
-                        std::fs::create_dir_all(&path).map_err(|e| e)
+                        std::fs::create_dir_all(&path)
                     };
                     if let Err(e) = result {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Failed to create folder: {}", e)));

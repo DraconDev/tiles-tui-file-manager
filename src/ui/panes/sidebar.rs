@@ -149,7 +149,7 @@ if app.sidebar_tree_cache_key != cache_key {
             app.sidebar_tree_cache = Some(items);
             app.sidebar_tree_cache_key = cache_key;
         }
-        let tree_items = app.sidebar_tree_cache.as_ref().map(|v| v.as_slice()).unwrap_or(&[]);
+        let tree_items = app.sidebar_tree_cache.as_deref().unwrap_or(&[]);
 
         for (path, depth, is_dir) in tree_items.iter().cloned() {
                     let name = path
@@ -187,10 +187,10 @@ if app.sidebar_tree_cache_key != cache_key {
                     let indent_str = "  ".repeat(depth as usize);
                     let marker_w = if is_dir { 2 } else { 0 };
                     let icon_w = icon.width();
-                    let arrow_end_x = inner.x + 1 + (depth as u16 * 2) + marker_w as u16 + icon_w as u16;
+                    let arrow_end_x = inner.x + 1 + (depth * 2) + marker_w as u16 + icon_w as u16;
                     let line = Line::from(vec![
                         Span::raw(format!("{}{}", indent_str, marker)),
-                        Span::raw(format!("{}", icon)),
+                        Span::raw(icon.to_string()),
                         Span::raw(name),
                     ]);
                     sidebar_items.push(ListItem::new(line).style(style));
@@ -772,7 +772,7 @@ if app.editor_sidebar_cache_key != editor_cache_key {
             app.editor_sidebar_cache = Some(items);
             app.editor_sidebar_cache_key = editor_cache_key;
         }
-        let tree_items = app.editor_sidebar_cache.as_ref().map(|v| v.as_slice()).unwrap_or(&[]);
+        let tree_items = app.editor_sidebar_cache.as_deref().unwrap_or(&[]);
 
     let open_files: HashSet<PathBuf> = app
         .panes
