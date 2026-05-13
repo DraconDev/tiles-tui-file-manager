@@ -157,6 +157,7 @@ pub struct App {
     /// Custom user commands loaded from commands.toml
     pub user_commands: Vec<crate::user_commands::UserCommand>,
     /// Whether ripgrep (`rg`) is available on PATH.
+    #[allow(dead_code)]
     pub rg_available: bool,
 }
 
