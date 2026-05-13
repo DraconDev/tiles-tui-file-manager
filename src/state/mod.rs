@@ -212,6 +212,7 @@ pub enum AppMode {
         actions: Vec<ContextMenuAction>,
         selected_index: Option<usize>,
     },
+    ContentSearch,
 }
 
 #[derive(Clone, Debug, PartialEq)]
