@@ -384,6 +384,69 @@ fn handle_content_search_keys(
     }
 }
 
+fn handle_quick_filter_keys(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+) -> bool {
+    use dracon_terminal_engine::contracts::KeyCode;
+    match key.code {
+        KeyCode::Esc => {
+            app.mode = AppMode::Normal;
+            app.quick_filter_input.clear();
+            if let Some(fs) = app.current_file_state_mut() {
+                fs.search_filter.clear();
+                fs.search_generation += 1;
+                fs.selection.selected = app.quick_filter_prev_selection;
+            }
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            true
+        }
+        KeyCode::Enter => {
+            app.mode = AppMode::Normal;
+            app.quick_filter_input.clear();
+            true
+        }
+        KeyCode::Up => {
+            if let Some(fs) = app.current_file_state_mut() {
+                if fs.selection.selected.unwrap_or(0) > 0 {
+                    fs.selection.selected = Some(fs.selection.selected.unwrap_or(0).saturating_sub(1));
+                }
+            }
+            true
+        }
+        KeyCode::Down => {
+            if let Some(fs) = app.current_file_state_mut() {
+                let max = fs.files.len().saturating_sub(1);
+                let next = fs.selection.selected.unwrap_or(0).saturating_add(1).min(max);
+                fs.selection.selected = Some(next);
+            }
+            true
+        }
+        KeyCode::Backspace => {
+            app.quick_filter_input.pop();
+            if let Some(fs) = app.current_file_state_mut() {
+                fs.search_filter = app.quick_filter_input.clone();
+                fs.search_generation += 1;
+                fs.selection.selected = Some(0);
+            }
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            true
+        }
+        KeyCode::Char(c) => {
+            app.quick_filter_input.push(c);
+            if let Some(fs) = app.current_file_state_mut() {
+                fs.search_filter = app.quick_filter_input.clone();
+                fs.search_generation += 1;
+                fs.selection.selected = Some(0);
+            }
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+            true
+        }
+        _ => false,
+    }
+}
+
 fn handle_path_input_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
