@@ -145,7 +145,8 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
         }
         CommandAction::CopyPathToClipboard => {
             let maybe_path = app.current_file_state().and_then(|fs| {
-                fs.files.get(fs.selection.selected)
+                fs.selection.selected
+                    .and_then(|idx| fs.files.get(idx))
                     .map(|f| fs.current_path.join(&f.name))
             });
             if let Some(path) = maybe_path {
