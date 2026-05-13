@@ -213,6 +213,7 @@ pub enum AppMode {
         selected_index: Option<usize>,
     },
     ContentSearch,
+    QuickFilter,
 }
 
 #[derive(Clone, Debug, PartialEq)]

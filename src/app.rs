@@ -146,6 +146,10 @@ pub struct App {
     pub content_search_results: Vec<crate::modules::rg::ContentSearchResult>,
     pub content_search_selected: usize,
     pub content_search_scroll: usize,
+    /// Fzf-style quick filter state.
+    pub quick_filter_input: String,
+    /// Previous selection index to restore on quick filter cancel.
+    pub quick_filter_prev_selection: Option<usize>,
 }
 
 impl App {
@@ -328,6 +332,8 @@ editor: ViewPreferences {
             content_search_results: Vec::new(),
             content_search_selected: 0,
             content_search_scroll: 0,
+            quick_filter_input: String::new(),
+            quick_filter_prev_selection: None,
         }
     }
 
