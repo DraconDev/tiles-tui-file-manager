@@ -188,6 +188,12 @@ pub fn handle_event(
                             return true;
                         }
                     }
+                    CurrentView::Trash | CurrentView::DiskUsage => {
+                        // Handled via the file manager event loop for navigation
+                        if file_manager::handle_file_events(&evt, app, &event_tx) {
+                            return true;
+                        }
+                    }
                 }
             }
         }
