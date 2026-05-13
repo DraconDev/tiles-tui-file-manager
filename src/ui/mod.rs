@@ -5933,17 +5933,24 @@ fn draw_trash_page(f: &mut Frame, area: Rect, app: &App) {
     let mut lines: Vec<Line> = Vec::new();
     lines.push(Line::from(vec![
         Span::styled(" NAME ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
-        Span::styled(" SIZE ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(" ORIGINAL LOCATION ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
         Span::styled(" DELETED ", Style::default().fg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
     ]));
 
     for item in &items {
-        let name = item.name.clone();
-        let size = format_size(item.size);
-        let time = format_time(item.time_deleted);
+        let name = item.name.to_string_lossy().to_string();
+        let orig = item.original_parent.to_string_lossy().to_string();
+        let time = if item.time_deleted >= 0 {
+            let dt = chrono::DateTime::from_timestamp(item.time_deleted, 0)
+                .map(|dt| dt.format("%Y-%m-%d %H:%M").to_string())
+                .unwrap_or_else(|| "unknown".to_string());
+            dt
+        } else {
+            "unknown".to_string()
+        };
         lines.push(Line::from(vec![
-            Span::raw(format!(" {} ", truncate_to_width(&name, 40, "..."))),
-            Span::raw(format!(" {} ", size)),
+            Span::raw(format!(" {} ", truncate_to_width(&name, 30, "..."))),
+            Span::raw(format!(" {} ", truncate_to_width(&orig, 30, "..."))),
             Span::raw(format!(" {} ", time)),
         ]));
     }
