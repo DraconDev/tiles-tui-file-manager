@@ -522,6 +522,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 // Don't reset retry_count here — preserves the retry counter
                                 // across ReconnectRemote → ConnectToRemote cycles
                                 // Use last_path only if non-empty; otherwise default to remote root
+                        crate::app::log_debug(&format!("ConnectToRemote cached: pane={} path={:?}", pane_idx, fs.current_path));
                                 fs.current_path = PathBuf::from("/"); // Always start at root for cached connections too
                             }
                         }
