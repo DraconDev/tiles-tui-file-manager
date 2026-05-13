@@ -1047,13 +1047,13 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             })
                             .unwrap_or_default();
                         if !files.is_empty() {
-                            app.mode = AppMode::BulkRename {
+                            app.mode = AppMode::BulkRename(Box::new(crate::state::BulkRenameState {
                                 files,
                                 pattern: String::new(),
                                 replacement: String::new(),
                                 matched_indices: Vec::new(),
                                 selected_index: None,
-                            };
+                            }));
                             app.input.clear();
                         }
                     } else {

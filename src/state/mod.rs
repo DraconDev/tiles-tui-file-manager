@@ -206,13 +206,7 @@ pub enum AppMode {
     Hotkeys,
     Header(usize),
     Highlight,
-    BulkRename {
-        files: Vec<PathBuf>,
-        pattern: String,
-        replacement: String,
-        matched_indices: Vec<usize>,
-        selected_index: Option<usize>,
-    },
+    BulkRename(Box<BulkRenameState>),
     OpenWith(PathBuf),
     DragDropMenu {
         sources: Vec<PathBuf>,
