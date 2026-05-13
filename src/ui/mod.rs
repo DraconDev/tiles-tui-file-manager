@@ -3471,8 +3471,15 @@ fn draw_file_view(
                             }
                         }
                         FileColumn::Size => {
-                            let size = metadata.map(|m| m.size).unwrap_or(0);
                             let is_dir = metadata.map(|m| m.is_dir).unwrap_or(false);
+                            let size = if is_dir {
+                                // Use computed folder size if available
+                                file_state.folder_sizes.get(path).copied()
+                                    .or_else(|| metadata.map(|m| m.size))
+                                    .unwrap_or(0)
+                            } else {
+                                metadata.map(|m| m.size).unwrap_or(0)
+                            };
                             let text = if is_dir && size == 0 {
                                 "<DIR>".to_string()
                             } else {
