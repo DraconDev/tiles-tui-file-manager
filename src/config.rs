@@ -80,6 +80,9 @@ pub struct PersistentState {
     pub panes: Vec<Pane>,
     pub focused_pane_index: usize,
     pub starred: Vec<PathBuf>,
+    /// Legacy field for migration from state.json → servers.toml.
+    /// - Deserialized: old state.json files may have this populated, we migrate it.
+    /// - Never serialized: servers are stored in servers.toml, not state.json.
     #[serde(default, skip_serializing)]
     pub remote_bookmarks: Vec<RemoteBookmark>,
     pub current_view: CurrentView,
