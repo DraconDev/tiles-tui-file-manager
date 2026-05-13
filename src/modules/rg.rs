@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process::Stdio;
 
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub struct ContentSearchResult {
     pub path: PathBuf,
     pub line_number: usize,
