@@ -226,19 +226,19 @@ impl Keybindings {
         }
 
         match std::fs::read_to_string(&path) {
-            match std::fs::read_to_string(&path) {
-                Ok(contents) => match toml::from_str(&contents) {
-                    Ok(kb) => kb,
-                    Err(e) => {
-                        crate::app::log_debug(&format!("Warning: failed to parse keybindings.toml: {}", e));
-                        Self::default()
-                    }
-                },
+            Ok(contents) => match toml::from_str(&contents) {
+                Ok(kb) => kb,
                 Err(e) => {
-                    crate::app::log_debug(&format!("Warning: failed to read keybindings.toml: {}", e));
+                    crate::app::log_debug(&format!("Warning: failed to parse keybindings.toml: {}", e));
                     Self::default()
                 }
+            },
+            Err(e) => {
+                crate::app::log_debug(&format!("Warning: failed to read keybindings.toml: {}", e));
+                Self::default()
             }
+        }
+    }
 
     /// Look up which action (if any) is bound to the given key event.
     pub fn lookup(&self, code: &KeyCode, modifiers: &KeyModifiers) -> Option<KeyAction> {
