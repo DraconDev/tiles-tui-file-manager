@@ -8,7 +8,6 @@ use std::sync::LazyLock;
 use parking_lot::Mutex;
 use std::time::{Duration, Instant};
 
-static LAST_SAVE: LazyLock<Mutex<Option<(Instant, String)>>> = LazyLock::new(|| Mutex::new(None));
 
 // === Tiles Configuration Constants ===
 // User-adjustable settings for behavior tuning
@@ -74,7 +73,6 @@ pub struct PersistentState {
     pub remote_bookmarks: Vec<RemoteBookmark>,
     pub current_view: CurrentView,
     pub window_size: Option<(u16, u16)>,
-    pub path_colors: HashMap<PathBuf, u8>,
     #[serde(default)]
     pub external_tools: HashMap<String, Vec<ExternalTool>>, // ext -> tools
     #[serde(default)]
@@ -153,7 +151,6 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         } else {
             None
         },
-        path_colors: app.path_colors.clone(),
         external_tools: app.external_tools.clone(),
         icon_mode: Some(app.icon_mode),
         is_split_mode: app.is_split_mode,
