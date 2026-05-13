@@ -407,6 +407,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if let AppMode::CreateArchive(ref paths, format_idx) = app.mode {
         draw_create_archive_modal(f, app, paths, format_idx);
     }
+    if let AppMode::CommandOutput(ref _cmd) = app.mode {
+        draw_command_output_modal(f, app);
+    }
 
     if app.is_dragging {
         draw_drag_ghost(f, app);
