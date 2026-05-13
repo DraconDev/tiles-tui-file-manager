@@ -280,6 +280,7 @@ pub enum CommandAction {
     TrashView,
     DiskUsageView,
     ZoxideJump,
+    CustomUserCommand(String),
 }
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileMetadata {
