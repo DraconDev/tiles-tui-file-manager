@@ -27,6 +27,7 @@ mod modules;
 mod servers;
 mod state;
 mod terminal;
+mod term_graphics;
 mod ui;
 
 #[tokio::main]
