@@ -16,9 +16,10 @@ const DOUBLE_CLICK_MS: u64 = 500;
 const SEARCH_DEBOUNCE_MS: u64 = 300;
 
 fn is_valid_search_char(c: char) -> bool {
-    !(c as u32 < 32 || c == '\x7f' || c == '\x1b'
+    let bad = (c as u32) < 32 || c == '\x7f' || c == '\x1b'
         || matches!(c, '[' | ']' | '~' | '^' | '_' | '=' | '+' | '<' | '>' | '*' | '?' | '!' | '$'
-            | '%' | '&' | '@' | '#' | '{' | '}' | '\\' | '|' | '`'))
+            | '%' | '&' | '@' | '#' | '{' | '}' | '\\' | '|' | '`');
+    !bad
 }
 
 fn is_double_click(

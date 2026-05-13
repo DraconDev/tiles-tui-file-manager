@@ -558,7 +558,6 @@ fn handle_context_menu_keys(
                             {
                                 app.mode = AppMode::Normal;
                             }
-                        }
                     }
                 }
             }
