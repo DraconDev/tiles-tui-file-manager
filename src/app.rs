@@ -137,6 +137,10 @@ pub struct App {
     /// connection pooling would require caching ssh2::Session objects at the provider level.
     /// Stale entries are cleaned up after 5 minutes of inactivity.
     pub remote_session_pool: HashMap<String, (RemoteSession, Instant)>,
+    /// Detected terminal graphics protocol for inline image rendering.
+    pub graphics_protocol: crate::term_graphics::GraphicsProtocol,
+    /// Image queued for rendering after the next terminal.draw() call.
+    pub pending_image_render: Option<crate::term_graphics::PendingImageRender>,
 }
 
 impl App {

@@ -12,6 +12,15 @@ pub enum GraphicsProtocol {
     None,
 }
 
+/// Queued image render request emitted after terminal.draw().
+#[derive(Clone, Debug)]
+pub struct PendingImageRender {
+    pub rgba: Vec<u8>,
+    pub width: u32,
+    pub height: u32,
+    pub area: ratatui::layout::Rect,
+}
+
 /// Detect the best available terminal graphics protocol.
 pub fn detect_protocol() -> GraphicsProtocol {
     // Check for Kitty
