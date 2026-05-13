@@ -414,6 +414,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let app_guard = app.lock();
                         sync_watches(&app_guard, &mut debouncer);
                         last_watch_sync = std::time::Instant::now();
+
+                        // Also prune remote health and stale sessions periodically
+                        drop(app_guard);
+                        let mut app_guard = app.lock();
+                        app_guard.prune_remote_health();
+                        let stale_threshold = Duration::from_secs(300);
+                        app_guard.remote_session_pool.retain(|_, (_, last_used)| {
+                            last_used.elapsed() < stale_threshold
+                        });
                     }
                     needs_draw = true;
                 }
