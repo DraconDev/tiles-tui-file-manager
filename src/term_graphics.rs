@@ -196,7 +196,7 @@ mod tests {
     #[test]
     fn graphics_protocol_variants() {
         assert_ne!(GraphicsProtocol::None, GraphicsProtocol::Kitty);
-        assert_ne!(GraphicsProtocol::Kitty, GraphicsProtocol::Iterm2);
-        assert_ne!(GraphicsProtocol::Iterm2, GraphicsProtocol::Sixel);
+        assert_ne!(GraphicsProtocol::Kitty, GraphicsProtocol::ITerm2);
+        assert_ne!(GraphicsProtocol::ITerm2, GraphicsProtocol::Sixel);
     }
 }
