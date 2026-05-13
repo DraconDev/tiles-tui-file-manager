@@ -4,6 +4,7 @@ use std::process::Stdio;
 
 /// A single match result from ripgrep content search.
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub struct ContentSearchResult {
     pub path: PathBuf,
     pub line_number: usize,

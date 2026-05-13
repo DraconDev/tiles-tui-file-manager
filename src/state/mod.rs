@@ -10,7 +10,7 @@ pub use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
 pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, SelectionState};
 
 /// State for the bulk rename modal (boxed to reduce AppMode enum size).
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct BulkRenameState {
     pub files: Vec<PathBuf>,
     pub pattern: String,
