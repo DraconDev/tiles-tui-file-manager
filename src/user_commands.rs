@@ -145,6 +145,9 @@ pub fn expand_command_template(template: &str, path: &std::path::Path) -> Vec<St
         }
     }
 
+    // Filter out empty parts that result from unknown placeholders being removed
+    parts.retain(|p| !p.is_empty());
+
     parts
 }
 
