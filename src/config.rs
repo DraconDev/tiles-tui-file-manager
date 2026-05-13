@@ -110,6 +110,8 @@ pub struct PersistentState {
     pub sidebar_width_percent: u16,
     #[serde(default)]
     pub recent_folders: Vec<PathBuf>,
+    #[serde(default)]
+    pub path_colors: HashMap<PathBuf, u8>,
 }
 
 fn default_true() -> bool {
