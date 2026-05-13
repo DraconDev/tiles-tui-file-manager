@@ -2,11 +2,12 @@
 use std::path::PathBuf;
 use std::process::Stdio;
 
+/// A single match result from ripgrep content search.
 #[derive(Clone, Debug)]
-#[allow(dead_code)]
 pub struct ContentSearchResult {
     pub path: PathBuf,
     pub line_number: usize,
+    /// 1-based column offset within the line (from rg's --column flag).
     pub column: usize,
     pub content: String,
 }
@@ -58,8 +59,8 @@ fn parse_json_lines(output: &str) -> Vec<ContentSearchResult> {
                         .get("line_number")
                         .and_then(|n| n.as_u64())
                         .unwrap_or(0) as usize;
-                    let absolute_offset = data
-                        .get("absolute_offset")
+                    let column = data
+                        .get("column")
                         .and_then(|n| n.as_u64())
                         .unwrap_or(0) as usize;
                     let content = data
@@ -72,7 +73,7 @@ fn parse_json_lines(output: &str) -> Vec<ContentSearchResult> {
                     results.push(ContentSearchResult {
                         path,
                         line_number,
-                        column: absolute_offset,
+                        column,
                         content,
                     });
                 }
@@ -88,11 +89,12 @@ mod tests {
 
     #[test]
     fn parse_sample_rg_json() {
-        let json = r#"{"type":"match","data":{"path":{"text":"src/main.rs"},"lines":{"text":"fn main() {\n"},"line_number":10,"absolute_offset":120}}"#;
+        let json = r#"{"type":"match","data":{"path":{"text":"src/main.rs"},"lines":{"text":"fn main() {\n"},"line_number":10,"column":1}}"#;
         let results = parse_json_lines(json);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].path, PathBuf::from("src/main.rs"));
         assert_eq!(results[0].line_number, 10);
+        assert_eq!(results[0].column, 1);
         assert_eq!(results[0].content, "fn main() {");
     }
 
