@@ -1,6 +1,7 @@
 /// Terminal graphics protocol support for inline image rendering.
 /// Supports Kitty, iTerm2, and Sixel protocols with ASCII block fallback.
 
+use base64::Engine;
 use std::io::Write;
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -89,7 +90,7 @@ fn render_kitty(rgba: &[u8], w: u32, h: u32, cols: u16, rows: u16) {
         rgb.push(chunk[2]);
     }
 
-    let data = base64_encode(&rgb);
+    let data = base64::engine::general_purpose::STANDARD.encode(&rgb);
     let chunk_size = 4096;
 
     // Kitty placement control: a=T (direct), f=24 (RGB), s/w=source dimensions,
@@ -137,7 +138,7 @@ fn render_iterm2(rgba: &[u8], w: u32, h: u32, cols: u16, rows: u16) {
         }
     }
 
-    let b64 = base64_encode(&png_data);
+    let b64 = base64::engine::general_purpose::STANDARD.encode(&png_data);
     let osc = format!(
         "\x1b]1337;File=inline=1;size={};width={}px;height={}px;preserveAspectRatio=1:{}\x07",
         png_data.len(),
