@@ -11,6 +11,7 @@ pub fn copy_path_to_clipboard(path: &PathBuf) -> Result<(), String> {
 }
 
 /// Copy multiple file paths to the system clipboard (newline-separated).
+#[allow(dead_code)]
 pub fn copy_paths_to_clipboard(paths: &[PathBuf]) -> Result<(), String> {
     let mut clipboard = Clipboard::new().map_err(|e| format!("Clipboard init failed: {}", e))?;
     let text = paths.iter()

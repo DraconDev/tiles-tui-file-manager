@@ -5882,7 +5882,7 @@ fn draw_highlight_modal(f: &mut Frame, _app: &App) {
     );
 }
 
-fn draw_trash_page(f: &mut Frame, area: Rect, app: &App) {
+fn draw_trash_page(f: &mut Frame, area: Rect, _app: &App) {
     let block = Block::default()
         .title_top(Line::from(vec![Span::styled(
             " TRASH ",
