@@ -178,14 +178,6 @@ fn render_sixel(_rgba: &[u8], _w: u32, _h: u32) {
     // Full sixel support can be added later using a dedicated library.
 }
 
-/// Emit Sixel graphics escape sequence.
-/// This is a simplified implementation that produces basic sixel output.
-fn render_sixel(_rgba: &[u8], _w: u32, _h: u32) {
-    // Sixel encoding is complex and requires palette quantization.
-    // For now, skip sixel and let the ASCII fallback handle it.
-    // Full sixel support can be added later using a dedicated library.
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
