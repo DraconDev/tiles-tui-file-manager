@@ -317,6 +317,8 @@ editor: ViewPreferences {
             saved_pane: None,
             remote_session_pool: HashMap::new(),
             keybindings: crate::keybindings::Keybindings::load(),
+            graphics_protocol: crate::term_graphics::detect_protocol(),
+            pending_image_render: None,
         }
     }
 
