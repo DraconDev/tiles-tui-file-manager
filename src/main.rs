@@ -470,13 +470,23 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::ContentSearchResults(results) => {
                     let mut app_guard = app.lock();
-                    app_guard.content_search_results = results;
-                    let count = app_guard.content_search_results.len();
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                        "Found {} matches for '{}'",
-                        count,
-                        app_guard.content_search_query
-                    )));
+                    match results {
+                        Some(r) => {
+                            app_guard.content_search_results = r;
+                            let count = app_guard.content_search_results.len();
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                "Found {} matches for '{}'",
+                                count,
+                                app_guard.content_search_query
+                            )));
+                        }
+                        None => {
+                            app_guard.content_search_results.clear();
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                                "ripgrep (rg) is not installed. Install it to enable content search.".to_string()
+                            ));
+                        }
+                    }
                     needs_draw = true;
                 }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {

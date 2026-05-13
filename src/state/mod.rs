@@ -65,7 +65,7 @@ pub enum AppEvent {
     Raw(dracon_terminal_engine::contracts::InputEvent),
     ServersTomlChanged,
     ContentSearchStart(String, PathBuf),
-    ContentSearchResults(Vec<crate::modules::rg::ContentSearchResult>),
+    ContentSearchResults(Option<Vec<crate::modules::rg::ContentSearchResult>>),
     CommandOutputLine(String),
     CommandOutputDone(String),
 }
