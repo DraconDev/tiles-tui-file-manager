@@ -145,6 +145,7 @@ pub enum ContextMenuAction {
     EditorSelectAll,
     Undo,
     Redo,
+    RunCommand,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]

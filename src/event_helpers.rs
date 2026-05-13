@@ -109,6 +109,10 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
             app.mode = AppMode::ContentSearch;
             app.input.clear();
         }
+        CommandAction::RunCommand => {
+            app.mode = AppMode::CommandOutput(String::new());
+            app.input.clear();
+        }
     }
 }
 
