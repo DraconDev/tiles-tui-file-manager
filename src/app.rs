@@ -154,6 +154,8 @@ pub struct App {
     pub command_output: Vec<String>,
     pub command_output_scroll: usize,
     pub command_output_status: Option<String>,
+    /// Custom user commands loaded from commands.toml
+    pub user_commands: Vec<crate::user_commands::UserCommand>,
 }
 
 impl App {
