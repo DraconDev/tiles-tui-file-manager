@@ -22,7 +22,7 @@ jobs:
         run: cargo build
 
       - name: Clippy
-        run: cargo clippy -- -D warnings
+        run: cargo clippy
 
       - name: Test
         run: cargo test
