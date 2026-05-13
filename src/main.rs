@@ -2397,6 +2397,10 @@ fn setup_app(
         crate::app::log_debug(&format!("  SERVER: name={} host={} user={}", s.name, s.host, s.user));
     }
 
+    // Load custom user commands
+    crate::user_commands::maybe_create_default_commands_toml();
+    app.user_commands = crate::user_commands::load_user_commands();
+
     // Prime visible tabs synchronously so startup never renders as empty while waiting
     // for async refresh/tick scheduling.
     prime_visible_tabs(&mut app);
