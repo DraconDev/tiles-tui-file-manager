@@ -54,6 +54,11 @@ pub fn update_commands(app: &mut App) {
             desc: "Collapse Folders".to_string(),
             action: CommandAction::CollapseFolders,
         },
+        CommandItem {
+            key: "/".to_string(),
+            desc: "Search in Files (ripgrep)".to_string(),
+            action: CommandAction::ContentSearch,
+        },
     ];
 
     for (i, bookmark) in app.servers.iter().enumerate() {
