@@ -150,7 +150,6 @@ impl SelectionState {
             self.selected = Some(idx);
         } else {
             self.multi.clear();
-            self.multi.insert(idx);
             self.selected = Some(idx);
             self.anchor = Some(idx);
         }
