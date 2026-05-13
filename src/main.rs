@@ -30,6 +30,7 @@ mod state;
 mod terminal;
 mod term_graphics;
 mod ui;
+mod user_commands;
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
