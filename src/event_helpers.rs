@@ -118,6 +118,64 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
             app.mode = AppMode::CommandOutput(String::new());
             app.input.clear();
         }
+        CommandAction::CopyPathToClipboard => {
+            if let Some(path) = app.current_file_path() {
+                match crate::clipboard::copy_path_to_clipboard(&path) {
+                    Ok(()) => {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            format!("Copied to clipboard: {}", path.display())
+                        ));
+                    }
+                    Err(e) => {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            format!("Clipboard error: {}", e)
+                        ));
+                    }
+                }
+            }
+        }
+        CommandAction::PastePathsFromClipboard => {
+            match crate::clipboard::get_paths_from_clipboard() {
+                Ok(paths) => {
+                    if paths.is_empty() {
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            "Clipboard contains no valid paths".to_string()
+                        ));
+                    } else {
+                        let dest = app.current_file_state()
+                            .map(|fs| fs.current_path.clone())
+                            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                            format!("Pasting {} path(s) to {}", paths.len(), dest.display())
+                        ));
+                        // TODO: Implement actual paste (copy/move) operation
+                    }
+                }
+                Err(e) => {
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Clipboard error: {}", e)
+                    ));
+                }
+            }
+        }
+        CommandAction::TrashView => {
+            app.current_view = CurrentView::Trash;
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                "Trash view (browse and restore)".to_string()
+            ));
+        }
+        CommandAction::DiskUsageView => {
+            app.current_view = CurrentView::DiskUsage;
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                "Disk usage analyzer".to_string()
+            ));
+        }
+        CommandAction::ZoxideJump => {
+            app.mode = AppMode::PathInput;
+            app.input.clear();
+            app.input.value = "z ".to_string();
+            app.input.cursor_position = 2;
+        }
     }
 }
 
