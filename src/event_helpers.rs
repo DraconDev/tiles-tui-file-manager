@@ -215,6 +215,28 @@ pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sen
             app.input.value = "z ".to_string();
             app.input.cursor_position = 2;
         }
+        CommandAction::CustomUserCommand(ref exec) => {
+            let maybe_path = app.current_file_state().and_then(|fs| {
+                fs.selection.selected
+                    .and_then(|idx| fs.files.get(idx))
+                    .map(|f| fs.current_path.join(f))
+            });
+            if let Some(path) = maybe_path {
+                let parts = crate::user_commands::expand_command_template(exec, &path);
+                if parts.is_empty() {
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        "Empty command".to_string()
+                    ));
+                } else {
+                    let program = parts[0].clone();
+                    let args: Vec<String> = parts.into_iter().skip(1).collect();
+                    dracon_terminal_engine::utils::spawn_detached(&program, args);
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                        format!("Running: {}", exec.replace("{path}", &path.to_string_lossy()))
+                    ));
+                }
+            }
+        }
     }
 }
 
