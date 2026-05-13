@@ -586,16 +586,23 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         // Read last_path before mutable pane borrow
                         let last_path = app_guard.servers.iter()
                             .find(|s| s.name == remote_name)
-                            .map(|s| s.last_path.clone());
+                            .and_then(|s| if s.last_path.to_string_lossy().is_empty() { None } else { Some(s.last_path.clone()) });
                         if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                             if let Some(fs) = pane.current_state_mut() {
                                 fs.remote_session = Some(session);
-                                // Use last_path if available, otherwise default to /
+                                // Use last_path only if non-empty and non-home; otherwise default to remote root
+                                // Note: last_path is the LAST VISITED remote path, not a local path
                                 fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
                                 fs.retry_count = 0;
                                 // Note: don't clear fs.files — old files stay visible until async refresh
                             }
                         }
+                        crate::app::log_debug(&format!(
+                            "RemoteConnected: pane={} host={} current_path={}",
+                            pane_idx,
+                            remote_name,
+                            last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
+                        ));
                     }
                     // Trigger initial file listing for the remote session
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
