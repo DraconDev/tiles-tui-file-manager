@@ -156,6 +156,8 @@ pub struct App {
     pub command_output_status: Option<String>,
     /// Custom user commands loaded from commands.toml
     pub user_commands: Vec<crate::user_commands::UserCommand>,
+    /// Whether ripgrep (`rg`) is available on PATH.
+    pub rg_available: bool,
 }
 
 impl App {
