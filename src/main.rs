@@ -369,7 +369,18 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         let mut app_guard = app.lock();
         if let Ok(size) = terminal.size() {
             if size.width > 0 && size.height > 0 {
+                crate::term_graphics::clear_images(app_guard.graphics_protocol);
                 let _ = terminal.draw(|f| ui::draw(f, &mut app_guard));
+                if let Some(render) = app_guard.pending_image_render.take() {
+                    crate::term_graphics::render_image(
+                        app_guard.graphics_protocol,
+                        &render.rgba,
+                        render.width,
+                        render.height,
+                        render.area.width,
+                        render.area.height,
+                    );
+                }
             }
         }
     }
@@ -2191,9 +2202,20 @@ paired = new_paired;
                         shutdown.store(true, Ordering::Release);
                         break;
                     }
+                    crate::term_graphics::clear_images(app_guard.graphics_protocol);
                     let draw_result = terminal.draw(|f| ui::draw(f, &mut app_guard));
                     if let Err(e) = draw_result {
                         crate::app::log_debug(&format!("Draw error: {}", e));
+                    }
+                    if let Some(render) = app_guard.pending_image_render.take() {
+                        crate::term_graphics::render_image(
+                            app_guard.graphics_protocol,
+                            &render.rgba,
+                            render.width,
+                            render.height,
+                            render.area.width,
+                            render.area.height,
+                        );
                     }
                 }
             }
