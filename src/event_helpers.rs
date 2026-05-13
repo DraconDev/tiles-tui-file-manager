@@ -91,6 +91,15 @@ pub fn update_commands(app: &mut App) {
         },
     ];
 
+    // Add custom user commands from commands.toml
+    for cmd in &app.user_commands {
+        commands.push(CommandItem {
+            key: cmd.key.clone(),
+            desc: cmd.name.clone(),
+            action: CommandAction::CustomUserCommand(cmd.exec.clone()),
+        });
+    }
+
     for (i, bookmark) in app.servers.iter().enumerate() {
         commands.push(CommandItem {
             key: format!("r{}", i),
