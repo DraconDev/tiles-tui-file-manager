@@ -161,6 +161,12 @@ impl KeyAction {
 }
 
 /// User-configurable keybindings loaded from `~/.config/tiles/keybindings.toml`.
+///
+/// Note: The file manager's core key dispatch (events/file_manager.rs) uses
+/// hardcoded key matching for performance. This keybindings system is used
+/// for the command palette lookup and action display. Future work should
+/// integrate `Keybindings::lookup()` into the main key dispatch so that
+/// user-configured bindings take effect everywhere.
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Keybindings {
     #[serde(default)]
