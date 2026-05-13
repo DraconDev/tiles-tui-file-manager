@@ -900,6 +900,68 @@ fn draw_create_archive_modal(
     f.render_widget(Paragraph::new(text), inner);
 }
 
+fn draw_command_output_modal(f: &mut Frame, app: &App) {
+    let area = centered_rect(80, 70, f.area());
+    let block = Block::default()
+        .title(" Command Output ")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(crate::ui::theme::accent_primary()));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Fill(1),
+            Constraint::Length(1),
+        ])
+        .split(inner);
+
+    // Output area
+    if app.command_output.is_empty() && app.command_output_status.as_deref() == Some("Running...") {
+        f.render_widget(
+            Paragraph::new("Running...")
+                .style(Style::default().fg(Color::Yellow))
+                .alignment(ratatui::layout::Alignment::Center),
+            chunks[0],
+        );
+    } else {
+        let visible_height = chunks[0].height as usize;
+        let total_lines = app.command_output.len();
+        let start = app.command_output_scroll.min(total_lines.saturating_sub(1));
+        let visible: Vec<Line> = app.command_output
+            .iter()
+            .skip(start)
+            .take(visible_height)
+            .map(|line| {
+                if line.starts_with("ERR: ") {
+                    Line::from(Span::styled(&line[5..], Style::default().fg(Color::Red)))
+                } else {
+                    Line::from(Span::raw(line))
+                }
+            })
+            .collect();
+        f.render_widget(Paragraph::new(visible), chunks[0]);
+    }
+
+    // Status bar
+    let status_text = if let Some(ref status) = app.command_output_status {
+        if status == "Running..." {
+            format!(" {} | Lines: {} | Esc/q to close", status, app.command_output.len())
+        } else {
+            format!(" {} | Lines: {} | Esc/q to close", status, app.command_output.len())
+        }
+    } else {
+        format!(" Type command | Lines: {} | Esc to cancel", app.command_output.len())
+    };
+    f.render_widget(
+        Paragraph::new(status_text)
+            .style(Style::default().fg(Color::DarkGray)),
+        chunks[1],
+    );
+}
+
 fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
     let area = centered_rect(70, 80, f.area());
     let block = Block::default()
