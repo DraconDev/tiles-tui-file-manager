@@ -9,6 +9,16 @@ use dracon_terminal_engine::widgets::TextEditor;
 pub use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
 pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, SelectionState};
 
+/// State for the bulk rename modal (boxed to reduce AppMode enum size).
+#[derive(Clone, Debug, PartialEq)]
+pub struct BulkRenameState {
+    pub files: Vec<PathBuf>,
+    pub pattern: String,
+    pub replacement: String,
+    pub matched_indices: Vec<usize>,
+    pub selected_index: Option<usize>,
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum AppEvent {
