@@ -114,6 +114,7 @@ pub enum KeyAction {
     ToggleMultiSelect,
     Star,
     SortToggle,
+    QuickFilter,
 }
 
 impl KeyAction {
