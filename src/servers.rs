@@ -17,13 +17,23 @@ pub fn expand_tilde(path: &Path) -> PathBuf {
             return PathBuf::from(home).join(&s[2..]);
         }
     } else if s.starts_with("~") {
-        // ~user/... pattern
+        // ~user/... pattern — only expand if the directory exists.
+        // Convention: user homes under /home/<user> on Linux.
+        // We verify existence to avoid silently producing wrong paths on non-standard systems
+        // (e.g., macOS with /Users/<user>, custom setups with /home/<user> in different locations).
         let end = s[1..].find('/').map(|i| i + 1).unwrap_or(s.len());
         let user = &s[1..end];
-        // Convention: user homes under /home/<user>
-        let user_home = PathBuf::from("/home").join(user);
-        let rest = if end < s.len() { &s[end + 1..] } else { "" };
-        return if rest.is_empty() { user_home } else { user_home.join(rest) };
+        if !user.is_empty() {
+            let user_home = PathBuf::from("/home").join(user);
+            if user_home.exists() {
+                let rest = if end < s.len() { &s[end + 1..] } else { "" };
+                return if rest.is_empty() {
+                    user_home
+                } else {
+                    user_home.join(rest)
+                };
+            }
+        }
     }
     path.to_path_buf()
 }
