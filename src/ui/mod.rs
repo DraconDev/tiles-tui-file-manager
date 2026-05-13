@@ -2946,6 +2946,68 @@ fn draw_file_view(
                     Style::default().fg(crate::ui::theme::border_inactive())
                 });
 
+            if let Some((rgba, w, h)) = preview.image_data.as_ref() {
+                let max_w = area.width as usize;
+                let max_h = (area.height.saturating_sub(3)) as usize;
+                let w_val = *w as usize;
+                let h_val = *h as usize;
+                let scale_x = if w_val > 0 { max_w as f32 / w_val as f32 } else { 1.0 };
+                let scale_y = if h_val > 0 { max_h as f32 / h_val as f32 } else { 1.0 };
+                let scale = scale_x.min(scale_y).max(0.1);
+                let new_w = ((w_val as f32 * scale) as u16).max(1);
+                let new_h = ((h_val as f32 * scale) as u16).max(1);
+                let img_area = Rect::new(
+                    area.x.saturating_add((area.width.saturating_sub(new_w)) / 2),
+                    area.y.saturating_add((area.height.saturating_sub(new_h + 3)) / 2),
+                    new_w,
+                    new_h,
+                );
+                // Draw image as ASCII block characters (fallback for all terminals)
+                let chars = ["░", "▒", "▓", "█"];
+                let step_x = (w_val / new_w as usize).max(1);
+                let step_y = (h_val / new_h as usize).max(1);
+                let mut img_text = String::new();
+                for y in (0..h_val).step_by(step_y).take(new_h as usize) {
+                    for x in (0..w_val).step_by(step_x) {
+                        let idx = (y * w_val + x) * 4;
+                        if idx + 2 < rgba.len() {
+                            let r = rgba[idx] as usize;
+                            let g = rgba[idx + 1] as usize;
+                            let b = rgba[idx + 2] as usize;
+                            let bright = (r + g + b) / 3;
+                            let c = if bright > 200 { chars[3] } else if bright > 150 { chars[2] } else if bright > 100 { chars[1] } else { chars[0] };
+                            img_text.push_str(c);
+                        } else {
+                            img_text.push(' ');
+                        }
+                    }
+                    img_text.push('\n');
+                }
+                let img_block = Block::default()
+                    .title(format!(" Image {}x{} ", w, h))
+                    .borders(borders)
+                    .border_type(BorderType::Rounded)
+                    .border_style(if is_focused {
+                        Style::default().fg(crate::ui::theme::border_active())
+                    } else {
+                        Style::default().fg(crate::ui::theme::border_inactive())
+                    });
+                f.render_widget(&img_block, img_area);
+                let inner_img = img_block.inner(img_area);
+                f.render_widget(Paragraph::new(img_text), inner_img);
+
+                // Queue terminal-native image render if protocol is available
+                if app.graphics_protocol != crate::term_graphics::GraphicsProtocol::None {
+                    app.pending_image_render = Some(crate::term_graphics::PendingImageRender {
+                        rgba: rgba.clone(),
+                        width: *w,
+                        height: *h,
+                        area: inner_img,
+                    });
+                }
+                return;
+            }
+
             let lines = if let Some(cached) = &preview.highlighted_lines {
                 cached.clone()
             } else {
