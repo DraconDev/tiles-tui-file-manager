@@ -150,6 +150,10 @@ pub struct App {
     pub quick_filter_input: String,
     /// Previous selection index to restore on quick filter cancel.
     pub quick_filter_prev_selection: Option<usize>,
+    /// Shell command output buffer for CommandOutput mode.
+    pub command_output: Vec<String>,
+    pub command_output_scroll: usize,
+    pub command_output_status: Option<String>,
 }
 
 impl App {
@@ -334,6 +338,9 @@ editor: ViewPreferences {
             content_search_scroll: 0,
             quick_filter_input: String::new(),
             quick_filter_prev_selection: None,
+            command_output: Vec::new(),
+            command_output_scroll: 0,
+            command_output_status: None,
         }
     }
 

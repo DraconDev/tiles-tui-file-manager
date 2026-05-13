@@ -66,6 +66,8 @@ pub enum AppEvent {
     ServersTomlChanged,
     ContentSearchStart(String, PathBuf),
     ContentSearchResults(Vec<crate::modules::rg::ContentSearchResult>),
+    CommandOutputLine(String),
+    CommandOutputDone(String),
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -214,6 +216,7 @@ pub enum AppMode {
     },
     ContentSearch,
     QuickFilter,
+    CommandOutput(String),
 }
 
 #[derive(Clone, Debug, PartialEq)]
