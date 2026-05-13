@@ -132,10 +132,13 @@ pub fn expand_command_template(template: &str, path: &std::path::Path) -> Vec<St
     // to prevent accidental shell injection from malformed configs
     for part in &mut parts {
         *part = part.replace("{path}", &path_str);
-        // Replace any remaining {unknown} placeholders with empty string
+        // Replace any remaining {unknown} placeholders with empty string.
+        // Loop until no more '{' is found, since replace_range shifts indices.
         while let Some(start) = part.find('{') {
             if let Some(end) = part[start..].find('}') {
+                // +1 to include the '}' in the range
                 part.replace_range(start..start + end + 1, "");
+                // Don't increment start — after replace_range, the next char is at the same index
             } else {
                 break;
             }
