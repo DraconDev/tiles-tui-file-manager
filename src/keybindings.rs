@@ -22,9 +22,9 @@ impl KeyCombo {
 
         for part in &parts {
             match part.to_ascii_lowercase().as_str() {
-                "ctrl" | "control" | "c" => ctrl = true,
-                "alt" | "a" => alt = true,
-                "shift" | "s" => shift = true,
+                "ctrl" | "control" => ctrl = true,
+                "alt" => alt = true,
+                "shift" => shift = true,
                 c => code = c.to_string(),
             }
         }
@@ -285,5 +285,34 @@ mod tests {
         let c = KeyCombo::parse("Ctrl+Q").unwrap();
         assert!(c.matches(&KeyCode::Char('q'), &KeyModifiers::CONTROL));
         assert!(c.matches(&KeyCode::Char('Q'), &KeyModifiers::CONTROL));
+    }
+
+    #[test]
+    fn single_letter_not_modifier() {
+        // "c" should be the letter C, not ctrl
+        let c = KeyCombo::parse("c").unwrap();
+        assert_eq!(c.code, "c");
+        assert!(!c.ctrl);
+        assert!(!c.alt);
+        assert!(!c.shift);
+
+        // "a" should be the letter A, not alt
+        let a = KeyCombo::parse("a").unwrap();
+        assert_eq!(a.code, "a");
+        assert!(!a.alt);
+
+        // "s" should be the letter S, not shift
+        let s = KeyCombo::parse("s").unwrap();
+        assert_eq!(s.code, "s");
+        assert!(!s.shift);
+    }
+
+    #[test]
+    fn default_keybindings_parse() {
+        let kb = Keybindings::default();
+        for (action, combo_str) in &kb.bindings {
+            assert!(KeyCombo::parse(combo_str).is_some(),
+                "Default binding '{}' for action '{}' failed to parse", combo_str, action);
+        }
     }
 }
