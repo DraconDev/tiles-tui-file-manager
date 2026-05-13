@@ -602,10 +602,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             "RemoteConnected: pane={} host={} current_path={}",
                             pane_idx,
                             remote_name,
-                            last_path.as_ref().map(|p| p.display().to_string()).unwrap_or_else(|| "/".to_string())
+                            "RemoteConnected: pane={} host={} current_path={:?}",
                         ));
                     }
-                    // Trigger initial file listing for the remote session
+                            pane_idx, remote_name, &fs.current_path
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                     needs_draw = true;
                 }
