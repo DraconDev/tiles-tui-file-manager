@@ -8,6 +8,7 @@ use ratatui::{
     },
     Frame,
 };
+use std::path::PathBuf;
 use std::time::SystemTime;
 
 use crate::app::{
