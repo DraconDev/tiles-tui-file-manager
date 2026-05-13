@@ -2262,6 +2262,20 @@ paired = new_paired;
         tokio::time::sleep(Duration::from_millis(33)).await;
     }
 
+    // Write last directory for `cd` on quit support
+    {
+        let app_guard = app.lock();
+        if let Some(fs) = app_guard.current_file_state() {
+            let last_dir = fs.current_path.clone();
+            if let Some(config_dir) = dirs::config_dir() {
+                let tiles_dir = config_dir.join("tiles");
+                let _ = std::fs::create_dir_all(&tiles_dir);
+                let last_dir_file = tiles_dir.join("last_dir");
+                let _ = std::fs::write(&last_dir_file, last_dir.as_os_str().as_encoded_bytes());
+            }
+        }
+    }
+
     Ok(())
 }
 
