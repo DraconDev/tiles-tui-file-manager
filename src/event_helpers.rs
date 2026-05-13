@@ -64,6 +64,31 @@ pub fn update_commands(app: &mut App) {
             desc: "Run Command".to_string(),
             action: CommandAction::RunCommand,
         },
+        CommandItem {
+            key: "y".to_string(),
+            desc: "Copy Path to Clipboard".to_string(),
+            action: CommandAction::CopyPathToClipboard,
+        },
+        CommandItem {
+            key: "p".to_string(),
+            desc: "Paste Paths from Clipboard".to_string(),
+            action: CommandAction::PastePathsFromClipboard,
+        },
+        CommandItem {
+            key: "t".to_string(),
+            desc: "View Trash".to_string(),
+            action: CommandAction::TrashView,
+        },
+        CommandItem {
+            key: "u".to_string(),
+            desc: "Disk Usage Analyzer".to_string(),
+            action: CommandAction::DiskUsageView,
+        },
+        CommandItem {
+            key: "z".to_string(),
+            desc: "Zoxide Jump".to_string(),
+            action: CommandAction::ZoxideJump,
+        },
     ];
 
     for (i, bookmark) in app.servers.iter().enumerate() {
