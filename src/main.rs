@@ -522,7 +522,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 // Don't reset retry_count here — preserves the retry counter
                                 // across ReconnectRemote → ConnectToRemote cycles
                                 // Use last_path only if non-empty; otherwise default to remote root
-                                fs.current_path = last_path.clone().unwrap_or_else(|| PathBuf::from("/"));
+                                fs.current_path = last_path.unwrap_or_else(|| PathBuf::from("/"));
                             }
                         }
                         let server_name = app_guard.servers.get(bookmark_idx).map(|s| s.name.clone()).unwrap_or_default();
