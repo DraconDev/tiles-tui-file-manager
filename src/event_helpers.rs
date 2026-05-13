@@ -762,7 +762,7 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::EditorPaste => {
             let text = app.editor_clipboard.clone()
-                .or_else(|| dracon_terminal_engine::utils::get_clipboard_text());
+                .or_else(dracon_terminal_engine::utils::get_clipboard_text);
             if let Some(text) = text {
                 if let Some(editor) = get_active_editor_mut(app) {
                     editor.insert_string(&text);
@@ -790,13 +790,7 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::Save => {
             let path = get_active_editor_path(app);
-            let content = {
-                if let Some(editor) = get_active_editor_mut(app) {
-                    Some(editor.get_content())
-                } else {
-                    None
-                }
-            };
+            let content = get_active_editor_mut(app).map(|editor| editor.get_content());
             if let (Some(path), Some(content)) = (path, content) {
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path, content));
                 if let Some(editor) = get_active_editor_mut(app) {

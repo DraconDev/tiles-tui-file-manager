@@ -494,7 +494,7 @@ pub fn log_debug(msg: &str) {
         let path = "debug.log";
         if let Ok(meta) = std::fs::metadata(path) {
             if meta.len() > MAX_LOG_SIZE_BYTES {
-                let _ = std::fs::rename(path, format!("debug.log.1"));
+                let _ = std::fs::rename(path, "debug.log.1");
                 let _ = std::fs::remove_file("debug.log.2");
                 let _ = std::fs::rename("debug.log.1", "debug.log.2");
             }

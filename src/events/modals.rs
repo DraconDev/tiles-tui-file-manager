@@ -553,8 +553,9 @@ fn handle_context_menu_keys(
                             app,
                             event_tx.clone(),
                         );
-                        if matches!(prev_mode, AppMode::ContextMenu { .. }) {
-                            if !matches!(app.mode, AppMode::NewFile | AppMode::NewFolder | AppMode::Rename | AppMode::Delete(_) | AppMode::DeleteFile(_)) {
+                        if matches!(prev_mode, AppMode::ContextMenu { .. })
+                            && !matches!(app.mode, AppMode::NewFile | AppMode::NewFolder | AppMode::Rename | AppMode::Delete(_) | AppMode::DeleteFile(_))
+                            {
                                 app.mode = AppMode::Normal;
                             }
                         }
