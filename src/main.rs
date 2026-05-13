@@ -452,8 +452,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::ContentSearchStart(query, path) => {
                     let tx = event_tx.clone();
+                    let query_clone = query.clone();
                     tokio::spawn(async move {
-                        let results = crate::modules::rg::search(&query, &path).await;
+                        let results = crate::modules::rg::search(&query_clone, &path).await;
                         let _ = tx.send(AppEvent::ContentSearchResults(results)).await;
                     });
                     {
