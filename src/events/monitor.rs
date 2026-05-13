@@ -1,4 +1,4 @@
-#![allow(clippy::needless_borrow)]
+#![allow(clippy::needless_borrow, clippy::collapsible_match)]
 
 use crate::app::{App, AppEvent, MonitorSubview};
 use dracon_terminal_engine::contracts::{InputEvent as Event, KeyCode};

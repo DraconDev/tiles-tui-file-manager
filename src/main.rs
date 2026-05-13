@@ -26,6 +26,13 @@ mod modules;
 mod state;
 mod ui;
 
+type TreeScanResult = (
+    Vec<(PathBuf, u16)>,
+    std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
+    Vec<PathBuf>,
+    std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
+);
+
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -1079,7 +1086,7 @@ let list_path_for_filter = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
                 let start_generation = current_generation;
-                let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
+                let (tree_files, mut metadata, g_files, g_meta): TreeScanResult =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         if let Some(session) = &list_remote {

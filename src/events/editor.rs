@@ -1,4 +1,4 @@
-#![allow(clippy::needless_borrow)]
+#![allow(clippy::needless_borrow, clippy::collapsible_match)]
 
 use std::path::PathBuf;
 use crate::app::{App, AppEvent, AppMode, ContextMenuAction, ContextMenuTarget, CurrentView};
