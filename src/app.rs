@@ -346,6 +346,10 @@ editor: ViewPreferences {
             command_output_scroll: 0,
             command_output_status: None,
             user_commands: Vec::new(),
+            rg_available: std::process::Command::new("rg")
+                .arg("--version")
+                .output()
+                .is_ok(),
         }
     }
 

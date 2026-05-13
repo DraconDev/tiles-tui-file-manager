@@ -14,7 +14,17 @@ pub struct ContentSearchResult {
 
 /// Run ripgrep asynchronously and return results.
 /// Searches `query` in `path` (recursively if directory).
-pub async fn search(query: &str, path: &PathBuf) -> Vec<ContentSearchResult> {
+/// Returns `None` if rg is not installed.
+pub async fn search(query: &str, path: &PathBuf) -> Option<Vec<ContentSearchResult>> {
+    // Check if rg is available first
+    if std::process::Command::new("rg")
+        .arg("--version")
+        .output()
+        .is_err()
+    {
+        return None;
+    }
+
     let query = query.to_string();
     let path = path.clone();
 
@@ -41,6 +51,7 @@ pub async fn search(query: &str, path: &PathBuf) -> Vec<ContentSearchResult> {
     })
     .await
     .unwrap_or_default()
+    .into()
 }
 
 fn parse_json_lines(output: &str) -> Vec<ContentSearchResult> {
