@@ -1039,12 +1039,8 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
 
     let subviews = [
         (MonitorSubview::Overview, "󰊚 OVERVIEW"),
-        (MonitorSubview::Cpu, " CPU"),
-        (MonitorSubview::Memory, " MEM"),
-        (MonitorSubview::Disk, " DISK"),
-        (MonitorSubview::Network, " NET"),
-        (MonitorSubview::Processes, "󰑮 PROC"),
-        (MonitorSubview::Applications, "󰀻 APPS"),
+        (MonitorSubview::Processes, "󰑮 PROCESSES"),
+        (MonitorSubview::Applications, "󰀻 APPLICATIONS"),
     ];
 
     app.monitor_subview_bounds.clear();
