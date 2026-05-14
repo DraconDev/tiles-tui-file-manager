@@ -62,7 +62,11 @@ pub fn handle_monitor_events(
                         if let Some(p) = app.system_state.processes.get(
                             app.process_table_state.selected().unwrap(),
                         ) {
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::KillProcess(p.pid));
+                            app.mode = crate::app::AppMode::SignalSelect {
+                                pid: p.pid,
+                                name: p.name.clone(),
+                                selected_index: 1,
+                            };
                         }
                         return true;
                     }

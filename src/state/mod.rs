@@ -206,6 +206,11 @@ pub enum AppMode {
         actions: Vec<ContextMenuAction>,
         selected_index: Option<usize>,
     },
+    SignalSelect {
+        pid: u32,
+        name: String,
+        selected_index: usize,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]

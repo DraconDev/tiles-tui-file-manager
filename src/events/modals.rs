@@ -241,6 +241,9 @@ fn handle_modal_keys(
             ref sources,
             ref target,
         } => handle_drag_drop_keys(key, app, event_tx, sources, target),
+        AppMode::SignalSelect { pid, name, selected_index } => {
+            handle_signal_select_keys(key, app, event_tx, pid, &name, selected_index)
+        }
         AppMode::EditorReplace => handle_editor_replace_keys(key, app, event_tx, evt),
         AppMode::EditorSearch => handle_editor_search_keys(key, app, event_tx, evt),
         AppMode::EditorGoToLine => handle_editor_goto_keys(key, app, event_tx, evt),
@@ -563,6 +566,51 @@ fn handle_context_menu_keys(
                     }
                 }
             }
+            true
+        }
+        _ => true,
+    }
+}
+
+const SIGNALS: [(i32, &str); 6] = [
+    (1, "SIGHUP"),
+    (2, "SIGINT"),
+    (9, "SIGKILL"),
+    (15, "SIGTERM"),
+    (18, "SIGCONT"),
+    (19, "SIGSTOP"),
+];
+
+fn handle_signal_select_keys(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+    pid: u32,
+    name: &str,
+    selected_index: usize,
+) -> bool {
+    match key.code {
+        KeyCode::Esc => {
+            app.mode = AppMode::Normal;
+            true
+        }
+        KeyCode::Up => {
+            let new_idx = selected_index.saturating_sub(1);
+            app.mode = AppMode::SignalSelect { pid, name: name.to_string(), selected_index: new_idx };
+            true
+        }
+        KeyCode::Down => {
+            let new_idx = (selected_index + 1).min(SIGNALS.len() - 1);
+            app.mode = AppMode::SignalSelect { pid, name: name.to_string(), selected_index: new_idx };
+            true
+        }
+        KeyCode::Enter => {
+            if let Some((sig, _)) = SIGNALS.get(selected_index) {
+                let _ = crate::app::try_send_event(event_tx, AppEvent::KillProcess(pid));
+                let _ = dracon_system::ProcessController
+                    .kill_process(pid, Some(*sig));
+            }
+            app.mode = AppMode::Normal;
             true
         }
         _ => true,

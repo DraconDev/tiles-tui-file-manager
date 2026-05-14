@@ -393,6 +393,9 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     {
         draw_drag_drop_modal(f, app, sources, target);
     }
+    if let AppMode::SignalSelect { pid, ref name, selected_index } = app.mode {
+        draw_signal_select_modal(f, app, pid, name, selected_index);
+    }
 
     if app.is_dragging {
         draw_drag_ghost(f, app);
