@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
+
 use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, DropTarget, SidebarTarget,
 };
@@ -88,11 +90,9 @@ pub fn handle_event(
                     return true;
                 }
                 match key.code {
-                    KeyCode::Char('m') | KeyCode::Char('M') => {
-                        if app.current_view == CurrentView::Editor {
-                            app.show_main_stage = !app.show_main_stage;
-                            return true;
-                        }
+                    KeyCode::Char('m') | KeyCode::Char('M') if app.current_view == CurrentView::Editor => {
+                        app.show_main_stage = !app.show_main_stage;
+                        return true;
                     }
                     KeyCode::Char('p') | KeyCode::Char('P') => {
                         app.toggle_split();

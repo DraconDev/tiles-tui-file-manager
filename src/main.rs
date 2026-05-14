@@ -26,6 +26,13 @@ mod modules;
 mod state;
 mod ui;
 
+type TreeScanResult = (
+    Vec<(PathBuf, u16)>,
+    std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
+    Vec<PathBuf>,
+    std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
+);
+
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
@@ -681,7 +688,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
-                        crate::modules::remote::create_file(&remote, &path).map_err(|e| e)
+                        crate::modules::remote::create_file(&remote, &path)
                     } else {
                         std::fs::File::create(&path).map(|_| ())
                     };
@@ -703,7 +710,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
                         crate::modules::remote::create_dir_all(&remote, &path)
                     } else {
-                        std::fs::create_dir_all(&path).map_err(|e| e)
+                        std::fs::create_dir_all(&path)
                     };
                     if let Err(e) = result {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Failed to create folder: {}", e)));
@@ -1079,7 +1086,7 @@ let list_path_for_filter = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
                 let start_generation = current_generation;
-                let (tree_files, mut metadata, g_files, g_meta): (Vec<(PathBuf, u16)>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>, Vec<PathBuf>, std::collections::HashMap<PathBuf, crate::state::FileMetadata>) =
+                let (tree_files, mut metadata, g_files, g_meta): TreeScanResult =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         if let Some(session) = &list_remote {

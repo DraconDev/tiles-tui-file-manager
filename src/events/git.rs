@@ -1,3 +1,5 @@
+#![allow(clippy::needless_borrow)]
+
 use crate::app::{App, AppEvent, AppMode, CurrentView};
 use dracon_terminal_engine::contracts::{InputEvent as Event, KeyCode, MouseButton, MouseEventKind};
 use tokio::sync::mpsc;
