@@ -1,5 +1,8 @@
 # Tiles — TUI File Manager
 
+[![crates.io](https://img.shields.io/crates/v/tiles-tui-file-manager.svg)](https://crates.io/crates/tiles-tui-file-manager)
+[![GitHub release](https://img.shields.io/github/v/release/DraconDev/tiles?label=latest)](https://github.com/DraconDev/tiles/releases)
+
 ![Tiles](assets/tiles-screenshot.png)
 
 A dual-pane TUI file manager built in Rust. Features include vim-style navigation, integrated text editor, git awareness, remote SSH browsing, and system monitoring — all in one terminal interface.
@@ -67,15 +70,15 @@ A dual-pane TUI file manager built in Rust. Features include vim-style navigatio
 
 ## Install
 
+### From crates.io
+```bash
+cargo install tiles-tui-file-manager
+```
+
+### From source
 ```bash
 git clone https://github.com/DraconDev/tiles
 cd tiles
-./install.sh
-```
-
-Or build manually:
-
-```bash
 cargo build --release
 ./target/release/tiles
 ```
