@@ -3,36 +3,38 @@ set -e
 
 BUILD_TYPE="${1:-dev}"
 
-TILES_TARGET=$(command -v tiles 2>/dev/null || echo "")
+TILES_INSTALL_PATH=$(command -v tiles 2>/dev/null || echo "")
 
-install_to_path() {
-  if [ -n "$TILES_TARGET" ]; then
-    local src="$HOME/.cargo/bin/tiles"
-    if [ "$TILES_TARGET" = "$src" ]; then
-      return
-    fi
-    local bak="${TILES_TARGET}.bak"
-    mv "$TILES_TARGET" "$bak" 2>/dev/null || true
-    cp "$src" "$TILES_TARGET" 2>/dev/null || {
-      mv "$bak" "$TILES_TARGET" 2>/dev/null || true
-      echo "WARNING: could not install to $TILES_TARGET (binary in use)"
+install_binary() {
+  if [ -z "$TILES_INSTALL_PATH" ]; then
+    echo "WARNING: tiles not found in PATH, skipping binary install"
+    return
+  fi
+
+  local src="$HOME/.cargo/bin/tiles"
+  if [ "$TILES_INSTALL_PATH" != "$src" ]; then
+    local bak="${TILES_INSTALL_PATH}.bak"
+    mv "$TILES_INSTALL_PATH" "$bak" 2>/dev/null || true
+    cp "$src" "$TILES_INSTALL_PATH" 2>/dev/null || {
+      mv "$bak" "$TILES_INSTALL_PATH" 2>/dev/null || true
+      echo "WARNING: could not install to $TILES_INSTALL_PATH (binary in use)"
       return
     }
     rm -f "$bak"
-    echo "Installed to $TILES_TARGET"
   fi
+  echo "Installed to $TILES_INSTALL_PATH"
 }
 
 case "$BUILD_TYPE" in
   dev)
     cargo build
     cargo install --path . --bins
-    install_to_path
+    install_binary
     ;;
   release)
     cargo build --release
     cargo install --path . --bins --release
-    install_to_path
+    install_binary
     ;;
   check)
     cargo clippy -D warnings
