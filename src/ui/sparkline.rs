@@ -74,12 +74,12 @@ impl BrailleSparkline {
             let mut row_str = String::with_capacity(braille_cols);
             for col in 0..braille_cols {
                 let mut bits: u32 = 0;
-                for dot_row in 0..4usize {
+                for (dot_row, dot_row_bits) in BIT_MAP.iter().enumerate() {
                     let abs_dot_row = term_row * 4 + dot_row;
-                    for sub_col in 0..2usize {
+                    for (sub_col, &bit_val) in dot_row_bits.iter().enumerate() {
                         let data_idx = col * 2 + sub_col;
                         if data_idx < self.data.len() && dot_data[abs_dot_row][data_idx] {
-                            bits |= BIT_MAP[dot_row][sub_col];
+                            bits |= bit_val;
                         }
                     }
                 }
