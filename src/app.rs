@@ -169,6 +169,8 @@ impl App {
             net_out_history: VecDeque::from(vec![0; 100]),
             last_net_in: 0,
             last_net_out: 0,
+            net_interfaces: Vec::new(),
+            last_net_interfaces: Vec::new(),
             uptime: 0,
             os_name: String::new(),
             os_version: String::new(),

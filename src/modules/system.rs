@@ -101,6 +101,32 @@ impl SystemModule {
         s.net_in = data.net_in;
         s.net_out = data.net_out;
 
+        let current_ifaces = read_net_interfaces();
+        let elapsed = s.last_update.elapsed().as_secs_f64().max(0.1);
+        for iface in &mut current_ifaces {
+            if let Some(prev) = s.last_net_interfaces.iter().find(|p| p.name == iface.name) {
+                iface.rx_rate = iface.rx_bytes.saturating_sub(prev.rx_bytes);
+                iface.tx_rate = iface.tx_bytes.saturating_sub(prev.tx_bytes);
+                let rx_rate_scaled = (iface.rx_rate as f64 / elapsed / 1024.0 * 100.0) as u64;
+                let tx_rate_scaled = (iface.tx_rate as f64 / elapsed / 1024.0 * 100.0) as u64;
+                iface.rx_history = prev.rx_history.clone();
+                iface.tx_history = prev.tx_history.clone();
+                iface.rx_history.push_back(rx_rate_scaled);
+                iface.tx_history.push_back(tx_rate_scaled);
+                if iface.rx_history.len() > 100 {
+                    iface.rx_history.pop_front();
+                }
+                if iface.tx_history.len() > 100 {
+                    iface.tx_history.pop_front();
+                }
+            } else {
+                iface.rx_history = VecDeque::from(vec![0; 100]);
+                iface.tx_history = VecDeque::from(vec![0; 100]);
+            }
+        }
+        s.last_net_interfaces = s.net_interfaces.clone();
+        s.net_interfaces = current_ifaces;
+
         s.cpu_temperature = read_cpu_temperature();
         s.cpu_frequency = read_cpu_frequency();
 
@@ -161,6 +187,33 @@ fn read_disk_io() -> HashMap<String, DiskIo> {
         }
     }
     io_map
+}
+
+fn read_net_interfaces() -> Vec<crate::state::NetInterface> {
+    let mut ifaces = Vec::new();
+    if let Ok(content) = std::fs::read_to_string("/proc/net/dev") {
+        for line in content.lines().skip(2) {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 10 {
+                let name = parts[0].trim_end_matches(':').to_string();
+                if name == "lo" {
+                    continue;
+                }
+                let rx_bytes: u64 = parts[1].parse().unwrap_or(0);
+                let tx_bytes: u64 = parts[9].parse().unwrap_or(0);
+                ifaces.push(crate::state::NetInterface {
+                    name,
+                    rx_bytes,
+                    tx_bytes,
+                    rx_rate: 0,
+                    tx_rate: 0,
+                    rx_history: VecDeque::new(),
+                    tx_history: VecDeque::new(),
+                });
+            }
+        }
+    }
+    ifaces
 }
 
 fn read_cpu_temperature() -> Option<f32> {

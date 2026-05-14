@@ -1435,6 +1435,29 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         Span::styled(format_size(app.system_state.net_out), Style::default().fg(Color::White)),
     ]));
 
+    for iface in &app.system_state.net_interfaces {
+        let rx_rate_kbps = iface.rx_rate as f64 / 1024.0;
+        let tx_rate_kbps = iface.tx_rate as f64 / 1024.0;
+        let rx_display = if rx_rate_kbps > 1024.0 {
+            format!("{:.1} MB/s", rx_rate_kbps / 1024.0)
+        } else {
+            format!("{:.0} KB/s", rx_rate_kbps)
+        };
+        let tx_display = if tx_rate_kbps > 1024.0 {
+            format!("{:.1} MB/s", tx_rate_kbps / 1024.0)
+        } else {
+            format!("{:.0} KB/s", tx_rate_kbps)
+        };
+        lines.push(Line::from(vec![
+            Span::styled("│  ", sep),
+            Span::styled(format!("{:10}", iface.name), Style::default().fg(Color::White)),
+            Span::styled(" ▼ ", Style::default().fg(theme::accent_secondary())),
+            Span::styled(format!("{:>10}", rx_display), Style::default().fg(theme::accent_secondary())),
+            Span::styled(" ▲ ", Style::default().fg(theme::accent_primary())),
+            Span::styled(format!("{:>10}", tx_display), Style::default().fg(theme::accent_primary())),
+        ]));
+    }
+
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
         Span::styled("─".repeat(w), sep),
