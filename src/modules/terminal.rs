@@ -88,46 +88,106 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
         }
     }
 
-    let terminals: Vec<(&str, Vec<&str>)> = vec![
-        ("konsole", vec!["--new-tab", "--workdir", "-e"]),
-        ("gnome-terminal", vec!["--tab", "--"]),
-        ("xfce4-terminal", vec!["--tab", "-e"]),
-        ("x-terminal-emulator", vec!["-e"]),
-        ("alacritty", vec!["-e"]),
-        ("kitty", vec!["@", "launch", "--type=tab", "--cwd"]),
-        ("wezterm", vec!["cli", "spawn", "--cwd", "--"]),
-        ("termite", vec!["-e"]),
-        ("urxvt", vec!["-e"]),
+    let terminals = [
+        "konsole",
+        "gnome-terminal",
+        "xfce4-terminal",
+        "x-terminal-emulator",
+        "alacritty",
+        "kitty",
+        "wezterm",
+        "termite",
+        "urxvt",
     ];
 
-    for (term, base_args) in terminals {
+    for term in terminals {
         if !command_exists(term) {
             continue;
         }
 
-        let mut args: Vec<String> = base_args.iter().map(|s| (*s).to_string()).collect();
-        args.push(path_str.clone());
+        let mut args: Vec<String> = Vec::new();
+        let mut did_build = false;
 
-        if let Some(cmd_str) = command {
-            let split_args = split_command(cmd_str);
-            if split_args.is_empty() {
-                continue;
-            }
-            if term == "kitty" {
-                args.push(split_args[0].clone());
-                if split_args.len() > 1 {
-                    for arg in &split_args[1..] {
-                        args.push(arg.clone());
+        match term {
+            "konsole" => {
+                args.push("--new-tab".to_string());
+                args.push("--workdir".to_string());
+                args.push(path_str.clone());
+                if let Some(cmd_str) = command {
+                    let split = split_command(cmd_str);
+                    if !split.is_empty() {
+                        args.push("-e".to_string());
+                        args.extend(split);
                     }
                 }
-            } else {
-                for arg in split_args {
-                    args.push(arg);
-                }
+                did_build = true;
             }
+            "gnome-terminal" => {
+                args.push("--tab".to_string());
+                args.push(format!("--working-directory={}", path_str));
+                if let Some(cmd_str) = command {
+                    let split = split_command(cmd_str);
+                    if !split.is_empty() {
+                        args.push("--".to_string());
+                        args.extend(split);
+                    }
+                }
+                did_build = true;
+            }
+            "xfce4-terminal" => {
+                args.push("--tab".to_string());
+                args.push("--working-directory".to_string());
+                args.push(path_str.clone());
+                if let Some(cmd_str) = command {
+                    let split = split_command(cmd_str);
+                    if !split.is_empty() {
+                        args.push("-e".to_string());
+                        args.extend(split);
+                    }
+                }
+                did_build = true;
+            }
+            "kitty" => {
+                args.push("@".to_string());
+                args.push("launch".to_string());
+                args.push("--type=tab".to_string());
+                args.push("--cwd".to_string());
+                args.push(path_str.clone());
+                if let Some(cmd_str) = command {
+                    args.extend(split_command(cmd_str));
+                }
+                did_build = true;
+            }
+            "wezterm" => {
+                args.push("cli".to_string());
+                args.push("spawn".to_string());
+                args.push("--cwd".to_string());
+                args.push(path_str.clone());
+                if let Some(cmd_str) = command {
+                    let split = split_command(cmd_str);
+                    if !split.is_empty() {
+                        args.push("--".to_string());
+                        args.extend(split);
+                    }
+                }
+                did_build = true;
+            }
+            "x-terminal-emulator" | "alacritty" | "termite" | "urxvt" => {
+                args.push("--working-directory".to_string());
+                args.push(path_str.clone());
+                if let Some(cmd_str) = command {
+                    let split = split_command(cmd_str);
+                    if !split.is_empty() {
+                        args.push("-e".to_string());
+                        args.extend(split);
+                    }
+                }
+                did_build = true;
+            }
+            _ => {}
         }
 
-        if Command::new(term).args(&args).spawn().is_ok() {
+        if did_build && Command::new(term).args(&args).spawn().is_ok() {
             return true;
         }
     }
