@@ -38,6 +38,7 @@ impl SystemModule {
         s.disks = data.disks.into_iter().map(map_disk).collect();
         s.uptime = data.uptime;
         s.processes = data.processes.into_iter().map(map_process).collect();
+        s.process_ppid = read_process_ppid();
         s.hostname = data.hostname;
         s.os_name = data.os_name;
         s.os_version = data.os_version;
@@ -208,4 +209,31 @@ fn map_process(p: ProcessSnapshot) -> ProcessInfo {
         user: p.user,
         status: p.status,
     }
+}
+
+fn read_process_ppid() -> HashMap<u32, u32> {
+    let mut ppid_map = HashMap::new();
+    if let Ok(entries) = std::fs::read_dir("/proc") {
+        for entry in entries.flatten() {
+            let name = entry.file_name();
+            let pid_str = name.to_string_lossy();
+            if let Ok(pid) = pid_str.parse::<u32>() {
+                let stat_path = std::path::PathBuf::from(format!("/proc/{}/stat", pid));
+                if let Ok(stat_content) = std::fs::read_to_string(&stat_path) {
+                    if let Some(ppid) = parse_ppid_from_stat(&stat_content) {
+                        ppid_map.insert(pid, ppid);
+                    }
+                }
+            }
+        }
+    }
+    ppid_map
+}
+
+fn parse_ppid_from_stat(stat: &str) -> Option<u32> {
+    let start = stat.rfind(')')?;
+    let rest = &stat[start + 2..];
+    let mut fields = rest.split_whitespace();
+    fields.nth(1)?;
+    fields.next().and_then(|s| s.parse().ok())
 }

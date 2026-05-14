@@ -1622,13 +1622,25 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             crate::ui::theme::accent_secondary()
         };
+        let depth = if app.process_tree_view {
+            crate::modules::system::process_tree_depth(p.pid, &app.system_state.process_ppid)
+        } else {
+            0
+        };
+        let indent = "  ".repeat(depth.min(8));
+        let prefix = if depth > 0 { "└ " } else { "" };
+        let name_display = if app.process_tree_view {
+            format!("{}{}{}", indent, prefix, p.name)
+        } else {
+            p.name.clone()
+        };
         Row::new(vec![
             Cell::from(format!("  {}", p.pid)).style(Style::default().fg(if is_selected {
                 Color::Black
             } else {
                 Color::Rgb(60, 65, 75)
             })),
-            Cell::from(p.name.clone()).style(Style::default().add_modifier(Modifier::BOLD)),
+            Cell::from(name_display).style(Style::default().add_modifier(Modifier::BOLD)),
             Cell::from(p.user.clone()).style(Style::default().fg(if is_selected {
                 Color::Black
             } else {

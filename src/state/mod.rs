@@ -421,6 +421,7 @@ pub struct SystemState {
     pub disk_read_history: VecDeque<u64>,
     pub disk_write_history: VecDeque<u64>,
     pub processes: Vec<ProcessInfo>,
+    pub process_ppid: HashMap<u32, u32>,
     pub cpu_usage: f32,
     pub cpu_cores: Vec<f32>,
     pub cpu_temperature: Option<f32>,

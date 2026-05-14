@@ -67,6 +67,12 @@ pub fn handle_monitor_events(
                         return true;
                     }
                 }
+                KeyCode::Char('t') => {
+                    if matches!(app.monitor_subview, MonitorSubview::Processes | MonitorSubview::Applications) {
+                        app.process_tree_view = !app.process_tree_view;
+                        return true;
+                    }
+                }
                 _ => {}
             }
         }
