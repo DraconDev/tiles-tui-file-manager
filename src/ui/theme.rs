@@ -202,7 +202,6 @@ pub fn header_fg() -> Color {
     ACTIVE_THEME.read().header_fg
 }
 
-// Monitor gauge colors
 pub fn gauge_danger() -> Color {
     Color::Rgb(255, 60, 60)
 }
@@ -211,15 +210,11 @@ pub fn gauge_warning() -> Color {
     Color::Rgb(255, 180, 0)
 }
 
-pub fn gauge_normal() -> Color {
-    accent_secondary()
-}
-
 pub fn monitor_label() -> Color {
     Color::Rgb(60, 65, 75)
 }
 
-pub fn monitor_dim_value() -> Color {
+pub fn monitor_dim() -> Color {
     Color::Rgb(100, 100, 110)
 }
 

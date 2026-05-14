@@ -21,42 +21,42 @@ pub fn handle_monitor_events(
                     return true;
                 }
                 KeyCode::Char('3') => {
-                    app.monitor_subview = MonitorSubview::Cpu;
+                    app.monitor_subview = MonitorSubview::Applications;
                     return true;
                 }
-                KeyCode::Char('4') => {
-                    app.monitor_subview = MonitorSubview::Memory;
-                    return true;
-                }
-                KeyCode::Char('5') => {
-                    app.monitor_subview = MonitorSubview::Disk;
-                    return true;
-                }
-                KeyCode::Char('6') => {
-                    app.monitor_subview = MonitorSubview::Network;
-                    return true;
-                }
-                KeyCode::Up if app.monitor_subview == MonitorSubview::Processes => {
-                    app.process_table_state.select(
-                        app.process_table_state
-                            .selected()
-                            .map(|s| s.saturating_sub(1))
-                            .or(Some(0)),
-                    );
-                    return true;
-                }
-                KeyCode::Down if app.monitor_subview == MonitorSubview::Processes => {
-                    let len = app.system_state.processes.len();
-                    app.process_table_state.select(
-                        app.process_table_state
-                            .selected()
-                            .map(|s| (s + 1).min(len.saturating_sub(1)))
-                            .or(Some(0)),
-                    );
-                    return true;
-                }
+                KeyCode::Up => match app.monitor_subview {
+                    MonitorSubview::Overview => {
+                        app.overview_scroll_offset = app.overview_scroll_offset.saturating_sub(1);
+                        return true;
+                    }
+                    MonitorSubview::Processes | MonitorSubview::Applications => {
+                        app.process_table_state.select(
+                            app.process_table_state
+                                .selected()
+                                .map(|s| s.saturating_sub(1))
+                                .or(Some(0)),
+                        );
+                        return true;
+                    }
+                },
+                KeyCode::Down => match app.monitor_subview {
+                    MonitorSubview::Overview => {
+                        app.overview_scroll_offset = app.overview_scroll_offset.saturating_add(1).min(1000);
+                        return true;
+                    }
+                    MonitorSubview::Processes | MonitorSubview::Applications => {
+                        let len = app.system_state.processes.len();
+                        app.process_table_state.select(
+                            app.process_table_state
+                                .selected()
+                                .map(|s| (s + 1).min(len.saturating_sub(1)))
+                                .or(Some(0)),
+                        );
+                        return true;
+                    }
+                },
                 KeyCode::Char('k') => {
-                    if app.monitor_subview == MonitorSubview::Processes
+                    if matches!(app.monitor_subview, MonitorSubview::Processes | MonitorSubview::Applications)
                         && app.process_table_state.selected().is_some()
                     {
                         if let Some(p) = app.system_state.processes.get(

@@ -4,6 +4,7 @@ use dracon_system::{
     SystemSnapshotContract, SystemSnapshotProvider,
 };
 use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
+use std::collections::VecDeque;
 
 pub struct SystemModule {
     monitor: SystemSnapshotProvider,
@@ -47,7 +48,7 @@ impl SystemModule {
         }
 
         if s.core_history.len() != data.cpu_cores.len() {
-            s.core_history = vec![std::collections::VecDeque::from(vec![0; 100]); data.cpu_cores.len()];
+            s.core_history = vec![VecDeque::from(vec![0; 100]); data.cpu_cores.len()];
         }
         for (i, &usage) in data.cpu_cores.iter().enumerate() {
             s.core_history[i].push_back(usage as u64);

@@ -1,5 +1,5 @@
 use ratatui::widgets::TableState;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
 use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
@@ -151,14 +151,14 @@ impl App {
             total_mem: 0.0,
             swap_usage: 0.0,
             total_swap: 0.0,
-            cpu_history: std::collections::VecDeque::from(vec![0; 100]),
+            cpu_history: VecDeque::from(vec![0; 100]),
             core_history: Vec::new(),
-            mem_history: std::collections::VecDeque::from(vec![0; 100]),
-            swap_history: std::collections::VecDeque::from(vec![0; 100]),
+            mem_history: VecDeque::from(vec![0; 100]),
+            swap_history: VecDeque::from(vec![0; 100]),
             net_in: 0,
             net_out: 0,
-            net_in_history: std::collections::VecDeque::from(vec![0; 100]),
-            net_out_history: std::collections::VecDeque::from(vec![0; 100]),
+            net_in_history: VecDeque::from(vec![0; 100]),
+            net_out_history: VecDeque::from(vec![0; 100]),
             last_net_in: 0,
             last_net_out: 0,
             uptime: 0,
