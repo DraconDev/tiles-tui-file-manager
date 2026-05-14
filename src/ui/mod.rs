@@ -1314,7 +1314,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         let tx = app
             .system_state
             .net_out_history
-            .last()
+            .back()
             .copied()
             .unwrap_or(0);
         let uptime_d = app.system_state.uptime / 86400;
