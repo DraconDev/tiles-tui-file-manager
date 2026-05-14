@@ -5,56 +5,37 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
     let path_str = path.to_string_lossy().to_string();
 
     if new_tab {
-        if let (Ok(service), Ok(window)) = (
-            std::env::var("KONSOLE_DBUS_SERVICE"),
-            std::env::var("KONSOLE_DBUS_WINDOW"),
-        ) {
-            let dbus_cmd: Option<&str> = if command_exists("qdbus") {
-                Some("qdbus")
-            } else if command_exists("qdbus6") {
-                Some("qdbus6")
-            } else {
-                None
-            };
-
-            if let Some(dbus) = dbus_cmd {
-                let args = vec![
-                    "--session".to_string(),
-                    service.clone(),
-                    window.clone(),
-                    "org.kde.konsole.Window.newSession".to_string(),
-                    "".to_string(),
+        if let Ok(service) = std::env::var("KONSOLE_DBUS_SERVICE") {
+            if command_exists("dbus-send") {
+                let mut konsole_args: Vec<String> = vec![
+                    "konsole".to_string(),
+                    "--new-tab".to_string(),
+                    "--workdir".to_string(),
                     path_str.clone(),
                 ];
+                if let Some(cmd_str) = command {
+                    let split = split_command(cmd_str);
+                    if !split.is_empty() {
+                        konsole_args.push("-e".to_string());
+                        konsole_args.extend(split);
+                    }
+                }
 
-                if let Ok(output) = Command::new(dbus).args(&args).output() {
+                let dbus_args: Vec<String> = vec![
+                    "--session".to_string(),
+                    format!("--dest={}", service),
+                    "--type=method_call".to_string(),
+                    "--print-reply".to_string(),
+                    "/org/kde/konsole".to_string(),
+                    "org.kde.KDBusService.CommandLine".to_string(),
+                    format!("array:string:{}", konsole_args.iter().map(|a| format!("\"{}\"", a.replace('"', "\\\""))).collect::<Vec<_>>().join(",")),
+                    format!("string:{}", path_str),
+                    "dict:string:variant:".to_string(),
+                ];
+
+                if let Ok(output) = Command::new("dbus-send").args(&dbus_args).output() {
                     if output.status.success() {
-                        let session_id =
-                            String::from_utf8_lossy(&output.stdout).trim().to_string();
-                        if !session_id.is_empty() {
-                            if let Some(cmd_str) = command {
-                                let session_path = format!("/Sessions/{}", session_id);
-                                let _ = Command::new(dbus)
-                                    .args([
-                                        "--session",
-                                        &service,
-                                        &session_path,
-                                        "org.kde.konsole.Session.runCommand",
-                                        cmd_str,
-                                    ])
-                                    .spawn();
-                            }
-                            let main_win = "/konsole/MainWindow_1";
-                            let _ = Command::new(dbus)
-                                .args([
-                                    "--session",
-                                    &service,
-                                    main_win,
-                                    "org.qtproject.Qt.QWidget.raise",
-                                ])
-                                .spawn();
-                            return true;
-                        }
+                        return true;
                     }
                 }
             }
