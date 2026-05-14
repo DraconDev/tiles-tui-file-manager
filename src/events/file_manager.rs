@@ -1325,6 +1325,10 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 } else {
+                    let (is_binary, _, _) = crate::modules::files::check_file_suitability(&path, u64::MAX);
+                    if is_binary {
+                        return;
+                    }
                     let target_pane = app
                         .focused_pane_index
                         .min(app.panes.len().saturating_sub(1));
