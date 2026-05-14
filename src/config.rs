@@ -239,7 +239,7 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
             continue;
         }
 
-        if line.starts_with("Host ") {
+        if let Some(stripped) = line.strip_prefix("Host ") {
             if let Some(entry) = current_entry.take() {
                 if entry.host.is_some() && entry.user.is_some() {
                     let host = entry.host.unwrap();
@@ -255,7 +255,7 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
                     }
                 }
             }
-            let name = line[5..].trim().to_string();
+            let name = stripped.trim().to_string();
             current_entry = Some(SshHostEntry {
                 name,
                 host: None,
