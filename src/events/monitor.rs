@@ -11,36 +11,42 @@ pub fn handle_monitor_events(
 ) -> bool {
     if let Event::Key(key) = evt {
         if key.modifiers.is_empty() {
+            let has_table = matches!(
+                app.monitor_subview,
+                MonitorSubview::Processes
+                    | MonitorSubview::Applications
+                    | MonitorSubview::Overview
+            );
             match key.code {
                 KeyCode::Char('1') => {
                     app.monitor_subview = MonitorSubview::Overview;
                     return true;
                 }
                 KeyCode::Char('2') => {
-                    app.monitor_subview = MonitorSubview::Processes;
-                    return true;
-                }
-                KeyCode::Char('3') => {
                     app.monitor_subview = MonitorSubview::Cpu;
                     return true;
                 }
-                KeyCode::Char('4') => {
+                KeyCode::Char('3') => {
                     app.monitor_subview = MonitorSubview::Memory;
                     return true;
                 }
-                KeyCode::Char('5') => {
+                KeyCode::Char('4') => {
                     app.monitor_subview = MonitorSubview::Disk;
                     return true;
                 }
-                KeyCode::Char('6') => {
+                KeyCode::Char('5') => {
                     app.monitor_subview = MonitorSubview::Network;
+                    return true;
+                }
+                KeyCode::Char('6') => {
+                    app.monitor_subview = MonitorSubview::Processes;
                     return true;
                 }
                 KeyCode::Char('7') => {
                     app.monitor_subview = MonitorSubview::Applications;
                     return true;
                 }
-                KeyCode::Up if app.monitor_subview == MonitorSubview::Processes => {
+                KeyCode::Up if has_table => {
                     app.process_table_state.select(
                         app.process_table_state
                             .selected()
@@ -49,7 +55,7 @@ pub fn handle_monitor_events(
                     );
                     return true;
                 }
-                KeyCode::Down if app.monitor_subview == MonitorSubview::Processes => {
+                KeyCode::Down if has_table => {
                     let len = app.system_state.processes.len();
                     app.process_table_state.select(
                         app.process_table_state
@@ -59,14 +65,15 @@ pub fn handle_monitor_events(
                     );
                     return true;
                 }
-                KeyCode::Char('k') => {
-                    if app.monitor_subview == MonitorSubview::Processes
-                        && app.process_table_state.selected().is_some()
-                    {
+                KeyCode::Char('k') if has_table => {
+                    if app.process_table_state.selected().is_some() {
                         if let Some(p) = app.system_state.processes.get(
                             app.process_table_state.selected().unwrap(),
                         ) {
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::KillProcess(p.pid));
+                            let _ = crate::app::try_send_event(
+                                &event_tx,
+                                AppEvent::KillProcess(p.pid),
+                            );
                         }
                         return true;
                     }
@@ -90,6 +97,21 @@ pub fn handle_monitor_mouse(
                 y: me.row,
             }) {
                 app.monitor_subview = *sv;
+                return true;
+            }
+        }
+        for (rect, col) in &app.process_column_bounds {
+            if rect.contains(ratatui::layout::Position {
+                x: me.column,
+                y: me.row,
+            }) {
+                if app.process_sort_col == *col {
+                    app.process_sort_asc = !app.process_sort_asc;
+                } else {
+                    app.process_sort_col = *col;
+                    app.process_sort_asc = false;
+                }
+                app.apply_process_sort();
                 return true;
             }
         }
