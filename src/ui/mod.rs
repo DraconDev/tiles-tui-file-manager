@@ -1379,7 +1379,7 @@ fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
         .iter()
         .map(|disk| {
             let ratio = if disk.total_space > 0.0 {
-                (disk.used_space / disk.total_space).clamp(0.0, 1.0)
+                (disk.used_space / disk.total_space).clamp(0.0, 1.0) as f32
             } else {
                 0.0
             };
