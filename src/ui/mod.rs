@@ -1060,7 +1060,7 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::Rgb(60, 65, 75))
+            Style::default().fg(crate::ui::theme::monitor_label())
         };
         if app.mouse_pos.1 == nav_layout[0].y
             && app.mouse_pos.0 >= rect.x
@@ -1157,9 +1157,9 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(
                         pct,
                         Style::default()
@@ -1204,15 +1204,15 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(core_label, Style::default().fg(Color::Rgb(50, 55, 65))),
+                    Span::styled(core_label, Style::default().fg(crate::ui::theme::monitor_core_index())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(40, 40, 45))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_connector())),
                     Span::styled(
                         pct,
                         Style::default().fg(if usage > 10.0 {
                             Color::White
                         } else {
-                            Color::Rgb(60, 65, 75)
+                            crate::ui::theme::monitor_label()
                         }),
                     ),
                 ])),
@@ -1247,9 +1247,9 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(
                         suffix,
                         Style::default()
@@ -1292,9 +1292,9 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(
                         suffix,
                         Style::default()
@@ -1321,7 +1321,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         let uptime_h = (app.system_state.uptime % 86400) / 3600;
         f.render_widget(
             Paragraph::new(Line::from(vec![
-                Span::styled("NET ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                Span::styled("NET ", Style::default().fg(crate::ui::theme::monitor_label())),
                 Span::styled(
                     "▼",
                     Style::default().fg(crate::ui::theme::accent_secondary()),
@@ -1340,7 +1340,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
                 ),
                 Span::styled(
                     "│ ",
-                    Style::default().fg(Color::Rgb(30, 30, 35)),
+                    Style::default().fg(crate::ui::theme::monitor_separator()),
                 ),
                 Span::styled(
                     app.system_state.hostname.clone(),
@@ -1348,12 +1348,12 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
                 ),
                 Span::styled(
                     " │ ",
-                    Style::default().fg(Color::Rgb(30, 30, 35)),
+                    Style::default().fg(crate::ui::theme::monitor_separator()),
                 ),
                 Span::raw(format!("up {}d {}h", uptime_d, uptime_h)),
                 Span::styled(
                     " │ ",
-                    Style::default().fg(Color::Rgb(30, 30, 35)),
+                    Style::default().fg(crate::ui::theme::monitor_separator()),
                 ),
                 Span::raw(app.system_state.kernel_version.clone()),
             ])),
@@ -1406,9 +1406,9 @@ fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(
                         pct,
                         Style::default()
@@ -1453,15 +1453,15 @@ fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(core_label, Style::default().fg(Color::Rgb(50, 55, 65))),
+                    Span::styled(core_label, Style::default().fg(crate::ui::theme::monitor_core_index())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(40, 40, 45))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_connector())),
                     Span::styled(
                         pct,
                         Style::default().fg(if usage > 10.0 {
                             Color::White
                         } else {
-                            Color::Rgb(60, 65, 75)
+                            crate::ui::theme::monitor_label()
                         }),
                     ),
                 ])),
@@ -1477,12 +1477,12 @@ fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 "HISTORY",
                 Style::default()
-                    .fg(Color::Rgb(60, 65, 75))
+                    .fg(crate::ui::theme::monitor_label())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 format!("  {} pts", app.system_state.cpu_history.len()),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
         ])),
         chunks[1],
@@ -1554,9 +1554,9 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(
                         suffix,
                         Style::default()
@@ -1599,9 +1599,9 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
             );
             f.render_widget(
                 Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
                     Span::styled(
                         suffix,
                         Style::default()
@@ -1620,12 +1620,12 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 "MEM HISTORY",
                 Style::default()
-                    .fg(Color::Rgb(60, 65, 75))
+                    .fg(crate::ui::theme::monitor_label())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
                 format!("  peak {:.0}%", app.system_state.mem_history.iter().copied().max().unwrap_or(0)),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
         ])),
         chunks[1],
@@ -1654,7 +1654,7 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 "SWAP HISTORY",
                 Style::default()
-                    .fg(Color::Rgb(60, 65, 75))
+                    .fg(crate::ui::theme::monitor_label())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
@@ -1663,7 +1663,7 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
                 } else {
                     "  no swap".to_string()
                 },
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
         ])),
         chunks[3],
@@ -1695,7 +1695,7 @@ fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
         Span::styled(
             "STORAGE",
             Style::default()
-                .fg(Color::Rgb(60, 65, 75))
+                .fg(crate::ui::theme::monitor_label())
                 .add_modifier(Modifier::BOLD),
         ),
     ]));
@@ -1719,7 +1719,7 @@ fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
             ),
             Span::styled(
                 format!("({})", disk.device),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
         ]));
 
@@ -1740,10 +1740,10 @@ fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
             "░".repeat(bar_w.saturating_sub(filled))
         );
         lines.push(Line::from(vec![
-            Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+            Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
             Span::styled(bar_str, Style::default().fg(color)),
-            Span::styled("]", Style::default().fg(Color::Rgb(60, 65, 75))),
-            Span::styled(pct, Style::default().fg(Color::Rgb(100, 100, 110))),
+            Span::styled("]", Style::default().fg(crate::ui::theme::monitor_label())),
+            Span::styled(pct, Style::default().fg(crate::ui::theme::monitor_dim_value())),
         ]));
 
         // Mount line
@@ -1751,7 +1751,7 @@ fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
             lines.push(Line::from(vec![
                 Span::styled(
                     "  mounted",
-                    Style::default().fg(Color::Rgb(60, 65, 75)),
+                    Style::default().fg(crate::ui::theme::monitor_label()),
                 ),
             ]));
         }
@@ -1832,19 +1832,19 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
         Paragraph::new(Line::from(vec![
             Span::styled(
                 "  total ",
-                Style::default().fg(Color::Rgb(60, 65, 75)),
+                Style::default().fg(crate::ui::theme::monitor_label()),
             ),
             Span::styled(
                 format_size(app.system_state.net_in),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
             Span::styled(
                 " received   total ",
-                Style::default().fg(Color::Rgb(60, 65, 75)),
+                Style::default().fg(crate::ui::theme::monitor_label()),
             ),
             Span::styled(
                 format_size(app.system_state.net_out),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
             Span::raw(" sent"),
         ])),
@@ -1857,7 +1857,7 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 "RX HISTORY",
                 Style::default()
-                    .fg(Color::Rgb(60, 65, 75))
+                    .fg(crate::ui::theme::monitor_label())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
@@ -1872,7 +1872,7 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
                             .unwrap_or(0)
                     )
                 ),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
         ])),
         chunks[1],
@@ -1908,7 +1908,7 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 "TX HISTORY",
                 Style::default()
-                    .fg(Color::Rgb(60, 65, 75))
+                    .fg(crate::ui::theme::monitor_label())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
@@ -1923,7 +1923,7 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
                             .unwrap_or(0)
                     )
                 ),
-                Style::default().fg(Color::Rgb(100, 100, 110)),
+                Style::default().fg(crate::ui::theme::monitor_dim_value()),
             ),
         ])),
         chunks[3],
@@ -1980,9 +1980,9 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     let rows = app_procs.iter().enumerate().map(|(i, p)| {
         let mut is_selected = false;
         let mut style = if i % 2 == 0 {
-            Style::default().fg(Color::Rgb(180, 185, 190))
+            Style::default().fg(crate::ui::theme::monitor_row_even())
         } else {
-            Style::default().fg(Color::Rgb(140, 145, 150))
+            Style::default().fg(crate::ui::theme::monitor_row_odd())
         };
         if app.process_selected_idx == Some(i)
             && app.monitor_subview == MonitorSubview::Applications
@@ -2007,7 +2007,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
             Cell::from(p.pid.to_string()).style(Style::default().fg(if is_selected {
                 Color::Black
             } else {
-                Color::Rgb(60, 65, 75)
+                crate::ui::theme::monitor_label()
             })),
             Cell::from(p.status.clone()),
         ])
@@ -2059,7 +2059,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
                 .fg(if app.process_sort_col == *col {
                     crate::ui::theme::accent_primary()
                 } else {
-                    Color::Rgb(60, 65, 75)
+                    crate::ui::theme::monitor_label()
                 })
                 .add_modifier(Modifier::BOLD),
         )
@@ -2123,7 +2123,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                     .fg(if app.process_sort_col == col {
                         crate::ui::theme::accent_primary()
                     } else {
-                        Color::Rgb(60, 65, 75)
+                        crate::ui::theme::monitor_label()
                     })
                     .add_modifier(Modifier::BOLD),
             )
@@ -2131,9 +2131,9 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let rows = app.system_state.processes.iter().enumerate().map(|(i, p)| {
         let mut is_selected = false;
         let mut style = if i % 2 == 0 {
-            Style::default().fg(Color::Rgb(180, 185, 190))
+            Style::default().fg(crate::ui::theme::monitor_row_even())
         } else {
-            Style::default().fg(Color::Rgb(140, 145, 150))
+            Style::default().fg(crate::ui::theme::monitor_row_odd())
         };
         if app.process_selected_idx == Some(i) && app.monitor_subview == MonitorSubview::Processes {
             style = style
@@ -2153,7 +2153,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
             Cell::from(format!("  {}", p.pid)).style(Style::default().fg(if is_selected {
                 Color::Black
             } else {
-                Color::Rgb(60, 65, 75)
+                crate::ui::theme::monitor_label()
             })),
             Cell::from(p.name.clone()).style(Style::default().add_modifier(Modifier::BOLD)),
             Cell::from(p.user.clone()).style(Style::default().fg(if is_selected {
@@ -3325,7 +3325,7 @@ fn draw_stat_bar(
         } else {
             spans.push(Span::styled(
                 symbol,
-                Style::default().fg(Color::Rgb(30, 30, 35)),
+                Style::default().fg(crate::ui::theme::monitor_separator()),
             ));
         }
     }
