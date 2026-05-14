@@ -310,3 +310,191 @@ pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn parse_config(content: &str) -> Vec<RemoteBookmark> {
+        let tempdir = std::env::temp_dir();
+        let ssh_config = tempdir.join("ssh_config_test");
+        std::fs::write(&ssh_config, content).unwrap();
+        let result = do_parse_ssh_config(&ssh_config);
+        std::fs::remove_file(ssh_config).ok();
+        result
+    }
+
+    fn do_parse_ssh_config(path: &std::path::Path) -> Vec<RemoteBookmark> {
+        use std::fs;
+        if !path.exists() {
+            return Vec::new();
+        }
+        let content = match fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => return Vec::new(),
+        };
+        let mut results = Vec::new();
+        let mut current_entry: Option<SshHostEntry> = None;
+        for line in content.lines() {
+            let line = line.trim();
+            if line.is_empty() || line.starts_with('#') {
+                continue;
+            }
+            let line_lower = line.to_ascii_lowercase();
+            if line_lower.starts_with("host ") {
+                if let Some(entry) = current_entry.take() {
+                    if let Some(bookmark) = try_flush_entry(entry) {
+                        results.push(bookmark);
+                    }
+                }
+                let name = line[5..].trim().to_string();
+                current_entry = Some(SshHostEntry {
+                    name,
+                    host: None,
+                    user: None,
+                    port: None,
+                    key_path: None,
+                });
+            } else if let Some(current) = current_entry.as_mut() {
+                if line_lower.starts_with("hostname ") {
+                    current.host = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
+                } else if line_lower.starts_with("user ") {
+                    current.user = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
+                } else if line_lower.starts_with("port ") {
+                    current.port = line.split_once(' ').map(|x| x.1).unwrap_or("").trim().parse().ok();
+                } else if line_lower.starts_with("identityfile ") {
+                    let path = line.split_once(' ').map(|x| x.1).unwrap_or("").trim();
+                    current.key_path = Some(PathBuf::from(expand_tilde(path)));
+                }
+            }
+        }
+        if let Some(entry) = current_entry.take() {
+            if let Some(bookmark) = try_flush_entry(entry) {
+                results.push(bookmark);
+            }
+        }
+        results
+    }
+
+    #[test]
+    fn test_parse_normal_host() {
+        let config = r#"
+Host myserver
+    HostName 192.168.1.100
+    User admin
+    Port 2222
+    IdentityFile ~/.ssh/id_ed25519
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 1);
+        let bm = &results[0];
+        assert_eq!(bm.name, "myserver");
+        assert_eq!(bm.host, "192.168.1.100");
+        assert_eq!(bm.user, "admin");
+        assert_eq!(bm.port, 2222);
+    }
+
+    #[test]
+    fn test_parse_git_user_filtered() {
+        let config = r#"
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 0, "git user should be filtered out");
+    }
+
+    #[test]
+    fn test_parse_host_wildcard_ignored() {
+        let config = r#"
+Host *
+    IPQoS throughput
+    AddressFamily inet
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 0, "Host * with no HostName/User should be ignored");
+    }
+
+    #[test]
+    fn test_parse_case_insensitive_keywords() {
+        let config = r#"
+Host server1
+    HOSTNAME 10.0.0.1
+    USER ubuntu
+    PORT 22
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 1);
+        let bm = &results[0];
+        assert_eq!(bm.host, "10.0.0.1");
+        assert_eq!(bm.user, "ubuntu");
+        assert_eq!(bm.port, 22);
+    }
+
+    #[test]
+    fn test_parse_tilde_expansion() {
+        let config = r#"
+Host server2
+    HostName 10.0.0.2
+    User ubuntu
+    IdentityFile ~/keys/server2_key
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 1);
+        let home = dirs::home_dir().unwrap_or_default();
+        let expected = home.join("keys/server2_key");
+        assert_eq!(results[0].key_path, Some(expected));
+    }
+
+    #[test]
+    fn test_parse_tilde_not_in_middle() {
+        let config = r#"
+Host server3
+    HostName 10.0.0.3
+    User ubuntu
+    IdentityFile /tmp/~backup/key
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].key_path, Some(PathBuf::from("/tmp/~backup/key")));
+    }
+
+    #[test]
+    fn test_parse_default_port() {
+        let config = r#"
+Host server4
+    HostName 10.0.0.4
+    User ubuntu
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].port, 22, "default port should be 22");
+    }
+
+    #[test]
+    fn test_parse_multiple_hosts() {
+        let config = r#"
+Host serverA
+    HostName 10.0.0.A
+    User userA
+
+Host serverB
+    HostName 10.0.0.B
+    User userB
+"#;
+        let results = parse_config(config);
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].name, "serverA");
+        assert_eq!(results[1].name, "serverB");
+    }
+
+    #[test]
+    fn test_expand_tilde() {
+        let home = dirs::home_dir().unwrap_or_default();
+        let expected = format!("{}/keys/key", home.to_string_lossy());
+        assert_eq!(expand_tilde("~/keys/key"), expected);
+        assert_eq!(expand_tilde("/absolute/path"), "/absolute/path");
+    }
+}
