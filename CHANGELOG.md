@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.34.78] - Cleanup & Package Hygiene
+
+### Changed
+- **Cargo.toml license** — Fixed from `"MIT"` to `"Dracon-1.1"` to match actual LICENSE file
+- **Cargo.toml exclude** — Added `flake.nix`, `flake.lock`, `tiles.desktop`, `tiles_icon.svg` to exclude list
+- **README.md** — Complete rewrite: terminal compatibility table, Space/Enter key behavior, install section, configuration docs
+- **CONTRIBUTING.md** — Updated deps table to crates.io, added `terminal.rs` to structure, fixed `dracon-system` → `dracon-system-lib`
+- **QA matrix** — Added terminal spawning test section (T1-T8)
+
+### Removed
+- **`vendor/utils.rs`** — Dead code (old `spawn_terminal_at` replaced by `modules/terminal.rs`)
+- **`note.md`** — Empty file shipped in crate for no reason
+- **Old release binaries** — Removed `tiles-v0.1.*-linux` and `tiles-v0.19.*-linux` from `releases/`
+
 ## [10.34.75] - Konsole Tab Fix + crates.io Publishing
 
 ### Added
