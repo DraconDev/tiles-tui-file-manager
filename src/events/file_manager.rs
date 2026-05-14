@@ -281,6 +281,84 @@ fn handle_global_shortcuts(
     }
 }
 
+fn handle_clipboard_and_undo(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+) -> Option<bool> {
+    let has_shift = key.modifiers.contains(KeyModifiers::SHIFT);
+    match key.code {
+        KeyCode::Char('c') => {
+            if let Some(fs) = app.current_file_state() {
+                if let Some(idx) = fs.selection.selected {
+                    if let Some(path) = fs.files.get(idx) {
+                        app.clipboard = Some((path.clone(), crate::app::ClipboardOp::Copy));
+                    }
+                }
+            }
+            Some(true)
+        }
+        KeyCode::Char('x') => {
+            if let Some(fs) = app.current_file_state() {
+                if let Some(idx) = fs.selection.selected {
+                    if let Some(path) = fs.files.get(idx) {
+                        app.clipboard = Some((path.clone(), crate::app::ClipboardOp::Cut));
+                    }
+                }
+            }
+            Some(true)
+        }
+        KeyCode::Char('v') => {
+            if let Some((src, op)) = app.clipboard.clone() {
+                if let Some(fs) = app.current_file_state() {
+                    let dest = fs.current_path.join(
+                        src.file_name().unwrap_or_else(|| std::ffi::OsStr::new("root")),
+                    );
+                    match op {
+                        crate::app::ClipboardOp::Copy => {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
+                        }
+                        crate::app::ClipboardOp::Cut => {
+                            let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
+                            if result {
+                                app.clipboard = None;
+                            }
+                        }
+                    }
+                }
+            }
+            Some(true)
+        }
+        KeyCode::Char('a') => {
+            if let Some(fs) = app.current_file_state_mut() {
+                fs.selection.select_all(fs.files.len());
+            }
+            Some(true)
+        }
+        KeyCode::Char('z') if !has_shift => {
+            if execute_undo(app, event_tx).is_none() {
+                if let Some(fs) = app.current_file_state_mut() {
+                    if !fs.search_filter.is_empty() {
+                        fs.search_filter.clear();
+                        fs.search_generation += 1;
+                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                    }
+                }
+            }
+            Some(true)
+        }
+        KeyCode::Char('y') | KeyCode::Char('Z') if has_shift => {
+            execute_redo(app, event_tx);
+            Some(true)
+        }
+        KeyCode::Char('Z') if !has_shift => {
+            execute_redo(app, event_tx);
+            Some(true)
+        }
+        _ => None,
+    }
+}
+
 pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     if let Event::Key(key) = evt {
         let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
@@ -318,77 +396,12 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
             }
 
             match key.code {
-                KeyCode::Char('c') if has_control => {
-                    if let Some(fs) = app.current_file_state() {
-                        if let Some(idx) = fs.selection.selected {
-                            if let Some(path) = fs.files.get(idx) {
-                                app.clipboard = Some((path.clone(), crate::app::ClipboardOp::Copy));
-                            }
-                        }
-                    }
-                    return true;
-                }
-                KeyCode::Char('x') if has_control => {
-                    if let Some(fs) = app.current_file_state() {
-                        if let Some(idx) = fs.selection.selected {
-                            if let Some(path) = fs.files.get(idx) {
-                                app.clipboard = Some((path.clone(), crate::app::ClipboardOp::Cut));
-                            }
-                        }
-                    }
-                    return true;
-                }
-                KeyCode::Char('v') if has_control => {
-                    if let Some((src, op)) = app.clipboard.clone() {
-                        if let Some(fs) = app.current_file_state() {
-                            let dest = fs.current_path.join(
-                                src.file_name()
-                                    .unwrap_or_else(|| std::ffi::OsStr::new("root")),
-                            );
-                            match op {
-                                crate::app::ClipboardOp::Copy => {
-                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::Copy(src, dest));
-                                }
-                                crate::app::ClipboardOp::Cut => {
-                                    let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
-                                    if result {
-                                        app.clipboard = None;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    return true;
-                }
-                KeyCode::Char('a') if has_control => {
-                    if let Some(fs) = app.current_file_state_mut() {
-                        fs.selection.select_all(fs.files.len());
-                    }
-                    return true;
-                }
-                KeyCode::Char('z')
-                    if has_control && !key.modifiers.contains(KeyModifiers::SHIFT) =>
+                KeyCode::Char('c') | KeyCode::Char('x') | KeyCode::Char('v') | KeyCode::Char('a') | KeyCode::Char('z') | KeyCode::Char('y') | KeyCode::Char('Z')
+                    if has_control =>
                 {
-                    if execute_undo(app, event_tx).is_none() {
-                        if let Some(fs) = app.current_file_state_mut() {
-                            if !fs.search_filter.is_empty() {
-                                fs.search_filter.clear();
-                                fs.search_generation += 1;
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
-                            }
-                        }
+                    if let Some(handled) = handle_clipboard_and_undo(key, app, event_tx) {
+                        return handled;
                     }
-                    return true;
-                }
-                KeyCode::Char('y') | KeyCode::Char('Z')
-                    if has_control && key.modifiers.contains(KeyModifiers::SHIFT) =>
-                {
-                    execute_redo(app, event_tx);
-                    return true;
-                }
-                KeyCode::Char('Z') if has_control && !key.modifiers.contains(KeyModifiers::SHIFT) => {
-                    execute_redo(app, event_tx);
-                    return true;
                 }
                 KeyCode::Char('f') if has_control => {
                     app.mode = AppMode::Search;
