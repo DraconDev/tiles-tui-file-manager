@@ -1096,10 +1096,6 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     });
     match app.monitor_subview {
         MonitorSubview::Overview => draw_monitor_overview(f, content_area, app),
-        MonitorSubview::Cpu => draw_monitor_cpu(f, content_area, app),
-        MonitorSubview::Memory => draw_monitor_memory(f, content_area, app),
-        MonitorSubview::Disk => draw_monitor_disk(f, content_area, app),
-        MonitorSubview::Network => draw_monitor_network(f, content_area, app),
         MonitorSubview::Processes => draw_processes_view(f, content_area, app),
         MonitorSubview::Applications => draw_monitor_applications(f, content_area, app),
     }
