@@ -162,24 +162,24 @@ Scores are out of 1000 across all categories. Higher = better.
 |---------|-------|------|--------|----|-----|------|------|
 | CPU total usage | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | CPU per-core usage | ● | ○ | ○ | ○ | ○ | ○ | ● |
-| CPU frequency | ○ | ○ | ○ | ○ | ○ | ○ | ● |
-| CPU temperature | ○ | ○ | ○ | ○ | ○ | ○ | ● |
+| CPU frequency | ● | ○ | ○ | ○ | ○ | ○ | ● |
+| CPU temperature | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | CPU history sparkline | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Memory usage | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Swap usage | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Memory history sparkline | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Disk usage (per partition) | ● | ○ | ○ | ○ | ◐ | ◐ | ● |
-| Disk I/O rates | ○ | ○ | ○ | ○ | ○ | ○ | ● |
+| Disk I/O rates | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Network RX/TX rates | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Network sparklines | ● | ○ | ○ | ○ | ○ | ○ | ● |
-| Network per-interface | ○ | ○ | ○ | ○ | ○ | ○ | ● |
+| Network per-interface | ◐ | ○ | ○ | ○ | ○ | ○ | ● |
 | GPU usage (NVIDIA/AMD/Intel) | ○ | ○ | ○ | ○ | ○ | ○ | ● |
 | GPU temperature | ○ | ○ | ○ | ○ | ○ | ○ | ● |
 | Battery status | ○ | ○ | ○ | ○ | ○ | ○ | ◐ |
-| **Subtotal** | **95** | **0** | **0** | **0** | **5** | **5** | **175** |
+| **Subtotal** | **130** | **0** | **0** | **0** | **5** | **5** | **175** |
 
 **Notes:**
-- Tiles: -15 no CPU freq/temp, -15 no disk I/O, -15 no GPU, -10 no per-interface net, -10 no battery
+- Tiles: -10 no GPU, -10 no battery, -5 per-interface net (rates shown, no sparklines yet)
 - btop: -5 no battery (varies by system), -10 no per-interface network
 - nnn: only disk usage (basic), -5 disk usage only, no I/O
 - vifm: same as nnn - disk usage only, very basic
@@ -191,15 +191,15 @@ Scores are out of 1000 across all categories. Higher = better.
 | Process list | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Sort by CPU/mem/pid/name | ● | ○ | ○ | ○ | ○ | ○ | ● |
 | Kill process | ● | ○ | ○ | ○ | ○ | ○ | ● |
-| Process tree view | ○ | ○ | ● | ○ | ○ | ● | ● |
+| Process tree view | ◐ | ○ | ● | ○ | ○ | ● | ● |
 | Search/filter processes | ● | ○ | ● | ○ | ● | ● | ● |
-| Signal selection (SIGTERM/etc) | ○ | ○ | ● | ○ | ○ | ● | ● |
+| Signal selection (SIGTERM/etc) | ◐ | ○ | ● | ○ | ○ | ● | ● |
 | Nice/priority | ○ | ○ | ○ | ○ | ○ | ● | ● |
 | User filter | ● | ○ | ● | ○ | ● | ● | ● |
-| **Subtotal** | **52** | **0** | **38** | **0** | **28** | **52** | **70** |
+| **Subtotal** | **60** | **0** | **38** | **0** | **28** | **52** | **70** |
 
 **Notes:**
-- Tiles: -15 no process tree, -8 no signal selection, -5 no nice
+- Tiles: -8 process tree only in Processes view (not Applications), -5 no nice, -7 signal selection partial (no SIGUSR1 etc)
 - Ranger: -15 no process list in fm, depends on htop external
 - nnn: -20 no process list, -15 no nice, -10 no signals
 - btop: -5 no nice, -5 no signal selection UI
