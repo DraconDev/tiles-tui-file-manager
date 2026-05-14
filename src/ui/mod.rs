@@ -178,51 +178,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         );
 
         if let Some(preview) = &app.editor_state {
-            if let Some((rgba, w, h)) = preview.image_data.as_ref() {
-                let max_w = inner_area.width as usize;
-                let max_h = (inner_area.height.saturating_sub(footer_height + 3)) as usize;
-                let w_val = *w as usize;
-                let h_val = *h as usize;
-                let scale_x = if w_val > 0 { max_w as f32 / w_val as f32 } else { 1.0 };
-                let scale_y = if h_val > 0 { max_h as f32 / h_val as f32 } else { 1.0 };
-                let scale = scale_x.min(scale_y).max(0.1);
-                let new_w = ((w_val as f32 * scale) as u16).max(1);
-                let new_h = ((h_val as f32 * scale) as u16).max(1);
-                let img_area = Rect::new(
-                    inner_area.x.saturating_add((inner_area.width.saturating_sub(new_w)) / 2),
-                    inner_area.y.saturating_add((inner_area.height.saturating_sub(new_h + footer_height)) / 2),
-                    new_w,
-                    new_h,
-                );
-                // Draw image as ASCII block characters
-                let chars = ["░", "▒", "▓", "█"];
-                let step_x = (w_val / new_w as usize).max(1);
-                let step_y = (h_val / new_h as usize).max(1);
-                let mut img_text = String::new();
-                for y in (0..h_val).step_by(step_y).take(new_h as usize) {
-                    for x in (0..w_val).step_by(step_x) {
-                        let idx = (y * w_val + x) * 4;
-                        if idx + 2 < rgba.len() {
-                            let r = rgba[idx] as usize;
-                            let g = rgba[idx + 1] as usize;
-                            let b = rgba[idx + 2] as usize;
-                            let bright = (r + g + b) / 3;
-                            let c = if bright > 200 { chars[3] } else if bright > 150 { chars[2] } else if bright > 100 { chars[1] } else { chars[0] };
-                            img_text.push_str(c);
-                        } else {
-                            img_text.push(' ');
-                        }
-                    }
-                    img_text.push('\n');
-                }
-                let block = Block::default()
-                    .title(format!(" Image {}x{} ", w, h))
-                    .borders(Borders::ALL)
-                    .border_style(Style::default().fg(crate::ui::theme::border_active()));
-                f.render_widget(&block, img_area);
-                let inner_img = block.inner(img_area);
-                f.render_widget(Paragraph::new(img_text), inner_img);
-            } else if let Some(editor) = &preview.editor {
+            if let Some(editor) = &preview.editor {
                 let mut editor_clone = editor.clone();
                 editor_clone.wrap = app.is_split_mode;
                 f.render_widget(&editor_clone, editor_area);

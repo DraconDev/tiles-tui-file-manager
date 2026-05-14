@@ -101,7 +101,7 @@ impl SystemModule {
         s.net_in = data.net_in;
         s.net_out = data.net_out;
 
-        let current_ifaces = read_net_interfaces();
+        let mut current_ifaces = read_net_interfaces();
         let elapsed = s.last_update.elapsed().as_secs_f64().max(0.1);
         for iface in &mut current_ifaces {
             if let Some(prev) = s.last_net_interfaces.iter().find(|p| p.name == iface.name) {
