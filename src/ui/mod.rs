@@ -681,6 +681,66 @@ fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     );
 }
 
+fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str, selected_index: usize) {
+    let signals: [(i32, &str); 6] = [
+        (1, "SIGHUP"),
+        (2, "SIGINT"),
+        (9, "SIGKILL"),
+        (15, "SIGTERM"),
+        (18, "SIGCONT"),
+        (19, "SIGSTOP"),
+    ];
+    let area = centered_rect(50, 60, f.area());
+    f.render_widget(Clear, area);
+    let block = Block::default()
+        .title(" Send Signal ")
+        .borders(Borders::ALL)
+        .border_type(BorderType::Rounded)
+        .border_style(Style::default().fg(Color::Yellow));
+    let inner = block.inner(area);
+    f.render_widget(block, area);
+
+    let mut text = Vec::new();
+    text.push(Line::from(vec![
+        Span::styled(" PID ", Style::default().fg(Color::Black).bg(crate::ui::theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(format!(" {} ", pid), Style::default().fg(Color::White)),
+        Span::styled(name, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+    ]));
+    text.push(Line::from(""));
+
+    for (i, (sig, sig_name)) in signals.iter().enumerate() {
+        let is_selected = i == selected_index;
+        let style = if is_selected {
+            Style::default().bg(crate::ui::theme::accent_primary()).fg(Color::Black).add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(Color::White)
+        };
+        let danger_style = if is_selected {
+            Style::default().bg(crate::ui::theme::accent_primary()).fg(Color::Black).add_modifier(Modifier::BOLD)
+        } else if *sig == 9 {
+            Style::default().fg(Color::Red)
+        } else {
+            Style::default().fg(Color::White)
+        };
+        text.push(Line::from(vec![
+            Span::styled(format!("  {} ", if is_selected { "▸" } else { " " }), style),
+            Span::styled(format!("{:>2}", sig), danger_style),
+            Span::styled(format!("  {:<10}", sig_name), style),
+        ]));
+    }
+
+    text.push(Line::from(""));
+    text.push(Line::from(vec![
+        Span::styled("  Enter ", Style::default().fg(Color::DarkGray)),
+        Span::styled("Send", Style::default().fg(crate::ui::theme::accent_secondary())),
+        Span::raw("    "),
+        Span::styled(" Esc ", Style::default().fg(Color::DarkGray)),
+        Span::styled("Cancel", Style::default().fg(Color::Red)),
+    ]));
+
+    f.render_widget(Paragraph::new(text), inner);
+}
+
 fn draw_drag_drop_modal(
     f: &mut Frame,
     app: &App,

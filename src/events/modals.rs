@@ -606,9 +606,7 @@ fn handle_signal_select_keys(
         }
         KeyCode::Enter => {
             if let Some((sig, _)) = SIGNALS.get(selected_index) {
-                let _ = crate::app::try_send_event(event_tx, AppEvent::KillProcess(pid));
-                let _ = dracon_system::ProcessController
-                    .kill_process(pid, Some(*sig));
+                let _ = crate::modules::system::SystemModule::kill_process_with_signal(pid, *sig);
             }
             app.mode = AppMode::Normal;
             true

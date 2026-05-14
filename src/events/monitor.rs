@@ -7,7 +7,7 @@ use tokio::sync::mpsc;
 pub fn handle_monitor_events(
     evt: &Event,
     app: &mut App,
-    event_tx: &mpsc::Sender<AppEvent>,
+    _event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
     if let Event::Key(key) = evt {
         if key.modifiers.is_empty() {

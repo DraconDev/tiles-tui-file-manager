@@ -27,6 +27,11 @@ impl SystemModule {
         controller.kill_process(pid, Some(9))
     }
 
+    pub fn kill_process_with_signal(pid: u32, signal: i32) -> std::io::Result<()> {
+        let controller = ProcessController;
+        controller.kill_process(pid, Some(signal))
+    }
+
     pub fn update_app_state(app: &mut App, data: SystemSnapshot) {
         let s = &mut app.system_state;
         s.cpu_usage = data.cpu_usage;
