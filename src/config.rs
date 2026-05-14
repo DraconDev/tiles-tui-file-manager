@@ -410,10 +410,9 @@ Host server1
 "#;
         let results = do_parse(config);
         assert_eq!(results.len(), 1);
-        let bm = &results[0];
-        assert_eq!(bm.host, "10.0.0.1");
-        assert_eq!(bm.user, "ubuntu");
-        assert_eq!(bm.port, 22);
+        assert_eq!(results[0].host, "10.0.0.1");
+        assert_eq!(results[0].user, "ubuntu");
+        assert_eq!(results[0].port, 22);
     }
 
     #[test]
@@ -470,7 +469,9 @@ Host serverB
         let results = do_parse(config);
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].name, "serverA");
+        assert_eq!(results[0].host, "10.0.0.A");
         assert_eq!(results[1].name, "serverB");
+        assert_eq!(results[1].host, "10.0.0.B");
     }
 
     #[test]
