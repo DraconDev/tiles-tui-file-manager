@@ -17,6 +17,10 @@ exclude = [
     "debug.log",
     "install.sh",
     "release.sh",
+    "flake.nix",
+    "flake.lock",
+    "tiles.desktop",
+    "tiles_icon.svg",
 ]
 
 
