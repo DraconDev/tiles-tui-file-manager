@@ -29,7 +29,8 @@ src/
 ├── modules/
 │   ├── files.rs         # Local filesystem: read_dir, metadata, search, git data
 │   ├── remote.rs        # SSH remote: directory listing, git data, file ops
-│   └── system.rs        # System stats: CPU, memory, disk, processes
+│   ├── system.rs        # System stats: CPU, memory, disk, processes
+│   └── terminal.rs      # Terminal spawning: Konsole D-Bus, Kitty, Wezterm, fallback
 ├── events/
 │   ├── mod.rs           # Event routing: keyboard → handler dispatch
 │   ├── input.rs         # Input helpers (delete_word_backwards)
@@ -42,9 +43,11 @@ src/
     ├── mod.rs           # Main draw function, all page renderers
     ├── modals.rs        # Modal rendering (settings, properties, confirmations)
     ├── theme.rs         # Color themes and styling
+    ├── layout.rs        # Layout calculations
+    ├── sparkline.rs     # Sparkline widget for system monitor
     └── panes/
         ├── mod.rs       # Pane layout utilities
-        ├── files.rs     # File list table rendering
+        ├── editor.rs    # Editor pane rendering
         ├── breadcrumbs.rs # Breadcrumb bar with editable path
         └── sidebar.rs   # Sidebar (favorites, projects, folder tree)
 ```
@@ -53,10 +56,10 @@ src/
 
 | Crate | Source | Purpose |
 |-------|--------|---------|
-| `dracon-terminal-engine` | Git (dracon-libs) | Terminal runtime, compositor, input parser, ratatui bridge, widgets |
-| `dracon-files` | Git (dracon-libs) | Filesystem operations, metadata, search |
-| `dracon-git` | Git (dracon-libs) | Git log, diff, status parsing |
-| `dracon-system` | Git (dracon-libs) | System stats, SSH remote operations |
+| `dracon-terminal-engine` | crates.io | Terminal runtime, compositor, input parser, ratatui bridge, widgets |
+| `dracon-files` | crates.io | Filesystem operations, metadata, search |
+| `dracon-git` | crates.io | Git log, diff, status parsing |
+| `dracon-system-lib` | crates.io | System stats, SSH remote operations |
 
 ## Running
 
@@ -102,6 +105,14 @@ cargo test && cargo clippy
 - Uses `notify-debouncer-mini` with 200ms debounce
 - `Recursive` mode — watches directory trees (expanded folders and their contents)
 - `sync_watches` has fast bail-out when paths haven't changed
+
+### Terminal Spawning
+- `modules/terminal.rs` handles all terminal spawning logic
+- Konsole: uses `dbus-send` with `org.kde.KDBusService.CommandLine` (not `qdbus`, which crashes on NixOS)
+- Kitty: `kitty @ launch --type=tab`
+- Wezterm: `wezterm cli spawn --new-window=false`
+- Generic fallback: per-terminal CLI flags (`--new-tab`, `--tab`, etc.)
+- `split_command()` shell-like parser for command strings
 
 ### Editor Clipboard Pattern
 The editor uses a unified clipboard model:
