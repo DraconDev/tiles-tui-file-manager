@@ -1176,7 +1176,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             .split(Rect::new(x, y, w, 1));
 
         for (i, col_rect) in cols.iter().enumerate() {
-            let idx = (row * cores_per_row + i) as usize;
+            let idx = row as usize * cores_per_row + i;
             if idx >= core_count {
                 break;
             }
