@@ -13,9 +13,7 @@ pub fn handle_monitor_events(
         if key.modifiers.is_empty() {
             let has_table = matches!(
                 app.monitor_subview,
-                MonitorSubview::Processes
-                    | MonitorSubview::Applications
-                    | MonitorSubview::Overview
+                MonitorSubview::Processes | MonitorSubview::Applications
             );
             match key.code {
                 KeyCode::Char('1') => {
@@ -23,26 +21,10 @@ pub fn handle_monitor_events(
                     return true;
                 }
                 KeyCode::Char('2') => {
-                    app.monitor_subview = MonitorSubview::Cpu;
-                    return true;
-                }
-                KeyCode::Char('3') => {
-                    app.monitor_subview = MonitorSubview::Memory;
-                    return true;
-                }
-                KeyCode::Char('4') => {
-                    app.monitor_subview = MonitorSubview::Disk;
-                    return true;
-                }
-                KeyCode::Char('5') => {
-                    app.monitor_subview = MonitorSubview::Network;
-                    return true;
-                }
-                KeyCode::Char('6') => {
                     app.monitor_subview = MonitorSubview::Processes;
                     return true;
                 }
-                KeyCode::Char('7') => {
+                KeyCode::Char('3') => {
                     app.monitor_subview = MonitorSubview::Applications;
                     return true;
                 }
@@ -63,6 +45,14 @@ pub fn handle_monitor_events(
                             .map(|s| (s + 1).min(len.saturating_sub(1)))
                             .or(Some(0)),
                     );
+                    return true;
+                }
+                KeyCode::Up if app.monitor_subview == MonitorSubview::Overview => {
+                    app.overview_scroll_offset = app.overview_scroll_offset.saturating_sub(1);
+                    return true;
+                }
+                KeyCode::Down if app.monitor_subview == MonitorSubview::Overview => {
+                    app.overview_scroll_offset = app.overview_scroll_offset.saturating_add(1);
                     return true;
                 }
                 KeyCode::Char('k') if has_table => {
