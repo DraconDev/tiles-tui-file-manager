@@ -1480,6 +1480,7 @@ fn setup_app(
         app.starred = loaded_starred;
 
         app.remote_bookmarks = state.remote_bookmarks;
+        crate::config::merge_ssh_config_bookmarks(&mut app.remote_bookmarks);
         app.path_colors = state.path_colors;
         app.external_tools = state.external_tools;
         if let Some(mode) = state.icon_mode {
