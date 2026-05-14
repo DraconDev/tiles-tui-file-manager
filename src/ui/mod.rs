@@ -24,6 +24,7 @@ use dracon_terminal_engine::widgets::HotkeyHint;
 use unicode_width::UnicodeWidthStr;
 
 pub mod panes;
+pub mod sparkline;
 pub mod theme;
 
 pub use panes::breadcrumbs::draw_pane_breadcrumbs;
