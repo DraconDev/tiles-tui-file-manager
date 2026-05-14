@@ -98,19 +98,19 @@ impl SystemModule {
         s.cpu_temperature = read_cpu_temperature();
         s.cpu_frequency = read_cpu_frequency();
 
-        let current_disk_io = read_disk_io();
+        let mut current_disk_io = read_disk_io();
         let elapsed = s.last_update.elapsed().as_secs_f64().max(0.1);
         let mut total_read_rate: u64 = 0;
         let mut total_write_rate: u64 = 0;
 
-        for (dev, current) in &current_disk_io {
+        for (dev, io) in current_disk_io.iter_mut() {
             if let Some(prev) = s.last_disk_io.get(dev) {
-                let dr = current.read_bytes.saturating_sub(prev.read_bytes);
-                let dw = current.write_bytes.saturating_sub(prev.write_bytes);
-                let read_rate = (dr as f64 / elapsed / 1_048_576.0 * 100.0) as u64;
-                let write_rate = (dw as f64 / elapsed / 1_048_576.0 * 100.0) as u64;
-                total_read_rate += read_rate;
-                total_write_rate += write_rate;
+                let dr = io.read_bytes.saturating_sub(prev.read_bytes);
+                let dw = io.write_bytes.saturating_sub(prev.write_bytes);
+                io.read_rate_mbps = dr as f64 / elapsed / 1_048_576.0;
+                io.write_rate_mbps = dw as f64 / elapsed / 1_048_576.0;
+                total_read_rate += (io.read_rate_mbps * 100.0) as u64;
+                total_write_rate += (io.write_rate_mbps * 100.0) as u64;
             }
         }
 
@@ -147,6 +147,8 @@ fn read_disk_io() -> HashMap<String, DiskIo> {
                     DiskIo {
                         read_bytes: sectors_read * sector_size,
                         write_bytes: sectors_written * sector_size,
+                        read_rate_mbps: 0.0,
+                        write_rate_mbps: 0.0,
                     },
                 );
             }
