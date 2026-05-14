@@ -523,10 +523,6 @@ pub struct GitPendingChange {
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub enum MonitorSubview {
     Overview,
-    Cpu,
-    Memory,
-    Disk,
-    Network,
     Processes,
     Applications,
 }
