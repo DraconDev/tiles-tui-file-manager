@@ -241,13 +241,12 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
 
         if let Some(stripped) = line.strip_prefix("Host ") {
             if let Some(entry) = current_entry.take() {
-                if entry.host.is_some() && entry.user.is_some() {
-                    let host = entry.host.unwrap();
+                if let (Some(host), Some(user)) = (entry.host, entry.user) {
                     if !host.contains("github.com") && !host.contains("codeberg.org") {
                         results.push(RemoteBookmark {
                             name: entry.name,
                             host,
-                            user: entry.user.unwrap(),
+                            user,
                             port: entry.port.unwrap_or(22),
                             last_path: PathBuf::from("/"),
                             key_path: entry.key_path,
