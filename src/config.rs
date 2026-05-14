@@ -218,7 +218,9 @@ struct SshHostEntry {
 }
 
 fn expand_tilde(path: &str) -> String {
-    if path.starts_with("~/") {
+    if path == "~" {
+        dirs::home_dir().unwrap_or_default().to_string_lossy().into_owned()
+    } else if path.starts_with("~/") {
         let home = dirs::home_dir().unwrap_or_default();
         format!("{}{}", home.to_string_lossy(), &path[1..])
     } else {
@@ -227,9 +229,12 @@ fn expand_tilde(path: &str) -> String {
 }
 
 fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
-    let host = entry.host?;
     let user = entry.user?;
     if user == "git" {
+        return None;
+    }
+    let host = entry.host.unwrap_or_else(|| entry.name.clone());
+    if host.contains('*') || host.contains('?') {
         return None;
     }
     Some(RemoteBookmark {
@@ -242,19 +247,11 @@ fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
     })
 }
 
-fn parse_ssh_config() -> Vec<RemoteBookmark> {
-    let ssh_config_path = match dirs::home_dir() {
-        Some(home) => home.join(".ssh").join("config"),
-        None => return Vec::new(),
-    };
-    if !ssh_config_path.exists() {
-        return Vec::new();
-    }
-    let content = match fs::read_to_string(&ssh_config_path) {
-        Ok(c) => c,
-        Err(_) => return Vec::new(),
-    };
+fn parse_ssh_config_value(line: &str) -> Option<&str> {
+    line.split_whitespace().nth(1)
+}
 
+fn parse_ssh_config_content(content: &str) -> Vec<RemoteBookmark> {
     let mut results = Vec::new();
     let mut current_entry: Option<SshHostEntry> = None;
 
@@ -271,7 +268,7 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
                     results.push(bookmark);
                 }
             }
-            let name = line[5..].trim().to_string();
+            let name = parse_ssh_config_value(line).unwrap_or("").trim().to_string();
             current_entry = Some(SshHostEntry {
                 name,
                 host: None,
@@ -281,13 +278,13 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
             });
         } else if let Some(current) = current_entry.as_mut() {
             if line_lower.starts_with("hostname ") {
-                current.host = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
+                current.host = parse_ssh_config_value(line).map(|v| v.trim().to_string());
             } else if line_lower.starts_with("user ") {
-                current.user = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
+                current.user = parse_ssh_config_value(line).map(|v| v.trim().to_string());
             } else if line_lower.starts_with("port ") {
-                current.port = line.split_once(' ').map(|x| x.1).unwrap_or("").trim().parse().ok();
+                current.port = parse_ssh_config_value(line).and_then(|v| v.trim().parse().ok());
             } else if line_lower.starts_with("identityfile ") {
-                let path = line.split_once(' ').map(|x| x.1).unwrap_or("").trim();
+                let path = parse_ssh_config_value(line).unwrap_or("").trim();
                 current.key_path = Some(PathBuf::from(expand_tilde(path)));
             }
         }
@@ -300,6 +297,21 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
     }
 
     results
+}
+
+fn parse_ssh_config() -> Vec<RemoteBookmark> {
+    let ssh_config_path = match dirs::home_dir() {
+        Some(home) => home.join(".ssh").join("config"),
+        None => return Vec::new(),
+    };
+    if !ssh_config_path.exists() {
+        return Vec::new();
+    }
+    let content = match fs::read_to_string(&ssh_config_path) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+    parse_ssh_config_content(&content)
 }
 
 pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
@@ -315,50 +327,6 @@ pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
 mod tests {
     use super::*;
 
-    fn do_parse(content: &str) -> Vec<RemoteBookmark> {
-        let mut results = Vec::new();
-        let mut current_entry: Option<SshHostEntry> = None;
-        for line in content.lines() {
-            let line = line.trim();
-            if line.is_empty() || line.starts_with('#') {
-                continue;
-            }
-            let line_lower = line.to_ascii_lowercase();
-            if line_lower.starts_with("host ") {
-                if let Some(entry) = current_entry.take() {
-                    if let Some(bookmark) = try_flush_entry(entry) {
-                        results.push(bookmark);
-                    }
-                }
-                let name = line[5..].trim().to_string();
-                current_entry = Some(SshHostEntry {
-                    name,
-                    host: None,
-                    user: None,
-                    port: None,
-                    key_path: None,
-                });
-            } else if let Some(current) = current_entry.as_mut() {
-                if line_lower.starts_with("hostname ") {
-                    current.host = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
-                } else if line_lower.starts_with("user ") {
-                    current.user = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
-                } else if line_lower.starts_with("port ") {
-                    current.port = line.split_once(' ').map(|x| x.1).unwrap_or("").trim().parse().ok();
-                } else if line_lower.starts_with("identityfile ") {
-                    let path = line.split_once(' ').map(|x| x.1).unwrap_or("").trim();
-                    current.key_path = Some(PathBuf::from(expand_tilde(path)));
-                }
-            }
-        }
-        if let Some(entry) = current_entry.take() {
-            if let Some(bookmark) = try_flush_entry(entry) {
-                results.push(bookmark);
-            }
-        }
-        results
-    }
-
     #[test]
     fn test_parse_normal_host() {
         let config = r#"
@@ -368,7 +336,7 @@ Host myserver
     Port 2222
     IdentityFile ~/.ssh/id_ed25519
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 1);
         let bm = &results[0];
         assert_eq!(bm.name, "myserver");
@@ -385,7 +353,7 @@ Host github.com
     User git
     IdentityFile ~/.ssh/id_ed25519
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 0, "git user should be filtered out");
     }
 
@@ -396,7 +364,7 @@ Host *
     IPQoS throughput
     AddressFamily inet
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 0, "Host * with no HostName/User should be ignored");
     }
 
@@ -408,7 +376,7 @@ Host server1
     USER ubuntu
     PORT 22
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].host, "10.0.0.1");
         assert_eq!(results[0].user, "ubuntu");
@@ -423,7 +391,7 @@ Host server2
     User ubuntu
     IdentityFile ~/keys/server2_key
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 1);
         let home = dirs::home_dir().unwrap_or_default();
         let expected = home.join("keys/server2_key");
@@ -438,7 +406,7 @@ Host server3
     User ubuntu
     IdentityFile /tmp/~backup/key
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].key_path, Some(PathBuf::from("/tmp/~backup/key")));
     }
@@ -450,7 +418,7 @@ Host server4
     HostName 10.0.0.4
     User ubuntu
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].port, 22, "default port should be 22");
     }
@@ -466,7 +434,7 @@ Host serverB
     HostName 10.0.0.B
     User userB
 "#;
-        let results = do_parse(config);
+        let results = parse_ssh_config_content(config);
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].name, "serverA");
         assert_eq!(results[0].host, "10.0.0.A");
@@ -480,5 +448,30 @@ Host serverB
         let expected = format!("{}/keys/key", home.to_string_lossy());
         assert_eq!(expand_tilde("~/keys/key"), expected);
         assert_eq!(expand_tilde("/absolute/path"), "/absolute/path");
+        assert_eq!(expand_tilde("~"), home.to_string_lossy().as_ref());
     }
-}
+
+    #[test]
+    fn test_parse_host_name_as_hostname() {
+        let config = r#"
+Host myserver
+    User ubuntu
+    IdentityFile ~/.ssh/myserver.key
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].host, "myserver");
+        assert_eq!(results[0].name, "myserver");
+    }
+
+    #[test]
+    fn test_parse_hostname_equals_separator() {
+        let config = r#"
+Host server5
+    HostName = 10.0.0.5
+    User admin
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].host, "10.0.0.5");
+    }
