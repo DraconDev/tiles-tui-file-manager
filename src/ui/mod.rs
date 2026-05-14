@@ -1480,7 +1480,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
 fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     let current_user = std::env::var("USER").unwrap_or_else(|_| "dracon".to_string());
-    let app_procs: Vec<_> = app
+    let mut app_procs: Vec<_> = app
         .system_state
         .processes
         .iter()
@@ -1497,7 +1497,12 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
                 && !p.name.contains("kworker")
                 && matches
         })
+        .cloned()
         .collect();
+
+    if app.process_tree_view {
+        crate::modules::system::tree_sort_processes(&mut app_procs, &app.system_state.process_ppid);
+    }
 
     let rows = app_procs.iter().enumerate().map(|(i, p)| {
         let mut is_selected = false;
@@ -1522,8 +1527,20 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             crate::ui::theme::accent_secondary()
         };
+        let depth = if app.process_tree_view {
+            crate::modules::system::process_tree_depth(p.pid, &app.system_state.process_ppid)
+        } else {
+            0
+        };
+        let indent = "  ".repeat(depth.min(8));
+        let prefix = if depth > 0 { "└ " } else { "" };
+        let name_display = if app.process_tree_view {
+            format!("{}{}{}", indent, prefix, p.name)
+        } else {
+            p.name.clone()
+        };
         Row::new(vec![
-            Cell::from(format!("  {}", p.name)),
+            Cell::from(format!("  {}", name_display)),
             Cell::from(format!("{:.1}%", p.cpu)).style(Style::default().fg(cpu_color)),
             Cell::from(format!("{:.1} MB", p.mem)),
             Cell::from(p.pid.to_string()).style(Style::default().fg(if is_selected {

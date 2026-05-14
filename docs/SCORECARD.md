@@ -104,16 +104,16 @@ Scores are out of 1000 across all categories. Higher = better.
 
 | Feature | Tiles | Yazi | Ranger | lf | nnn | vifm | btop |
 |---------|-------|------|--------|----|-----|------|------|
-| Fuzzy find (fzf-like) | ◐ | ● | ◐ | ○ | ● | ○ | N/A |
+| Fuzzy find (fzf-like) | ● | ● | ◐ | ○ | ● | ○ | N/A |
 | Regex search | ● | ● | ● | ● | ● | ● | N/A |
 | Filter by extension | ● | ● | ● | ● | ● | ● | N/A |
 | Global search (all dirs) | ○ | ● | ◐ | ○ | ● | ◐ | N/A |
 | Live search as you type | ● | ● | ● | ◐ | ● | ● | N/A |
 | Search history | ● | ● | ● | ● | ● | ● | N/A |
-| **Subtotal** | **60** | **75** | **58** | **48** | **70** | **58** | **0** |
+| **Subtotal** | **70** | **75** | **58** | **48** | **70** | **58** | **0** |
 
 **Notes:**
-- Tiles: -15 fuzzy find requires fzf integration, not native; -5 no global search
+- Tiles: -5 no global search; native fuzzy via SkimMatcherV2
 - Yazi: -5 fuzzy not as polished as fzf
 - Ranger: -10 fuzzy via fzf external, -10 no native global search
 - lf: -15 no fuzzy, -10 no global search
@@ -284,7 +284,7 @@ Scores are out of 1000 across all categories. Higher = better.
 
 | Tool | File Mgmt | File Ops | Preview | Search | Bookmarks | Bulk | **Monitor** | Process | **Git** | **SSH** | UI/UX | Ext | **TOTAL** |
 |------|-----------|----------|---------|--------|-----------|------|------------|---------|---------|---------|-------|-----|-----------|
-| **Tiles** | 140 | 105 | 45 | 60 | 48 | 55 | **95** | 52 | **70** | **68** | 55 | 22 | **815** |
+| **Tiles** | 140 | 105 | 45 | 70 | 48 | 55 | **130** | 60 | **70** | **68** | 55 | 22 | **868** |
 | Yazi | 120 | 100 | 75 | 75 | 40 | 48 | 0 | 0 | 15 | 40 | 55 | 40 | **608** |
 | Ranger | 115 | 92 | 50 | 58 | 48 | 50 | 0 | 38 | 20 | 15 | 50 | 38 | **574** |
 | btop | 0 | 0 | 0 | 0 | 0 | 0 | **175** | 70 | 0 | 0 | 55 | 0 | **300** |
@@ -302,7 +302,7 @@ Scores are out of 1000 across all categories. Higher = better.
 |----------|-------|-----------|
 | Git Integration | 70 | Yazi 15 |
 | SSH/Remote | 68 | Yazi 40 |
-| System Monitor | 95 | btop 0 (non-compete) |
+| System Monitor | 130 | btop 0 (non-compete) |
 | File Browsing | 140 | Yazi 120 |
 
 ### Where Tiles Loses (Biggest gaps)
@@ -310,30 +310,34 @@ Scores are out of 1000 across all categories. Higher = better.
 |----------|-------|-----------|
 | Preview (images) | 45 | Yazi 75 |
 | Extensibility | 22 | Yazi 40 |
-| Search (fuzzy) | 60 | Yazi 75 |
-| Process Management | 52 | btop 70 |
+| Process Management | 60 | btop 70 |
 
 ---
 
 ## Priority Improvements to Close Gaps
 
+### Done ✅
+1. ~~Fuzzy find native~~ — integrated `fuzzy-matcher` (SkimMatcherV2)
+2. ~~Process tree view~~ — toggle with `t` key in Processes view
+3. ~~Disk I/O rates~~ — read/write MB/s with sparklines
+4. ~~Per-interface network~~ — eth0/wlan0 rates from `/proc/net/dev`
+5. ~~CPU temperature/frequency~~ — read from `/sys/class/thermal` + `/sys/devices/system/cpu`
+6. ~~Signal selection UI~~ — SIGTERM/SIGKILL/etc picker on `k`
+
 ### Quick Wins (1-2 sessions)
-1. **Fuzzy find native** — integrate `skim` or `fzf` directly, not shell-dependent
-2. **Process tree view** — show process hierarchy in Applications view
-3. **Image preview** — via Überzug++ or iterm2 imgcat
+1. **Per-interface network sparklines** — individual sparkline per interface
+2. **Process tree in Applications view** — apply tree_sort to Applications subview
+3. **Nice/priority adjustment** — expose renice from sysinfo
 
 ### Medium Effort (1-2 weeks)
-4. **Disk I/O rates** — show read/write MB/s per disk
-5. **Per-interface network** — break down by eth0/wlan0
-6. **CPU temperature/frequency** — read from `/sys/class/thermal`
-7. **Signal selection UI** — SIGTERM/SIGKILL/etc picker when killing
-8. **Plugin system** — expose hooks for community contributions
+4. **Plugin system** — expose hooks for community contributions
+5. **GPU monitoring** — NVIDIA via `nvidia-smi`, AMD via `rocm-smi`
+6. **Battery status** — read from `/sys/class/power_supply`
 
 ### Long-term (differentiators)
-9. **Async directory loading** — non-blocking reads for large directories
-10. **GPU monitoring** — NVIDIA via `nvidia-smi`, AMD via `rocm-smi`
-11. **Tab system** — multiple simultaneous file manager tabs
-12. **Lazarus integration** — bring lazygit-level git UX into Tiles natively
+7. **Async directory loading** — non-blocking reads for large directories
+8. **Tab system** — multiple simultaneous file manager tabs
+9. **Lazarus integration** — bring lazygit-level git UX into Tiles natively
 
 ---
 
@@ -348,4 +352,4 @@ Scores are out of 1000 across all categories. Higher = better.
 
 **The question isn't "how does Tiles compare to btop" — it's "who else gives you file manager + monitor + git + SSH in one app?"**
 
-Answer: **Nobody.** That 815/1000 is in a category of one.
+Answer: **Nobody.** That 868/1000 is in a category of one.
