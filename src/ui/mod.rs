@@ -1104,382 +1104,260 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     }
 }
 
+fn gauge_color_for_ratio(ratio: f32) -> Color {
+    if ratio > 0.85 {
+        Color::Rgb(255, 60, 60)
+    } else if ratio > 0.5 {
+        Color::Rgb(255, 180, 0)
+    } else {
+        crate::ui::theme::accent_secondary()
+    }
+}
+
 fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
-    let main_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([Constraint::Fill(7), Constraint::Fill(3)])
-        .split(area.inner(ratatui::layout::Margin {
-            horizontal: 1,
-            vertical: 1,
-        }));
+    let core_count = app.system_state.cpu_cores.len();
+    let cores_per_row: usize = if core_count > 16 { 8 } else { 4 };
+    let core_rows: u16 = if core_count > 0 {
+        ((core_count as f32) / cores_per_row as f32).ceil() as u16
+    } else {
+        0
+    };
 
-    let left_chunks = Layout::default()
+    let header_h = core_rows + 4;
+
+    let chunks = Layout::default()
         .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(6), // Instant Telemetry Banks
-            Constraint::Min(0),    // Flux Rack (Cores)
-        ])
-        .split(main_layout[0]);
+        .constraints([Constraint::Length(header_h), Constraint::Min(0)])
+        .split(area);
 
-    // --- 1. TELEMETRY BANKS (Instant Data, Wireframe) ---
-    let bank_layout = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints([
-            Constraint::Fill(1),
-            Constraint::Fill(1),
-            Constraint::Fill(1),
-        ])
-        .split(left_chunks[0]);
+    let hdr = chunks[0];
+    let tbl = chunks[1];
+    let x = hdr.x;
+    let mut y = hdr.y;
+    let w = hdr.width;
 
-    let draw_telemetry_bank =
-        |f: &mut Frame, area: Rect, label: &str, cur: f32, total: f32, unit: &str| {
-            let inner = area.inner(ratatui::layout::Margin {
-                horizontal: 1,
-                vertical: 0,
-            });
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([
-                    Constraint::Length(1), // Header
-                    Constraint::Length(1), // Big Value
-                    Constraint::Length(1), // Pipe Gauge
-                ])
-                .split(inner);
-
-            // Header: "SYS // CPU"
-            f.render_widget(
-                Paragraph::new(Span::styled(
-                    format!("SYS // {}", label),
-                    Style::default()
-                        .fg(Color::Rgb(80, 85, 95))
-                        .add_modifier(Modifier::BOLD),
-                )),
-                chunks[0],
+    // 1. Aggregate CPU bar: CPU[████░░░░░░░░] 38%
+    {
+        let ratio = (app.system_state.cpu_usage / 100.0).clamp(0.0, 1.0);
+        let color = gauge_color_for_ratio(ratio);
+        let label = "CPU[";
+        let pct = format!("{:.0}%", app.system_state.cpu_usage);
+        let bar_w = (w as usize).saturating_sub(label.len() + 1 + pct.len() + 1);
+        if bar_w > 0 {
+            let filled = (ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
             );
-
-            // Big Value: "12.5 %"
-            let val_str = format!("{:.1}", cur);
-            let total_str = if total > 0.0 {
-                format!("/ {:.0}", total)
-            } else {
-                String::new()
-            };
-
-            let ratio = (cur / if total > 0.0 { total } else { 100.0 }).clamp(0.0, 1.0);
-            let color = if ratio > 0.85 {
-                Color::Rgb(255, 60, 60)
-            } else if ratio > 0.5 {
-                Color::Rgb(255, 180, 0)
-            } else {
-                crate::ui::theme::accent_secondary()
-            };
-
             f.render_widget(
                 Paragraph::new(Line::from(vec![
+                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
                     Span::styled(
-                        val_str,
+                        pct,
                         Style::default()
                             .fg(Color::White)
                             .add_modifier(Modifier::BOLD),
                     ),
-                    Span::styled(
-                        format!(" {}{}", unit, total_str),
-                        Style::default().fg(Color::Rgb(100, 100, 110)),
-                    ),
                 ])),
-                chunks[1],
+                Rect::new(x, y, w, 1),
             );
-
-            // Wireframe Pipe Gauge: "││││││············"
-            let gauge_w = chunks[2].width as usize;
-            let filled = (ratio * gauge_w as f32) as usize;
-            let pipe_gauge = format!(
-                "{}{}",
-                "│".repeat(filled),
-                "·".repeat(gauge_w.saturating_sub(filled))
-            );
-
-            f.render_widget(
-                Paragraph::new(Span::styled(pipe_gauge, Style::default().fg(color))),
-                chunks[2],
-            );
-
-            // Separator
-            f.render_widget(
-                Block::default()
-                    .borders(Borders::RIGHT)
-                    .border_style(Style::default().fg(Color::Rgb(30, 30, 35))),
-                area,
-            );
-        };
-
-    draw_telemetry_bank(
-        f,
-        bank_layout[0],
-        "CPU",
-        app.system_state.cpu_usage,
-        0.0,
-        "%",
-    );
-    draw_telemetry_bank(
-        f,
-        bank_layout[1],
-        "MEM",
-        app.system_state.mem_usage,
-        app.system_state.total_mem,
-        "GB",
-    );
-    draw_telemetry_bank(
-        f,
-        bank_layout[2],
-        "SWAP",
-        app.system_state.swap_usage,
-        app.system_state.total_swap,
-        "GB",
-    );
-
-    // --- 2. FLUX RACK (Core Grid) ---
-    let rack_area = left_chunks[1].inner(ratatui::layout::Margin {
-        horizontal: 1,
-        vertical: 1,
-    });
-    let core_count = app.system_state.cpu_cores.len();
-    if core_count > 0 {
-        f.render_widget(
-            Paragraph::new(Span::styled(
-                "RACK // THREAD_FLUX",
-                Style::default()
-                    .fg(Color::Rgb(60, 65, 75))
-                    .add_modifier(Modifier::BOLD),
-            )),
-            Rect::new(rack_area.x, rack_area.y - 1, 30, 1),
-        );
-
-        let cols = if core_count > 16 {
-            4
-        } else if core_count > 8 {
-            2
-        } else {
-            1
-        };
-        let rows = (core_count as f32 / cols as f32).ceil() as u16;
-
-        let rack_rows = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(vec![Constraint::Length(1); rows as usize])
-            .split(rack_area);
-
-        for r in 0..rows {
-            if r as usize >= rack_rows.len() {
-                break;
-            }
-            let core_cols = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(vec![Constraint::Fill(1); cols as usize])
-                .split(rack_rows[r as usize]);
-
-            for c in 0..cols {
-                let idx = (r * cols + c) as usize;
-                if idx < core_count {
-                    let usage = app.system_state.cpu_cores[idx];
-                    let intensity = usage / 100.0;
-                    let color = if intensity > 0.9 {
-                        Color::Rgb(255, 60, 60)
-                    } else if intensity > 0.5 {
-                        Color::Rgb(255, 180, 0)
-                    } else {
-                        crate::ui::theme::accent_secondary()
-                    };
-
-                    let slot = core_cols[c as usize].inner(ratatui::layout::Margin {
-                        horizontal: 1,
-                        vertical: 0,
-                    });
-
-                    let track_w: usize = slot.width.saturating_sub(14).into();
-                    let pos = (intensity * track_w as f32) as usize;
-                    let track = format!(
-                        "{}{}{}",
-                        "─".repeat(pos),
-                        "┼",
-                        "─".repeat(track_w.saturating_sub(pos))
-                    );
-
-                    f.render_widget(
-                        Paragraph::new(Line::from(vec![
-                            Span::styled(
-                                format!("0x{:02X} ", idx),
-                                Style::default().fg(Color::Rgb(50, 55, 65)),
-                            ),
-                            Span::styled("╾", Style::default().fg(Color::Rgb(40, 40, 45))),
-                            Span::styled(track, Style::default().fg(color)),
-                            Span::styled("╼", Style::default().fg(Color::Rgb(40, 40, 45))),
-                            Span::styled(
-                                format!(" {:>3.0}%", usage),
-                                Style::default().fg(if intensity > 0.1 {
-                                    Color::White
-                                } else {
-                                    Color::Rgb(60, 65, 75)
-                                }),
-                            ),
-                        ])),
-                        slot,
-                    );
-                }
-            }
         }
+        y += 1;
     }
 
-    // --- 3. I/O STREAM SIDEBAR ---
-    let right_chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([
-            Constraint::Length(6), // Identity
-            Constraint::Length(8), // Network Stream
-            Constraint::Min(0),    // Storage Arrays
-        ])
-        .split(main_layout[1]);
+    // 2. Per-core bars: 0[████░░░░]  1[████████░]  2[██░░░░░░]  3[██████░░]
+    for row in 0..core_rows {
+        let cols = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Fill(1); cores_per_row])
+            .split(Rect::new(x, y, w, 1));
 
-    // Identity
-    let id_info = vec![
-        Line::from(vec![
-            Span::styled("ID  ", Style::default().fg(Color::Rgb(60, 65, 75))),
-            Span::styled(
-                &app.system_state.hostname,
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ]),
-        Line::from(vec![
-            Span::styled("UP  ", Style::default().fg(Color::Rgb(60, 65, 75))),
-            Span::raw(format!(
-                "{}d {}h",
-                app.system_state.uptime / 86400,
-                (app.system_state.uptime % 86400) / 3600
-            )),
-        ]),
-        Line::from(vec![
-            Span::styled("KER ", Style::default().fg(Color::Rgb(60, 65, 75))),
-            Span::raw(&app.system_state.kernel_version),
-        ]),
-        Line::from(vec![
-            Span::styled("OS  ", Style::default().fg(Color::Rgb(60, 65, 75))),
-            Span::raw(&app.system_state.os_name),
-        ]),
-    ];
-    f.render_widget(
-        Paragraph::new(id_info).block(
-            Block::default()
-                .borders(Borders::LEFT)
-                .border_style(Style::default().fg(Color::Rgb(30, 30, 35))),
-        ),
-        right_chunks[0],
-    );
-
-    // Network Stream
-    let _net_area = right_chunks[1].inner(ratatui::layout::Margin {
-        horizontal: 1,
-        vertical: 0,
-    });
-    let rx = app.system_state.net_in_history.last().cloned().unwrap_or(0);
-    let tx = app
-        .system_state
-        .net_out_history
-        .last()
-        .cloned()
-        .unwrap_or(0);
-
-    let net_lines = vec![
-        Line::from(Span::styled(
-            "NET // STREAM",
-            Style::default()
-                .fg(Color::Rgb(60, 65, 75))
-                .add_modifier(Modifier::BOLD),
-        )),
-        Line::from(""),
-        Line::from(vec![
-            Span::styled(
-                "RX ▼ ",
-                Style::default().fg(crate::ui::theme::accent_secondary()),
-            ),
-            Span::styled(
-                format_size(rx),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ]),
-        Line::from(vec![
-            Span::styled(
-                "TX ▲ ",
-                Style::default().fg(crate::ui::theme::accent_primary()),
-            ),
-            Span::styled(
-                format_size(tx),
-                Style::default().add_modifier(Modifier::BOLD),
-            ),
-        ]),
-    ];
-    f.render_widget(
-        Paragraph::new(net_lines).block(
-            Block::default()
-                .borders(Borders::LEFT)
-                .border_style(Style::default().fg(Color::Rgb(30, 30, 35))),
-        ),
-        right_chunks[1],
-    );
-
-    // Storage Arrays
-    let disk_list: Vec<ListItem> = app
-        .system_state
-        .disks
-        .iter()
-        .map(|disk| {
-            let ratio = (disk.used_space / disk.total_space).clamp(0.0, 1.0);
-            let color = if ratio > 0.9 {
-                Color::Rgb(255, 60, 60)
-            } else if ratio > 0.7 {
-                Color::Rgb(255, 180, 0)
-            } else {
-                crate::ui::theme::accent_secondary()
-            };
-
-            let track_w: usize = 12;
-            let pos = (ratio * track_w as f64) as usize;
-            let track = format!(
-                "[{}|{}]",
-                "-".repeat(pos),
-                "·".repeat(track_w.saturating_sub(pos))
+        for (i, col_rect) in cols.iter().enumerate() {
+            let idx = (row * cores_per_row + i) as usize;
+            if idx >= core_count {
+                break;
+            }
+            let usage = app.system_state.cpu_cores[idx];
+            let ratio = (usage / 100.0).clamp(0.0, 1.0);
+            let color = gauge_color_for_ratio(ratio);
+            let cw = col_rect.width as usize;
+            let core_label = format!("{:>2}[", idx);
+            let pct = format!("{:>4.0}%", usage);
+            let overhead = core_label.len() + 2 + pct.len();
+            let bar_w = cw.saturating_sub(overhead);
+            if bar_w == 0 {
+                continue;
+            }
+            let filled = (ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
             );
-
-            ListItem::new(vec![
-                Line::from(vec![
-                    Span::styled("DSK ", Style::default().fg(Color::Rgb(60, 65, 75))),
-                    Span::styled(&disk.name, Style::default().fg(Color::White)),
-                ]),
-                Line::from(vec![
-                    Span::styled(track, Style::default().fg(color)),
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(core_label, Style::default().fg(Color::Rgb(50, 55, 65))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(40, 40, 45))),
                     Span::styled(
-                        format!(" {:.0}%", ratio * 100.0),
-                        Style::default().fg(Color::Rgb(100, 100, 110)),
+                        pct,
+                        Style::default().fg(if usage > 10.0 {
+                            Color::White
+                        } else {
+                            Color::Rgb(60, 65, 75)
+                        }),
                     ),
-                ]),
-                Line::from(""),
-            ])
-        })
-        .collect();
+                ])),
+                *col_rect,
+            );
+        }
+        y += 1;
+    }
 
-    f.render_widget(
-        List::new(disk_list).block(
-            Block::default()
-                .title(Span::styled(
-                    "STO // ARRAY",
-                    Style::default()
-                        .fg(Color::Rgb(60, 65, 75))
-                        .add_modifier(Modifier::BOLD),
-                ))
-                .borders(Borders::LEFT)
-                .border_style(Style::default().fg(Color::Rgb(30, 30, 35))),
-        ),
-        right_chunks[2],
-    );
+    // 3. Memory bar: Mem[████████████░░░░░░░] 7.2G/15.5G [46%]
+    {
+        let mem_ratio = if app.system_state.total_mem > 0.0 {
+            (app.system_state.mem_usage / app.system_state.total_mem).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(mem_ratio);
+        let suffix = format!(
+            "{:.1}G/{:.1}G [{:.0}%]",
+            app.system_state.mem_usage,
+            app.system_state.total_mem,
+            mem_ratio * 100.0
+        );
+        let label = "Mem[";
+        let bar_w = (w as usize).saturating_sub(label.len() + 2 + suffix.len());
+        if bar_w > 0 {
+            let filled = (mem_ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(
+                        suffix,
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                ])),
+                Rect::new(x, y, w, 1),
+            );
+        }
+        y += 1;
+    }
+
+    // 4. Swap bar: Swp[██░░░░░░░░░░░░░░░░░] 512M/2.0G [25%]
+    {
+        let swap_ratio = if app.system_state.total_swap > 0.0 {
+            (app.system_state.swap_usage / app.system_state.total_swap).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(swap_ratio);
+        let suffix = if app.system_state.total_swap > 0.0 {
+            format!(
+                "{:.1}G/{:.1}G [{:.0}%]",
+                app.system_state.swap_usage,
+                app.system_state.total_swap,
+                swap_ratio * 100.0
+            )
+        } else {
+            "[none]".to_string()
+        };
+        let label = "Swp[";
+        let bar_w = (w as usize).saturating_sub(label.len() + 2 + suffix.len());
+        if bar_w > 0 {
+            let filled = (swap_ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(
+                        suffix,
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                ])),
+                Rect::new(x, y, w, 1),
+            );
+        }
+        y += 1;
+    }
+
+    // 5. Info line: NET ▼ 12.3 MiB/s ▲ 1.2 MiB/s │ dracon │ up 42d 3h │ 6.8.0
+    {
+        let rx = app.system_state.net_in_history.last().copied().unwrap_or(0);
+        let tx = app
+            .system_state
+            .net_out_history
+            .last()
+            .copied()
+            .unwrap_or(0);
+        let uptime_d = app.system_state.uptime / 86400;
+        let uptime_h = (app.system_state.uptime % 86400) / 3600;
+        f.render_widget(
+            Paragraph::new(Line::from(vec![
+                Span::styled("NET ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                Span::styled(
+                    "▼",
+                    Style::default().fg(crate::ui::theme::accent_secondary()),
+                ),
+                Span::styled(
+                    format!(" {} ", format_size(rx)),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    "▲",
+                    Style::default().fg(crate::ui::theme::accent_primary()),
+                ),
+                Span::styled(
+                    format!(" {} ", format_size(tx)),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    "│ ",
+                    Style::default().fg(Color::Rgb(30, 30, 35)),
+                ),
+                Span::styled(
+                    app.system_state.hostname.clone(),
+                    Style::default().add_modifier(Modifier::BOLD),
+                ),
+                Span::styled(
+                    " │ ",
+                    Style::default().fg(Color::Rgb(30, 30, 35)),
+                ),
+                Span::raw(format!("up {}d {}h", uptime_d, uptime_h)),
+                Span::styled(
+                    " │ ",
+                    Style::default().fg(Color::Rgb(30, 30, 35)),
+                ),
+                Span::raw(app.system_state.kernel_version.clone()),
+            ])),
+            Rect::new(x, y, w, 1),
+        );
+    }
+
+    // Process table fills remaining space
+    draw_processes_view(f, tbl, app);
 }
 
 fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
