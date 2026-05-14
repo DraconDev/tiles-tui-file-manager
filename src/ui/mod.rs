@@ -1112,109 +1112,91 @@ fn gauge_color_for_ratio(ratio: f32) -> Color {
 }
 
 fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
+    let w = area.width as usize;
     let core_count = app.system_state.cpu_cores.len();
     let cores_per_row: usize = if core_count > 16 { 8 } else { 4 };
-    let core_rows: u16 = if core_count > 0 {
-        ((core_count as f32) / cores_per_row as f32).ceil() as u16
-    } else {
-        0
-    };
+    let spark_h: u16 = 4;
+    let label = crate::ui::theme::monitor_label();
+    let dim = crate::ui::theme::monitor_dim_value();
+    let sep = crate::ui::theme::monitor_separator();
+    let core_idx_color = crate::ui::theme::monitor_core_index();
 
-    let header_h = core_rows + 4;
+    let mut lines: Vec<Line> = Vec::new();
 
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(header_h), Constraint::Min(0)])
-        .split(area);
+    // ── CPU Section ──
+    lines.push(Line::from(vec![
+        Span::styled("CPU", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+    ]));
 
-    let hdr = chunks[0];
-    let tbl = chunks[1];
-    let x = hdr.x;
-    let mut y = hdr.y;
-    let w = hdr.width;
-
-    // 1. Aggregate CPU bar: CPU[████░░░░░░░░] 38%
+    // Aggregate bar
     {
         let ratio = (app.system_state.cpu_usage / 100.0).clamp(0.0, 1.0);
         let color = gauge_color_for_ratio(ratio);
-        let label = "CPU[";
         let pct = format!("{:.0}%", app.system_state.cpu_usage);
-        let bar_w = (w as usize).saturating_sub(label.len() + 1 + pct.len() + 1);
+        let lbl = "CPU[";
+        let bar_w = w.saturating_sub(lbl.len() + 2 + pct.len() + 1);
         if bar_w > 0 {
             let filled = (ratio * bar_w as f32) as usize;
-            let bar_str = format!(
-                "{}{}",
-                "█".repeat(filled),
-                "░".repeat(bar_w.saturating_sub(filled))
-            );
-            f.render_widget(
-                Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
-                    Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
-                    Span::styled(
-                        pct,
-                        Style::default()
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                ])),
-                Rect::new(x, y, w, 1),
-            );
+            let bar_str = format!("{}{}", "█".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            lines.push(Line::from(vec![
+                Span::styled(lbl, Style::default().fg(label)),
+                Span::styled(bar_str, Style::default().fg(color)),
+                Span::styled("] ", Style::default().fg(label)),
+                Span::styled(pct, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            ]));
         }
-        y += 1;
     }
 
-    // 2. Per-core bars: 0[████░░░░]  1[████████░]  2[██░░░░░░]  3[██████░░]
-    for row in 0..core_rows {
-        let cols = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints(vec![Constraint::Fill(1); cores_per_row])
-            .split(Rect::new(x, y, w, 1));
-
-        for (i, col_rect) in cols.iter().enumerate() {
-            let idx = row as usize * cores_per_row + i;
+    // Per-core bars
+    for row in 0..((core_count as f32 / cores_per_row as f32).ceil() as usize) {
+        let mut spans = Vec::new();
+        for i in 0..cores_per_row {
+            let idx = row * cores_per_row + i;
             if idx >= core_count {
                 break;
             }
             let usage = app.system_state.cpu_cores[idx];
             let ratio = (usage / 100.0).clamp(0.0, 1.0);
             let color = gauge_color_for_ratio(ratio);
-            let cw = col_rect.width as usize;
             let core_label = format!("{:>2}[", idx);
             let pct = format!("{:>4.0}%", usage);
-            let overhead = core_label.len() + 2 + pct.len();
-            let bar_w = cw.saturating_sub(overhead);
+            let overhead = core_label.len() + 2 + pct.len() + 1;
+            let bar_w = (w / cores_per_row).saturating_sub(overhead);
             if bar_w == 0 {
                 continue;
             }
             let filled = (ratio * bar_w as f32) as usize;
-            let bar_str = format!(
-                "{}{}",
-                "█".repeat(filled),
-                "░".repeat(bar_w.saturating_sub(filled))
-            );
-            f.render_widget(
-                Paragraph::new(Line::from(vec![
-                    Span::styled(core_label, Style::default().fg(crate::ui::theme::monitor_core_index())),
-                    Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_connector())),
-                    Span::styled(
-                        pct,
-                        Style::default().fg(if usage > 10.0 {
-                            Color::White
-                        } else {
-                            crate::ui::theme::monitor_label()
-                        }),
-                    ),
-                ])),
-                *col_rect,
-            );
+            let bar_str = format!("{}{}", "█".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            if !spans.is_empty() {
+                spans.push(Span::raw(" "));
+            }
+            spans.push(Span::styled(core_label, Style::default().fg(core_idx_color)));
+            spans.push(Span::styled(bar_str, Style::default().fg(color)));
+            spans.push(Span::styled("]", Style::default().fg(crate::ui::theme::monitor_connector())));
+            spans.push(Span::styled(pct, Style::default().fg(if usage > 10.0 { Color::White } else { label })));
         }
-        y += 1;
+        lines.push(Line::from(spans));
     }
 
-    // 3. Memory bar: Mem[████████████░░░░░░░] 7.2G/15.5G [46%]
+    // CPU sparkline
+    lines.push(Line::from(vec![
+        Span::styled("HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  {} pts", app.system_state.cpu_history.len()), Style::default().fg(dim)),
+    ]));
+    let cpu_spark = sparkline::BrailleSparkline::new(app.system_state.cpu_history.iter().copied())
+        .max_val(100)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    lines.extend(cpu_spark);
+    lines.push(Line::from(""));
+
+    // ── Memory Section ──
+    lines.push(Line::from(vec![
+        Span::styled("MEMORY", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+    ]));
+
+    // Mem bar
     {
         let mem_ratio = if app.system_state.total_mem > 0.0 {
             (app.system_state.mem_usage / app.system_state.total_mem).clamp(0.0, 1.0)
@@ -1222,40 +1204,22 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             0.0
         };
         let color = gauge_color_for_ratio(mem_ratio);
-        let suffix = format!(
-            "{:.1}G/{:.1}G [{:.0}%]",
-            app.system_state.mem_usage,
-            app.system_state.total_mem,
-            mem_ratio * 100.0
-        );
-        let label = "Mem[";
-        let bar_w = (w as usize).saturating_sub(label.len() + 2 + suffix.len());
+        let suffix = format!("{:.1}G/{:.1}G [{:.0}%]", app.system_state.mem_usage, app.system_state.total_mem, mem_ratio * 100.0);
+        let lbl = "Mem[";
+        let bar_w = w.saturating_sub(lbl.len() + 2 + suffix.len());
         if bar_w > 0 {
             let filled = (mem_ratio * bar_w as f32) as usize;
-            let bar_str = format!(
-                "{}{}",
-                "█".repeat(filled),
-                "░".repeat(bar_w.saturating_sub(filled))
-            );
-            f.render_widget(
-                Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
-                    Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
-                    Span::styled(
-                        suffix,
-                        Style::default()
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                ])),
-                Rect::new(x, y, w, 1),
-            );
+            let bar_str = format!("{}{}", "█".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            lines.push(Line::from(vec![
+                Span::styled(lbl, Style::default().fg(label)),
+                Span::styled(bar_str, Style::default().fg(color)),
+                Span::styled("] ", Style::default().fg(label)),
+                Span::styled(suffix, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            ]));
         }
-        y += 1;
     }
 
-    // 4. Swap bar: Swp[██░░░░░░░░░░░░░░░░░] 512M/2.0G [25%]
+    // Swap bar
     {
         let swap_ratio = if app.system_state.total_swap > 0.0 {
             (app.system_state.swap_usage / app.system_state.total_swap).clamp(0.0, 1.0)
@@ -1264,97 +1228,177 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         };
         let color = gauge_color_for_ratio(swap_ratio);
         let suffix = if app.system_state.total_swap > 0.0 {
-            format!(
-                "{:.1}G/{:.1}G [{:.0}%]",
-                app.system_state.swap_usage,
-                app.system_state.total_swap,
-                swap_ratio * 100.0
-            )
+            format!("{:.1}G/{:.1}G [{:.0}%]", app.system_state.swap_usage, app.system_state.total_swap, swap_ratio * 100.0)
         } else {
             "[none]".to_string()
         };
-        let label = "Swp[";
-        let bar_w = (w as usize).saturating_sub(label.len() + 2 + suffix.len());
+        let lbl = "Swp[";
+        let bar_w = w.saturating_sub(lbl.len() + 2 + suffix.len());
         if bar_w > 0 {
             let filled = (swap_ratio * bar_w as f32) as usize;
-            let bar_str = format!(
-                "{}{}",
-                "█".repeat(filled),
-                "░".repeat(bar_w.saturating_sub(filled))
-            );
-            f.render_widget(
-                Paragraph::new(Line::from(vec![
-                    Span::styled(label, Style::default().fg(crate::ui::theme::monitor_label())),
-                    Span::styled(bar_str, Style::default().fg(color)),
-                    Span::styled("] ", Style::default().fg(crate::ui::theme::monitor_label())),
-                    Span::styled(
-                        suffix,
-                        Style::default()
-                            .fg(Color::White)
-                            .add_modifier(Modifier::BOLD),
-                    ),
-                ])),
-                Rect::new(x, y, w, 1),
-            );
+            let bar_str = format!("{}{}", "█".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            lines.push(Line::from(vec![
+                Span::styled(lbl, Style::default().fg(label)),
+                Span::styled(bar_str, Style::default().fg(color)),
+                Span::styled("] ", Style::default().fg(label)),
+                Span::styled(suffix, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            ]));
         }
-        y += 1;
     }
 
-    // 5. Info line: NET ▼ 12.3 MiB/s ▲ 1.2 MiB/s │ dracon │ up 42d 3h │ 6.8.0
-    {
-        let rx = app.system_state.net_in_history.back().copied().unwrap_or(0);
-        let tx = app
-            .system_state
-            .net_out_history
-            .back()
-            .copied()
-            .unwrap_or(0);
-        let uptime_d = app.system_state.uptime / 86400;
-        let uptime_h = (app.system_state.uptime % 86400) / 3600;
-        f.render_widget(
-            Paragraph::new(Line::from(vec![
-                Span::styled("NET ", Style::default().fg(crate::ui::theme::monitor_label())),
-                Span::styled(
-                    "▼",
-                    Style::default().fg(crate::ui::theme::accent_secondary()),
-                ),
-                Span::styled(
-                    format!(" {} ", format_size(rx)),
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
-                Span::styled(
-                    "▲",
-                    Style::default().fg(crate::ui::theme::accent_primary()),
-                ),
-                Span::styled(
-                    format!(" {} ", format_size(tx)),
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
-                Span::styled(
-                    "│ ",
-                    Style::default().fg(crate::ui::theme::monitor_separator()),
-                ),
-                Span::styled(
-                    app.system_state.hostname.clone(),
-                    Style::default().add_modifier(Modifier::BOLD),
-                ),
-                Span::styled(
-                    " │ ",
-                    Style::default().fg(crate::ui::theme::monitor_separator()),
-                ),
-                Span::raw(format!("up {}d {}h", uptime_d, uptime_h)),
-                Span::styled(
-                    " │ ",
-                    Style::default().fg(crate::ui::theme::monitor_separator()),
-                ),
-                Span::raw(app.system_state.kernel_version.clone()),
-            ])),
-            Rect::new(x, y, w, 1),
-        );
+    // Memory sparkline
+    lines.push(Line::from(vec![
+        Span::styled("MEM HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  peak {:.0}%", app.system_state.mem_history.iter().copied().max().unwrap_or(0)), Style::default().fg(dim)),
+    ]));
+    let mem_spark = sparkline::BrailleSparkline::new(app.system_state.mem_history.iter().copied())
+        .max_val(100)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    lines.extend(mem_spark);
+
+    // Swap sparkline
+    lines.push(Line::from(vec![
+        Span::styled("SWAP HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            if app.system_state.total_swap > 0.0 {
+                format!("  peak {:.0}%", app.system_state.swap_history.iter().copied().max().unwrap_or(0))
+            } else {
+                "  no swap".to_string()
+            },
+            Style::default().fg(dim),
+        ),
+    ]));
+    let swap_spark = sparkline::BrailleSparkline::new(app.system_state.swap_history.iter().copied())
+        .max_val(100)
+        .color(crate::ui::theme::accent_primary())
+        .height(spark_h)
+        .render();
+    lines.extend(swap_spark);
+    lines.push(Line::from(""));
+
+    // ── Disk Section ──
+    lines.push(Line::from(vec![
+        Span::styled("STORAGE", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+    ]));
+
+    for disk in &app.system_state.disks {
+        let ratio = if disk.total_space > 0.0 {
+            (disk.used_space / disk.total_space).clamp(0.0, 1.0) as f32
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(ratio);
+
+        // Disk name + device
+        lines.push(Line::from(vec![
+            Span::styled(format!("{} ", disk.name), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::styled(format!("({})", disk.device), Style::default().fg(dim)),
+        ]));
+
+        // Bar
+        let pct = format!(" {:.0}%  {:.1}G/{:.1}G  avail {:.1}G", ratio * 100.0, disk.used_space, disk.total_space, disk.available_space);
+        let bar_w = 20usize;
+        let filled = (ratio * bar_w as f32) as usize;
+        let bar_str = format!("{}{}", "█".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+        lines.push(Line::from(vec![
+            Span::styled("[", Style::default().fg(label)),
+            Span::styled(bar_str, Style::default().fg(color)),
+            Span::styled("]", Style::default().fg(label)),
+            Span::styled(pct, Style::default().fg(dim)),
+        ]));
+
+        if disk.is_mounted {
+            lines.push(Line::from(vec![
+                Span::styled("  mounted", Style::default().fg(label)),
+            ]));
+        }
+        lines.push(Line::from(""));
+    }
+    if app.system_state.disks.is_empty() {
+        lines.push(Line::from(vec![
+            Span::styled("  no disks found", Style::default().fg(dim)),
+        ]));
+        lines.push(Line::from(""));
     }
 
-    // Process table fills remaining space
-    draw_processes_view(f, tbl, app);
+    // ── Network Section ──
+    lines.push(Line::from(vec![
+        Span::styled("NETWORK", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+    ]));
+
+    let rx = app.system_state.net_in_history.back().copied().unwrap_or(0);
+    let tx = app.system_state.net_out_history.back().copied().unwrap_or(0);
+
+    // Current rates
+    lines.push(Line::from(vec![
+        Span::styled("▼ RX ", Style::default().fg(crate::ui::theme::accent_secondary())),
+        Span::styled(format!("{:>12}/s", format_size(rx)), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled("   ▲ TX ", Style::default().fg(crate::ui::theme::accent_primary())),
+        Span::styled(format!("{:>12}/s", format_size(tx)), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+    ]));
+
+    // Cumulative totals
+    lines.push(Line::from(vec![
+        Span::styled("  total ", Style::default().fg(label)),
+        Span::styled(format_size(app.system_state.net_in), Style::default().fg(dim)),
+        Span::styled(" received   total ", Style::default().fg(label)),
+        Span::styled(format_size(app.system_state.net_out), Style::default().fg(dim)),
+        Span::raw(" sent"),
+    ]));
+
+    // RX sparkline
+    let rx_max = app.system_state.net_in_history.iter().copied().max().unwrap_or(1);
+    lines.push(Line::from(vec![
+        Span::styled("RX HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  peak {}/s", format_size(rx_max)), Style::default().fg(dim)),
+    ]));
+    let rx_spark = sparkline::BrailleSparkline::new(app.system_state.net_in_history.iter().copied())
+        .max_val(rx_max)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    lines.extend(rx_spark);
+
+    // TX sparkline
+    let tx_max = app.system_state.net_out_history.iter().copied().max().unwrap_or(1);
+    lines.push(Line::from(vec![
+        Span::styled("TX HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  peak {}/s", format_size(tx_max)), Style::default().fg(dim)),
+    ]));
+    let tx_spark = sparkline::BrailleSparkline::new(app.system_state.net_out_history.iter().copied())
+        .max_val(tx_max)
+        .color(crate::ui::theme::accent_primary())
+        .height(spark_h)
+        .render();
+    lines.extend(tx_spark);
+    lines.push(Line::from(""));
+
+    // ── System Info ──
+    let uptime_d = app.system_state.uptime / 86400;
+    let uptime_h = (app.system_state.uptime % 86400) / 3600;
+    lines.push(Line::from(vec![
+        Span::styled("SYSTEM ", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("│ {} ", app.system_state.hostname), Style::default().add_modifier(Modifier::BOLD)),
+        Span::styled("│ ", Style::default().fg(sep)),
+        Span::raw(format!("up {}d {}h", uptime_d, uptime_h)),
+        Span::styled(" │ ", Style::default().fg(sep)),
+        Span::raw(app.system_state.kernel_version.clone()),
+    ]));
+
+    // Apply scroll offset
+    let scroll = app.overview_scroll_offset as usize;
+    let visible = area.height as usize;
+    let total = lines.len();
+    if scroll + visible > total && total > visible {
+        app.overview_scroll_offset = (total - visible) as u16;
+    }
+    let start = scroll.min(total.saturating_sub(visible));
+    let end = (start + visible).min(total);
+    let visible_lines: Vec<Line> = lines.into_iter().skip(start).take(end - start).collect();
+
+    f.render_widget(Paragraph::new(visible_lines), area);
 }
 
 fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
