@@ -1,8 +1,8 @@
-# Tiles
+# Tiles — TUI File Manager
 
 ![Tiles](assets/tiles-screenshot.png)
 
-A high-performance terminal file manager built in Rust. Modular pane system, integrated text editor, git awareness, remote SSH file browsing, and system monitoring — all in one TUI.
+A dual-pane TUI file manager built in Rust. Features include vim-style navigation, integrated text editor, git awareness, remote SSH browsing, and system monitoring — all in one terminal interface.
 
 ## Features
 
