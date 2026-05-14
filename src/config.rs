@@ -34,7 +34,7 @@ pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
     if pattern.is_empty() {
         return true;
     }
-    use fuzzy_matcher::skim::SkimMatcherV2;
+    use fuzzy_matcher::{skim::SkimMatcherV2, FuzzyMatcher};
     SkimMatcherV2::default().fuzzy_match(text, pattern).is_some()
 }
 
