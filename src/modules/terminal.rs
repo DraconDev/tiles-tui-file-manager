@@ -9,10 +9,10 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
             std::env::var("KONSOLE_DBUS_SERVICE"),
             std::env::var("KONSOLE_DBUS_WINDOW"),
         ) {
-            let dbus_cmd = if command_exists("qdbus") {
-                "qdbus"
+            let dbus_cmd: Option<&str> = if command_exists("qdbus") {
+                Some("qdbus")
             } else if command_exists("qdbus6") {
-                "qdbus6"
+                Some("qdbus6")
             } else {
                 None
             };
