@@ -237,3 +237,62 @@ fn parse_ppid_from_stat(stat: &str) -> Option<u32> {
     fields.nth(1)?;
     fields.next().and_then(|s| s.parse().ok())
 }
+
+pub fn process_tree_depth(pid: u32, ppid_map: &std::collections::HashMap<u32, u32>) -> usize {
+    let mut depth = 0;
+    let mut current = pid;
+    let mut visited = std::collections::HashSet::new();
+    while let Some(&parent) = ppid_map.get(&current) {
+        if parent == 0 || parent == 1 || visited.contains(&parent) {
+            break;
+        }
+        visited.insert(parent);
+        current = parent;
+        depth += 1;
+        if depth > 20 {
+            break;
+        }
+    }
+    depth
+}
+
+pub fn tree_sort_processes(
+    processes: &mut Vec<dracon_terminal_engine::system::ProcessInfo>,
+    ppid_map: &std::collections::HashMap<u32, u32>,
+) {
+    let pid_to_idx: std::collections::HashMap<u32, usize> = processes
+        .iter()
+        .enumerate()
+        .map(|(i, p)| (p.pid, i))
+        .collect();
+
+    let mut children: std::collections::HashMap<u32, Vec<u32>> = std::collections::HashMap::new();
+    for p in processes.iter() {
+        if let Some(&ppid) = ppid_map.get(&p.pid) {
+            children.entry(ppid).or_default().push(p.pid);
+        }
+    }
+
+    let mut sorted = Vec::with_capacity(processes.len());
+    let mut stack: Vec<(u32, usize)> = vec![(0, 0), (1, 0)];
+
+    while let Some((pid, _depth)) = stack.pop() {
+        if let Some(&idx) = pid_to_idx.get(&pid) {
+            sorted.push(processes[idx].clone());
+        }
+        if let Some(mut kids) = children.get(&pid).cloned() {
+            kids.sort_by(|a, b| {
+                let a_cpu = processes.iter().find(|p| p.pid == *a).map(|p| p.cpu).unwrap_or(0.0);
+                let b_cpu = processes.iter().find(|p| p.pid == *b).map(|p| p.cpu).unwrap_or(0.0);
+                b_cpu.partial_cmp(&a_cpu).unwrap_or(std::cmp::Ordering::Equal)
+            });
+            for k in kids.into_iter().rev() {
+                stack.push((k, 0));
+            }
+        }
+    }
+
+    if sorted.len() == processes.len() {
+        *processes = sorted;
+    }
+}

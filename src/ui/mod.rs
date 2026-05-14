@@ -1079,15 +1079,22 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     }
 
     if app.monitor_subview != MonitorSubview::Overview {
+        let tree_indicator = if app.process_tree_view { " 󰁔 TREE" } else { "" };
         let search_style = if app.process_search_filter.is_empty() {
             Style::default().fg(Color::Rgb(40, 45, 55))
         } else {
             Style::default().fg(crate::ui::theme::accent_primary())
         };
-        f.render_widget(
-            Paragraph::new(format!(" 󰍉 {}", app.process_search_filter)).style(search_style),
-            nav_layout[1],
-        );
+        let tree_style = if app.process_tree_view {
+            Style::default().fg(crate::ui::theme::accent_primary())
+        } else {
+            Style::default().fg(Color::Rgb(40, 45, 55))
+        };
+        let nav_text = Line::from(vec![
+            Span::styled(format!(" 󰍉 {}", app.process_search_filter), search_style),
+            Span::styled(tree_indicator.to_string(), tree_style),
+        ]);
+        f.render_widget(Paragraph::new(nav_text), nav_layout[1]);
     }
 
     let content_area = chunks[1].inner(ratatui::layout::Margin {
@@ -1547,6 +1554,10 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
 }
 
 fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
+    let mut procs = app.system_state.processes.clone();
+    if app.process_tree_view {
+        crate::modules::system::tree_sort_processes(&mut procs, &app.system_state.process_ppid);
+    }
     let column_constraints = [
         Constraint::Length(8),
         Constraint::Min(25),
@@ -1601,7 +1612,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                     .add_modifier(Modifier::BOLD),
             )
         });
-    let rows = app.system_state.processes.iter().enumerate().map(|(i, p)| {
+    let rows = procs.iter().enumerate().map(|(i, p)| {
         let mut is_selected = false;
         let mut style = if i % 2 == 0 {
             Style::default().fg(theme::monitor_row_even())
