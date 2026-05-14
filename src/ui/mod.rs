@@ -1401,6 +1401,117 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(Paragraph::new(visible_lines), area);
 }
 
+fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
+    let current_user = std::env::var("USER").unwrap_or_else(|_| "dracon".to_string());
+    let app_procs: Vec<_> = app
+        .system_state
+        .processes
+        .iter()
+        .filter(|p| {
+            let matches = if app.process_search_filter.is_empty() {
+                true
+            } else {
+                p.name
+                    .to_lowercase()
+                    .contains(&app.process_search_filter.to_lowercase())
+            };
+            p.user == current_user
+                && !p.name.starts_with('[')
+                && !p.name.contains("kworker")
+                && matches
+        })
+        .collect();
+
+    let rows = app_procs.iter().enumerate().map(|(i, p)| {
+        let mut is_selected = false;
+        let mut style = if i % 2 == 0 {
+            Style::default().fg(crate::ui::theme::monitor_row_even())
+        } else {
+            Style::default().fg(crate::ui::theme::monitor_row_odd())
+        };
+        if app.process_selected_idx == Some(i)
+            && app.monitor_subview == MonitorSubview::Applications
+        {
+            style = style
+                .bg(crate::ui::theme::accent_primary())
+                .fg(Color::Black)
+                .add_modifier(Modifier::BOLD);
+            is_selected = true;
+        }
+        let cpu_color = if is_selected {
+            Color::Black
+        } else if p.cpu > 50.0 {
+            Color::Red
+        } else {
+            crate::ui::theme::accent_secondary()
+        };
+        let pid_style = if is_selected {
+            Style::default().fg(Color::Black)
+        } else {
+            Style::default().fg(crate::ui::theme::monitor_label())
+        };
+        Row::new(vec![
+            Cell::from(p.name.clone()).style(style.add_modifier(Modifier::BOLD)),
+            Cell::from(format!("{:.1}", p.cpu)).style(style.fg(cpu_color)),
+            Cell::from(format!("{:.1}", p.mem)).style(style),
+            Cell::from(p.pid.to_string()).style(pid_style),
+            Cell::from(p.status.clone()).style(style),
+        ])
+        .height(1)
+    });
+
+    let sort_col = app.process_sort_col;
+    let sort_asc = app.process_sort_asc;
+    let header_style = |col: ProcessColumn| -> Style {
+        if sort_col == col {
+            Style::default()
+                .fg(crate::ui::theme::accent_primary())
+                .add_modifier(Modifier::BOLD)
+        } else {
+            Style::default().fg(crate::ui::theme::monitor_label())
+        }
+    };
+    let arrow = |col: ProcessColumn| -> &str {
+        if sort_col == col {
+            if sort_asc { " 󰁝" } else { " 󰁅" }
+        } else {
+            ""
+        }
+    };
+
+    let header = Row::new(vec![
+        Cell::from(format!("Application{}", arrow(ProcessColumn::Name))).style(header_style(ProcessColumn::Name)),
+        Cell::from(format!("CPU{}", arrow(ProcessColumn::Cpu))).style(header_style(ProcessColumn::Cpu)),
+        Cell::from(format!("Memory{}", arrow(ProcessColumn::Mem))).style(header_style(ProcessColumn::Mem)),
+        Cell::from(format!("PID{}", arrow(ProcessColumn::Pid))).style(header_style(ProcessColumn::Pid)),
+        Cell::from(format!("Status{}", arrow(ProcessColumn::Status))).style(header_style(ProcessColumn::Status)),
+    ])
+    .style(Style::default().add_modifier(Modifier::BOLD))
+    .height(1)
+    .bottom_margin(1);
+
+    let constraints = [
+        Constraint::Min(35),
+        Constraint::Length(10),
+        Constraint::Length(15),
+        Constraint::Length(10),
+        Constraint::Length(15),
+    ];
+
+    let table = Table::new(rows, constraints)
+        .header(header)
+        .block(Block::default())
+        .row_highlight_style(Style::default().bg(crate::ui::theme::accent_primary()).fg(Color::Black));
+
+    let mut table_state = app.process_table_state.clone();
+    f.render_stateful_widget(table, area, &mut table_state);
+
+    app.process_column_bounds.clear();
+    if let Some(state_row) = table_state.selected() {
+        let _ = state_row;
+    }
+}
+
 fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let column_constraints = [
         Constraint::Length(8),
