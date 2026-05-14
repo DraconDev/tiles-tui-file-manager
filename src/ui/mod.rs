@@ -1111,8 +1111,46 @@ fn gauge_color_for_ratio(ratio: f32) -> Color {
     }
 }
 
+fn card_top(title: &str, w: usize) -> Line<'static> {
+    let prefix = format!("╭─ {} ", title);
+    let fill = w.saturating_sub(prefix.chars().count() + 1); // +1 for ╮
+    let text = format!("{}{}{}", prefix, "─".repeat(fill), "╮");
+    Line::from(Span::styled(text, Style::default().fg(crate::ui::theme::monitor_label())))
+}
+
+fn card_bottom(w: usize) -> Line<'static> {
+    let text = format!("╰{}╯", "─".repeat(w.saturating_sub(2)));
+    Line::from(Span::styled(text, Style::default().fg(crate::ui::theme::monitor_label())))
+}
+
+fn card_line(spans: Vec<Span<'static>>) -> Line<'static> {
+    let mut all = vec![Span::styled("│", Style::default().fg(crate::ui::theme::monitor_label()))];
+    all.extend(spans);
+    all.push(Span::styled("│", Style::default().fg(crate::ui::theme::monitor_label())));
+    Line::from(all)
+}
+
+fn card_sparklines(lines: Vec<Line<'static>>) -> Vec<Line<'static>> {
+    lines
+        .into_iter()
+        .map(|line| {
+            let mut spans = vec![Span::styled(
+                "│",
+                Style::default().fg(crate::ui::theme::monitor_label()),
+            )];
+            spans.extend(line.spans.iter().cloned());
+            spans.push(Span::styled(
+                "│",
+                Style::default().fg(crate::ui::theme::monitor_label()),
+            ));
+            Line::from(spans)
+        })
+        .collect()
+}
+
 fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     let w = area.width as usize;
+    let inner_w = w.saturating_sub(2); // account for ││ borders
     let core_count = app.system_state.cpu_cores.len();
     let cores_per_row: usize = if core_count > 16 { 8 } else { 4 };
     let spark_h: u16 = 4;
@@ -1123,10 +1161,8 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     let mut lines: Vec<Line> = Vec::new();
 
-    // ── CPU Section ──
-    lines.push(Line::from(vec![
-        Span::styled("CPU", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
-    ]));
+    // ╭─ CPU ───────────────────────╮
+    lines.push(card_top("CPU", w));
 
     // Aggregate bar
     {
@@ -1134,17 +1170,269 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         let color = gauge_color_for_ratio(ratio);
         let pct = format!("{:.0}%", app.system_state.cpu_usage);
         let lbl = "CPU[";
-        let bar_w = w.saturating_sub(lbl.len() + 2 + pct.len() + 1);
+        let bar_w = inner_w.saturating_sub(lbl.len() + 2 + pct.len() + 1);
         if bar_w > 0 {
             let filled = (ratio * bar_w as f32) as usize;
-            let bar_str = format!("{}{}", "█".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
-            lines.push(Line::from(vec![
+            let bar_str = format!("{}{}", "▓".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            lines.push(card_line(vec![
                 Span::styled(lbl, Style::default().fg(label)),
                 Span::styled(bar_str, Style::default().fg(color)),
                 Span::styled("] ", Style::default().fg(label)),
                 Span::styled(pct, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
             ]));
         }
+    }
+
+    // Per-core bars
+    for row in 0..((core_count as f32 / cores_per_row as f32).ceil() as usize) {
+        let mut spans = Vec::new();
+        for i in 0..cores_per_row {
+            let idx = row * cores_per_row + i;
+            if idx >= core_count {
+                break;
+            }
+            let usage = app.system_state.cpu_cores[idx];
+            let ratio = (usage / 100.0).clamp(0.0, 1.0);
+            let color = gauge_color_for_ratio(ratio);
+            let core_label = format!("{:>2}[")
+            let pct = format!("{:>4.0}%", usage);
+            let overhead = core_label.len() + 2 + pct.len() + 1;
+            let bar_w = (inner_w / cores_per_row).saturating_sub(overhead);
+            if bar_w == 0 {
+                continue;
+            }
+            let filled = (ratio * bar_w as f32) as usize;
+            let bar_str = format!("{}{}", "▓".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            if !spans.is_empty() {
+                spans.push(Span::raw("  "));
+            }
+            spans.push(Span::styled(core_label, Style::default().fg(core_idx_color)));
+            spans.push(Span::styled(bar_str, Style::default().fg(color)));
+            spans.push(Span::styled("]", Style::default().fg(crate::ui::theme::monitor_connector())));
+            spans.push(Span::styled(pct, Style::default().fg(if usage > 10.0 { Color::White } else { label })));
+        }
+        lines.push(card_line(spans));
+    }
+
+    // CPU sparkline
+    lines.push(card_line(vec![
+        Span::styled("HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  {} pts", app.system_state.cpu_history.len()), Style::default().fg(dim)),
+    ]));
+    let cpu_spark = sparkline::BrailleSparkline::new(app.system_state.cpu_history.iter().copied())
+        .max_val(100)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    lines.extend(card_sparklines(cpu_spark));
+    lines.push(card_bottom(w));
+    lines.push(Line::from(""));
+
+    // ╭─ MEMORY ────────────────────╮
+    lines.push(card_top("MEMORY", w));
+
+    // Mem bar
+    {
+        let mem_ratio = if app.system_state.total_mem > 0.0 {
+            (app.system_state.mem_usage / app.system_state.total_mem).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(mem_ratio);
+        let suffix = format!("{:.1}G/{:.1}G [{:.0}%]", app.system_state.mem_usage, app.system_state.total_mem, mem_ratio * 100.0);
+        let lbl = "Mem[";
+        let bar_w = inner_w.saturating_sub(lbl.len() + 2 + suffix.len());
+        if bar_w > 0 {
+            let filled = (mem_ratio * bar_w as f32) as usize;
+            let bar_str = format!("{}{}", "▓".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            lines.push(card_line(vec![
+                Span::styled(lbl, Style::default().fg(label)),
+                Span::styled(bar_str, Style::default().fg(color)),
+                Span::styled("] ", Style::default().fg(label)),
+                Span::styled(suffix, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            ]));
+        }
+    }
+
+    // Swap bar
+    {
+        let swap_ratio = if app.system_state.total_swap > 0.0 {
+            (app.system_state.swap_usage / app.system_state.total_swap).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(swap_ratio);
+        let suffix = if app.system_state.total_swap > 0.0 {
+            format!("{:.1}G/{:.1}G [{:.0}%]", app.system_state.swap_usage, app.system_state.total_swap, swap_ratio * 100.0)
+        } else {
+            "[none]".to_string()
+        };
+        let lbl = "Swp[";
+        let bar_w = inner_w.saturating_sub(lbl.len() + 2 + suffix.len());
+        if bar_w > 0 {
+            let filled = (swap_ratio * bar_w as f32) as usize;
+            let bar_str = format!("{}{}", "▓".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+            lines.push(card_line(vec![
+                Span::styled(lbl, Style::default().fg(label)),
+                Span::styled(bar_str, Style::default().fg(color)),
+                Span::styled("] ", Style::default().fg(label)),
+                Span::styled(suffix, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            ]));
+        }
+    }
+
+    // Memory sparkline
+    lines.push(card_line(vec![
+        Span::styled("MEM HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  peak {:.0}%", app.system_state.mem_history.iter().copied().max().unwrap_or(0)), Style::default().fg(dim)),
+    ]));
+    let mem_spark = sparkline::BrailleSparkline::new(app.system_state.mem_history.iter().copied())
+        .max_val(100)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    lines.extend(card_sparklines(mem_spark));
+
+    // Swap sparkline
+    lines.push(card_line(vec![
+        Span::styled("SWAP HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(
+            if app.system_state.total_swap > 0.0 {
+                format!("  peak {:.0}%", app.system_state.swap_history.iter().copied().max().unwrap_or(0))
+            } else {
+                "  no swap".to_string()
+            },
+            Style::default().fg(dim),
+        ),
+    ]));
+    let swap_spark = sparkline::BrailleSparkline::new(app.system_state.swap_history.iter().copied())
+        .max_val(100)
+        .color(crate::ui::theme::accent_primary())
+        .height(spark_h)
+        .render();
+    lines.extend(card_sparklines(swap_spark));
+    lines.push(card_bottom(w));
+    lines.push(Line::from(""));
+
+    // ╭─ STORAGE ───────────────────╮
+    lines.push(card_top("STORAGE", w));
+
+    for disk in &app.system_state.disks {
+        let ratio = if disk.total_space > 0.0 {
+            (disk.used_space / disk.total_space).clamp(0.0, 1.0) as f32
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(ratio);
+
+        // Disk name + device
+        lines.push(card_line(vec![
+            Span::styled(format!("{} ", disk.name), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+            Span::styled(format!("({})", disk.device), Style::default().fg(dim)),
+        ]));
+
+        // Bar
+        let pct = format!(" {:.0}%  {:.1}G/{:.1}G  avail {:.1}G", ratio * 100.0, disk.used_space, disk.total_space, disk.available_space);
+        let bar_w = 20usize;
+        let filled = (ratio * bar_w as f32) as usize;
+        let bar_str = format!("{}{}", "▓".repeat(filled), "░".repeat(bar_w.saturating_sub(filled)));
+        lines.push(card_line(vec![
+            Span::styled("[", Style::default().fg(label)),
+            Span::styled(bar_str, Style::default().fg(color)),
+            Span::styled("]", Style::default().fg(label)),
+            Span::styled(pct, Style::default().fg(dim)),
+        ]));
+
+        if disk.is_mounted {
+            lines.push(card_line(vec![
+                Span::styled("  mounted", Style::default().fg(label)),
+            ]));
+        }
+    }
+    if app.system_state.disks.is_empty() {
+        lines.push(card_line(vec![
+            Span::styled("  no disks found", Style::default().fg(dim)),
+        ]));
+    }
+    lines.push(card_bottom(w));
+    lines.push(Line::from(""));
+
+    // ╭─ NETWORK ───────────────────╮
+    lines.push(card_top("NETWORK", w));
+
+    let rx = app.system_state.net_in_history.back().copied().unwrap_or(0);
+    let tx = app.system_state.net_out_history.back().copied().unwrap_or(0);
+
+    // Current rates
+    lines.push(card_line(vec![
+        Span::styled("▼ RX ", Style::default().fg(crate::ui::theme::accent_secondary())),
+        Span::styled(format!("{:>12}/s", format_size(rx)), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled("   ▲ TX ", Style::default().fg(crate::ui::theme::accent_primary())),
+        Span::styled(format!("{:>12}/s", format_size(tx)), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+    ]));
+
+    // Cumulative totals
+    lines.push(card_line(vec![
+        Span::styled("  total ", Style::default().fg(label)),
+        Span::styled(format_size(app.system_state.net_in), Style::default().fg(dim)),
+        Span::styled(" received   total ", Style::default().fg(label)),
+        Span::styled(format_size(app.system_state.net_out), Style::default().fg(dim)),
+        Span::raw(" sent"),
+    ]));
+
+    // RX sparkline
+    let rx_max = app.system_state.net_in_history.iter().copied().max().unwrap_or(1);
+    lines.push(card_line(vec![
+        Span::styled("RX HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  peak {}/s", format_size(rx_max)), Style::default().fg(dim)),
+    ]));
+    let rx_spark = sparkline::BrailleSparkline::new(app.system_state.net_in_history.iter().copied())
+        .max_val(rx_max)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    lines.extend(card_sparklines(rx_spark));
+
+    // TX sparkline
+    let tx_max = app.system_state.net_out_history.iter().copied().max().unwrap_or(1);
+    lines.push(card_line(vec![
+        Span::styled("TX HISTORY", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  peak {}/s", format_size(tx_max)), Style::default().fg(dim)),
+    ]));
+    let tx_spark = sparkline::BrailleSparkline::new(app.system_state.net_out_history.iter().copied())
+        .max_val(tx_max)
+        .color(crate::ui::theme::accent_primary())
+        .height(spark_h)
+        .render();
+    lines.extend(card_sparklines(tx_spark));
+    lines.push(card_bottom(w));
+    lines.push(Line::from(""));
+
+    // ── System Info ──
+    let uptime_d = app.system_state.uptime / 86400;
+    let uptime_h = (app.system_state.uptime % 86400) / 3600;
+    lines.push(Line::from(vec![
+        Span::styled("SYSTEM ", Style::default().fg(crate::ui::theme::accent_primary()).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("│ {} ", app.system_state.hostname), Style::default().add_modifier(Modifier::BOLD)),
+        Span::styled("│ ", Style::default().fg(sep)),
+        Span::raw(format!("up {}d {}h", uptime_d, uptime_h)),
+        Span::styled(" │ ", Style::default().fg(sep)),
+        Span::raw(app.system_state.kernel_version.clone()),
+    ]));
+
+    // Apply scroll offset
+    let scroll = app.overview_scroll_offset as usize;
+    let visible = area.height as usize;
+    let total = lines.len();
+    if scroll + visible > total && total > visible {
+        app.overview_scroll_offset = (total - visible) as u16;
+    }
+    let start = scroll.min(total.saturating_sub(visible));
+    let end = (start + visible).min(total);
+    let visible_lines: Vec<Line> = lines.into_iter().skip(start).take(end - start).collect();
+
+    f.render_widget(Paragraph::new(visible_lines), area);
+}
     }
 
     // Per-core bars
