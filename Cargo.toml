@@ -22,7 +22,7 @@ dirs = "5.0.1"
 chrono = "0.4.42"
 ratatui = "0.29.0"
 
-dracon-terminal-engine = "0.1"
+dracon-terminal-engine = "1.1"
 dracon-files = "94.2"
 dracon-git = "94.2"
 dracon-system-lib = "94.2"
