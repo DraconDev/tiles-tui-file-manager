@@ -24,9 +24,9 @@ pub struct BrailleSparkline {
 }
 
 impl BrailleSparkline {
-    pub fn new(data: &[u64]) -> Self {
+    pub fn new(data: impl IntoIterator<Item = u64>) -> Self {
         Self {
-            data: data.to_vec(),
+            data: data.into_iter().collect(),
             max_val: None,
             color: Color::White,
             height: 2,
@@ -92,7 +92,7 @@ impl BrailleSparkline {
     }
 }
 
-pub fn render_sparkline(data: &[u64], max_val: Option<u64>, color: Color, height: u16) -> Vec<Line<'static>> {
+pub fn render_sparkline(data: impl IntoIterator<Item = u64>, max_val: Option<u64>, color: Color, height: u16) -> Vec<Line<'static>> {
     BrailleSparkline::new(data)
         .max_val(max_val.unwrap_or(0))
         .color(color)

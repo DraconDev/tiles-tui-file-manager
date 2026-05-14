@@ -1310,7 +1310,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     // 5. Info line: NET ▼ 12.3 MiB/s ▲ 1.2 MiB/s │ dracon │ up 42d 3h │ 6.8.0
     {
-        let rx = app.system_state.net_in_history.last().copied().unwrap_or(0);
+        let rx = app.system_state.net_in_history.back().copied().unwrap_or(0);
         let tx = app
             .system_state
             .net_out_history
@@ -1489,7 +1489,7 @@ fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
     );
 
     // CPU sparkline
-    let spark_lines = sparkline::BrailleSparkline::new(&app.system_state.cpu_history)
+    let spark_lines = sparkline::BrailleSparkline::new(app.system_state.cpu_history.iter().copied())
         .max_val(100)
         .color(crate::ui::theme::accent_secondary())
         .height(spark_h)
@@ -1632,7 +1632,7 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
     );
 
     // Memory sparkline
-    let mem_spark = sparkline::BrailleSparkline::new(&app.system_state.mem_history)
+    let mem_spark = sparkline::BrailleSparkline::new(app.system_state.mem_history.iter().copied())
         .max_val(100)
         .color(crate::ui::theme::accent_secondary())
         .height(spark_h)
@@ -1670,7 +1670,7 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
     );
 
     // Swap sparkline
-    let swap_spark = sparkline::BrailleSparkline::new(&app.system_state.swap_history)
+    let swap_spark = sparkline::BrailleSparkline::new(app.system_state.swap_history.iter().copied())
         .max_val(100)
         .color(crate::ui::theme::accent_primary())
         .height(spark_h)
@@ -1799,8 +1799,8 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
     let w = chunks[0].width;
 
     // Current rates line
-    let rx = app.system_state.net_in_history.last().copied().unwrap_or(0);
-    let tx = app.system_state.net_out_history.last().copied().unwrap_or(0);
+    let rx = app.system_state.net_in_history.back().copied().unwrap_or(0);
+    let tx = app.system_state.net_out_history.back().copied().unwrap_or(0);
     f.render_widget(
         Paragraph::new(Line::from(vec![
             Span::styled(
@@ -1886,7 +1886,7 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
         .copied()
         .max()
         .unwrap_or(1);
-    let rx_spark = sparkline::BrailleSparkline::new(&app.system_state.net_in_history)
+    let rx_spark = sparkline::BrailleSparkline::new(app.system_state.net_in_history.iter().copied())
         .max_val(rx_max)
         .color(crate::ui::theme::accent_secondary())
         .height(spark_h)
@@ -1937,7 +1937,7 @@ fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
         .copied()
         .max()
         .unwrap_or(1);
-    let tx_spark = sparkline::BrailleSparkline::new(&app.system_state.net_out_history)
+    let tx_spark = sparkline::BrailleSparkline::new(app.system_state.net_out_history.iter().copied())
         .max_val(tx_max)
         .color(crate::ui::theme::accent_primary())
         .height(spark_h)
