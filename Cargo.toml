@@ -1,8 +1,14 @@
 [package]
-name = "tiles"
+name = "tiles-tui-file-manager"
 version = "10.34.74"
+description = "A dual-pane TUI file manager built in Rust. Features include vim-style navigation, integrated text editor, git awareness, remote SSH browsing, and system monitoring."
+repository = "https://github.com/DraconDev/tiles"
+license = "MIT"
 edition = "2021"
-license-file = "LICENSE"
+
+[[bin]]
+name = "tiles"
+path = "src/main.rs"
 
 [dependencies]
 
