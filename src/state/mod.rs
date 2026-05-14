@@ -411,6 +411,8 @@ pub struct SystemState {
     pub processes: Vec<ProcessInfo>,
     pub cpu_usage: f32,
     pub cpu_cores: Vec<f32>,
+    pub cpu_temperature: Option<f32>,
+    pub cpu_frequency: Option<f32>,
     pub mem_usage: f32,
     pub total_mem: f32,
     pub swap_usage: f32,
