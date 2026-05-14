@@ -34,9 +34,7 @@ pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
     if pattern.is_empty() {
         return true;
     }
-    use skim::prelude::*;
-    let matcher = SkimMatcher::new();
-    matcher.matches(text, pattern).is_some()
+    fuzzy_matcher::fuzzy_match(text, pattern).is_some()
 }
 
 #[derive(Serialize, Deserialize, Clone)]

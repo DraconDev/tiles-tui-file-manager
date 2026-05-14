@@ -1,6 +1,6 @@
 [package]
 name = "tiles"
-version = "10.34.29"
+version = "10.34.30"
 edition = "2021"
 license-file = "LICENSE"
 
@@ -31,6 +31,6 @@ notify = "8.2.0"
 notify-debouncer-mini = "0.7.0"
 trash = "5.2"
 regex = "1"
-sk-skimmer = "0.13.6"
+fuzzy-matcher = "0.3.7"
 
 [workspace]
