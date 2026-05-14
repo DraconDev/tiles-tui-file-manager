@@ -217,6 +217,31 @@ struct SshHostEntry {
     key_path: Option<PathBuf>,
 }
 
+fn expand_tilde(path: &str) -> String {
+    if path.starts_with("~/") {
+        let home = dirs::home_dir().unwrap_or_default();
+        format!("{}{}", home.to_string_lossy(), &path[1..])
+    } else {
+        path.to_string()
+    }
+}
+
+fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
+    let host = entry.host?;
+    let user = entry.user?;
+    if user == "git" {
+        return None;
+    }
+    Some(RemoteBookmark {
+        name: entry.name,
+        host,
+        user,
+        port: entry.port.unwrap_or(22),
+        last_path: PathBuf::from("/"),
+        key_path: entry.key_path,
+    })
+}
+
 fn parse_ssh_config() -> Vec<RemoteBookmark> {
     let ssh_config_path = match dirs::home_dir() {
         Some(home) => home.join(".ssh").join("config"),
@@ -239,22 +264,14 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
             continue;
         }
 
-        if let Some(stripped) = line.strip_prefix("Host ") {
+        let line_lower = line.to_ascii_lowercase();
+        if line_lower.starts_with("host ") {
             if let Some(entry) = current_entry.take() {
-                if let (Some(host), Some(user)) = (entry.host, entry.user) {
-                    if !host.contains("github.com") && !host.contains("codeberg.org") {
-                        results.push(RemoteBookmark {
-                            name: entry.name,
-                            host,
-                            user,
-                            port: entry.port.unwrap_or(22),
-                            last_path: PathBuf::from("/"),
-                            key_path: entry.key_path,
-                        });
-                    }
+                if let Some(bookmark) = try_flush_entry(entry) {
+                    results.push(bookmark);
                 }
             }
-            let name = stripped.trim().to_string();
+            let name = line[5..].trim().to_string();
             current_entry = Some(SshHostEntry {
                 name,
                 host: None,
@@ -263,31 +280,22 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
                 key_path: None,
             });
         } else if let Some(current) = current_entry.as_mut() {
-            if let Some(value) = line.strip_prefix("HostName ") {
-                current.host = Some(value.trim().to_string());
-            } else if let Some(value) = line.strip_prefix("User ") {
-                current.user = Some(value.trim().to_string());
-            } else if let Some(value) = line.strip_prefix("Port ") {
-                current.port = Some(value.trim().parse().unwrap_or(22));
-            } else if let Some(value) = line.strip_prefix("IdentityFile ") {
-                let path = value.trim().replace('~', &dirs::home_dir().unwrap_or_default().to_string_lossy());
-                current.key_path = Some(PathBuf::from(path));
+            if line_lower.starts_with("hostname ") {
+                current.host = Some(line.splitn(2, ' ').nth(1).unwrap_or("").trim().to_string());
+            } else if line_lower.starts_with("user ") {
+                current.user = Some(line.splitn(2, ' ').nth(1).unwrap_or("").trim().to_string());
+            } else if line_lower.starts_with("port ") {
+                current.port = line.splitn(2, ' ').nth(1).unwrap_or("").trim().parse().ok();
+            } else if line_lower.starts_with("identityfile ") {
+                let path = line.splitn(2, ' ').nth(1).unwrap_or("").trim();
+                current.key_path = Some(PathBuf::from(expand_tilde(path)));
             }
         }
     }
 
-    if let Some(entry) = current_entry {
-        if let (Some(host), Some(user)) = (entry.host, entry.user) {
-            if !host.contains("github.com") && !host.contains("codeberg.org") {
-                results.push(RemoteBookmark {
-                    name: entry.name,
-                    host,
-                    user,
-                    port: entry.port.unwrap_or(22),
-                    last_path: PathBuf::from("/"),
-                    key_path: entry.key_path,
-                });
-            }
+    if let Some(entry) = current_entry.take() {
+        if let Some(bookmark) = try_flush_entry(entry) {
+            results.push(bookmark);
         }
     }
 
@@ -296,8 +304,12 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
 
 pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
     let ssh_bookmarks = parse_ssh_config();
+    let existing: std::collections::HashSet<_> = bookmarks
+        .iter()
+        .map(|b| (&b.host, &b.user))
+        .collect();
     for sb in ssh_bookmarks {
-        if !bookmarks.iter().any(|b| b.host == sb.host && b.user == sb.user) {
+        if !existing.contains((&sb.host, &sb.user)) {
             bookmarks.push(sb);
         }
     }
