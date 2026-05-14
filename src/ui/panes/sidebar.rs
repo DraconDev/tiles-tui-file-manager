@@ -837,6 +837,9 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
 
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
         let indent_str = "  ".repeat(depth as usize);
+        let marker_w = if is_dir { 2 } else { 0 };
+        let icon_w = icon.width();
+        let arrow_end_x = inner.x + 1 + (depth * 2) + marker_w as u16 + icon_w as u16;
 
         let open_indicator = if !is_dir && open_files.contains(&path) {
             Some(Span::styled(
@@ -863,7 +866,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
             y: current_y,
             index: current_idx,
             target: SidebarTarget::Project(path.clone()),
-            ..Default::default()
+            arrow_end_x,
         });
         current_y += 1;
 
