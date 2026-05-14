@@ -1,6 +1,6 @@
 use crate::app::{CommitInfo, FileMetadata, GitPendingChange};
 use crate::state::{RemoteBookmark, RemoteSession};
-use dracon_system::{
+use dracon_system_lib::{
     RemoteBookmark as RemoteBookmarkContract, RemoteConnectContract, RemoteConnectRequest,
     RemoteConnection, RemoteEntryMetadata, RemoteExecContract, RemoteFsContract,
     SshRemoteConnector, SshRemoteExecProvider, SshRemoteFsProvider,

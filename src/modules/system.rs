@@ -1,6 +1,6 @@
 use crate::app::App;
 use crate::state::DiskIo;
-use dracon_system::{
+use dracon_system_lib::{
     DiskSnapshot, ProcessControlContract, ProcessController, ProcessSnapshot, SystemSnapshot,
     SystemSnapshotContract, SystemSnapshotProvider,
 };

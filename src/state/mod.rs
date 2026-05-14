@@ -49,7 +49,7 @@ pub enum AppEvent {
     AddToFavorites(PathBuf),
     ConnectToRemote(usize, usize),
     RemoteConnected(usize, RemoteSession),
-    SystemUpdated(dracon_system::SystemSnapshot),
+    SystemUpdated(dracon_system_lib::SystemSnapshot),
 
     KillProcess(u32),
     GitHistoryUpdated(
