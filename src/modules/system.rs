@@ -94,9 +94,42 @@ impl SystemModule {
         s.net_in = data.net_in;
         s.net_out = data.net_out;
 
+        s.cpu_temperature = read_cpu_temperature();
+        s.cpu_frequency = read_cpu_frequency();
+
         app.apply_process_sort();
     }
 }
+
+fn read_cpu_temperature() -> Option<f32> {
+    let thermal_dirs = std::fs::read_dir("/sys/class/thermal").ok()?;
+    for entry in thermal_dirs.flatten() {
+        let path = entry.path();
+        let zone_type = path.join("type");
+        if let Ok(content) = std::fs::read_to_string(zone_type) {
+            let trimmed = content.trim();
+            if trimmed == "x86_pkg_temp" || trimmed == "CPU" || trimmed == "acpitz" {
+                let temp_file = path.join("temp");
+                if let Ok(temp_str) = std::fs::read_to_string(temp_file) {
+                    if let Ok(temp_millidegrees) = temp_str.trim().parse::<i64>() {
+                        return Some(temp_millidegrees as f32 / 1000.0);
+                    }
+                }
+            }
+        }
+    }
+    std::fs::read_to_string("/sys/class/thermal/thermal_zone0/temp")
+        .ok()
+        .and_then(|s| s.trim().parse::<i64>().ok())
+        .map(|t| t as f32 / 1000.0)
+}
+
+fn read_cpu_frequency() -> Option<f32> {
+    let freq_path = "/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq";
+    std::fs::read_to_string(freq_path)
+        .ok()
+        .and_then(|s| s.trim().parse::<i64>().ok())
+        .map(|f| f as f32 / 1000.0)
 
 fn map_disk(d: DiskSnapshot) -> DiskInfo {
     DiskInfo {

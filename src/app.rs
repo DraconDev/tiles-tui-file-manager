@@ -147,6 +147,8 @@ impl App {
             processes: Vec::new(),
             cpu_usage: 0.0,
             cpu_cores: Vec::new(),
+            cpu_temperature: None,
+            cpu_frequency: None,
             mem_usage: 0.0,
             total_mem: 0.0,
             swap_usage: 0.0,
