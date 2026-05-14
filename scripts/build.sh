@@ -3,21 +3,23 @@ set -e
 
 BUILD_TYPE="${1:-dev}"
 
-# Detect where the user's tiles is resolved from PATH
 TILES_TARGET=$(command -v tiles 2>/dev/null || echo "")
 
-install_binary() {
-  local src="$HOME/.cargo/bin/tiles"
-  if [ -n "$TILES_TARGET" ] && [ "$TILES_TARGET" != "$src" ]; then
+install_to_path() {
+  if [ -n "$TILES_TARGET" ]; then
+    local src="$HOME/.cargo/bin/tiles"
+    if [ "$TILES_TARGET" = "$src" ]; then
+      return
+    fi
     local bak="${TILES_TARGET}.bak"
     mv "$TILES_TARGET" "$bak" 2>/dev/null || true
     cp "$src" "$TILES_TARGET" 2>/dev/null || {
       mv "$bak" "$TILES_TARGET" 2>/dev/null || true
-      echo "  WARNING: could not install to $TILES_TARGET (binary in use)"
+      echo "WARNING: could not install to $TILES_TARGET (binary in use)"
       return
     }
     rm -f "$bak"
-    echo "  also installed to $TILES_TARGET"
+    echo "Installed to $TILES_TARGET"
   fi
 }
 
@@ -25,12 +27,12 @@ case "$BUILD_TYPE" in
   dev)
     cargo build
     cargo install --path . --bins
-    install_binary
+    install_to_path
     ;;
   release)
     cargo build --release
     cargo install --path . --bins --release
-    install_binary
+    install_to_path
     ;;
   check)
     cargo clippy -D warnings
