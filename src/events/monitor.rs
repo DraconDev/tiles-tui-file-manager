@@ -36,6 +36,10 @@ pub fn handle_monitor_events(
                     app.monitor_subview = MonitorSubview::Network;
                     return true;
                 }
+                KeyCode::Char('7') => {
+                    app.monitor_subview = MonitorSubview::Applications;
+                    return true;
+                }
                 KeyCode::Up if app.monitor_subview == MonitorSubview::Processes => {
                     app.process_table_state.select(
                         app.process_table_state

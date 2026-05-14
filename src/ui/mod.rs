@@ -1033,13 +1033,17 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     });
     let nav_layout = Layout::default()
         .direction(Direction::Horizontal)
-        .constraints([Constraint::Min(40), Constraint::Length(50)])
+        .constraints([Constraint::Min(80), Constraint::Length(30)])
         .split(nav_area);
 
     let subviews = [
         (MonitorSubview::Overview, "󰊚 OVERVIEW"),
-        (MonitorSubview::Applications, "󰀻 APPLICATIONS"),
-        (MonitorSubview::Processes, "󰑮 PROCESSES"),
+        (MonitorSubview::Cpu, " CPU"),
+        (MonitorSubview::Memory, " MEM"),
+        (MonitorSubview::Disk, " DISK"),
+        (MonitorSubview::Network, " NET"),
+        (MonitorSubview::Processes, "󰑮 PROC"),
+        (MonitorSubview::Applications, "󰀻 APPS"),
     ];
 
     app.monitor_subview_bounds.clear();
@@ -1095,12 +1099,12 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     });
     match app.monitor_subview {
         MonitorSubview::Overview => draw_monitor_overview(f, content_area, app),
+        MonitorSubview::Cpu => draw_monitor_cpu(f, content_area, app),
+        MonitorSubview::Memory => draw_monitor_memory(f, content_area, app),
+        MonitorSubview::Disk => draw_monitor_disk(f, content_area, app),
+        MonitorSubview::Network => draw_monitor_network(f, content_area, app),
         MonitorSubview::Processes => draw_processes_view(f, content_area, app),
         MonitorSubview::Applications => draw_monitor_applications(f, content_area, app),
-        MonitorSubview::Cpu
-        | MonitorSubview::Memory
-        | MonitorSubview::Disk
-        | MonitorSubview::Network => draw_monitor_overview(f, content_area, app),
     }
 }
 
@@ -1358,6 +1362,66 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     // Process table fills remaining space
     draw_processes_view(f, tbl, app);
+}
+
+fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
+    draw_monitor_overview(f, area, app);
+}
+
+fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
+    draw_monitor_overview(f, area, app);
+}
+
+fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
+    let disk_list: Vec<Line> = app
+        .system_state
+        .disks
+        .iter()
+        .map(|disk| {
+            let ratio = if disk.total_space > 0.0 {
+                (disk.used_space / disk.total_space).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            let color = gauge_color_for_ratio(ratio);
+            let label = format!("{} ", disk.name);
+            let pct = format!(" {:.0}%  {:.0}G/{:.0}G", ratio * 100.0, disk.used_space, disk.total_space);
+            let bar_w = (area.width as usize).saturating_sub(label.len() + 2 + pct.len() + 4);
+            let filled = if bar_w > 0 {
+                (ratio * bar_w as f32) as usize
+            } else {
+                0
+            };
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            Line::from(vec![
+                Span::styled(label, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+                Span::styled("[", Style::default().fg(Color::Rgb(60, 65, 75))),
+                Span::styled(bar_str, Style::default().fg(color)),
+                Span::styled("]", Style::default().fg(Color::Rgb(60, 65, 75))),
+                Span::styled(pct, Style::default().fg(Color::Rgb(100, 100, 110))),
+            ])
+        })
+        .collect();
+
+    let header = Line::from(vec![
+        Span::styled(
+            "STORAGE",
+            Style::default()
+                .fg(Color::Rgb(60, 65, 75))
+                .add_modifier(Modifier::BOLD),
+        ),
+    ]);
+    let mut lines = vec![header, Line::from("")];
+    lines.extend(disk_list);
+    f.render_widget(Paragraph::new(lines), area);
+}
+
+fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
+    draw_monitor_overview(f, area, app);
 }
 
 fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
