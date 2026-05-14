@@ -2690,7 +2690,7 @@ dependencies = [
 
 [[package]]
 name = "tiles-tui-file-manager"
-version = "10.34.75"
+version = "10.34.76"
 dependencies = [
  "anyhow",
  "base64",
