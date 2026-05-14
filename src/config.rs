@@ -317,7 +317,7 @@ mod tests {
 
     fn parse_config(content: &str) -> Vec<RemoteBookmark> {
         let tempdir = std::env::temp_dir();
-        let ssh_config = tempdir.join("ssh_config_test");
+        let ssh_config = tempdir.join(format!("ssh_config_test_{}", std::process::id()));
         std::fs::write(&ssh_config, content).unwrap();
         let result = do_parse_ssh_config(&ssh_config);
         std::fs::remove_file(ssh_config).ok();
