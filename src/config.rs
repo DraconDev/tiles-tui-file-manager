@@ -304,12 +304,8 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
 
 pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
     let ssh_bookmarks = parse_ssh_config();
-    let existing: std::collections::HashSet<_> = bookmarks
-        .iter()
-        .map(|b| (b.host.as_str(), b.user.as_str()))
-        .collect();
     for sb in ssh_bookmarks {
-        if !existing.contains((sb.host.as_str(), sb.user.as_str())) {
+        if !bookmarks.iter().any(|b| b.host == sb.host && b.user == sb.user) {
             bookmarks.push(sb);
         }
     }
