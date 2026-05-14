@@ -1366,11 +1366,329 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 }
 
 fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
-    draw_monitor_overview(f, area, app);
+    let core_count = app.system_state.cpu_cores.len();
+    let cores_per_row: usize = if core_count > 16 { 8 } else { 4 };
+    let core_rows: u16 = if core_count > 0 {
+        ((core_count as f32) / cores_per_row as f32).ceil() as u16
+    } else {
+        0
+    };
+
+    let spark_h: u16 = 4;
+    let bar_section_h = core_rows + 2;
+    let total_top = bar_section_h + 1 + spark_h;
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(bar_section_h),
+            Constraint::Length(1),
+            Constraint::Length(spark_h),
+            Constraint::Min(0),
+        ])
+        .split(area);
+
+    let x = chunks[0].x;
+    let w = chunks[0].width;
+    let mut y = chunks[0].y;
+
+    // Aggregate CPU bar
+    {
+        let ratio = (app.system_state.cpu_usage / 100.0).clamp(0.0, 1.0);
+        let color = gauge_color_for_ratio(ratio);
+        let label = "CPU[";
+        let pct = format!("{:.0}%", app.system_state.cpu_usage);
+        let bar_w = (w as usize).saturating_sub(label.len() + 1 + pct.len() + 1);
+        if bar_w > 0 {
+            let filled = (ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(
+                        pct,
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                ])),
+                Rect::new(x, y, w, 1),
+            );
+        }
+        y += 1;
+    }
+
+    // Per-core bars
+    for row in 0..core_rows {
+        let cols = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints(vec![Constraint::Fill(1); cores_per_row])
+            .split(Rect::new(x, y, w, 1));
+
+        for (i, col_rect) in cols.iter().enumerate() {
+            let idx = row as usize * cores_per_row + i;
+            if idx >= core_count {
+                break;
+            }
+            let usage = app.system_state.cpu_cores[idx];
+            let ratio = (usage / 100.0).clamp(0.0, 1.0);
+            let color = gauge_color_for_ratio(ratio);
+            let cw = col_rect.width as usize;
+            let core_label = format!("{:>2}[", idx);
+            let pct = format!("{:>4.0}%", usage);
+            let overhead = core_label.len() + 2 + pct.len();
+            let bar_w = cw.saturating_sub(overhead);
+            if bar_w == 0 {
+                continue;
+            }
+            let filled = (ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(core_label, Style::default().fg(Color::Rgb(50, 55, 65))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(40, 40, 45))),
+                    Span::styled(
+                        pct,
+                        Style::default().fg(if usage > 10.0 {
+                            Color::White
+                        } else {
+                            Color::Rgb(60, 65, 75)
+                        }),
+                    ),
+                ])),
+                *col_rect,
+            );
+        }
+        y += 1;
+    }
+
+    // Sparkline label
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "HISTORY",
+                Style::default()
+                    .fg(Color::Rgb(60, 65, 75))
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                format!("  {} pts", app.system_state.cpu_history.len()),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+        ])),
+        chunks[1],
+    );
+
+    // CPU sparkline
+    let spark_lines = sparkline::BrailleSparkline::new(&app.system_state.cpu_history)
+        .max_val(100)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    let spark_area = chunks[2];
+    for (i, line) in spark_lines.iter().enumerate() {
+        if i >= spark_area.height as usize {
+            break;
+        }
+        f.render_widget(
+            Paragraph::new(line.clone()),
+            Rect::new(spark_area.x, spark_area.y + i as u16, spark_area.width, 1),
+        );
+    }
+
+    // Process table fills remaining space
+    draw_processes_view(f, chunks[3], app);
 }
 
 fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
-    draw_monitor_overview(f, area, app);
+    let spark_h: u16 = 4;
+    let bar_section_h: u16 = 2;
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(bar_section_h),
+            Constraint::Length(1),
+            Constraint::Length(spark_h),
+            Constraint::Length(1),
+            Constraint::Length(spark_h),
+            Constraint::Min(0),
+        ])
+        .split(area);
+
+    let x = chunks[0].x;
+    let w = chunks[0].width;
+    let mut y = chunks[0].y;
+
+    // Memory bar
+    {
+        let mem_ratio = if app.system_state.total_mem > 0.0 {
+            (app.system_state.mem_usage / app.system_state.total_mem).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(mem_ratio);
+        let suffix = format!(
+            "{:.1}G/{:.1}G [{:.0}%]",
+            app.system_state.mem_usage,
+            app.system_state.total_mem,
+            mem_ratio * 100.0
+        );
+        let label = "Mem[";
+        let bar_w = (w as usize).saturating_sub(label.len() + 2 + suffix.len());
+        if bar_w > 0 {
+            let filled = (mem_ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(
+                        suffix,
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                ])),
+                Rect::new(x, y, w, 1),
+            );
+        }
+        y += 1;
+    }
+
+    // Swap bar
+    {
+        let swap_ratio = if app.system_state.total_swap > 0.0 {
+            (app.system_state.swap_usage / app.system_state.total_swap).clamp(0.0, 1.0)
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(swap_ratio);
+        let suffix = if app.system_state.total_swap > 0.0 {
+            format!(
+                "{:.1}G/{:.1}G [{:.0}%]",
+                app.system_state.swap_usage,
+                app.system_state.total_swap,
+                swap_ratio * 100.0
+            )
+        } else {
+            "[none]".to_string()
+        };
+        let label = "Swp[";
+        let bar_w = (w as usize).saturating_sub(label.len() + 2 + suffix.len());
+        if bar_w > 0 {
+            let filled = (swap_ratio * bar_w as f32) as usize;
+            let bar_str = format!(
+                "{}{}",
+                "█".repeat(filled),
+                "░".repeat(bar_w.saturating_sub(filled))
+            );
+            f.render_widget(
+                Paragraph::new(Line::from(vec![
+                    Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(bar_str, Style::default().fg(color)),
+                    Span::styled("] ", Style::default().fg(Color::Rgb(60, 65, 75))),
+                    Span::styled(
+                        suffix,
+                        Style::default()
+                            .fg(Color::White)
+                            .add_modifier(Modifier::BOLD),
+                    ),
+                ])),
+                Rect::new(x, y, w, 1),
+            );
+        }
+    }
+
+    // Memory sparkline label
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "MEM HISTORY",
+                Style::default()
+                    .fg(Color::Rgb(60, 65, 75))
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                format!("  peak {:.0}%", app.system_state.mem_history.iter().copied().max().unwrap_or(0)),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+        ])),
+        chunks[1],
+    );
+
+    // Memory sparkline
+    let mem_spark = sparkline::BrailleSparkline::new(&app.system_state.mem_history)
+        .max_val(100)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    let sa = chunks[2];
+    for (i, line) in mem_spark.iter().enumerate() {
+        if i >= sa.height as usize {
+            break;
+        }
+        f.render_widget(
+            Paragraph::new(line.clone()),
+            Rect::new(sa.x, sa.y + i as u16, sa.width, 1),
+        );
+    }
+
+    // Swap sparkline label
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "SWAP HISTORY",
+                Style::default()
+                    .fg(Color::Rgb(60, 65, 75))
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                if app.system_state.total_swap > 0.0 {
+                    format!("  peak {:.0}%", app.system_state.swap_history.iter().copied().max().unwrap_or(0))
+                } else {
+                    "  no swap".to_string()
+                },
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+        ])),
+        chunks[3],
+    );
+
+    // Swap sparkline
+    let swap_spark = sparkline::BrailleSparkline::new(&app.system_state.swap_history)
+        .max_val(100)
+        .color(crate::ui::theme::accent_primary())
+        .height(spark_h)
+        .render();
+    let sa = chunks[4];
+    for (i, line) in swap_spark.iter().enumerate() {
+        if i >= sa.height as usize {
+            break;
+        }
+        f.render_widget(
+            Paragraph::new(line.clone()),
+            Rect::new(sa.x, sa.y + i as u16, sa.width, 1),
+        );
+    }
+
+    draw_processes_view(f, chunks[5], app);
 }
 
 fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
