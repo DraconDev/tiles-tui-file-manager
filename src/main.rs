@@ -530,23 +530,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
                         };
 
-                        // Load image for preview if applicable
-                        let mut image_data: Option<(Vec<u8>, u32, u32)> = None;
-                        {
-                            let ext = path.extension()
-                                .and_then(|s| s.to_str())
-                                .unwrap_or("")
-                                .to_lowercase();
-                            let image_exts = ["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "tiff"];
-                            if image_exts.contains(&ext.as_str()) {
-                                if let Ok(img) = image::open(&path) {
-                                    let (w, h) = img.dimensions();
-                                    let rgba = img.to_rgba8().into_raw();
-                                    image_data = Some((rgba, w, h));
-                                }
-                            }
-                        }
-
                         let mut editor = dracon_terminal_engine::widgets::TextEditor::with_content(&content);
                         if path_str.starts_with("git://") || path_str.starts_with("git-diff://") {
                             editor.language = "diff".to_string();
@@ -573,7 +556,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 content,
                                 editor: Some(editor),
                                 last_saved: None,
-                                image_data,
                                 highlighted_lines: None,
                             };
 
