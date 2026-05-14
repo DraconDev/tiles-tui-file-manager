@@ -240,6 +240,7 @@ impl App {
             split_columns: vec![FileColumn::Name, FileColumn::Size],
             monitor_subview: MonitorSubview::Overview,
             monitor_subview_bounds: Vec::new(),
+            overview_scroll_offset: 0,
             process_sort_col: ProcessColumn::Cpu,
             process_sort_asc: false,
             process_column_bounds: Vec::new(),
@@ -477,7 +478,19 @@ editor: ViewPreferences {
     }
 
     pub fn apply_process_sort(&mut self) {
-        // Implementation in modules/system.rs handles the actual sorting of the vector
+        let col = self.process_sort_col;
+        let asc = self.process_sort_asc;
+        self.system_state.processes.sort_by(|a, b| {
+            let ord = match col {
+                ProcessColumn::Pid => a.pid.cmp(&b.pid),
+                ProcessColumn::Name => a.name.cmp(&b.name),
+                ProcessColumn::Cpu => a.cpu.partial_cmp(&b.cpu).unwrap_or(std::cmp::Ordering::Equal),
+                ProcessColumn::Mem => a.mem.partial_cmp(&b.mem).unwrap_or(std::cmp::Ordering::Equal),
+                ProcessColumn::User => a.user.cmp(&b.user),
+                ProcessColumn::Status => a.status.cmp(&b.status),
+            };
+            if asc { ord } else { ord.reverse() }
+        });
     }
 }
 

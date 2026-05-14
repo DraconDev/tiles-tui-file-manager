@@ -1098,10 +1098,6 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
         MonitorSubview::Overview => draw_monitor_overview(f, content_area, app),
         MonitorSubview::Processes => draw_processes_view(f, content_area, app),
         MonitorSubview::Applications => draw_monitor_applications(f, content_area, app),
-        MonitorSubview::Cpu
-        | MonitorSubview::Memory
-        | MonitorSubview::Disk
-        | MonitorSubview::Network => draw_monitor_overview(f, content_area, app),
     }
 }
 

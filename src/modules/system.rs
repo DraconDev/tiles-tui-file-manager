@@ -41,18 +41,18 @@ impl SystemModule {
         s.os_version = data.os_version;
         s.kernel_version = data.kernel_version;
 
-        s.cpu_history.push(data.cpu_usage as u64);
+        s.cpu_history.push_back(data.cpu_usage as u64);
         if s.cpu_history.len() > 100 {
-            s.cpu_history.remove(0);
+            s.cpu_history.pop_front();
         }
 
         if s.core_history.len() != data.cpu_cores.len() {
-            s.core_history = vec![vec![0; 100]; data.cpu_cores.len()];
+            s.core_history = vec![std::collections::VecDeque::from(vec![0; 100]); data.cpu_cores.len()];
         }
         for (i, &usage) in data.cpu_cores.iter().enumerate() {
-            s.core_history[i].push(usage as u64);
+            s.core_history[i].push_back(usage as u64);
             if s.core_history[i].len() > 100 {
-                s.core_history[i].remove(0);
+                s.core_history[i].pop_front();
             }
         }
 
@@ -61,9 +61,9 @@ impl SystemModule {
         } else {
             0.0
         };
-        s.mem_history.push(mem_p as u64);
+        s.mem_history.push_back(mem_p as u64);
         if s.mem_history.len() > 100 {
-            s.mem_history.remove(0);
+            s.mem_history.pop_front();
         }
 
         let swap_p = if data.total_swap > 0.0 {
@@ -71,21 +71,21 @@ impl SystemModule {
         } else {
             0.0
         };
-        s.swap_history.push(swap_p as u64);
+        s.swap_history.push_back(swap_p as u64);
         if s.swap_history.len() > 100 {
-            s.swap_history.remove(0);
+            s.swap_history.pop_front();
         }
 
         if s.last_net_in > 0 {
             let diff_in = data.net_in.saturating_sub(s.last_net_in);
             let diff_out = data.net_out.saturating_sub(s.last_net_out);
-            s.net_in_history.push(diff_in);
-            s.net_out_history.push(diff_out);
+            s.net_in_history.push_back(diff_in);
+            s.net_out_history.push_back(diff_out);
             if s.net_in_history.len() > 100 {
-                s.net_in_history.remove(0);
+                s.net_in_history.pop_front();
             }
             if s.net_out_history.len() > 100 {
-                s.net_out_history.remove(0);
+                s.net_out_history.pop_front();
             }
         }
         s.last_net_in = data.net_in;
