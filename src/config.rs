@@ -320,6 +320,12 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
     parse_ssh_config_content(&content)
 }
 
+/// Merges SSH config hosts from `~/.ssh/config` into the bookmark list.
+/// Hosts with `User git` (Git auth aliases like github.com, codeberg.org) are skipped.
+/// Wildcard patterns (`Host *`, `Host?`) are skipped.
+/// If a host has no explicit `HostName`, the `Host` alias name is used as the hostname.
+/// Merged bookmarks are NOT automatically removed if deleted from `~/.ssh/config` —
+/// they persist in `state.json` until manually deleted.
 pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
     let ssh_bookmarks = parse_ssh_config();
     for sb in ssh_bookmarks {
@@ -328,6 +334,7 @@ pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
         }
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
