@@ -151,134 +151,144 @@ fn execute_redo(
     Some(action_name)
 }
 
+fn handle_global_shortcuts(
+    key: &dracon_terminal_engine::contracts::KeyEvent,
+    app: &mut App,
+    event_tx: &mpsc::Sender<AppEvent>,
+) -> Option<bool> {
+    let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
+    let has_alt = key.modifiers.contains(KeyModifiers::ALT);
+    match key.code {
+        KeyCode::Char('i') | KeyCode::Char('I') if has_control => {
+            app.mode = AppMode::Properties;
+            Some(true)
+        }
+        KeyCode::Enter if has_alt => {
+            app.mode = AppMode::Properties;
+            Some(true)
+        }
+        KeyCode::Char('h') | KeyCode::Char('H') if has_control => {
+            let idx = app.toggle_hidden();
+            if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
+                app.default_show_hidden = fs.show_hidden;
+            }
+            crate::config::save_state_quiet(app);
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
+            Some(true)
+        }
+        KeyCode::Backspace if has_control => {
+            let idx = app.toggle_hidden();
+            if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
+                app.default_show_hidden = fs.show_hidden;
+            }
+            crate::config::save_state_quiet(app);
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
+            Some(true)
+        }
+        KeyCode::Char('g') | KeyCode::Char('G') if has_control => {
+            app.mode = AppMode::Settings;
+            app.settings_scroll = 0;
+            Some(true)
+        }
+        KeyCode::Char('n') | KeyCode::Char('N') if has_control => {
+            if let Some(fs) = app.current_file_state() {
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
+                    path: fs.current_path.clone(),
+                    new_tab: true,
+                    remote: fs.remote_session.clone(),
+                    command: None,
+                });
+            }
+            Some(true)
+        }
+        KeyCode::Char('k') | KeyCode::Char('K') if has_control => {
+            if let Some(fs) = app.current_file_state() {
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
+                    path: fs.current_path.clone(),
+                    new_tab: false,
+                    remote: fs.remote_session.clone(),
+                    command: None,
+                });
+            }
+            Some(true)
+        }
+        KeyCode::Char('t') | KeyCode::Char('T') if has_control => {
+            if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
+                if let Some(fs) = pane.current_state() {
+                    let new_fs = fs.clone();
+                    pane.open_tab(new_fs);
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                }
+            }
+            Some(true)
+        }
+        KeyCode::Char('w') if has_control && app.current_view == CurrentView::Files => {
+            let pane_idx = app.focused_pane_index;
+            if let Some(pane) = app.panes.get_mut(pane_idx) {
+                if pane.tabs.len() > 1 {
+                    let removed = pane.tabs.remove(pane.active_tab_index);
+                    if pane.active_tab_index >= pane.tabs.len() {
+                        pane.active_tab_index = pane.tabs.len() - 1;
+                    }
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                        "Closed: {}",
+                        removed.current_path.file_name()
+                            .map(|n| n.to_string_lossy().to_string())
+                            .unwrap_or_default()
+                    )));
+                } else {
+                    let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Cannot close last tab".to_string()));
+                }
+            }
+            Some(true)
+        }
+        KeyCode::Left if has_alt => {
+            app.resize_sidebar(-2);
+            Some(true)
+        }
+        KeyCode::Right if has_alt => {
+            app.resize_sidebar(2);
+            Some(true)
+        }
+        KeyCode::Char(' ') if has_control => {
+            app.input.clear();
+            app.mode = AppMode::CommandPalette;
+            crate::event_helpers::update_commands(app);
+            Some(true)
+        }
+        KeyCode::Left if has_control => {
+            if app.sidebar_focus {
+                app.resize_sidebar(-2);
+            } else {
+                app.move_to_other_pane();
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
+            }
+            Some(true)
+        }
+        KeyCode::Right if has_control => {
+            if app.sidebar_focus {
+                app.resize_sidebar(2);
+            } else {
+                app.move_to_other_pane();
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
+                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
+            }
+            Some(true)
+        }
+        _ => None,
+    }
+}
+
 pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     if let Event::Key(key) = evt {
         let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
         let has_alt = key.modifiers.contains(KeyModifiers::ALT);
 
         if app.mode == AppMode::Normal {
-            // Global Shortcuts
-            match key.code {
-                KeyCode::Char('i') | KeyCode::Char('I') if has_control => {
-                    app.mode = AppMode::Properties;
-                    return true;
-                }
-                KeyCode::Enter if has_alt => {
-                    app.mode = AppMode::Properties;
-                    return true;
-                }
-                KeyCode::Char('h') | KeyCode::Char('H') if has_control => {
-                    let idx = app.toggle_hidden();
-                    if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
-                        app.default_show_hidden = fs.show_hidden;
-                    }
-                    crate::config::save_state_quiet(app);
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
-                    return true;
-                }
-                KeyCode::Backspace if has_control => {
-                    let idx = app.toggle_hidden();
-                    if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
-                        app.default_show_hidden = fs.show_hidden;
-                    }
-                    crate::config::save_state_quiet(app);
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
-                    return true;
-                }
-                KeyCode::Char('g') | KeyCode::Char('G') if has_control => {
-                    app.mode = AppMode::Settings;
-                    app.settings_scroll = 0;
-                    return true;
-                }
-                KeyCode::Char('n') | KeyCode::Char('N') if has_control => {
-                    if let Some(fs) = app.current_file_state() {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
-                            path: fs.current_path.clone(),
-                            new_tab: true,
-                            remote: fs.remote_session.clone(),
-                            command: None,
-                        });
-                    }
-                    return true;
-                }
-                KeyCode::Char('k') | KeyCode::Char('K') if has_control => {
-                    if let Some(fs) = app.current_file_state() {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
-                            path: fs.current_path.clone(),
-                            new_tab: false,
-                            remote: fs.remote_session.clone(),
-                            command: None,
-                        });
-                    }
-                    return true;
-                }
-                KeyCode::Char('t') | KeyCode::Char('T') if has_control => {
-                    if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
-                        if let Some(fs) = pane.current_state() {
-                            let new_fs = fs.clone();
-                            pane.open_tab(new_fs);
-                            let _ =
-                                crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
-                        }
-                    }
-                    return true;
-                }
-                KeyCode::Char('w') if has_control && app.current_view == CurrentView::Files => {
-                    let pane_idx = app.focused_pane_index;
-                    if let Some(pane) = app.panes.get_mut(pane_idx) {
-                        if pane.tabs.len() > 1 {
-                            let removed = pane.tabs.remove(pane.active_tab_index);
-                            if pane.active_tab_index >= pane.tabs.len() {
-                                pane.active_tab_index = pane.tabs.len() - 1;
-                            }
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                "Closed: {}",
-                                removed.current_path.file_name()
-                                    .map(|n| n.to_string_lossy().to_string())
-                                    .unwrap_or_default()
-                            )));
-                        } else {
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Cannot close last tab".to_string()));
-                        }
-                    }
-                    return true;
-                }
-                KeyCode::Left if has_alt => {
-                    app.resize_sidebar(-2);
-                    return true;
-                }
-                KeyCode::Right if has_alt => {
-                    app.resize_sidebar(2);
-                    return true;
-                }
-                KeyCode::Char(' ') if has_control => {
-                    app.input.clear();
-                    app.mode = AppMode::CommandPalette;
-                    crate::event_helpers::update_commands(app);
-                    return true;
-                }
-                KeyCode::Left if has_control => {
-                    if app.sidebar_focus {
-                        app.resize_sidebar(-2);
-                    } else {
-                        app.move_to_other_pane();
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
-                    }
-                    return true;
-                }
-                KeyCode::Right if has_control => {
-                    if app.sidebar_focus {
-                        app.resize_sidebar(2);
-                    } else {
-                        app.move_to_other_pane();
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(0));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(1));
-                    }
-                    return true;
-                }
-                _ => {}
+            if let Some(handled) = handle_global_shortcuts(key, app, event_tx) {
+                return handled;
             }
 
             // Standard Navigation
