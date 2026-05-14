@@ -315,24 +315,7 @@ pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
 mod tests {
     use super::*;
 
-    fn parse_config(content: &str) -> Vec<RemoteBookmark> {
-        let tempdir = std::env::temp_dir();
-        let ssh_config = tempdir.join(format!("ssh_config_test_{}", std::process::id()));
-        std::fs::write(&ssh_config, content).unwrap();
-        let result = do_parse_ssh_config(&ssh_config);
-        std::fs::remove_file(ssh_config).ok();
-        result
-    }
-
-    fn do_parse_ssh_config(path: &std::path::Path) -> Vec<RemoteBookmark> {
-        use std::fs;
-        if !path.exists() {
-            return Vec::new();
-        }
-        let content = match fs::read_to_string(path) {
-            Ok(c) => c,
-            Err(_) => return Vec::new(),
-        };
+    fn do_parse(content: &str) -> Vec<RemoteBookmark> {
         let mut results = Vec::new();
         let mut current_entry: Option<SshHostEntry> = None;
         for line in content.lines() {
@@ -385,7 +368,7 @@ Host myserver
     Port 2222
     IdentityFile ~/.ssh/id_ed25519
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 1);
         let bm = &results[0];
         assert_eq!(bm.name, "myserver");
@@ -402,7 +385,7 @@ Host github.com
     User git
     IdentityFile ~/.ssh/id_ed25519
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 0, "git user should be filtered out");
     }
 
@@ -413,7 +396,7 @@ Host *
     IPQoS throughput
     AddressFamily inet
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 0, "Host * with no HostName/User should be ignored");
     }
 
@@ -425,7 +408,7 @@ Host server1
     USER ubuntu
     PORT 22
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 1);
         let bm = &results[0];
         assert_eq!(bm.host, "10.0.0.1");
@@ -441,7 +424,7 @@ Host server2
     User ubuntu
     IdentityFile ~/keys/server2_key
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 1);
         let home = dirs::home_dir().unwrap_or_default();
         let expected = home.join("keys/server2_key");
@@ -456,7 +439,7 @@ Host server3
     User ubuntu
     IdentityFile /tmp/~backup/key
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].key_path, Some(PathBuf::from("/tmp/~backup/key")));
     }
@@ -468,7 +451,7 @@ Host server4
     HostName 10.0.0.4
     User ubuntu
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].port, 22, "default port should be 22");
     }
@@ -484,7 +467,7 @@ Host serverB
     HostName 10.0.0.B
     User userB
 "#;
-        let results = parse_config(config);
+        let results = do_parse(config);
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].name, "serverA");
         assert_eq!(results[1].name, "serverB");
