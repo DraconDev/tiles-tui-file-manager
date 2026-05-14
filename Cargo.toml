@@ -6,6 +6,20 @@ repository = "https://github.com/DraconDev/tiles"
 license = "MIT"
 edition = "2021"
 
+exclude = [
+    "releases/**",
+    ".dracon/**",
+    "docs/**",
+    "plan/**",
+    ".sisyphus/**",
+    "*.log",
+    "clippy.log",
+    "debug.log",
+    "install.sh",
+    "release.sh",
+]
+
+
 [[bin]]
 name = "tiles"
 path = "src/main.rs"
