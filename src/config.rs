@@ -248,7 +248,13 @@ fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
 }
 
 fn parse_ssh_config_value(line: &str) -> Option<&str> {
-    line.split_whitespace().nth(1)
+    let mut tokens = line.split_whitespace().skip(1);
+    let second = tokens.next();
+    if second == Some("=") {
+        tokens.next()
+    } else {
+        second
+    }
 }
 
 fn parse_ssh_config_content(content: &str) -> Vec<RemoteBookmark> {
