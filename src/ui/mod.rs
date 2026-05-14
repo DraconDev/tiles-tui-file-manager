@@ -1288,6 +1288,45 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     ]));
     lines.push(Line::from(""));
 
+    // ╭── DISK I/O ──────────────────────────────────────────────╮
+    lines.push(Line::from(vec![
+        Span::styled("╭─ ", sep),
+        Span::styled("DISK I/O", Style::default().fg(label).add_modifier(Modifier::BOLD)),
+    ]));
+
+    let disk_read_rate = app.system_state.disk_read_history.back().copied().unwrap_or(0);
+    let disk_write_rate = app.system_state.disk_write_history.back().copied().unwrap_or(0);
+    let read_mbps = disk_read_rate as f64 / 100.0;
+    let write_mbps = disk_write_rate as f64 / 100.0;
+
+    lines.push(Line::from(vec![
+        Span::styled("│  ", sep),
+        Span::styled("R ▶ ", Style::default().fg(theme::accent_secondary())),
+        Span::styled(format!("{:>6.1} MB/s", read_mbps), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::raw("     "),
+        Span::styled("W ◀ ", Style::default().fg(theme::accent_primary())),
+        Span::styled(format!("{:>6.1} MB/s", write_mbps), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+    ]));
+
+    let half_w = (w.saturating_sub(6)) / 2;
+    if !app.system_state.disk_read_history.is_empty() && !app.system_state.disk_write_history.is_empty() {
+        let r_spark = Sparkline::new(app.system_state.disk_read_history.iter().copied(), half_w).color(theme::accent_secondary()).render();
+        let w_spark = Sparkline::new(app.system_state.disk_write_history.iter().copied(), half_w).color(theme::accent_primary()).render();
+        lines.push(Line::from(vec![
+            Span::raw("│  "),
+            Span::styled(r_spark.to_string(), Style::default().fg(theme::accent_secondary())),
+            Span::raw("  "),
+            Span::styled(w_spark.to_string(), Style::default().fg(theme::accent_primary())),
+        ]));
+    }
+
+    lines.push(Line::from(vec![
+        Span::styled("╰", sep),
+        Span::styled("─".repeat(w), sep),
+        Span::styled("╯", sep),
+    ]));
+    lines.push(Line::from(""));
+
     // ╭── NETWORK ───────────────────────────────────────────────╮
     lines.push(Line::from(vec![
         Span::styled("╭─ ", sep),

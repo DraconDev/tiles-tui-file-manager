@@ -13,6 +13,8 @@ pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, Sele
 pub struct DiskIo {
     pub read_bytes: u64,
     pub write_bytes: u64,
+    pub read_rate_mbps: f64,
+    pub write_rate_mbps: f64,
 }
 
 #[allow(dead_code)]
@@ -415,6 +417,9 @@ pub struct SystemState {
     pub last_update: std::time::Instant,
     pub disks: Vec<DiskInfo>,
     pub disk_io: HashMap<String, DiskIo>,
+    pub last_disk_io: HashMap<String, DiskIo>,
+    pub disk_read_history: VecDeque<u64>,
+    pub disk_write_history: VecDeque<u64>,
     pub processes: Vec<ProcessInfo>,
     pub cpu_usage: f32,
     pub cpu_cores: Vec<f32>,

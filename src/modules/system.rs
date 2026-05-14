@@ -97,7 +97,34 @@ impl SystemModule {
 
         s.cpu_temperature = read_cpu_temperature();
         s.cpu_frequency = read_cpu_frequency();
-        s.disk_io = read_disk_io();
+
+        let current_disk_io = read_disk_io();
+        let elapsed = s.last_update.elapsed().as_secs_f64().max(0.1);
+        let mut total_read_rate: u64 = 0;
+        let mut total_write_rate: u64 = 0;
+
+        for (dev, current) in &current_disk_io {
+            if let Some(prev) = s.last_disk_io.get(dev) {
+                let dr = current.read_bytes.saturating_sub(prev.read_bytes);
+                let dw = current.write_bytes.saturating_sub(prev.write_bytes);
+                let read_rate = (dr as f64 / elapsed / 1_048_576.0 * 100.0) as u64;
+                let write_rate = (dw as f64 / elapsed / 1_048_576.0 * 100.0) as u64;
+                total_read_rate += read_rate;
+                total_write_rate += write_rate;
+            }
+        }
+
+        s.disk_read_history.push_back(total_read_rate);
+        if s.disk_read_history.len() > 100 {
+            s.disk_read_history.pop_front();
+        }
+        s.disk_write_history.push_back(total_write_rate);
+        if s.disk_write_history.len() > 100 {
+            s.disk_write_history.pop_front();
+        }
+
+        s.last_disk_io = s.disk_io.clone();
+        s.disk_io = current_disk_io;
 
         app.apply_process_sort();
     }
@@ -110,9 +137,9 @@ fn read_disk_io() -> HashMap<String, DiskIo> {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 14 {
                 let device_name = parts[2].to_string();
-                let reads_completed: u64 = parts[3].parse().unwrap_or(0);
+                let _reads_completed: u64 = parts[3].parse().unwrap_or(0);
                 let sectors_read: u64 = parts[5].parse().unwrap_or(0);
-                let writes_completed: u64 = parts[7].parse().unwrap_or(0);
+                let _writes_completed: u64 = parts[7].parse().unwrap_or(0);
                 let sectors_written: u64 = parts[9].parse().unwrap_or(0);
                 let sector_size = 512;
                 io_map.insert(
