@@ -328,7 +328,6 @@ pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
         }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
