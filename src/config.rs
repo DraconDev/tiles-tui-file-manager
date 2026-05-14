@@ -207,3 +207,284 @@ pub fn load_state() -> Option<PersistentState> {
     let json = fs::read_to_string(state_path).ok()?;
     serde_json::from_str(&json).ok()
 }
+
+#[derive(Debug)]
+struct SshHostEntry {
+    name: String,
+    host: Option<String>,
+    user: Option<String>,
+    port: Option<u16>,
+    key_path: Option<PathBuf>,
+}
+
+fn expand_tilde(path: &str) -> String {
+    if path == "~" {
+        dirs::home_dir().unwrap_or_default().to_string_lossy().into_owned()
+    } else if path.starts_with("~/") {
+        let home = dirs::home_dir().unwrap_or_default();
+        format!("{}{}", home.to_string_lossy(), &path[1..])
+    } else {
+        path.to_string()
+    }
+}
+
+fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
+    let user = entry.user?;
+    if user == "git" {
+        return None;
+    }
+    let host = entry.host.unwrap_or_else(|| entry.name.clone());
+    if host.contains('*') || host.contains('?') {
+        return None;
+    }
+    Some(RemoteBookmark {
+        name: entry.name,
+        host,
+        user,
+        port: entry.port.unwrap_or(22),
+        last_path: PathBuf::from("/"),
+        key_path: entry.key_path,
+    })
+}
+
+fn parse_ssh_config_value(line: &str) -> Option<&str> {
+    let mut tokens = line.split_whitespace().skip(1);
+    let second = tokens.next();
+    if second == Some("=") {
+        tokens.next()
+    } else {
+        second
+    }
+}
+
+fn parse_ssh_config_content(content: &str) -> Vec<RemoteBookmark> {
+    let mut results = Vec::new();
+    let mut current_entry: Option<SshHostEntry> = None;
+
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        let line_lower = line.to_ascii_lowercase();
+        if line_lower.starts_with("host ") {
+            if let Some(entry) = current_entry.take() {
+                if let Some(bookmark) = try_flush_entry(entry) {
+                    results.push(bookmark);
+                }
+            }
+            let name = parse_ssh_config_value(line).unwrap_or("").trim().to_string();
+            current_entry = Some(SshHostEntry {
+                name,
+                host: None,
+                user: None,
+                port: None,
+                key_path: None,
+            });
+        } else if let Some(current) = current_entry.as_mut() {
+            if line_lower.starts_with("hostname ") {
+                current.host = parse_ssh_config_value(line).map(|v| v.trim().to_string());
+            } else if line_lower.starts_with("user ") {
+                current.user = parse_ssh_config_value(line).map(|v| v.trim().to_string());
+            } else if line_lower.starts_with("port ") {
+                current.port = parse_ssh_config_value(line).and_then(|v| v.trim().parse().ok());
+            } else if line_lower.starts_with("identityfile ") {
+                let path = parse_ssh_config_value(line).unwrap_or("").trim();
+                current.key_path = Some(PathBuf::from(expand_tilde(path)));
+            }
+        }
+    }
+
+    if let Some(entry) = current_entry.take() {
+        if let Some(bookmark) = try_flush_entry(entry) {
+            results.push(bookmark);
+        }
+    }
+
+    results
+}
+
+fn parse_ssh_config() -> Vec<RemoteBookmark> {
+    let ssh_config_path = match dirs::home_dir() {
+        Some(home) => home.join(".ssh").join("config"),
+        None => return Vec::new(),
+    };
+    if !ssh_config_path.exists() {
+        return Vec::new();
+    }
+    let content = match fs::read_to_string(&ssh_config_path) {
+        Ok(c) => c,
+        Err(_) => return Vec::new(),
+    };
+    parse_ssh_config_content(&content)
+}
+
+/// Merges SSH config hosts from `~/.ssh/config` into the bookmark list.
+/// Hosts with `User git` (Git auth aliases like github.com, codeberg.org) are skipped.
+/// Wildcard patterns (`Host *`, `Host?`) are skipped.
+/// If a host has no explicit `HostName`, the `Host` alias name is used as the hostname.
+/// Merged bookmarks are NOT automatically removed if deleted from `~/.ssh/config` —
+/// they persist in `state.json` until manually deleted.
+pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
+    let ssh_bookmarks = parse_ssh_config();
+    for sb in ssh_bookmarks {
+        if !bookmarks.iter().any(|b| b.host == sb.host && b.user == sb.user) {
+            bookmarks.push(sb);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_normal_host() {
+        let config = r#"
+Host myserver
+    HostName 192.168.1.100
+    User admin
+    Port 2222
+    IdentityFile ~/.ssh/id_ed25519
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        let bm = &results[0];
+        assert_eq!(bm.name, "myserver");
+        assert_eq!(bm.host, "192.168.1.100");
+        assert_eq!(bm.user, "admin");
+        assert_eq!(bm.port, 2222);
+    }
+
+    #[test]
+    fn test_parse_git_user_filtered() {
+        let config = r#"
+Host github.com
+    HostName github.com
+    User git
+    IdentityFile ~/.ssh/id_ed25519
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 0, "git user should be filtered out");
+    }
+
+    #[test]
+    fn test_parse_host_wildcard_ignored() {
+        let config = r#"
+Host *
+    IPQoS throughput
+    AddressFamily inet
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 0, "Host * with no HostName/User should be ignored");
+    }
+
+    #[test]
+    fn test_parse_case_insensitive_keywords() {
+        let config = r#"
+Host server1
+    HOSTNAME 10.0.0.1
+    USER ubuntu
+    PORT 22
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].host, "10.0.0.1");
+        assert_eq!(results[0].user, "ubuntu");
+        assert_eq!(results[0].port, 22);
+    }
+
+    #[test]
+    fn test_parse_tilde_expansion() {
+        let config = r#"
+Host server2
+    HostName 10.0.0.2
+    User ubuntu
+    IdentityFile ~/keys/server2_key
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        let home = dirs::home_dir().unwrap_or_default();
+        let expected = home.join("keys/server2_key");
+        assert_eq!(results[0].key_path, Some(expected));
+    }
+
+    #[test]
+    fn test_parse_tilde_not_in_middle() {
+        let config = r#"
+Host server3
+    HostName 10.0.0.3
+    User ubuntu
+    IdentityFile /tmp/~backup/key
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].key_path, Some(PathBuf::from("/tmp/~backup/key")));
+    }
+
+    #[test]
+    fn test_parse_default_port() {
+        let config = r#"
+Host server4
+    HostName 10.0.0.4
+    User ubuntu
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].port, 22, "default port should be 22");
+    }
+
+    #[test]
+    fn test_parse_multiple_hosts() {
+        let config = r#"
+Host serverA
+    HostName 10.0.0.A
+    User userA
+
+Host serverB
+    HostName 10.0.0.B
+    User userB
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 2);
+        assert_eq!(results[0].name, "serverA");
+        assert_eq!(results[0].host, "10.0.0.A");
+        assert_eq!(results[1].name, "serverB");
+        assert_eq!(results[1].host, "10.0.0.B");
+    }
+
+    #[test]
+    fn test_expand_tilde() {
+        let home = dirs::home_dir().unwrap_or_default();
+        let expected = format!("{}/keys/key", home.to_string_lossy());
+        assert_eq!(expand_tilde("~/keys/key"), expected);
+        assert_eq!(expand_tilde("/absolute/path"), "/absolute/path");
+        assert_eq!(expand_tilde("~"), home.to_string_lossy().as_ref());
+    }
+
+    #[test]
+    fn test_parse_host_name_as_hostname() {
+        let config = r#"
+Host myserver
+    User ubuntu
+    IdentityFile ~/.ssh/myserver.key
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].host, "myserver");
+        assert_eq!(results[0].name, "myserver");
+    }
+
+    #[test]
+    fn test_parse_hostname_equals_separator() {
+        let config = r#"
+Host server5
+    HostName = 10.0.0.5
+    User admin
+"#;
+        let results = parse_ssh_config_content(config);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].host, "10.0.0.5");
+    }
+}
