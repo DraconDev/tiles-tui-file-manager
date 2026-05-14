@@ -1181,20 +1181,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
                 Span::styled(pct, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
             ]));
         }
-    }
-
-    // Per-core bars
-    for row in 0..((core_count as f32 / cores_per_row as f32).ceil() as usize) {
-        let mut spans = Vec::new();
-        for i in 0..cores_per_row {
-            let idx = row * cores_per_row + i;
-            if idx >= core_count {
-                break;
-            }
-            let usage = app.system_state.cpu_cores[idx];
-            let ratio = (usage / 100.0).clamp(0.0, 1.0);
-            let color = gauge_color_for_ratio(ratio);
-            let core_label = format!("{:>2}[")
+fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
             let pct = format!("{:>4.0}%", usage);
             let overhead = core_label.len() + 2 + pct.len() + 1;
             let bar_w = (inner_w / cores_per_row).saturating_sub(overhead);
