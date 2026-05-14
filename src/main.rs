@@ -904,7 +904,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         )
                     });
                     let cmd_str = remote_cmd.as_deref().or(command.as_deref());
-                    dracon_terminal_engine::utils::spawn_terminal_at(&path, new_tab, cmd_str);
+                    crate::modules::terminal::spawn_terminal(&path, new_tab, cmd_str);
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
                     dracon_terminal_engine::utils::spawn_detached(&cmd, args);
