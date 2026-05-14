@@ -1,6 +1,35 @@
 # Tiles QA Matrix
 
-Status legend: `PASS` | `FAIL` | `FIXED`
+Status legend: `PASS` | `FAIL` | `FIXED` | `N/A`
+
+## Session 2026-05-14 — Terminal Tab Spawning + crates.io Publishing
+
+### Environment
+- Date: 2026-05-14
+- Build target: v10.34.75 (crates.io)
+- Focus areas:
+  - Terminal tab spawning (Konsole D-Bus, Kitty, Wezterm, generic fallback)
+  - crates.io install verification
+  - Dependency resolution from crates.io (no git deps)
+
+### Test Matrix
+
+| ID | Flow | Environment | Steps | Expected | Result |
+|----|------|-------------|-------|----------|--------|
+| T1 | Konsole tab spawn | Konsole + NixOS | Right-click → Open Terminal Here | New tab in existing Konsole window | |
+| T2 | Konsole run script | Konsole + NixOS | Select .sh file, Ctrl+Enter | Script runs in new Konsole tab | |
+| T3 | Kitty tab spawn | Kitty | Right-click → Open Terminal Here | New tab via `kitty @ launch` | |
+| T4 | Wezterm tab spawn | Wezterm | Right-click → Open Terminal Here | New tab via `wezterm cli spawn` | |
+| T5 | Generic fallback | gnome-terminal | Right-click → Open Terminal Here | `--tab` flag used | |
+| T6 | cargo install | Clean machine | `cargo install tiles-tui-file-manager` | Binary `tiles` installed | PASS |
+| T7 | All deps from crates.io | Any | `cargo build` with crates.io Cargo.toml | No git deps needed | PASS |
+| T8 | Unit tests | Any | `cargo test` | 52 tests pass | PASS |
+
+### Known Limitations
+- `dbus-send array:string:` uses commas as delimiters — args containing commas will break
+- Konsole `runCommand` D-Bus API blocked by security policy (bypassed via `KDBusService.CommandLine`)
+
+---
 
 ## Environment
 - Date: 2026-04-22
