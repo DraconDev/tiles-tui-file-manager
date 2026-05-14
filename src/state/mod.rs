@@ -17,6 +17,17 @@ pub struct DiskIo {
     pub write_rate_mbps: f64,
 }
 
+#[derive(Clone, Debug)]
+pub struct NetInterface {
+    pub name: String,
+    pub rx_bytes: u64,
+    pub tx_bytes: u64,
+    pub rx_rate: u64,
+    pub tx_rate: u64,
+    pub rx_history: VecDeque<u64>,
+    pub tx_history: VecDeque<u64>,
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum AppEvent {
@@ -445,6 +456,8 @@ pub struct SystemState {
     pub net_out_history: VecDeque<u64>,
     pub last_net_in: u64,
     pub last_net_out: u64,
+    pub net_interfaces: Vec<NetInterface>,
+    pub last_net_interfaces: Vec<NetInterface>,
     pub uptime: u64,
     pub os_name: String,
     pub os_version: String,

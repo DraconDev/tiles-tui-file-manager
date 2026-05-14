@@ -584,7 +584,7 @@ const SIGNALS: [(i32, &str); 6] = [
 fn handle_signal_select_keys(
     key: &dracon_terminal_engine::contracts::KeyEvent,
     app: &mut App,
-    event_tx: &mpsc::Sender<AppEvent>,
+    _event_tx: &mpsc::Sender<AppEvent>,
     pid: u32,
     name: &str,
     selected_index: usize,
