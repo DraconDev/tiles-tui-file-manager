@@ -1111,9 +1111,9 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
 
 fn gauge_color_for_ratio(ratio: f32) -> Color {
     if ratio > 0.85 {
-        Color::Rgb(255, 60, 60)
+        crate::ui::theme::gauge_danger()
     } else if ratio > 0.5 {
-        Color::Rgb(255, 180, 0)
+        crate::ui::theme::gauge_warning()
     } else {
         crate::ui::theme::accent_secondary()
     }
@@ -1376,8 +1376,6 @@ fn draw_monitor_cpu(f: &mut Frame, area: Rect, app: &mut App) {
 
     let spark_h: u16 = 4;
     let bar_section_h = core_rows + 2;
-    let total_top = bar_section_h + 1 + spark_h;
-
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
@@ -1783,7 +1781,179 @@ fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
 }
 
 fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
-    draw_monitor_overview(f, area, app);
+    let spark_h: u16 = 4;
+
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(2),
+            Constraint::Length(1),
+            Constraint::Length(spark_h),
+            Constraint::Length(1),
+            Constraint::Length(spark_h),
+            Constraint::Min(0),
+        ])
+        .split(area);
+
+    let x = chunks[0].x;
+    let w = chunks[0].width;
+
+    // Current rates line
+    let rx = app.system_state.net_in_history.last().copied().unwrap_or(0);
+    let tx = app.system_state.net_out_history.last().copied().unwrap_or(0);
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "▼ RX ",
+                Style::default().fg(crate::ui::theme::accent_secondary()),
+            ),
+            Span::styled(
+                format!("{:>12}/s", format_size(rx)),
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                "   ▲ TX ",
+                Style::default().fg(crate::ui::theme::accent_primary()),
+            ),
+            Span::styled(
+                format!("{:>12}/s", format_size(tx)),
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+        ])),
+        Rect::new(x, chunks[0].y, w, 1),
+    );
+
+    // Cumulative totals
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "  total ",
+                Style::default().fg(Color::Rgb(60, 65, 75)),
+            ),
+            Span::styled(
+                format_size(app.system_state.net_in),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+            Span::styled(
+                " received   total ",
+                Style::default().fg(Color::Rgb(60, 65, 75)),
+            ),
+            Span::styled(
+                format_size(app.system_state.net_out),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+            Span::raw(" sent"),
+        ])),
+        Rect::new(x, chunks[0].y + 1, w, 1),
+    );
+
+    // RX sparkline label
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "RX HISTORY",
+                Style::default()
+                    .fg(Color::Rgb(60, 65, 75))
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                format!(
+                    "  peak {}/s",
+                    format_size(
+                        app.system_state
+                            .net_in_history
+                            .iter()
+                            .copied()
+                            .max()
+                            .unwrap_or(0)
+                    )
+                ),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+        ])),
+        chunks[1],
+    );
+
+    // RX sparkline
+    let rx_max = app
+        .system_state
+        .net_in_history
+        .iter()
+        .copied()
+        .max()
+        .unwrap_or(1);
+    let rx_spark = sparkline::BrailleSparkline::new(&app.system_state.net_in_history)
+        .max_val(rx_max)
+        .color(crate::ui::theme::accent_secondary())
+        .height(spark_h)
+        .render();
+    let sa = chunks[2];
+    for (i, line) in rx_spark.iter().enumerate() {
+        if i >= sa.height as usize {
+            break;
+        }
+        f.render_widget(
+            Paragraph::new(line.clone()),
+            Rect::new(sa.x, sa.y + i as u16, sa.width, 1),
+        );
+    }
+
+    // TX sparkline label
+    f.render_widget(
+        Paragraph::new(Line::from(vec![
+            Span::styled(
+                "TX HISTORY",
+                Style::default()
+                    .fg(Color::Rgb(60, 65, 75))
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                format!(
+                    "  peak {}/s",
+                    format_size(
+                        app.system_state
+                            .net_out_history
+                            .iter()
+                            .copied()
+                            .max()
+                            .unwrap_or(0)
+                    )
+                ),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+        ])),
+        chunks[3],
+    );
+
+    // TX sparkline
+    let tx_max = app
+        .system_state
+        .net_out_history
+        .iter()
+        .copied()
+        .max()
+        .unwrap_or(1);
+    let tx_spark = sparkline::BrailleSparkline::new(&app.system_state.net_out_history)
+        .max_val(tx_max)
+        .color(crate::ui::theme::accent_primary())
+        .height(spark_h)
+        .render();
+    let sa = chunks[4];
+    for (i, line) in tx_spark.iter().enumerate() {
+        if i >= sa.height as usize {
+            break;
+        }
+        f.render_widget(
+            Paragraph::new(line.clone()),
+            Rect::new(sa.x, sa.y + i as u16, sa.width, 1),
+        );
+    }
+
+    draw_processes_view(f, chunks[5], app);
 }
 
 fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {

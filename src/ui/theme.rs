@@ -201,3 +201,39 @@ pub fn border_inactive() -> Color {
 pub fn header_fg() -> Color {
     ACTIVE_THEME.read().header_fg
 }
+
+pub fn gauge_danger() -> Color {
+    Color::Rgb(255, 60, 60)
+}
+
+pub fn gauge_warning() -> Color {
+    Color::Rgb(255, 180, 0)
+}
+
+pub fn monitor_label() -> Color {
+    Color::Rgb(60, 65, 75)
+}
+
+pub fn monitor_core_index() -> Color {
+    Color::Rgb(50, 55, 65)
+}
+
+pub fn monitor_connector() -> Color {
+    Color::Rgb(40, 40, 45)
+}
+
+pub fn monitor_dim_value() -> Color {
+    Color::Rgb(100, 100, 110)
+}
+
+pub fn monitor_separator() -> Color {
+    Color::Rgb(30, 30, 35)
+}
+
+pub fn monitor_row_even() -> Color {
+    Color::Rgb(180, 185, 190)
+}
+
+pub fn monitor_row_odd() -> Color {
+    Color::Rgb(140, 145, 150)
+}
