@@ -28,7 +28,7 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
                     "--print-reply".to_string(),
                     "/org/kde/konsole".to_string(),
                     "org.kde.KDBusService.CommandLine".to_string(),
-                    format!("array:string:{}", konsole_args.iter().map(|a| format!("\"{}\"", a.replace('"', "\\\""))).collect::<Vec<_>>().join(",")),
+                    format!("array:string:{}", konsole_args.join(",")),
                     format!("string:{}", path_str),
                     "dict:string:variant:".to_string(),
                 ];
