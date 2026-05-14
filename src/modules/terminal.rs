@@ -2,33 +2,88 @@ use std::path::Path;
 use std::process::Command;
 
 pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool {
+    let path_str = path.to_string_lossy().to_string();
+
     if new_tab {
-        if let Ok(service) = std::env::var("KONSOLE_DBUS_SERVICE") {
-            let window = std::env::var("KONSOLE_DBUS_WINDOW").unwrap_or_default();
-            std::env::remove_var("KONSOLE_DBUS_SERVICE");
-            std::env::remove_var("KONSOLE_DBUS_WINDOW");
+        if let (Ok(service), Ok(window)) = (
+            std::env::var("KONSOLE_DBUS_SERVICE"),
+            std::env::var("KONSOLE_DBUS_WINDOW"),
+        ) {
+            let dbus_cmd = if command_exists("qdbus") {
+                "qdbus"
+            } else if command_exists("qdbus6") {
+                "qdbus6"
+            } else {
+                None
+            };
+
+            if let Some(dbus) = dbus_cmd {
+                let args = vec![
+                    "--session".to_string(),
+                    service.clone(),
+                    window.clone(),
+                    "org.kde.konsole.Window.newSession".to_string(),
+                    "".to_string(),
+                    path_str.clone(),
+                ];
+
+                if let Ok(output) = Command::new(dbus).args(&args).output() {
+                    if output.status.success() {
+                        let session_id =
+                            String::from_utf8_lossy(&output.stdout).trim().to_string();
+                        if !session_id.is_empty() {
+                            if let Some(cmd_str) = command {
+                                let session_path = format!("/Sessions/{}", session_id);
+                                let _ = Command::new(dbus)
+                                    .args([
+                                        "--session",
+                                        &service,
+                                        &session_path,
+                                        "org.kde.konsole.Session.runCommand",
+                                        cmd_str,
+                                    ])
+                                    .spawn();
+                            }
+                            let main_win = "/konsole/MainWindow_1";
+                            let _ = Command::new(dbus)
+                                .args([
+                                    "--session",
+                                    &service,
+                                    main_win,
+                                    "org.qtproject.Qt.QWidget.raise",
+                                ])
+                                .spawn();
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if std::env::var("KITTY_WINDOW_ID").is_ok() {
+            let mut args = vec!["@".to_string(), "launch".to_string(), "--type=tab".to_string(), "--cwd".to_string()];
+            args.push(path_str.clone());
             if let Some(cmd_str) = command {
-                let args = split_command(cmd_str);
-                if args.is_empty() {
-                    std::env::set_var("KONSOLE_DBUS_SERVICE", service);
-                    std::env::set_var("KONSOLE_DBUS_WINDOW", window);
-                    return false;
+                for arg in split_command(cmd_str) {
+                    args.push(arg);
                 }
-                let mut cmd = Command::new("konsole");
-                cmd.arg("--new-tab");
-                cmd.arg("--workdir").arg(path);
-                cmd.arg("-e").arg(&args[0]);
-                if args.len() > 1 {
-                    cmd.args(&args[1..]);
+            }
+            if Command::new("kitty").args(&args).spawn().is_ok() {
+                return true;
+            }
+        }
+
+        if std::env::var("WEZTERM_PANE").is_ok() {
+            let mut args = vec!["cli".to_string(), "spawn".to_string(), "--cwd".to_string()];
+            args.push(path_str.clone());
+            if let Some(cmd_str) = command {
+                args.push("--".to_string());
+                for arg in split_command(cmd_str) {
+                    args.push(arg);
                 }
-                if cmd.spawn().is_ok() {
-                    std::env::set_var("KONSOLE_DBUS_SERVICE", service);
-                    std::env::set_var("KONSOLE_DBUS_WINDOW", window);
-                    return true;
-                }
-                std::env::set_var("KONSOLE_DBUS_SERVICE", service);
-                std::env::set_var("KONSOLE_DBUS_WINDOW", window);
-                return false;
+            }
+            if Command::new("wezterm").args(&args).spawn().is_ok() {
+                return true;
             }
         }
     }
@@ -51,7 +106,7 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
         }
 
         let mut args: Vec<String> = base_args.iter().map(|s| (*s).to_string()).collect();
-        args.push(path.to_string_lossy().to_string());
+        args.push(path_str.clone());
 
         if let Some(cmd_str) = command {
             let split_args = split_command(cmd_str);
@@ -113,10 +168,8 @@ fn split_command(cmd: &str) -> Vec<String> {
             }
         }
     }
-
     if !current.is_empty() {
         args.push(current);
     }
-
     args
 }
