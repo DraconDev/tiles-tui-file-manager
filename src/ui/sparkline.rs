@@ -62,8 +62,8 @@ impl BrailleSparkline {
         for (data_idx, &val) in self.data.iter().enumerate() {
             let normalized = (val as f64 / max as f64 * dot_rows as f64).round() as usize;
             let filled = normalized.min(dot_rows);
-            for row in 0..filled {
-                dot_data[row][data_idx] = true;
+            for row in dot_data.iter_mut().take(filled) {
+                row[data_idx] = true;
             }
         }
 
