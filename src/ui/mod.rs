@@ -1692,51 +1692,94 @@ fn draw_monitor_memory(f: &mut Frame, area: Rect, app: &mut App) {
 }
 
 fn draw_monitor_disk(f: &mut Frame, area: Rect, app: &mut App) {
-    let disk_list: Vec<Line> = app
-        .system_state
-        .disks
-        .iter()
-        .map(|disk| {
-            let ratio = if disk.total_space > 0.0 {
-                (disk.used_space / disk.total_space).clamp(0.0, 1.0) as f32
-            } else {
-                0.0
-            };
-            let color = gauge_color_for_ratio(ratio);
-            let label = format!("{} ", disk.name);
-            let pct = format!(" {:.0}%  {:.0}G/{:.0}G", ratio * 100.0, disk.used_space, disk.total_space);
-            let bar_w = (area.width as usize).saturating_sub(label.len() + 2 + pct.len() + 4);
-            let filled = if bar_w > 0 {
-                (ratio * bar_w as f32) as usize
-            } else {
-                0
-            };
-            let bar_str = format!(
-                "{}{}",
-                "█".repeat(filled),
-                "░".repeat(bar_w.saturating_sub(filled))
-            );
-            Line::from(vec![
-                Span::styled(label, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
-                Span::styled("[", Style::default().fg(Color::Rgb(60, 65, 75))),
-                Span::styled(bar_str, Style::default().fg(color)),
-                Span::styled("]", Style::default().fg(Color::Rgb(60, 65, 75))),
-                Span::styled(pct, Style::default().fg(Color::Rgb(100, 100, 110))),
-            ])
-        })
-        .collect();
-
-    let header = Line::from(vec![
+    let mut lines: Vec<Line> = Vec::new();
+    lines.push(Line::from(vec![
         Span::styled(
             "STORAGE",
             Style::default()
                 .fg(Color::Rgb(60, 65, 75))
                 .add_modifier(Modifier::BOLD),
         ),
-    ]);
-    let mut lines = vec![header, Line::from("")];
-    lines.extend(disk_list);
-    f.render_widget(Paragraph::new(lines), area);
+    ]));
+    lines.push(Line::from(""));
+
+    for disk in &app.system_state.disks {
+        let ratio = if disk.total_space > 0.0 {
+            (disk.used_space / disk.total_space).clamp(0.0, 1.0) as f32
+        } else {
+            0.0
+        };
+        let color = gauge_color_for_ratio(ratio);
+
+        // Disk name + device line
+        lines.push(Line::from(vec![
+            Span::styled(
+                format!("{} ", disk.name),
+                Style::default()
+                    .fg(Color::White)
+                    .add_modifier(Modifier::BOLD),
+            ),
+            Span::styled(
+                format!("({})", disk.device),
+                Style::default().fg(Color::Rgb(100, 100, 110)),
+            ),
+        ]));
+
+        // Bar line
+        let pct = format!(
+            " {:.0}%  {:.1}G/{:.1}G  avail {:.1}G",
+            ratio * 100.0,
+            disk.used_space,
+            disk.total_space,
+            disk.available_space
+        );
+        let label = "[";
+        let bar_w = 20usize;
+        let filled = (ratio * bar_w as f32) as usize;
+        let bar_str = format!(
+            "{}{}",
+            "█".repeat(filled),
+            "░".repeat(bar_w.saturating_sub(filled))
+        );
+        lines.push(Line::from(vec![
+            Span::styled(label, Style::default().fg(Color::Rgb(60, 65, 75))),
+            Span::styled(bar_str, Style::default().fg(color)),
+            Span::styled("]", Style::default().fg(Color::Rgb(60, 65, 75))),
+            Span::styled(pct, Style::default().fg(Color::Rgb(100, 100, 110))),
+        ]));
+
+        // Mount line
+        if disk.is_mounted {
+            lines.push(Line::from(vec![
+                Span::styled(
+                    "  mounted",
+                    Style::default().fg(Color::Rgb(60, 65, 75)),
+                ),
+            ]));
+        }
+
+        lines.push(Line::from(""));
+    }
+
+    if lines.len() > area.height as usize {
+        lines.truncate(area.height as usize);
+    }
+
+    let bar_h = lines.len() as u16;
+    let remaining = area.height.saturating_sub(bar_h);
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(bar_h),
+            Constraint::Min(0),
+        ])
+        .split(area);
+
+    f.render_widget(Paragraph::new(lines), chunks[0]);
+
+    if remaining > 3 {
+        draw_processes_view(f, chunks[1], app);
+    }
 }
 
 fn draw_monitor_network(f: &mut Frame, area: Rect, app: &mut App) {
