@@ -281,13 +281,13 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
             });
         } else if let Some(current) = current_entry.as_mut() {
             if line_lower.starts_with("hostname ") {
-                current.host = Some(line.splitn(2, ' ').nth(1).unwrap_or("").trim().to_string());
+                current.host = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
             } else if line_lower.starts_with("user ") {
-                current.user = Some(line.splitn(2, ' ').nth(1).unwrap_or("").trim().to_string());
+                current.user = Some(line.split_once(' ').map(|x| x.1).unwrap_or("").trim().to_string());
             } else if line_lower.starts_with("port ") {
-                current.port = line.splitn(2, ' ').nth(1).unwrap_or("").trim().parse().ok();
+                current.port = line.split_once(' ').map(|x| x.1).unwrap_or("").trim().parse().ok();
             } else if line_lower.starts_with("identityfile ") {
-                let path = line.splitn(2, ' ').nth(1).unwrap_or("").trim();
+                let path = line.split_once(' ').map(|x| x.1).unwrap_or("").trim();
                 current.key_path = Some(PathBuf::from(expand_tilde(path)));
             }
         }
