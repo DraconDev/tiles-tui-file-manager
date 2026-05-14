@@ -94,9 +94,7 @@ fn split_command(cmd: &str) -> Vec<String> {
     let mut in_single = false;
     let mut in_double = false;
     let mut current = String::new();
-    let mut chars = cmd.chars().peekable();
-
-    while let Some(c) = chars.next() {
+    for c in cmd.chars() {
         match c {
             '\'' if !in_double => {
                 in_single = !in_single;
