@@ -895,6 +895,15 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
                 ("Esc", "Exit Editor"),
             ],
         ),
+        (
+            "System Monitor",
+            vec![
+                ("1 / 2 / 3", "Overview / Processes / Apps"),
+                ("k", "Kill Process (Signal Picker)"),
+                ("t", "Toggle Tree View"),
+                ("Arrows", "Navigate / Scroll"),
+            ],
+        ),
     ];
 
     let mut rows = Vec::new();
@@ -1412,6 +1421,19 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(" ▲ ", Style::default().fg(theme::accent_primary())),
             Span::styled(format!("{:>10}", tx_display), Style::default().fg(theme::accent_primary())),
         ]));
+
+        let iface_half_w = (w.saturating_sub(6)) / 2;
+        if !iface.rx_history.is_empty() && !iface.tx_history.is_empty() {
+            let r_spark = Sparkline::new(iface.rx_history.iter().copied(), iface_half_w).color(theme::accent_secondary()).render();
+            let t_spark = Sparkline::new(iface.tx_history.iter().copied(), iface_half_w).color(theme::accent_primary()).render();
+            lines.push(Line::from(vec![
+                Span::styled("│  ", sep),
+                Span::styled(format!("{:10}", ""), Style::default().fg(Color::White)),
+                Span::styled(r_spark.to_string(), Style::default().fg(theme::accent_secondary())),
+                Span::raw("  "),
+                Span::styled(t_spark.to_string(), Style::default().fg(theme::accent_primary())),
+            ]));
+        }
     }
 
     lines.push(Line::from(vec![
