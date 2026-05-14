@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [10.34.75] - Konsole Tab Fix + crates.io Publishing
+
+### Added
+- **Terminal Tab Spawning** — New `modules/terminal.rs` module replaces `dracon_terminal_engine::utils::spawn_terminal_at`:
+  - **Konsole**: Uses `dbus-send` + `org.kde.KDBusService.CommandLine` to open tabs in existing window (bypasses blocked `runCommand` D-Bus API)
+  - **Kitty**: Context-aware detection, spawns via `kitty @ launch --type=tab`
+  - **Wezterm**: Spawns via `wezterm cli spawn --new-window=false`
+  - **Generic fallback**: Per-terminal match arms with correct arg ordering (`--new-tab --workdir PATH -e CMD...` vs `--tab --working-directory=PATH -- CMD...`)
+  - **`split_command()`** — Shell-like parser for command strings (handles single/double quotes)
+- **crates.io publishing** — All dependencies now resolve from crates.io instead of git:
+  - `dracon-files` v94.2.7
+  - `dracon-git` v94.2.7
+  - `dracon-system-lib` v94.2.7 (renamed from `dracon-system`)
+  - `dracon-terminal-engine` v1.1.17
+  - `tiles-tui-file-manager` v10.34.75 (crate name) / `tiles` (binary name)
+- **Build script** (`scripts/build.sh`) — Auto-detects `which tiles` path, copies from `~/.cargo/bin/tiles` with atomic swap
+- **Cargo.toml** — Added `exclude` list to reduce crate package from 61MB to 268KB
+- **Token storage** — crates.io API token saved at `~/.dracon/crates-io-token`
+
+### Changed
+- `dracon-system` → `dracon-system-lib` (crate was renamed upstream)
+- All `dracon_system::` imports updated to `dracon_system_lib::`
+- All four `dracon-*` git dependencies replaced with crates.io version requirements
+- README overhauled: terminal compatibility table, Space/Enter key behavior, install section, configuration docs
+- CONTRIBUTING.md updated: deps table, project structure, terminal spawning pattern
+
+### Fixed
+- **Konsole tab spawning** — `qdbus` crashes with SIGSEGV (exit 139) on Konsole 26.04.0/NixOS. Replaced with `dbus-send` which works reliably
+- **Generic fallback arg ordering** — Was `["--new-tab", "--workdir", "-e", PATH, CMD...]` (path after `-e` = wrong). Now per-terminal match arms with correct ordering
+- **`array:string:` format** — `dbus-send` does NOT use double quotes around elements; `array:string:konsole,--new-tab,--workdir,/path` not `array:string:"konsole",...`
+
+### Known Limitations
+- `array:string:` in `dbus-send` uses commas as delimiters — args containing commas will break
+- `runCommand` D-Bus API remains blocked by Konsole security policy
+
 ## [8.41.0] - Dolphin-Style Sidebar
 
 ### Added

@@ -3,7 +3,7 @@ name = "tiles-tui-file-manager"
 version = "10.34.75"
 description = "A dual-pane TUI file manager built in Rust. Features include vim-style navigation, integrated text editor, git awareness, remote SSH browsing, and system monitoring."
 repository = "https://github.com/DraconDev/tiles"
-license = "MIT"
+license = "Dracon-1.1"
 edition = "2021"
 
 exclude = [
