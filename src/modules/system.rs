@@ -1,10 +1,11 @@
 use crate::app::App;
+use crate::state::DiskIo;
 use dracon_system::{
     DiskSnapshot, ProcessControlContract, ProcessController, ProcessSnapshot, SystemSnapshot,
     SystemSnapshotContract, SystemSnapshotProvider,
 };
 use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
-use std::collections::VecDeque;
+use std::collections::{HashMap, VecDeque};
 
 pub struct SystemModule {
     monitor: SystemSnapshotProvider,
@@ -96,9 +97,35 @@ impl SystemModule {
 
         s.cpu_temperature = read_cpu_temperature();
         s.cpu_frequency = read_cpu_frequency();
+        s.disk_io = read_disk_io();
 
         app.apply_process_sort();
     }
+}
+
+fn read_disk_io() -> HashMap<String, DiskIo> {
+    let mut io_map = HashMap::new();
+    if let Ok(content) = std::fs::read_to_string("/proc/diskstats") {
+        for line in content.lines() {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            if parts.len() >= 14 {
+                let device_name = parts[2].to_string();
+                let reads_completed: u64 = parts[3].parse().unwrap_or(0);
+                let sectors_read: u64 = parts[5].parse().unwrap_or(0);
+                let writes_completed: u64 = parts[7].parse().unwrap_or(0);
+                let sectors_written: u64 = parts[9].parse().unwrap_or(0);
+                let sector_size = 512;
+                io_map.insert(
+                    device_name,
+                    DiskIo {
+                        read_bytes: sectors_read * sector_size,
+                        write_bytes: sectors_written * sector_size,
+                    },
+                );
+            }
+        }
+    }
+    io_map
 }
 
 fn read_cpu_temperature() -> Option<f32> {
@@ -130,6 +157,7 @@ fn read_cpu_frequency() -> Option<f32> {
         .ok()
         .and_then(|s| s.trim().parse::<i64>().ok())
         .map(|f| f as f32 / 1000.0)
+}
 
 fn map_disk(d: DiskSnapshot) -> DiskInfo {
     DiskInfo {

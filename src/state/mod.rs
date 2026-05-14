@@ -9,6 +9,12 @@ use dracon_terminal_engine::widgets::TextEditor;
 pub use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
 pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, SelectionState};
 
+#[derive(Clone, Debug)]
+pub struct DiskIo {
+    pub read_bytes: u64,
+    pub write_bytes: u64,
+}
+
 #[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum AppEvent {
@@ -408,6 +414,7 @@ pub struct SystemState {
     #[allow(dead_code)]
     pub last_update: std::time::Instant,
     pub disks: Vec<DiskInfo>,
+    pub disk_io: HashMap<String, DiskIo>,
     pub processes: Vec<ProcessInfo>,
     pub cpu_usage: f32,
     pub cpu_cores: Vec<f32>,

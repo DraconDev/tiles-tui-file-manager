@@ -144,6 +144,7 @@ impl App {
         let system_state = SystemState {
             last_update: std::time::Instant::now(),
             disks: Vec::new(),
+            disk_io: HashMap::new(),
             processes: Vec::new(),
             cpu_usage: 0.0,
             cpu_cores: Vec::new(),

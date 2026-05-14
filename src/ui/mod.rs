@@ -1155,6 +1155,18 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         lines.push(Line::from(vec![Span::raw("│  "), Span::styled(spark.to_string(), Style::default().fg(cpu_color))]));
     }
 
+    // Temperature and frequency
+    let mut sys_info_parts: Vec<Span<'static>> = vec![Span::styled("│  ", sep)];
+    if let Some(temp) = app.system_state.cpu_temperature {
+        sys_info_parts.push(Span::styled(format!("{:>4.0}°C  ", temp), Style::default().fg(dim)));
+    }
+    if let Some(freq) = app.system_state.cpu_frequency {
+        sys_info_parts.push(Span::styled(format!("{:>4.1} GHz", freq), Style::default().fg(Color::White)));
+    }
+    if sys_info_parts.len() > 1 {
+        lines.push(Line::from(sys_info_parts));
+    }
+
     lines.push(Line::from(Span::styled("│", sep)));
 
     // Per-core bars — 2 per row with 2-space gap
