@@ -270,6 +270,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
             match event {
                 AppEvent::Tick => {
                     needs_draw = true;
+                    last_self_save.retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
                     if last_watch_sync.elapsed() >= Duration::from_millis(WATCH_SYNC_INTERVAL_MS) {
                         let app_guard = app.lock();
                         sync_watches(&app_guard, &mut debouncer);
@@ -402,8 +403,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             };
                             
                             if should_refresh {
-                                crate::app::log_debug(&format!("Refreshing pane {} for path {:?}", i, path));
-                                panes_needing_refresh.insert(i);
+                                let is_self_save_dir = path.parent().map(|parent| {
+                                    last_self_save.keys().any(|sp| sp.parent() == Some(parent))
+                                }).unwrap_or(false)
+                                    && last_self_save.values().any(|(_, _, at)| at.elapsed() < Duration::from_secs(2));
+
+                                if !is_self_save_dir {
+                                    crate::app::log_debug(&format!("Refreshing pane {} for path {:?}", i, path));
+                                    panes_needing_refresh.insert(i);
+                                }
                             }
                         }
                         if let Some(fs) = pane.current_state() {
