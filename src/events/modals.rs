@@ -317,6 +317,8 @@ fn handle_search_keys(
             }
             app.mode = AppMode::Normal;
             app.input.clear();
+            app.input_shield_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(100));
             true
         }
         KeyCode::Enter => {
@@ -330,6 +332,8 @@ fn handle_search_keys(
             }
             app.mode = AppMode::Normal;
             app.input.clear();
+            app.input_shield_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(100));
             true
         }
         _ => {
