@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.0.0] - Sorting, Click Fixes & Context Menu
+
+### Added
+- **Column header sorting** — Clicking Name/Size/Modified/Created column headers now sorts the file tree by that column. `walk_tree` uses the user's chosen `sort_column` and `sort_ascending` at each directory level, preserving tree structure.
+- **Right-click empty space** — Right-clicking below the file list (or on a row with no file) opens a `ContextMenuTarget::EmptySpace` context menu with New File, New Folder, Paste, Toggle Hidden, Terminal Tab/Window, System Monitor.
+- **Sort toggle unit tests** — `sort_toggle_toggles_ascending_on_same_column` and `column_bounds_match_click` verify sorting behavior.
+- **`FileRowBounds` struct** — Tracks `arrow_end_x` per visible row in `FileState.file_row_bounds`, enabling precise arrow-region click detection.
+
+### Changed
+- **Arrow vs name click** — File pane now follows the same pattern as the sidebar:
+  - Click **arrow** (▸/▾ before `arrow_end_x`): toggle expand/collapse only
+  - Click **name**: select only (falls through to existing selection handler)
+  - Double-click on **name**: navigate into folder
+- **`walk_tree` sort params** — `sort_column` and `sort_ascending` are now passed into `walk_tree` and applied at each directory level. Previously `walk_tree` always sorted alphabetically, ignoring the user's sort preference.
+- **Double-click state** — Removed the unconditional `mouse_last_click`/`mouse_click_pos` reset at the top of `handle_general_mouse` that was preventing double-click navigation into folders.
+
+### Fixed
+- **package.json icon** — `package.json` and `package-lock.json` now render with Unicode icon mode (`{ `) instead of Nerd Font, avoiding the blank-box (tofu) rendering issue in terminals without Nerd Font patched fonts (e.g., Konsole). All other files continue using Nerd Font icons.
+
+### Changed
+- **Double-click enter folder** — With the double-click state fix, double-clicking a folder name in the file pane now correctly navigates into it (previously broken by the state reset).
+
+## [11.7.0] - package.json Icon Fallback
+
+### Fixed
+- **package.json rendering** — Reverted aggressive `detect_default_icon_mode()` that switched ALL icons to Unicode for Konsole. Replaced with a targeted override: only `package.json` and `package-lock.json` force Unicode mode, preserving Nerd Font icons for all other files.
+
+## [11.2.0] - Sort Column in RefreshFiles Handler
+
+### Added
+- **`sort_column`/`sort_ascending` in refresh tuple** — The `RefreshFiles` event handler now captures the current sort preferences alongside the path, enabling `walk_tree` to apply the correct sort order at each directory level.
+
+## [11.0.0] - Icon Mode Detection
+
+### Added
+- **Terminal-aware icon mode** — `detect_default_icon_mode()` checks terminal environment variables and defaults to `IconMode::Unicode` for Konsole/GNOME Terminal/Xterm, while modern terminals (Kitty, Alacritty, WezTerm, iTerm2, VSCode) use `IconMode::Nerd`.
+- **`FileRowBounds` tracking** — Per-row bounds with `arrow_end_x` are populated during render, enabling arrow-region click detection for the file pane (matching sidebar behavior).
+
 ## [10.34.78] - Cleanup & Package Hygiene
 
 ### Changed
