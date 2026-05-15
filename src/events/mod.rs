@@ -192,10 +192,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
         app.editor_state = None;
         app.sidebar_focus = false;
         app.input.clear();
-        app.input_shield_until =
-            Some(std::time::Instant::now() + std::time::Duration::from_millis(60));
-        app.input_shield_active_until =
-            Some(std::time::Instant::now() + std::time::Duration::from_millis(160));
+        app.set_input_shield(60);
         for pane in &mut app.panes {
             for fs in &mut pane.tabs {
                 if let Some(preview) = &fs.preview {
@@ -230,10 +227,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                 app.mode = AppMode::Normal;
                 app.input.clear();
                 app.current_view = CurrentView::Files;
-                app.input_shield_until =
-                    Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
-                app.input_shield_active_until =
-                    Some(std::time::Instant::now() + std::time::Duration::from_millis(250));
+                app.set_input_shield(150);
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 return true;
             }
@@ -270,10 +264,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                 app.editor_state = None;
                 app.input.clear(); // Ensure no stray inputs remain
                                    // Increase shield to catch escape sequences
-                app.input_shield_until =
-                    Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
-                app.input_shield_active_until =
-                    Some(std::time::Instant::now() + std::time::Duration::from_millis(250));
+                app.set_input_shield(150);
                 // Force a refresh to prevent "path display" glitches or empty lists
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 return true;

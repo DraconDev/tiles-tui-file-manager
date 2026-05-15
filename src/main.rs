@@ -377,7 +377,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let exact_match = std::fs::metadata(&path).ok().and_then(|meta| {
                             meta.modified().ok().map(|mtime| {
                                 let size: u64 = meta.len();
-                                mtime == _saved_mtime && size == *_saved_size
+                                mtime == *_saved_mtime && size == *_saved_size
                             })
                         }).unwrap_or(false);
 
