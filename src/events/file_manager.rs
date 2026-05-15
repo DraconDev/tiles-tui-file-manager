@@ -371,6 +371,13 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
 
             // Standard Navigation
             if key.code == KeyCode::Esc {
+                if app.is_dragging {
+                    app.is_dragging = false;
+                    app.drag_source = None;
+                    app.drag_start_pos = None;
+                    app.hovered_drop_target = None;
+                    return true;
+                }
                 if app.sidebar_focus {
                     // Exit sidebar focus first (standard TUI behavior)
                     app.sidebar_focus = false;
@@ -1210,7 +1217,17 @@ pub fn handle_file_mouse(
             app.hovered_drop_target = None;
             true
         }
-        MouseEventKind::Moved | MouseEventKind::Drag(_) => {
+        MouseEventKind::Moved => {
+            if app.is_dragging {
+                app.is_dragging = false;
+                app.drag_source = None;
+                app.drag_start_pos = None;
+                app.hovered_drop_target = None;
+                return true;
+            }
+            false
+        }
+        MouseEventKind::Drag(_) => {
             let mut changed = false;
             if let Some((sx, sy)) = app.drag_start_pos {
                 let dist_sq =

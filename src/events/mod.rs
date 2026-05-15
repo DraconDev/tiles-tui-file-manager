@@ -179,6 +179,13 @@ pub fn handle_event(
 }
 
 fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
+    if app.is_dragging {
+        app.is_dragging = false;
+        app.drag_source = None;
+        app.drag_start_pos = None;
+        app.hovered_drop_target = None;
+        return true;
+    }
     if app.current_view == CurrentView::Commit {
         app.current_view = CurrentView::Git;
         app.mode = AppMode::Normal;
@@ -688,7 +695,16 @@ fn handle_sidebar_mouse(
             app.sidebar_scroll_offset += 1;
             true
         }
-        MouseEventKind::Moved => false,
+        MouseEventKind::Moved => {
+            if app.is_dragging {
+                app.is_dragging = false;
+                app.drag_source = None;
+                app.drag_start_pos = None;
+                app.hovered_drop_target = None;
+                return true;
+            }
+            false
+        }
         _ => false,
     }
 }
