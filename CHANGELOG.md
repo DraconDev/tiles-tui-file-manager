@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [12.1.0] - Drag Cancel Fixes
+
+### Fixed
+- **Drag not cancelled on mouse release** — `Moved` events (mouse moved without button held) now properly clear drag state, stopping ghost drag.
+- **Drag not cancelled on Esc** — `Esc` key now cancels any active drag in both file pane and sidebar.
+
 ## [12.0.0] - Sorting, Click Fixes & Context Menu
 
 ### Added
