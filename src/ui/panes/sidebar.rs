@@ -184,6 +184,14 @@ if app.sidebar_tree_cache_key != cache_key {
                     };
 
                     let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.icon_mode);
+                    let icon = if !is_dir && matches!(
+                        path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
+                        "package.json" | "package-lock.json"
+                    ) {
+                        Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), false, crate::icons::IconMode::Unicode)
+                    } else {
+                        icon
+                    };
                     let indent_str = "  ".repeat(depth as usize);
                     let marker_w = if is_dir { 2 } else { 0 };
                     let icon_w = icon.width();
@@ -275,6 +283,14 @@ if app.sidebar_tree_cache_key != cache_key {
 
                     let cat = crate::modules::files::get_file_category(path);
                     let icon = Icon::get_for_path(path, cat, path.is_dir(), app.icon_mode);
+                    let icon = if !path.is_dir() && matches!(
+                        path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
+                        "package.json" | "package-lock.json"
+                    ) {
+                        Icon::get_for_path(path, cat, false, crate::icons::IconMode::Unicode)
+                    } else {
+                        icon
+                    };
 
                     sidebar_items.push(ListItem::new(format!("{}{}", icon, name)).style(style));
                     app.sidebar_bounds.push(SidebarBounds {
@@ -836,6 +852,14 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         };
 
         let icon = Icon::get_for_path(&path, cat, is_dir, icon_mode);
+        let icon = if !is_dir && matches!(
+            path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
+            "package.json" | "package-lock.json"
+        ) {
+            Icon::get_for_path(&path, cat, false, crate::icons::IconMode::Unicode)
+        } else {
+            icon
+        };
         let indent_str = "  ".repeat(depth as usize);
         let marker_w = if is_dir { 2 } else { 0 };
         let icon_w = icon.width();
