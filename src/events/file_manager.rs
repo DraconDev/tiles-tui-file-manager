@@ -1605,4 +1605,67 @@ mod tests {
             10
         ));
     }
+
+    #[test]
+    fn sort_toggle_toggles_ascending_on_same_column() {
+        use crate::state::FileColumn;
+        let mut sort_column = FileColumn::Name;
+        let mut sort_ascending = true;
+
+        // Click same column (Name) → toggle descending
+        let clicked = FileColumn::Name;
+        if sort_column == clicked {
+            sort_ascending = !sort_ascending;
+        } else {
+            sort_column = clicked;
+            sort_ascending = true;
+        }
+        assert!(!sort_ascending, "should be descending after toggle");
+        assert_eq!(sort_column, FileColumn::Name);
+
+        // Click different column (Size) → switch to Size, ascending
+        let clicked = FileColumn::Size;
+        if sort_column == clicked {
+            sort_ascending = !sort_ascending;
+        } else {
+            sort_column = clicked;
+            sort_ascending = true;
+        }
+        assert!(sort_ascending, "new column should start ascending");
+        assert_eq!(sort_column, FileColumn::Size);
+
+        // Click Size again → toggle to descending
+        let clicked = FileColumn::Size;
+        if sort_column == clicked {
+            sort_ascending = !sort_ascending;
+        } else {
+            sort_column = clicked;
+            sort_ascending = true;
+        }
+        assert!(!sort_ascending, "should be descending after second toggle");
+        assert_eq!(sort_column, FileColumn::Size);
+    }
+
+    #[test]
+    fn column_bounds_match_click() {
+        use crate::state::FileColumn;
+        use ratatui::layout::Rect;
+
+        // Simulate column_bounds as produced by render
+        let column_bounds = vec![
+            (Rect::new(40, 2, 60, 1), FileColumn::Name),
+            (Rect::new(100, 2, 12, 1), FileColumn::Size),
+            (Rect::new(112, 2, 20, 1), FileColumn::Modified),
+        ];
+
+        // Click at column 50, row 2 → should match Name
+        let col = 50u16;
+        for (r, c) in &column_bounds {
+            if col >= r.x && col < r.x.saturating_add(r.width) {
+                assert_eq!(*c, FileColumn::Name);
+                return;
+            }
+        }
+        panic!("click at column 50 should match Name column");
+    }
 }
