@@ -1091,6 +1091,8 @@ let list_path_for_filter = path.clone();
                             expanded: &std::collections::HashSet<PathBuf>,
                             hidden: bool,
                             tree_files: &mut Vec<(PathBuf, u16)>,
+                            sort_column: crate::state::FileColumn,
+                            sort_ascending: bool,
                         ) {
                             if depth >= max_depth {
                                 return;
@@ -1107,7 +1109,29 @@ let list_path_for_filter = path.clone();
                                         std::cmp::Ordering::Greater
                                     };
                                 }
-                                a.file_name().cmp(&b.file_name())
+                                let ordering = match sort_column {
+                                    crate::state::FileColumn::Name => {
+                                        let na = a.file_name().to_string_lossy().to_lowercase();
+                                        let nb = b.file_name().to_string_lossy().to_lowercase();
+                                        na.cmp(&nb)
+                                    }
+                                    crate::state::FileColumn::Size => {
+                                        let sa = a.path().metadata().map(|m| m.len()).unwrap_or(0);
+                                        let sb = b.path().metadata().map(|m| m.len()).unwrap_or(0);
+                                        sa.cmp(&sb)
+                                    }
+                                    crate::state::FileColumn::Modified | crate::state::FileColumn::Created => {
+                                        let da = a.path().metadata().ok().and_then(|m| m.modified().ok());
+                                        let db = b.path().metadata().ok().and_then(|m| m.modified().ok());
+                                        da.cmp(&db)
+                                    }
+                                    _ => a.file_name().cmp(&b.file_name()),
+                                };
+                                if sort_ascending {
+                                    ordering
+                                } else {
+                                    ordering.reverse()
+                                }
                             });
                             for entry in sorted {
                                 let p = entry.path();
@@ -1117,11 +1141,11 @@ let list_path_for_filter = path.clone();
                                 }
                                 tree_files.push((p.clone(), depth));
                                 if p.is_dir() && expanded.contains(&p) {
-                                    walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files);
+                                    walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files, sort_column, sort_ascending);
                                 }
                             }
                         }
-                        walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files);
+                        walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files, sort_column, sort_ascending);
                         // Collect metadata for all tree items
                         let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
                         let (files_meta, g_files, g_meta) = {
@@ -1243,8 +1267,10 @@ let list_path_for_filter = path.clone();
 paired = new_paired;
                             }
 
-                            // Tree order from walk_tree is already sorted (folders-first, alphabetical).
-                            // Do NOT re-sort here — it would scatter children away from parent folders.
+                            // Tree order from walk_tree is already sorted according to the user's
+                            // sort_column/sort_ascending (applied within each directory level).
+                            // Do NOT re-sort the flat list — it would scatter children away
+                            // from parent folders and break the tree structure.
 
                             fs.local_count = paired.len();
 
