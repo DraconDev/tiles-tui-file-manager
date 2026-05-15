@@ -184,7 +184,7 @@ impl App {
             mode: AppMode::Normal,
             previous_mode: AppMode::Normal,
             input: TextInput::default(),
-            icon_mode: crate::icons::IconMode::Nerd,
+            icon_mode: detect_default_icon_mode(),
             panes: vec![Pane::new(initial_fs)],
             focused_pane_index: 0,
             is_split_mode: false,
@@ -546,6 +546,25 @@ pub fn debug_logging_enabled() -> bool {
             .map(|v| matches!(v.as_str(), "1" | "true" | "TRUE" | "True"))
             .unwrap_or(false)
     })
+}
+
+/// Detects the best default icon mode based on terminal environment.
+/// Terminals like Konsole don't ship with Nerd Font patches, so we fall back
+/// to Unicode mode to avoid showing empty boxes (tofu) for Nerd Font codepoints.
+/// Config-stored icon_mode takes precedence over this detection.
+pub fn detect_default_icon_mode() -> crate::icons::IconMode {
+    // Konsole doesn't bundle a Nerd Font — PUA codepoints render as boxes
+    if std::env::var("KONSOLE_VERSION").is_ok() {
+        return crate::icons::IconMode::Unicode;
+    }
+    // GNOME Terminal, Xterm also typically lack Nerd Font
+    if std::env::var("GNOME_TERMINAL_SCREEN").is_ok()
+        || std::env::var("XTERM_VERSION").is_ok()
+    {
+        return crate::icons::IconMode::Unicode;
+    }
+    // Modern terminals (Kitty, Alacritty, WezTerm, iTerm2, VSCode, Ghostty) support Nerd Font
+    crate::icons::IconMode::Nerd
 }
 
 use tokio::sync::mpsc::Sender;
