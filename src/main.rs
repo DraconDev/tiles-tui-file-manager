@@ -1084,6 +1084,7 @@ let list_path_for_filter = path.clone();
                         // to avoid index misalignment after filtering/sorting
                         let max_depth = MAX_TREE_DEPTH;
                         let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
+                        #[allow(clippy::too_many_arguments)]
                         fn walk_tree(
                             path: &std::path::Path,
                             depth: u16,
