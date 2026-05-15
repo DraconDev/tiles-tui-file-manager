@@ -366,6 +366,8 @@ fn handle_path_input_keys(
             app.input.cursor_style = ratatui::style::Style::default()
                 .bg(ratatui::style::Color::White)
                 .fg(ratatui::style::Color::Black);
+            app.input_shield_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(100));
             true
         }
         KeyCode::Enter => {
