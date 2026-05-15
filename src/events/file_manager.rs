@@ -1223,9 +1223,9 @@ pub fn handle_file_mouse(
                 app.drag_source = None;
                 app.drag_start_pos = None;
                 app.hovered_drop_target = None;
-                return true;
             }
-            false
+            app.drag_start_pos = None;
+            true
         }
         MouseEventKind::Drag(_) => {
             let mut changed = false;

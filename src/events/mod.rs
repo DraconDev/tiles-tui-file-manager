@@ -701,9 +701,9 @@ fn handle_sidebar_mouse(
                 app.drag_source = None;
                 app.drag_start_pos = None;
                 app.hovered_drop_target = None;
-                return true;
             }
-            false
+            app.drag_start_pos = None;
+            true
         }
         _ => false,
     }
