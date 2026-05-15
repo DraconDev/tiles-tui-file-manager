@@ -233,7 +233,6 @@ pub enum DropTarget {
 
 #[derive(Clone, Debug, Default)]
 pub struct FileRowBounds {
-    pub y: u16,
     pub file_idx: usize,
     pub arrow_end_x: u16,
 }

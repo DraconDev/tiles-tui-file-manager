@@ -2766,7 +2766,6 @@ fn draw_file_view(
                                     if is_dir {
                                         let arrow_end_x = col_rect.x + 1 + (depth * 2) as u16 + marker_w as u16 + icon_w as u16;
                                         file_state.file_row_bounds.push(crate::state::FileRowBounds {
-                                            y: row_y,
                                             file_idx,
                                             arrow_end_x,
                                         });
