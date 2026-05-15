@@ -1309,13 +1309,26 @@ paired = new_paired;
                             let files: Vec<PathBuf> = paired.into_iter().map(|(p, _)| p).collect();
 
                             fs.tree_file_depths = tree_file_depths;
+                            let prev_selected_path = fs.selection.selected
+                                .and_then(|idx| fs.files.get(idx).cloned());
                             fs.files = files;
                             fs.metadata = metadata;
 
-                            // Clamp scroll and selection after file list update
-                            let max_idx = fs.files.len().saturating_sub(1);
-                            if let Some(sel) = fs.selection.selected {
-                                if sel > max_idx {
+                            // Re-find the previously selected file by path after file list update
+                            if let Some(path) = prev_selected_path {
+                                if let Some(new_idx) = fs.files.iter().position(|p| p == &path) {
+                                    fs.selection.selected = Some(new_idx);
+                                    fs.selection.anchor = Some(new_idx);
+                                    fs.table_state.select(Some(new_idx));
+                                    let capacity = fs.view_height.saturating_sub(3).max(1);
+                                    let offset = fs.table_state.offset();
+                                    if new_idx < offset {
+                                        *fs.table_state.offset_mut() = new_idx;
+                                    } else if new_idx >= offset + capacity {
+                                        *fs.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+                                    }
+                                } else {
+                                    let max_idx = fs.files.len().saturating_sub(1);
                                     fs.selection.selected = Some(max_idx);
                                     fs.table_state.select(Some(max_idx));
                                 }

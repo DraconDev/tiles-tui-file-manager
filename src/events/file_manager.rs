@@ -401,15 +401,8 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     return true;
                 }
                 if app.sidebar_focus {
-                    // Exit sidebar focus first (standard TUI behavior)
                     app.sidebar_focus = false;
                     return true;
-                }
-
-                for pane in &mut app.panes {
-                    for fs in &mut pane.tabs {
-                        fs.preview = None;
-                    }
                 }
 
                 if let Some(fs) = app.current_file_state_mut() {
@@ -883,11 +876,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         || key.modifiers.contains(KeyModifiers::ALT) =>
                 {
                     let is_sidebar = app.sidebar_focus;
+                    let old_path = if !is_sidebar {
+                        app.current_file_state()
+                            .and_then(|fs| fs.selection.selected)
+                            .and_then(|idx| fs.files.get(idx).cloned())
+                    } else {
+                        None
+                    };
                     if let Some(fs) = app.current_file_state_mut() {
                         delete_word_backwards(&mut fs.search_filter);
                         if !is_sidebar {
-                            fs.selection.selected = Some(0);
-                            *fs.table_state.offset_mut() = 0;
+                            reselect_after_filter(fs, old_path.as_deref());
                         }
                         fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                     }
@@ -899,11 +898,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Char('w') if has_control => {
                     let is_sidebar = app.sidebar_focus;
+                    let old_path = if !is_sidebar {
+                        app.current_file_state()
+                            .and_then(|fs| fs.selection.selected)
+                            .and_then(|idx| fs.files.get(idx).cloned())
+                    } else {
+                        None
+                    };
                     if let Some(fs) = app.current_file_state_mut() {
                         delete_word_backwards(&mut fs.search_filter);
                         if !is_sidebar {
-                            fs.selection.selected = Some(0);
-                            *fs.table_state.offset_mut() = 0;
+                            reselect_after_filter(fs, old_path.as_deref());
                         }
                         fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                     }
