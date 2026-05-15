@@ -1069,7 +1069,8 @@ pub fn handle_file_mouse(
                                 let clicked_arrow = fs.file_row_bounds.iter()
                                     .find(|b| b.file_idx == idx)
                                     .map_or(false, |b| b.arrow_end_x > 0 && column < b.arrow_end_x);
-                                let folder_path = p;
+                                let folder_path = p.clone();
+                                let _ = fs;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
                                 if clicked_arrow {
                                     if was_expanded {
@@ -1078,10 +1079,12 @@ pub fn handle_file_mouse(
                                         app.expanded_folders.insert(folder_path.clone());
                                     }
                                 } else {
-                                    fs.current_path = folder_path.clone();
-                                    fs.selection.clear();
-                                    fs.git_cache_until = None;
-                                    crate::event_helpers::push_history(fs, folder_path.clone());
+                                    if let Some(fs) = app.current_file_state_mut() {
+                                        fs.current_path = folder_path.clone();
+                                        fs.selection.clear();
+                                        fs.git_cache_until = None;
+                                        crate::event_helpers::push_history(fs, folder_path.clone());
+                                    }
                                     if !was_expanded {
                                         app.expanded_folders.insert(folder_path.clone());
                                     }
