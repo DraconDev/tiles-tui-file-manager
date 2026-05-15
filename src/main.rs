@@ -551,6 +551,26 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
                         {
                             let mut app_guard = app_clone.lock();
+
+                            let old_scroll = app_guard.editor_state.as_ref()
+                                .and_then(|p| p.editor.as_ref())
+                                .filter(|e| !e.modified)
+                                .map(|e| (e.scroll_row, e.scroll_col, e.cursor_row, e.cursor_col));
+
+                            let old_pane_scroll = app_guard.panes.get(pane_idx)
+                                .and_then(|p| p.current_state())
+                                .and_then(|fs| fs.preview.as_ref())
+                                .and_then(|p| p.editor.as_ref())
+                                .filter(|e| !e.modified)
+                                .map(|e| (e.scroll_row, e.scroll_col, e.cursor_row, e.cursor_col));
+
+                            if let Some((sr, sc, cr, cc)) = old_scroll.or(old_pane_scroll) {
+                                editor.scroll_row = sr;
+                                editor.scroll_col = sc;
+                                editor.cursor_row = cr;
+                                editor.cursor_col = cc;
+                            }
+
                             let preview = PreviewState {
                                 path: path.clone(),
                                 content,
