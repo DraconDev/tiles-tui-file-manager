@@ -845,8 +845,9 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let is_sidebar = app.sidebar_focus;
                     let old_path = if !is_sidebar {
                         app.current_file_state()
-                            .and_then(|fs| fs.selection.selected)
-                            .and_then(|idx| fs.files.get(idx).cloned())
+                            .and_then(|fs| {
+                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                            })
                     } else {
                         None
                     };
@@ -879,8 +880,9 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let is_sidebar = app.sidebar_focus;
                     let old_path = if !is_sidebar {
                         app.current_file_state()
-                            .and_then(|fs| fs.selection.selected)
-                            .and_then(|idx| fs.files.get(idx).cloned())
+                            .and_then(|fs| {
+                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                            })
                     } else {
                         None
                     };
@@ -901,8 +903,9 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let is_sidebar = app.sidebar_focus;
                     let old_path = if !is_sidebar {
                         app.current_file_state()
-                            .and_then(|fs| fs.selection.selected)
-                            .and_then(|idx| fs.files.get(idx).cloned())
+                            .and_then(|fs| {
+                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                            })
                     } else {
                         None
                     };
