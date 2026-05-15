@@ -816,6 +816,13 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
 
                     let is_sidebar = app.sidebar_focus;
                     let mut needs_refresh = false;
+                    let old_path = if !is_sidebar {
+                        app.current_file_state()
+                            .and_then(|fs| fs.selection.selected)
+                            .and_then(|idx| fs.files.get(idx).cloned())
+                    } else {
+                        None
+                    };
                     if let Some(fs) = app.current_file_state_mut() {
                         let now = std::time::Instant::now();
                         let should_refresh = fs.search_debounce_until
@@ -825,9 +832,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         fs.search_filter.push(c);
                         fs.search_generation += 1;
                         if !is_sidebar {
-                            fs.selection.selected = Some(0);
-                            fs.selection.anchor = Some(0);
-                            *fs.table_state.offset_mut() = 0;
+                            reselect_after_filter(fs, old_path.as_deref());
                             needs_refresh = should_refresh;
                         }
 
@@ -844,13 +849,18 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::Backspace if !key.modifiers.contains(KeyModifiers::CONTROL) => {
                     let mut handled_search = false;
                     let is_sidebar = app.sidebar_focus;
+                    let old_path = if !is_sidebar {
+                        app.current_file_state()
+                            .and_then(|fs| fs.selection.selected)
+                            .and_then(|idx| fs.files.get(idx).cloned())
+                    } else {
+                        None
+                    };
                     if let Some(fs) = app.current_file_state_mut() {
                         if !fs.search_filter.is_empty() {
                             fs.search_filter.pop();
                             if !is_sidebar {
-                                fs.selection.selected = Some(0);
-                                fs.selection.anchor = Some(0);
-                                *fs.table_state.offset_mut() = 0;
+                                reselect_after_filter(fs, old_path.as_deref());
                             }
                             fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                             handled_search = true;
