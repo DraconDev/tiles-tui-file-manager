@@ -1312,6 +1312,19 @@ paired = new_paired;
                             fs.files = files;
                             fs.metadata = metadata;
 
+                            // Clamp scroll and selection after file list update
+                            let max_idx = fs.files.len().saturating_sub(1);
+                            if let Some(sel) = fs.selection.selected {
+                                if sel > max_idx {
+                                    fs.selection.selected = Some(max_idx);
+                                    fs.table_state.select(Some(max_idx));
+                                }
+                            }
+                            let max_offset = fs.files.len().saturating_sub(fs.view_height.saturating_sub(3).max(1));
+                            if fs.table_state.offset() > max_offset {
+                                *fs.table_state.offset_mut() = max_offset;
+                            }
+
                             // Apply pending selection and scroll (e.g., after navigate_up)
                             if let Some((pending_path, pending_scroll)) = fs.pending_select_path.take() {
                                 if let Some(idx) = fs.files.iter().position(|p| p == &pending_path)
