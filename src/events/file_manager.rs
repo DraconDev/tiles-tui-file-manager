@@ -1031,6 +1031,18 @@ pub fn handle_file_mouse(
             // 3. File Row Interaction
             if row >= 3 {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
+                    if button == MouseButton::Right && column >= sw {
+                        let target = ContextMenuTarget::EmptySpace;
+                        let actions = crate::event_helpers::get_context_menu_actions(&target, app);
+                        app.mode = AppMode::ContextMenu {
+                            x: column,
+                            y: row,
+                            target,
+                            actions,
+                            selected_index: None,
+                        };
+                        return true;
+                    }
                     return true;
                 };
                 let mut sp = None;
