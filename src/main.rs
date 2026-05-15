@@ -1038,7 +1038,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
         // Handle Refreshes
         for pane_idx in panes_needing_refresh.drain() {
-            let (path, remote, current_filter, current_generation, git_view, tree_expanded) = {
+            let (path, remote, current_filter, current_generation, git_view, tree_expanded, sort_column, sort_ascending) = {
                 let app_guard = app.lock();
                 if let Some(pane) = app_guard.panes.get(pane_idx) {
                     if let Some(fs) = pane.current_state() {
@@ -1049,6 +1049,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.search_generation,
                             matches!(app_guard.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
                             app_guard.expanded_folders.clone(),
+                            fs.sort_column,
+                            fs.sort_ascending,
                         )
                     } else {
                         continue;
