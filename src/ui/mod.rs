@@ -2631,6 +2631,7 @@ fn draw_file_view(
 
         // --- ABSOLUTE CELL ISOLATION RENDERING ---
         file_state.column_bounds.clear();
+        file_state.file_row_bounds.clear();
         let header_y = inner_area.y;
         let content_y = header_y + 1;
         let visible_height = inner_area.height.saturating_sub(1) as usize;
@@ -2762,6 +2763,14 @@ fn draw_file_view(
                                     }
                                     let icon_w = icon_str.chars().map(get_visual_width).sum::<usize>();
                                     let marker_w = if expand_marker { 2 } else { 0 };
+                                    if is_dir {
+                                        let arrow_end_x = col_rect.x + 1 + (depth * 2) as u16 + marker_w as u16 + icon_w as u16;
+                                        file_state.file_row_bounds.push(crate::state::FileRowBounds {
+                                            y: row_y,
+                                            file_idx,
+                                            arrow_end_x,
+                                        });
+                                    }
                                     // 12 = leading space (1) + minimal trailing pad + room for "[*]" suffix (4)
                                     const CELL_TEXT_RESERVE: usize = 12;
                                     let available_width =
