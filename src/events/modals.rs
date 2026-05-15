@@ -319,6 +319,8 @@ fn handle_search_keys(
             app.input.clear();
             app.input_shield_until =
                 Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
+            app.input_shield_active_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(250));
             true
         }
         KeyCode::Enter => {
@@ -334,6 +336,8 @@ fn handle_search_keys(
             app.input.clear();
             app.input_shield_until =
                 Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
+            app.input_shield_active_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(250));
             true
         }
         _ => {
@@ -368,6 +372,8 @@ fn handle_path_input_keys(
                 .fg(ratatui::style::Color::Black);
             app.input_shield_until =
                 Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
+            app.input_shield_active_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(250));
             true
         }
         KeyCode::Enter => {

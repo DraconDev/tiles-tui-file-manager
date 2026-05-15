@@ -86,6 +86,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             }
             app.input_shield_until =
                 Some(std::time::Instant::now() + std::time::Duration::from_millis(50));
+            app.input_shield_active_until =
+                Some(std::time::Instant::now() + std::time::Duration::from_millis(150));
             return true;
         }
     }

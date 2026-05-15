@@ -359,6 +359,9 @@ fn handle_clipboard_and_undo(
         }
         KeyCode::Char('z') if !has_shift => {
             if execute_undo(app, event_tx).is_none() {
+                if app.in_soft_shield() {
+                    return Some(true);
+                }
                 if let Some(fs) = app.current_file_state_mut() {
                     if !fs.search_filter.is_empty() {
                         fs.search_filter.clear();
@@ -805,6 +808,10 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 {
                     if !is_valid_search_char(c) {
                         return false;
+                    }
+
+                    if app.in_soft_shield() {
+                        return true;
                     }
 
                     let is_sidebar = app.sidebar_focus;

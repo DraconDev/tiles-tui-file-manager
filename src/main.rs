@@ -258,7 +258,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     crate::app::log_debug("Entering main loop");
 
     let mut panes_needing_refresh = std::collections::HashSet::new();
-    let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64)> =
+    let mut last_self_save: std::collections::HashMap<PathBuf, (std::time::SystemTime, u64, std::time::Instant)> =
         std::collections::HashMap::new();
     let mut last_watch_sync = std::time::Instant::now();
     const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
@@ -372,16 +372,17 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::FilesChangedOnDisk(path) => {
                     crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
                     
-                    // Check if this was a self-save by comparing file mtime and size
-                    if let Some((saved_mtime, saved_size)) = last_self_save.get(&path) {
-                        if let Ok(meta) = std::fs::metadata(&path) {
-                            if let Ok(mtime) = meta.modified() {
+                    if let Some((_saved_mtime, _saved_size, saved_at)) = last_self_save.get(&path) {
+                        let exact_match = std::fs::metadata(&path).ok().and_then(|meta| {
+                            meta.modified().ok().map(|mtime| {
                                 let size: u64 = meta.len();
-                                if mtime == *saved_mtime && size == *saved_size {
-                                    last_self_save.remove(&path);
-                                    continue; // Skip refreshing/reloading for our own saves
-                                }
-                            }
+                                mtime == _saved_mtime && size == *_saved_size
+                            })
+                        }).unwrap_or(false);
+
+                        if exact_match || saved_at.elapsed() < Duration::from_secs(2) {
+                            last_self_save.remove(&path);
+                            continue;
                         }
                     }
 
@@ -634,7 +635,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                         if last_self_save.len() > 100 {
                                             last_self_save.clear();
                                         }
-                                        last_self_save.insert(path.clone(), (mtime, size));
+                                        last_self_save.insert(path.clone(), (mtime, size, std::time::Instant::now()));
                                     }
                                 }
                             }

@@ -109,6 +109,7 @@ pub struct App {
     pub selection_mode: bool,
     pub prevent_mouse_up_selection_cleanup: bool,
     pub input_shield_until: Option<std::time::Instant>,
+    pub input_shield_active_until: Option<std::time::Instant>,
     pub command_index: usize,
     pub filtered_commands: Vec<CommandItem>,
     pub view_prefs: ViewStatePersistence,
@@ -280,6 +281,7 @@ impl App {
             selection_mode: false,
             prevent_mouse_up_selection_cleanup: false,
             input_shield_until: None,
+            input_shield_active_until: None,
             command_index: 0,
             filtered_commands: Vec::new(),
             view_prefs: ViewStatePersistence {
@@ -302,6 +304,18 @@ editor: ViewPreferences {
             tile_queue,
             saved_pane: None,
         }
+    }
+
+    pub fn set_input_shield(&mut self, duration_ms: u64) {
+        let now = std::time::Instant::now();
+        self.input_shield_until = Some(now + std::time::Duration::from_millis(duration_ms));
+        self.input_shield_active_until = Some(now + std::time::Duration::from_millis(duration_ms + 100));
+    }
+
+    pub fn in_soft_shield(&self) -> bool {
+        self.input_shield_active_until
+            .map(|until| std::time::Instant::now() < until)
+            .unwrap_or(false)
     }
 
     pub fn push_recent_folder(&mut self, path: PathBuf) {
