@@ -1068,7 +1068,7 @@ pub fn handle_file_mouse(
                             if column >= name_rect.x && column < name_rect.x + name_rect.width {
                                 let clicked_arrow = fs.file_row_bounds.iter()
                                     .find(|b| b.file_idx == idx)
-                                    .map_or(false, |b| b.arrow_end_x > 0 && column < b.arrow_end_x);
+                                    .is_some_and(|b| b.arrow_end_x > 0 && column < b.arrow_end_x);
                                 let folder_path = p.clone();
                                 let _ = fs;
                                 let was_expanded = app.expanded_folders.contains(&folder_path);
