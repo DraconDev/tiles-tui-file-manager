@@ -24,6 +24,28 @@ fn is_valid_search_char(c: char) -> bool {
     !bad
 }
 
+fn reselect_after_filter(fs: &mut crate::state::FileState, old_path: Option<&std::path::Path>) {
+    if let Some(path) = old_path {
+        if let Some(new_idx) = fs.files.iter().position(|p| p == path) {
+            fs.selection.selected = Some(new_idx);
+            fs.selection.anchor = Some(new_idx);
+            fs.table_state.select(Some(new_idx));
+            let capacity = fs.view_height.saturating_sub(3).max(1);
+            let offset = fs.table_state.offset();
+            if new_idx < offset {
+                *fs.table_state.offset_mut() = new_idx;
+            } else if new_idx >= offset + capacity {
+                *fs.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+            }
+            return;
+        }
+    }
+    fs.selection.selected = Some(0);
+    fs.selection.anchor = Some(0);
+    fs.table_state.select(Some(0));
+    *fs.table_state.offset_mut() = 0;
+}
+
 fn is_double_click(
     last_click_pos: (u16, u16),
     last_click_time: std::time::Instant,
