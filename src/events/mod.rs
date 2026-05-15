@@ -287,10 +287,6 @@ fn handle_general_mouse(
     let (w, _) = app.terminal_size;
     app.mouse_pos = (column, row);
 
-    // Reset double-click state so clicks in header/sidebar/tabs don't trigger false double-clicks
-    app.mouse_last_click = std::time::Instant::now() - std::time::Duration::from_secs(1);
-    app.mouse_click_pos = (u16::MAX, u16::MAX);
-
     if let MouseEventKind::Down(MouseButton::Middle) = me.kind {}
 
     // 1. Sidebar Resizing
