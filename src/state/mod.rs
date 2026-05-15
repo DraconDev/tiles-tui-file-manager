@@ -231,6 +231,13 @@ pub enum DropTarget {
     ReorderFavorite(usize),
 }
 
+#[derive(Clone, Debug, Default)]
+pub struct FileRowBounds {
+    pub y: u16,
+    pub file_idx: usize,
+    pub arrow_end_x: u16,
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct SidebarBounds {
     pub y: u16,
@@ -376,6 +383,8 @@ pub struct FileState {
     #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
     pub tree_file_depths: Vec<u16>,
+    #[serde(skip)]
+    pub file_row_bounds: Vec<FileRowBounds>,
 }
 
 impl FileState {
@@ -423,6 +432,7 @@ impl FileState {
             git_cache_until: None,
             search_debounce_until: None,
             tree_file_depths: Vec::new(),
+            file_row_bounds: Vec::new(),
         }
     }
 }
