@@ -1062,35 +1062,25 @@ pub fn handle_file_mouse(
                     is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                     sp = Some(p.clone());
 
-                    // Folder click: arrow toggles expand/collapse, name navigates into folder
+                    // Arrow click on folder: toggle expand/collapse only
                     if is_dir && button == MouseButton::Left {
                         if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
                             if column >= name_rect.x && column < name_rect.x + name_rect.width {
                                 let clicked_arrow = fs.file_row_bounds.iter()
                                     .find(|b| b.file_idx == idx)
                                     .is_some_and(|b| b.arrow_end_x > 0 && column < b.arrow_end_x);
-                                let folder_path = p.clone();
-                                let _ = fs;
-                                let was_expanded = app.expanded_folders.contains(&folder_path);
                                 if clicked_arrow {
+                                    let folder_path = p.clone();
+                                    let _ = fs;
+                                    let was_expanded = app.expanded_folders.contains(&folder_path);
                                     if was_expanded {
                                         app.expanded_folders.remove(&folder_path);
                                     } else {
                                         app.expanded_folders.insert(folder_path.clone());
                                     }
-                                } else {
-                                    if let Some(fs) = app.current_file_state_mut() {
-                                        fs.current_path = folder_path.clone();
-                                        fs.selection.clear();
-                                        fs.git_cache_until = None;
-                                        crate::event_helpers::push_history(fs, folder_path.clone());
-                                    }
-                                    if !was_expanded {
-                                        app.expanded_folders.insert(folder_path.clone());
-                                    }
+                                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
+                                    return true;
                                 }
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
-                                return true;
                             }
                         }
                     }
