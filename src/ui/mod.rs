@@ -4294,6 +4294,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "t",
             bool_state: Some(app.smart_date),
+            read_only: false,
         },
         GeneralOption {
             label: "Semantic Coloring",
@@ -4304,6 +4305,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "s",
             bool_state: Some(app.semantic_coloring),
+            read_only: false,
         },
         GeneralOption {
             label: "Auto Save",
@@ -4314,24 +4316,28 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "a",
             bool_state: Some(app.auto_save),
+            read_only: false,
         },
         GeneralOption {
             label: "Preview Max Size",
             status: format!("{} MB", app.preview_max_mb),
             key: "p",
             bool_state: None,
+            read_only: false,
         },
         GeneralOption {
             label: "Icon Mode",
             status: format!("{:?}", app.icon_mode),
             key: "i",
             bool_state: None,
+            read_only: false,
         },
         GeneralOption {
             label: "─── Sidebar Sections ───",
             status: "".to_string(),
             key: "",
             bool_state: None,
+            read_only: false,
         },
         GeneralOption {
             label: "Sidebar Folders",
@@ -4342,6 +4348,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "f",
             bool_state: Some(app.sidebar_folders),
+            read_only: false,
         },
         GeneralOption {
             label: "Sidebar Favorites",
@@ -4352,6 +4359,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "v",
             bool_state: Some(app.sidebar_favorites),
+            read_only: false,
         },
         GeneralOption {
             label: "Sidebar Recent",
@@ -4362,6 +4370,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "c",
             bool_state: Some(app.sidebar_recent),
+            read_only: false,
         },
         GeneralOption {
             label: "Sidebar Storage",
@@ -4372,6 +4381,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "g",
             bool_state: Some(app.sidebar_storage),
+            read_only: false,
         },
         GeneralOption {
             label: "Sidebar Remotes",
@@ -4382,12 +4392,14 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "m",
             bool_state: Some(app.sidebar_remotes),
+            read_only: false,
         },
         GeneralOption {
             label: "Reset All Settings",
             status: "CONFIRM".to_string(),
             key: "!",
             bool_state: None,
+            read_only: false,
         },
     ];
 
