@@ -85,7 +85,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             app.load_view_prefs(CurrentView::Files);
             app.editor_state = None;
             app.set_input_shield(50);
-            return true;
+            return (true, None);
         }
     }
 
@@ -107,7 +107,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     }
                 }
             }
-            return true;
+            return (true, None);
         }
 
         if has_control && key.code == KeyCode::Char('w') {
@@ -134,7 +134,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("No more tabs to close".to_string()));
                 }
             }
-            return true;
+            return (true, None);
         }
 
         if has_control && key.code == KeyCode::Char('n') {
@@ -158,7 +158,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             }
             app.mode = AppMode::NewFile;
             app.input.clear();
-            return true;
+            return (true, None);
         }
 
         // Ctrl+R: run the current file
@@ -197,7 +197,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                 }
             }
             if did_handle {
-                return true;
+                return (true, None);
             }
         }
 
@@ -257,7 +257,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
                     app.mode = AppMode::Normal;
                     app.editor_state = None;
-                    return true;
+                    return (true, None);
                 }
 
                 // Ctrl+R: run the current file (full-screen mode)
@@ -292,7 +292,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                                 .unwrap_or_else(|| "unknown".to_string())
                         )));
                     }
-                    return true;
+                    return (true, None);
                 }
 
                 let mut clipboard = app.editor_clipboard.clone();
@@ -358,13 +358,13 @@ pub fn handle_editor_mouse(
                     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
                         if column >= w.saturating_sub(10) {
                             app.running = false;
-                            return true;
+                            return (true, None);
                         } else if column >= w.saturating_sub(20) {
                             app.mode = AppMode::Normal;
                             app.editor_state = None;
-                            return true;
+                            return (true, None);
                         }
-                        return true;
+                        return (true, None);
                     }
                 }
 
@@ -403,7 +403,7 @@ pub fn handle_editor_mouse(
                             actions,
                             selected_index: Some(0),
                         };
-                        return true;
+                        return (true, None);
                     }
                 }
 
@@ -496,7 +496,7 @@ pub fn handle_editor_mouse(
                                     actions,
                                     selected_index: Some(0),
                                 };
-                                return true;
+                                return (true, None);
                             }
                         }
                         let mut clipboard = app.editor_clipboard.clone();
@@ -654,13 +654,13 @@ fn handle_generic_editor_shortcuts(
                 editor.move_line_up();
                 editor.modified = true;
                 editor.invalidate_from(editor.cursor_row);
-                return true;
+                return (true, None);
             }
             KeyCode::Down => {
                 editor.move_line_down();
                 editor.modified = true;
                 editor.invalidate_from(editor.cursor_row.saturating_sub(1));
-                return true;
+                return (true, None);
             }
             _ => {}
         }
@@ -668,7 +668,7 @@ fn handle_generic_editor_shortcuts(
 
     if has_control && (key.code == KeyCode::Char('s') || key.code == KeyCode::Char('S')) {
         let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
-        return true;
+        return (true, None);
     }
 
     if has_control
@@ -678,7 +678,7 @@ fn handle_generic_editor_shortcuts(
         *prev_mode = mode.clone();
         *mode = AppMode::SaveAs(path.to_path_buf());
         input.clear();
-        return true;
+        return (true, None);
     }
 
     if has_control
@@ -698,7 +698,7 @@ fn handle_generic_editor_shortcuts(
         *clipboard = Some(content.clone());
         dracon_terminal_engine::utils::set_clipboard_text(&content);
         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Copied to clipboard".to_string()));
-        return true;
+        return (true, None);
     }
 
     if (has_control && (key.code == KeyCode::Char('x') || key.code == KeyCode::Char('X')))
@@ -725,7 +725,7 @@ fn handle_generic_editor_shortcuts(
         if auto_save {
             let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
         }
-        return true;
+        return (true, None);
     }
 
     if (has_control && (key.code == KeyCode::Char('v') || key.code == KeyCode::Char('V')))
@@ -741,13 +741,13 @@ fn handle_generic_editor_shortcuts(
                 editor.modified = false;
             }
         }
-        return true;
+        return (true, None);
     }
 
     if has_control && !key.modifiers.contains(KeyModifiers::SHIFT) && key.code == KeyCode::Char('z')
     {
         editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area);
-        return true;
+        return (true, None);
     }
     if has_control
         && (key.code == KeyCode::Char('y')
@@ -755,7 +755,7 @@ fn handle_generic_editor_shortcuts(
             || key.code == KeyCode::Char('Z'))
     {
         editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area);
-        return true;
+        return (true, None);
     }
 
     if has_control {
@@ -764,13 +764,13 @@ fn handle_generic_editor_shortcuts(
                 *prev_mode = mode.clone();
                 *mode = AppMode::EditorSearch;
                 input.set_value(editor.filter_query.clone());
-                return true;
+                return (true, None);
             }
             KeyCode::Char('g') | KeyCode::Char('G') => {
                 *prev_mode = mode.clone();
                 *mode = AppMode::EditorGoToLine;
                 input.clear();
-                return true;
+                return (true, None);
             }
             _ => {}
         }
@@ -784,7 +784,7 @@ fn handle_generic_editor_shortcuts(
         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
             "Replace: Type term to FIND, then press Enter/Tab".to_string(),
         ));
-        return true;
+        return (true, None);
     }
 
     if editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area) {
