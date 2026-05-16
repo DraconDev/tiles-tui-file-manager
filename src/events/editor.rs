@@ -214,7 +214,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                         let mut mode = app.mode.clone();
                         let mut prev_mode = app.previous_mode.clone();
 
-                        let handled = handle_generic_editor_shortcuts(
+                        let (handled, scroll_opt) = handle_generic_editor_shortcuts(
                             key,
                             editor,
                             &mut clipboard,
@@ -227,8 +227,11 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                             &preview.path,
                             evt,
                             pane_area,
-                            app,
                         );
+
+                        if let Some((path, pos)) = scroll_opt {
+                            app.scroll_positions.insert(path, pos);
+                        }
 
                         app.editor_clipboard = clipboard;
                         app.mode = mode;
@@ -779,13 +782,13 @@ fn handle_generic_editor_shortcuts(
     }
 
     if editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area) {
-        app.scroll_positions.insert(path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
         if auto_save && editor.modified {
             let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
             editor.modified = false;
         }
-        return true;
+        let scroll = (path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+        return (true, Some(scroll));
     }
 
-    false
+    (false, None)
 }
