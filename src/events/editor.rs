@@ -612,12 +612,12 @@ fn handle_text_editor_mouse(
 
     // Auto-save on modification
     if auto_save && editor.modified {
-        app.scroll_positions.insert(path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
         let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
         editor.modified = false;
     }
 
-    true
+    let scroll = (path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+    (true, Some(scroll))
 }
 
 #[allow(clippy::too_many_arguments)]
