@@ -70,7 +70,7 @@ All notable changes to this project will be documented in this file.
 ## [10.34.78] - Cleanup & Package Hygiene
 
 ### Changed
-- **Cargo.toml license** — Fixed from `"MIT"` to `"Dracon-1.1"` to match actual LICENSE file
+- **Cargo.toml license** — Fixed from `"MIT"` to `"Dracon-1.1"` to match actual LICENSE file *(now `"AGPL-3.0-only"` — see v14.32.0)*
 - **Cargo.toml exclude** — Added `flake.nix`, `flake.lock`, `tiles.desktop`, `tiles_icon.svg` to exclude list
 - **README.md** — Complete rewrite: terminal compatibility table, Space/Enter key behavior, install section, configuration docs
 - **CONTRIBUTING.md** — Updated deps table to crates.io, added `terminal.rs` to structure, fixed `dracon-system` → `dracon-system-lib`
@@ -135,7 +135,7 @@ All notable changes to this project will be documented in this file.
 - **Sidebar title** now shows current directory path (not "FAVORITES")
 - **Non-folder items** indented to align with folder icons (consistent sidebar + file pane)
 - **Esc key** exits sidebar focus first (standard TUI behavior)
-- **Script execution** (Ctrl+R, Ctrl+Enter, context menu) always opens in new tab
+- **Script execution** (Ctrl+R, Ctrl+Enter *(now Ctrl+R only — see v14.32.0)*, context menu) always opens in new tab
 - **Hidden files toggle** syncs between sidebar tree and file pane automatically
 
 ### Fixed
@@ -158,8 +158,8 @@ All notable changes to this project will be documented in this file.
   - **Editable files**: Cut, Copy, Paste, Undo, Redo, Select All, Save, Run
   - **Read-only files** (Viewer mode, git diffs, binary files): Copy, Select All, Run
 - **Unified Clipboard** — Copy/Cut stores in an internal buffer AND syncs to system clipboard. Paste reads from internal buffer first, falls back to system clipboard.
-- **Editor Footer Bar** — Shows live cursor position (`Ln X, Col Y`), language, and modified indicator (`●`)
-- **Modified Indicator on Tabs** — Amber dot appears on tab labels when a file has unsaved changes
+- **Editor Footer Bar** — Shows live cursor position (`Ln X, Col Y`), language, and modified indicator *(now row highlight — see v14.32.0)*
+- **Modified Indicator on Tabs** — Amber dot appears on tab labels when a file has unsaved changes *(now row highlight — see v14.32.0)*
 - **Auto-Open New Files** — `Ctrl+N` creates a new file and immediately opens it in the editor
 - **Save-As Path Sync** — After Save-As, the editor title and tab labels update to reflect the new filename
 
