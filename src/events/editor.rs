@@ -668,7 +668,7 @@ fn handle_generic_editor_shortcuts(
 
     if has_control && (key.code == KeyCode::Char('s') || key.code == KeyCode::Char('S')) {
         let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
-        return true;
+        return (true, None);
     }
 
     if has_control
@@ -678,7 +678,7 @@ fn handle_generic_editor_shortcuts(
         *prev_mode = mode.clone();
         *mode = AppMode::SaveAs(path.to_path_buf());
         input.clear();
-        return true;
+        return (true, None);
     }
 
     if has_control
@@ -698,7 +698,7 @@ fn handle_generic_editor_shortcuts(
         *clipboard = Some(content.clone());
         dracon_terminal_engine::utils::set_clipboard_text(&content);
         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("Copied to clipboard".to_string()));
-        return true;
+        return (true, None);
     }
 
     if (has_control && (key.code == KeyCode::Char('x') || key.code == KeyCode::Char('X')))
@@ -725,7 +725,7 @@ fn handle_generic_editor_shortcuts(
         if auto_save {
             let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
         }
-        return true;
+        return (true, None);
     }
 
     if (has_control && (key.code == KeyCode::Char('v') || key.code == KeyCode::Char('V')))
@@ -741,13 +741,13 @@ fn handle_generic_editor_shortcuts(
                 editor.modified = false;
             }
         }
-        return true;
+        return (true, None);
     }
 
     if has_control && !key.modifiers.contains(KeyModifiers::SHIFT) && key.code == KeyCode::Char('z')
     {
         editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area);
-        return true;
+        return (true, None);
     }
     if has_control
         && (key.code == KeyCode::Char('y')
@@ -755,7 +755,7 @@ fn handle_generic_editor_shortcuts(
             || key.code == KeyCode::Char('Z'))
     {
         editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area);
-        return true;
+        return (true, None);
     }
 
     if has_control {
@@ -764,13 +764,13 @@ fn handle_generic_editor_shortcuts(
                 *prev_mode = mode.clone();
                 *mode = AppMode::EditorSearch;
                 input.set_value(editor.filter_query.clone());
-                return true;
+                return (true, None);
             }
             KeyCode::Char('g') | KeyCode::Char('G') => {
                 *prev_mode = mode.clone();
                 *mode = AppMode::EditorGoToLine;
                 input.clear();
-                return true;
+                return (true, None);
             }
             _ => {}
         }
@@ -784,7 +784,7 @@ fn handle_generic_editor_shortcuts(
         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
             "Replace: Type term to FIND, then press Enter/Tab".to_string(),
         ));
-        return true;
+        return (true, None);
     }
 
     if editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area) {
