@@ -12,7 +12,7 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 - **Dual-Pane File Manager** — Navigate two directories side-by-side with drag & drop, batch operations, hidden file toggle, column sorting
 - **Built-in Text Editor** — Syntax highlighting via syntect, unlimited undo/redo, multi-selection, live search, right-click context menu, line movement (Alt+Up/Down), duplicate (Ctrl+D), kill line (Ctrl+K/U)
 - **Smart Terminal Spawning** — Commands open in a new tab in your current terminal window (Konsole via D-Bus, Kitty, Wezterm) instead of a new window
-- **Run Files** — Ctrl+Enter runs scripts (shebang), Cargo projects, and extension-mapped executables
+- **Run Files** — Ctrl+R runs scripts (shebang), Cargo projects, and extension-mapped executables
 - **Git Integration** — Commit history viewer, staged/unstaged diffs, branch info, ahead/behind tracking
 - **Remote SSH** — Browse remote filesystems via SSH, SFTP-style file operations, auto-import from `~/.ssh/config`
 - **System Monitor** — CPU/memory/disk/network stats with sparklines, process list with kill support
@@ -26,7 +26,8 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 |-----|-----------|-------------|
 | `Space` | Open file in editor (text) or do nothing (binary/image) | — |
 | `Enter` | Enter directory / open file with `xdg-open` | — |
-| `Ctrl+Enter` | — | Run current file |
+| `Ctrl+R` | — | Run current file |
+| `F2` | Rename | Find & Replace |
 | `Ctrl+D` | System monitor | Duplicate current line |
 | `Ctrl+E` | — | Switch to editor |
 
@@ -59,7 +60,8 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 | Key | Action |
 |-----|--------|
 | `Ctrl+E` | Editor view |
-| `Ctrl+Enter` | Run current file |
+| `Ctrl+R` | Run current file |
+| `F2` | Find & Replace |
 | `Alt+Up` / `Alt+Down` | Move current line up/down |
 | `Ctrl+D` | Duplicate current line |
 | `Ctrl+K` | Kill to end of line |
@@ -136,4 +138,4 @@ Settings are stored in `~/.config/tiles/settings.toml`. Toggle sidebar sections,
 
 ## License
 
-MIT License — see [LICENSE](LICENSE).
+AGPL-3.0 — see [LICENSE](LICENSE).

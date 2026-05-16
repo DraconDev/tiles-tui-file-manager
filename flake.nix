@@ -1,5 +1,5 @@
 {
-  description = "Tiles - High-performance modular data commander built on Terma";
+  description = "Tiles - Dual-pane TUI file manager built in Rust";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -27,7 +27,7 @@
 
         tiles = rustPlatform.buildRustPackage {
           pname = "tiles";
-          version = "14.0.0";
+          version = "14.32.0";
 
           src = ./.;
 
@@ -60,9 +60,9 @@
           doCheck = false;
 
           meta = with nixpkgs.lib; {
-            description = "High-performance modular data commander";
+            description = "Dual-pane TUI file manager built in Rust";
             homepage = "https://github.com/DraconDev/tiles";
-            license = licenses.mit;
+            license = licenses.agpl3Only;
             maintainers = [ ];
           };
         };

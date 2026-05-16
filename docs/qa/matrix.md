@@ -17,7 +17,7 @@ Status legend: `PASS` | `FAIL` | `FIXED` | `N/A`
 | ID | Flow | Environment | Steps | Expected | Result |
 |----|------|-------------|-------|----------|--------|
 | T1 | Konsole tab spawn | Konsole + NixOS | Right-click → Open Terminal Here | New tab in existing Konsole window | |
-| T2 | Konsole run script | Konsole + NixOS | Select .sh file, Ctrl+Enter | Script runs in new Konsole tab | |
+| T2 | Konsole run script | Konsole + NixOS | Select .sh file, Ctrl+R | Script runs in new Konsole tab | |
 | T3 | Kitty tab spawn | Kitty | Right-click → Open Terminal Here | New tab via `kitty @ launch` | |
 | T4 | Wezterm tab spawn | Wezterm | Right-click → Open Terminal Here | New tab via `wezterm cli spawn` | |
 | T5 | Generic fallback | gnome-terminal | Right-click → Open Terminal Here | `--tab` flag used | |
@@ -111,7 +111,7 @@ Manual interactive validation is still recommended for UI feel/regression checks
   - Editor context menu (right-click)
   - Unified clipboard (Copy/Cut/Paste round-trip)
   - Modified indicator on tabs
-  - Run file feature (Ctrl+Enter)
+  - Run file feature (Ctrl+R)
   - Editor footer bar
   - Save-As path sync
   - Auto-open new file after Ctrl+N
@@ -126,8 +126,8 @@ Manual interactive validation is still recommended for UI feel/regression checks
 | EC4 | Cut round-trip | Single pane | Select text, right-click Cut, right-click Paste | Text moves correctly | |
 | EC5 | Modified indicator | Single pane | Edit a file, check tab | Amber dot appears on tab | |
 | EC6 | Modified indicator | Split pane | Edit file in pane 1, check pane 2 tabs | Correct tab shows dot | |
-| EC7 | Run script | File browser | Select `.sh` file, Ctrl+Enter | Terminal opens and runs script | |
-| EC8 | Run Cargo | Pane editor | Open `src/main.rs`, Ctrl+Enter | Terminal opens with `cargo run` | |
+| EC7 | Run script | File browser | Select `.sh` file, Ctrl+R | Terminal opens and runs script | |
+| EC8 | Run Cargo | Pane editor | Open `src/main.rs`, Ctrl+R | Terminal opens with `cargo run` | |
 | EC9 | Editor footer | Pane editor | Open file, move cursor | Footer shows Ln X, Col Y, language, modified dot | |
 | EC10 | Save-As path | Pane editor | Save-As to new file | Tab and title update to new filename | |
 | EC11 | Auto-open new file | File browser | Navigate to dir, Ctrl+N "test.txt", Enter | New file opens in editor | |

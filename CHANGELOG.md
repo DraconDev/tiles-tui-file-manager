@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.32.0] - Keybinding Rework, Scroll Restore, UI Refinements
+
+### Changed
+- **Run shortcut** — `Ctrl+Enter` replaced with `Ctrl+R` in both Files and Editor views. `Alt+Enter` no longer triggers run (it shows Properties).
+- **Replace shortcut** — `F2` in Editor view now opens Find & Replace (was tied to Rename). F2 in Files view remains Rename.
+- **Modified/open indicators** — Row background highlight (`selection_bg()`) replaces `●` dot for modified editor tabs/footer and open sidebar files. No colored dots anywhere in the UI.
+- **License** — Changed from `"Dracon-1.1"` to `"AGPL-3.0-only"` in Cargo.toml to match actual LICENSE file.
+- **flake.nix** — Updated version, license (`agpl3Only`), and description to match Cargo.toml.
+
+### Added
+- **Scroll position restore** — `scroll_positions: HashMap<PathBuf, (usize, usize, usize, usize)>` on App preserves editor scroll/cursor across preview swaps and Esc dismissals. Cache updated on every interaction path (keyboard, mouse, Esc).
+- **`--version` / `-V` flag** — Prints version and exits.
+- **Version in Settings** — General tab shows current version.
+- **Drag cancellation** — `Moved` events (no button held) and `Esc` now properly cancel active drag.
+- **Input shield** — Soft shield drops `KeyCode::Char` events 100ms after hard shield expires, preventing stale key insertion.
+
+### Fixed
+- **Scroll reset on preview swap** — Pane previews kept alive on Esc; only full-screen overlay state destroyed. Scroll restored from cache on `PreviewRequested`.
+- **Self-save reload loop** — `FilesChangedOnDisk` checks `last_self_save` before adding previews to `needs_reload`. Time-window fallback (2s) for edge cases. Directory self-saves skipped.
+- **Stale `app` reference in mouse handler** — Removed `app.scroll_positions.insert()` from `handle_text_editor_mouse` and `handle_generic_editor_shortcuts` (no `app` in scope).
+
 ## [12.1.0] - Drag Cancel Fixes
 
 ### Fixed
@@ -128,7 +149,7 @@ All notable changes to this project will be documented in this file.
 ## [4.10.0] - Editor Enhancements
 
 ### Added
-- **Run Files** — Press `Ctrl+Enter` to run the current file. Supports:
+- **Run Files** — Press `Ctrl+Enter` to run the current file *(now Ctrl+R — see v14.32.0)*. Supports:
   - Scripts with shebang (`#!/bin/bash`, `#!/usr/bin/env python3`, etc.)
   - Rust projects (detects `Cargo.toml` by walking up the directory tree)
   - Extension-mapped executables: Python (`python3`), Node.js (`node`), Ruby (`ruby`), Perl (`perl`), PHP (`php`), Lua (`lua`), R (`Rscript`), Go (`go run`)
