@@ -334,7 +334,7 @@ pub fn handle_editor_mouse(
     me: &MouseEvent,
     app: &mut App,
     event_tx: &mpsc::Sender<AppEvent>,
-) (bool, Option<(PathBuf, (usize, usize, usize, usize))>)
+) -> bool {
     let (w, h) = app.terminal_size;
     let column = me.column;
     let row = me.row;
@@ -408,7 +408,7 @@ pub fn handle_editor_mouse(
                 }
 
                 let mut clipboard = app.editor_clipboard.clone();
-                let handled = handle_text_editor_mouse(
+                let (handled, scroll_opt) = handle_text_editor_mouse(
                     me,
                     editor,
                     &mut clipboard,
@@ -419,8 +419,10 @@ pub fn handle_editor_mouse(
                     editor_area,
                     event_tx,
                     &preview.path,
-                    app,
                 );
+                if let Some((path, pos)) = scroll_opt {
+                    app.scroll_positions.insert(path, pos);
+                }
                 app.editor_clipboard = clipboard;
                 return handled;
             }
@@ -498,7 +500,7 @@ pub fn handle_editor_mouse(
                             }
                         }
                         let mut clipboard = app.editor_clipboard.clone();
-                        let handled = handle_text_editor_mouse(
+                        let (handled, scroll_opt) = handle_text_editor_mouse(
                             me,
                             editor,
                             &mut clipboard,
@@ -509,8 +511,10 @@ pub fn handle_editor_mouse(
                             editor_area,
                             event_tx,
                             &preview.path,
-                            app,
                         );
+                        if let Some((path, pos)) = scroll_opt {
+                            app.scroll_positions.insert(path, pos);
+                        }
                         app.editor_clipboard = clipboard;
                         return handled;
                     }
