@@ -37,6 +37,26 @@ type TreeScanResult = (
 async fn main() -> color_eyre::Result<()> {
     color_eyre::install()?;
 
+    // Handle --version / -V early, before TUI init
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() >= 2 {
+        match args[1].as_str() {
+            "--version" | "-V" | "-v" => {
+                println!("tiles {}", env!("CARGO_PKG_VERSION"));
+                return Ok(());
+            }
+            "--help" | "-h" => {
+                println!("tiles {} — {}", env!("CARGO_PKG_VERSION"), env!("CARGO_PKG_DESCRIPTION"));
+                println!("Usage: tiles [options]");
+                println!("Options:");
+                println!("  --version, -V    Show version");
+                println!("  --help, -h        Show this help");
+                return Ok(());
+            }
+            _ => {}
+        }
+    }
+
     std::panic::set_hook(Box::new(|panic_info| {
         let msg = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
             s.to_string()
