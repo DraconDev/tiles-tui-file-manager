@@ -756,16 +756,6 @@ fn handle_generic_editor_shortcuts(
                 input.clear();
                 return true;
             }
-            KeyCode::Char('r') | KeyCode::Char('R') => {
-                *prev_mode = mode.clone();
-                *mode = AppMode::EditorReplace;
-                input.clear();
-                replace_buffer.clear();
-                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
-                    "Replace: Type term to FIND, then press Enter/Tab".to_string(),
-                ));
-                return true;
-            }
             _ => {}
         }
     }
