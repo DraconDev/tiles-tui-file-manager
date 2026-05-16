@@ -183,7 +183,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 editor_clone.wrap = app.is_split_mode;
                 f.render_widget(&editor_clone, editor_area);
 
-                // Footer bar: Ln X, Col Y | language | ● modified | ^S Save ^↵ Run
+                // Footer bar: Ln X, Col Y | language | ● modified | ^S Save ^R Run
                 let cursor_row = editor.cursor_row + 1;
                 let cursor_col = editor.cursor_col + 1;
                 let modified_indicator = if editor.modified { " ●" } else { "" };
@@ -3037,7 +3037,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                 crate::ui::theme::accent_secondary(),
             ));
             shortcuts.extend(HotkeyHint::render(
-                "^↵",
+                "^R",
                 "Run",
                 crate::ui::theme::accent_secondary(),
             ));
