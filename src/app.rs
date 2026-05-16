@@ -237,6 +237,7 @@ impl App {
             hovered_drop_target: None,
             last_action_msg: None,
             folder_selections: HashMap::new(),
+            scroll_positions: HashMap::new(),
             path_colors: HashMap::new(),
             confirm_delete: true,
             smart_date: true,
