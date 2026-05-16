@@ -767,6 +767,7 @@ fn handle_generic_editor_shortcuts(
     }
 
     if editor.handle_event(&dracon_terminal_engine::input::mapping::to_runtime_event(evt), area) {
+        app.scroll_positions.insert(path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
         if auto_save && editor.modified {
             let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(path.to_path_buf(), editor.get_content()));
             editor.modified = false;
