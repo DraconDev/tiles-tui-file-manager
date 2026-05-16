@@ -625,8 +625,8 @@ fn handle_text_editor_mouse(
         editor.modified = false;
     }
 
-    let scroll = (path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
-    (true, Some(scroll))
+    let scroll_info = (path.to_path_buf(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+    (false, Some(scroll_info))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -660,7 +660,7 @@ fn handle_generic_editor_shortcuts(
                 editor.move_line_down();
                 editor.modified = true;
                 editor.invalidate_from(editor.cursor_row.saturating_sub(1));
-                return true;
+                return (true, None);
             }
             _ => {}
         }
