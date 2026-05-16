@@ -129,7 +129,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     crate::ui::theme::accent_secondary(),
                 ));
                 header_left.extend(HotkeyHint::render(
-                    "^R/F2",
+                    "F2",
                     "Replace",
                     crate::ui::theme::accent_secondary(),
                 ));
@@ -887,7 +887,7 @@ fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
             "Editor",
             vec![
                 ("Ctrl + F", "Find (Live Filter)"),
-                ("Ctrl + R / F2", "Replace All"),
+                ("F2", "Replace All"),
                 ("Ctrl + G", "Go To Line"),
                 ("Ctrl + C", "Copy Line"),
                 ("Ctrl + X", "Cut Line / Delete Line"),
@@ -3027,7 +3027,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                 crate::ui::theme::accent_secondary(),
             ));
             shortcuts.extend(HotkeyHint::render(
-                "^R",
+                "F2",
                 "Replace",
                 crate::ui::theme::accent_secondary(),
             ));
@@ -4062,7 +4062,7 @@ fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
                 ("Ctrl + Delete", "Delete Word Forward"),
                 ("Ctrl + G", "Go to Line"),
                 ("Ctrl + F", "Find in File"),
-                ("Ctrl + R / F2", "Replace"),
+                ("F2", "Replace"),
                 ("Ctrl + Z / Ctrl + Y", "Undo / Redo"),
                 ("Ctrl + Shift + Z", "Redo Alternative"),
                 ("Double Click", "Select Word"),

@@ -761,19 +761,13 @@ fn handle_generic_editor_shortcuts(
     }
 
     if key.code == KeyCode::F(2) {
-        let name = path
-            .file_name()
-            .unwrap_or_else(|| std::ffi::OsStr::new("root"))
-            .to_string_lossy()
-            .to_string();
         *prev_mode = mode.clone();
-        *mode = AppMode::Rename;
-        input.set_value(name.clone());
-        if let Some(idx) = name.rfind('.') {
-            input.cursor_position = if idx > 0 { idx } else { name.len() };
-        } else {
-            input.cursor_position = name.len();
-        }
+        *mode = AppMode::EditorReplace;
+        input.clear();
+        replace_buffer.clear();
+        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+            "Replace: Type term to FIND, then press Enter/Tab".to_string(),
+        ));
         return true;
     }
 
