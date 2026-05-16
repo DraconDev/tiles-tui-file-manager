@@ -868,7 +868,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         let open_indicator = if !is_dir && open_files.contains(&path) {
             Some(Span::styled(
                 " ●",
-                Style::default().fg(crate::ui::theme::accent_primary()),
+                Style::default().fg(crate::ui::theme::accent_secondary()),
             ))
         } else {
             None

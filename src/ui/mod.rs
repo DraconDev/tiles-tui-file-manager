@@ -188,7 +188,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 let cursor_col = editor.cursor_col + 1;
                 let modified_indicator = if editor.modified { " ●" } else { "" };
                 let modified_color = if editor.modified {
-                    crate::ui::theme::accent_primary()
+                    crate::ui::theme::accent_secondary()
                 } else {
                     Color::DarkGray
                 };
@@ -1890,7 +1890,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 if is_modified {
                     spans.push(Span::styled(
                         " ●",
-                        Style::default().fg(crate::ui::theme::accent_primary()),
+                        Style::default().fg(crate::ui::theme::accent_secondary()),
                     ));
                 }
 
