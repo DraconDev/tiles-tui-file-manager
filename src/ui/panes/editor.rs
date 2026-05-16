@@ -150,7 +150,7 @@ pub fn draw_pane_editor(
                         Span::styled("^S ", Style::default().fg(Color::DarkGray)),
                         Span::styled("Save", Style::default().fg(crate::ui::theme::accent_secondary())),
                         Span::raw("  "),
-                        Span::styled("^↵ ", Style::default().fg(Color::DarkGray)),
+                        Span::styled("^R ", Style::default().fg(Color::DarkGray)),
                         Span::styled("Run", Style::default().fg(crate::ui::theme::accent_secondary())),
                     ]);
                     f.render_widget(Paragraph::new(footer_line).alignment(Alignment::Left), footer_area);
