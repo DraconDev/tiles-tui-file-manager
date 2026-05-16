@@ -438,7 +438,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             if let Some(ref preview) = fs.preview {
                                 if preview.path == path {
                                     if let Some(editor) = &preview.editor {
-                                        if !editor.modified {
+                                        if !editor.modified && !last_self_save.contains_key(&path) {
                                             needs_reload.push((i, path.clone()));
                                         }
                                     }
@@ -450,7 +450,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     if let Some(preview) = &app_guard.editor_state {
                         if preview.path == path {
                             if let Some(editor) = &preview.editor {
-                                if !editor.modified {
+                                if !editor.modified && !last_self_save.contains_key(&path) {
                                     needs_reload.push((app_guard.focused_pane_index, path.clone()));
                                 }
                             }
