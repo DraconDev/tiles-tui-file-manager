@@ -256,8 +256,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     return true;
                 }
 
-                // Alt+Enter: run the current file (full-screen mode)
-                if has_alt && key.code == KeyCode::Enter {
+                // Ctrl+R: run the current file (full-screen mode)
+                if has_control && (key.code == KeyCode::Char('r') || key.code == KeyCode::Char('R')) {
                     let remote = app
                         .panes
                         .get(app.focused_pane_index)

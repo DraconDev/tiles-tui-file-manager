@@ -655,41 +655,42 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
 
                 KeyCode::Enter => {
-                    if key.modifiers.contains(KeyModifiers::ALT) {
-                        // Alt+Enter: run the currently selected file (works in all terminals)
-                        if let Some(fs) = app.current_file_state() {
-                            if let Some(idx) = fs.selection.selected {
-                                if let Some(path) = fs.files.get(idx) {
-                                    if !path.is_dir() {
-                                        if let Some((work_dir, program, args)) =
-                                            crate::modules::files::get_run_command(path)
-                                        {
-                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
-                                                path: work_dir,
-                                                new_tab: true,
-                                                remote: fs.remote_session.clone(),
-                                                command: Some(format!("{} {}", program, args.join(" "))),
-                                            });
-                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                                "Running: {} {}",
-                                                program,
-                                                args.join(" ")
-                                            )));
-                                        } else {
-                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                                "No run command for: {}",
-                                                path.extension()
-                                                    .and_then(|e| e.to_str())
-                                                    .map(|e| format!(".{e}"))
-                                                    .unwrap_or_else(|| "unknown".to_string())
-                                            )));
-                                        }
+                    handle_enter_key(app, event_tx);
+                    return true;
+                }
+
+                KeyCode::Char('r') | KeyCode::Char('R') if has_control => {
+                    // Ctrl+R: run the currently selected file
+                    if let Some(fs) = app.current_file_state() {
+                        if let Some(idx) = fs.selection.selected {
+                            if let Some(path) = fs.files.get(idx) {
+                                if !path.is_dir() {
+                                    if let Some((work_dir, program, args)) =
+                                        crate::modules::files::get_run_command(path)
+                                    {
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
+                                            path: work_dir,
+                                            new_tab: true,
+                                            remote: fs.remote_session.clone(),
+                                            command: Some(format!("{} {}", program, args.join(" "))),
+                                        });
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                            "Running: {} {}",
+                                            program,
+                                            args.join(" ")
+                                        )));
+                                    } else {
+                                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
+                                            "No run command for: {}",
+                                            path.extension()
+                                                .and_then(|e| e.to_str())
+                                                .map(|e| format!(".{e}"))
+                                                .unwrap_or_else(|| "unknown".to_string())
+                                        )));
                                     }
                                 }
                             }
                         }
-                    } else {
-                        handle_enter_key(app, event_tx);
                     }
                     return true;
                 }
