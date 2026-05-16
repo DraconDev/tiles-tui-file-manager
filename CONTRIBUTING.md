@@ -1,152 +1,36 @@
-# Contributing to Tiles
+# Contributing to Dracon Projects
 
-## Prerequisites
+Thank you for your interest in contributing to Dracon projects.
 
-- Rust stable (1.75+)
-- Git
-- A terminal with TrueColor support
+## License
 
-## Setup
+All contributions are subject to the terms of the [AGPLv3 license](./LICENSE) and the [Contributor License Agreement (CLA)](./CLA.md).
 
-```bash
-git clone https://github.com/DraconDev/tiles
-cd tiles
-cargo build
-```
+**By submitting a Contribution (including via pull request, issue, comment, or any other method), you agree to be bound by both the AGPLv3 license and the CLA.**
 
-## Project Structure
+## Before You Submit a Pull Request
 
-```
-src/
-├── main.rs              # Entry point, event loop, tokio runtime, file watchers
-├── app.rs               # App state, debug logging, widget definitions
-├── event.rs             # Event type conversion helpers
-├── event_helpers.rs     # Navigation, clipboard, path resolution, history
-├── config.rs            # Settings persistence (TOML)
-├── icons.rs             # File type icon mapping
-├── state/
-│   └── mod.rs           # Data structures: FileState, AppMode, CurrentView, etc.
-├── modules/
-│   ├── files.rs         # Local filesystem: read_dir, metadata, search, git data
-│   ├── remote.rs        # SSH remote: directory listing, git data, file ops
-│   ├── system.rs        # System stats: CPU, memory, disk, processes
-│   └── terminal.rs      # Terminal spawning: Konsole D-Bus, Kitty, Wezterm, fallback
-├── events/
-│   ├── mod.rs           # Event routing: keyboard → handler dispatch
-│   ├── input.rs         # Input helpers (delete_word_backwards)
-│   ├── file_manager.rs  # File pane: navigation, selection, drag/drop, mouse
-│   ├── editor.rs        # Text editor: key handling, save, undo/redo
-│   ├── git.rs           # Git view: commit browsing, diff viewing
-│   ├── monitor.rs       # System monitor view key handling
-│   └── modals.rs        # Modals: settings, properties, path input, context menu
-└── ui/
-    ├── mod.rs           # Main draw function, all page renderers
-    ├── modals.rs        # Modal rendering (settings, properties, confirmations)
-    ├── theme.rs         # Color themes and styling
-    ├── layout.rs        # Layout calculations
-    ├── sparkline.rs     # Sparkline widget for system monitor
-    └── panes/
-        ├── mod.rs       # Pane layout utilities
-        ├── editor.rs    # Editor pane rendering
-        ├── breadcrumbs.rs # Breadcrumb bar with editable path
-        └── sidebar.rs   # Sidebar (favorites, projects, folder tree)
-```
+1. **Read the CLA** — Make sure you understand and agree to the [Contributor License Agreement](./CLA.md) before submitting any Contribution.
+2. **Fork and branch** — Create a feature branch from `main` for your changes.
+3. **Write clean, idiomatic code** — Follow the existing style and conventions of the project.
+4. **Test your changes** — Ensure all existing and new tests pass before opening a PR.
+5. **Describe your changes** — Include a clear PR description explaining *what* changed and *why*.
+6. **Keep scope small** — One PR per logical change. Don't bundle unrelated fixes.
 
-## Dependencies
+## Code of Conduct
 
-| Crate | Source | Purpose |
-|-------|--------|---------|
-| `dracon-terminal-engine` | crates.io | Terminal runtime, compositor, input parser, ratatui bridge, widgets |
-| `dracon-files` | crates.io | Filesystem operations, metadata, search |
-| `dracon-git` | crates.io | Git log, diff, status parsing |
-| `dracon-system-lib` | crates.io | System stats, SSH remote operations |
+All contributors are expected to behave professionally and respectfully. We do not tolerate harassment, discrimination, or hostile behavior in any form.
 
-## Running
+## Getting Help
 
-```bash
-# Debug mode
-cargo run
+If you have questions or need guidance, open an issue or reach out to the maintainers directly.
 
-# Release mode
-cargo run --release
+## Legal Notes
 
-# With debug logging (writes to debug.log)
-TILES_DEBUG_LOG=1 cargo run
-```
+- You must have the right to submit the work you are contributing.
+- All contributions will be licensed under AGPLv3.
+- By contributing, you grant the Project Owner the rights described in the CLA, including the right to relicense your contributions under commercial terms where applicable.
 
-## Testing
+---
 
-```bash
-# Run all tests
-cargo test
-
-# Run clippy linter
-cargo clippy
-
-# Both should pass with 0 warnings before submitting
-cargo test && cargo clippy
-```
-
-## Key Patterns
-
-### Event Flow
-1. Input thread reads stdin → parses via `dracon-terminal-engine::input::parser`
-2. Raw events sent through `mpsc` channel to main loop
-3. Main loop dispatches to handler functions in `events/`
-4. Handlers modify `App` state and may send `AppEvent` back through channel
-
-### Locking
-- `App` is wrapped in `Arc<Mutex<App>>`
-- Keep lock hold time minimal — clone data out, release lock, process
-- The main event loop holds the lock briefly per event
-- Spawned tasks (`tokio::spawn`) clone the Arc and acquire lock only to apply results
-
-### File Watching
-- Uses `notify-debouncer-mini` with 200ms debounce
-- `Recursive` mode — watches directory trees (expanded folders and their contents)
-- `sync_watches` has fast bail-out when paths haven't changed
-
-### Terminal Spawning
-- `modules/terminal.rs` handles all terminal spawning logic
-- Konsole: uses `dbus-send` with `org.kde.KDBusService.CommandLine` (not `qdbus`, which crashes on NixOS)
-- Kitty: `kitty @ launch --type=tab`
-- Wezterm: `wezterm cli spawn --new-window=false`
-- Generic fallback: per-terminal CLI flags (`--new-tab`, `--tab`, etc.)
-- `split_command()` shell-like parser for command strings
-
-### Editor Clipboard Pattern
-The editor uses a unified clipboard model:
-- **Internal buffer**: `app.editor_clipboard` — source of truth for Copy/Paste round-tripping
-- **System clipboard**: `dracon_terminal_engine::utils::set_clipboard_text()` — syncs to OS clipboard for external apps
-- **Paste order**: Internal buffer first, falls back to system clipboard
-- **Copy/Cut**: Write to both internal buffer and system clipboard
-- **Borrow safety**: When modifying `app.editor_clipboard` AND borrowing the editor, extract data first in a separate scope:
-  ```rust
-  // Correct: extract text first (borrow ends), then modify clipboard
-  let text = { if let Some(editor) = get_active_editor_mut(app) { editor.get_selected_text() } else { None } };
-  if let Some(text) = text {
-      app.editor_clipboard = Some(text.clone());
-      let _ = copy_text_to_clipboard(&text);
-  }
-  ```
-
-## Merging Code
-
-### Merge Safety Rules
-**Never merge orphaned or divergent branches blindly.** When merging branches that have diverged significantly:
-1. Review ALL changes before merging
-2. Prefer `git cherry-pick` for specific commits rather than merging divergent histories
-3. Always run `cargo build && cargo test` before pushing merged code
-4. If merge conflicts occur on binary files (Cargo.lock, Cargo.toml), prefer `--ours` to keep your current dependency versions
-5. If structural conflicts occur in source files, do NOT use `--theirs` blindly — this causes catastrophic API mismatches
-
-### Why Cherry-Pick Over Merge?
-Branches that have been developed in isolation often have incompatible API versions, missing modules, or deleted features. A merge that looks clean can produce dozens of compilation errors. Cherry-picking specific commits lets you apply only the changes you actually need.
-
-## Code Style
-
-- No comments in code unless specifically asked
-- Follow existing patterns in neighboring files
-- Use `crate::` imports for cross-module references
-- Prefer `PathBuf` over `String` for path handling
-- Use `ratatui::layout::Rect` for bounds tracking
+*For details on commercial licensing, see [COMMERCIAL-LICENSE.md](./COMMERCIAL-LICENSE.md).*
