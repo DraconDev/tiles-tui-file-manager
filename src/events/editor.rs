@@ -197,7 +197,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                 }
             }
             if did_handle {
-                return (true, None);
+                return true;
             }
         }
 
