@@ -227,14 +227,12 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                             &preview.path,
                             evt,
                             pane_area,
+                            app,
                         );
 
                         app.editor_clipboard = clipboard;
                         app.mode = mode;
                         app.previous_mode = prev_mode;
-                        if handled {
-                            app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
-                        }
                         return handled;
                     }
                 }
@@ -638,6 +636,7 @@ fn handle_generic_editor_shortcuts(
     path: &std::path::Path,
     evt: &Event,
     area: ratatui::layout::Rect,
+    app: &mut App,
 ) -> bool {
     let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
     let has_alt = key.modifiers.contains(KeyModifiers::ALT);
