@@ -134,7 +134,7 @@ pub fn draw_pane_editor(
                     let modified_indicator = if editor.modified { " ●" } else { "" };
                     let language = &editor.language;
                     let modified_color = if editor.modified {
-                        crate::ui::theme::accent_primary()
+                        crate::ui::theme::accent_secondary()
                     } else {
                         Color::DarkGray
                     };
