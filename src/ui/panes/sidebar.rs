@@ -817,6 +817,8 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         let cat = crate::modules::files::get_file_category(&path);
         let icon_mode = app.icon_mode;
 
+        let is_open = !is_dir && open_files.contains(&path);
+
         let style = if is_selected {
             Style::default()
                 .bg(selection_bg)
@@ -827,6 +829,13 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
                 .bg(crate::ui::theme::accent_secondary())
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD)
+        } else if is_open {
+            let fg = if app.semantic_coloring {
+                cat.cyber_color()
+            } else {
+                THEME.fg
+            };
+            Style::default().fg(fg).bg(selection_bg)
         } else {
             let fg = if app.semantic_coloring {
                 if is_dir {
@@ -865,23 +874,11 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         let icon_w = icon.width();
         let arrow_end_x = inner.x + 1 + (depth * 2) + marker_w as u16 + icon_w as u16;
 
-        let open_indicator = if !is_dir && open_files.contains(&path) {
-            Some(Span::styled(
-                " ●",
-                Style::default().fg(crate::ui::theme::accent_secondary()),
-            ))
-        } else {
-            None
-        };
-
         let line = Line::from({
             let mut spans = vec![
                 Span::raw(format!("{}{}", indent_str, marker)),
                 Span::raw(icon),
             ];
-            if let Some(ind) = open_indicator {
-                spans.push(ind);
-            }
             spans.push(Span::raw(name));
             spans
         });

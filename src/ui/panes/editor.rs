@@ -131,27 +131,25 @@ pub fn draw_pane_editor(
 
                     let cursor_row = editor.cursor_row + 1;
                     let cursor_col = editor.cursor_col + 1;
-                    let modified_indicator = if editor.modified { " ●" } else { "" };
                     let language = &editor.language;
-                    let modified_color = if editor.modified {
-                        crate::ui::theme::accent_secondary()
+                    let footer_bg = if editor.modified {
+                        crate::ui::theme::selection_bg()
                     } else {
-                        Color::DarkGray
+                        Color::Reset
                     };
 
                     let footer_line = Line::from(vec![
-                        Span::raw(" "),
-                        Span::styled(format!("Ln {}, Col {}", cursor_row, cursor_col), Style::default().fg(Color::DarkGray)),
-                        Span::raw(" | "),
-                        Span::styled(format!(" {} ", language), Style::default().fg(crate::ui::theme::accent_secondary())),
-                        Span::raw(" | "),
-                        Span::styled(modified_indicator, Style::default().fg(modified_color)),
-                        Span::raw("  "),
-                        Span::styled("^S ", Style::default().fg(Color::DarkGray)),
-                        Span::styled("Save", Style::default().fg(crate::ui::theme::accent_secondary())),
-                        Span::raw("  "),
-                        Span::styled("^R ", Style::default().fg(Color::DarkGray)),
-                        Span::styled("Run", Style::default().fg(crate::ui::theme::accent_secondary())),
+                        Span::styled(" ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled(format!("Ln {}, Col {}", cursor_row, cursor_col), Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled(" | ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled(format!(" {} ", language), Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
+                        Span::styled(" | ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled("  ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled("^S ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled("Save", Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
+                        Span::styled("  ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled("^R ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled("Run", Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
                     ]);
                     f.render_widget(Paragraph::new(footer_line).alignment(Alignment::Left), footer_area);
                     return;
