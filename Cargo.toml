@@ -1,6 +1,6 @@
 [package]
 name = "tiles-tui-file-manager"
-version = "14.0.0"
+version = "14.1.0"
 description = "A dual-pane TUI file manager built in Rust. Features include vim-style navigation, integrated text editor, git awareness, remote SSH browsing, and system monitoring."
 repository = "https://github.com/DraconDev/tiles"
 license = "MIT"
@@ -18,8 +18,6 @@ exclude = [
     "debug.log",
     "install.sh",
     "release.sh",
-    "flake.nix",
-    "flake.lock",
     "tiles.desktop",
     "tiles_icon.svg",
 ]
