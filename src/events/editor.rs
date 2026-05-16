@@ -75,6 +75,11 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
     // 1. View-Specific Esc Handling
     if key.code == KeyCode::Esc && matches!(app.mode, AppMode::Normal) {
         if let CurrentView::Editor = app.current_view {
+            if let Some(preview) = &app.editor_state {
+                if let Some(ref editor) = preview.editor {
+                    app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+                }
+            }
             app.save_current_view_prefs();
             app.current_view = CurrentView::Files;
             app.load_view_prefs(CurrentView::Files);
