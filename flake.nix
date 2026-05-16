@@ -27,7 +27,7 @@
 
         tiles = rustPlatform.buildRustPackage {
           pname = "tiles";
-          version = "0.1.14367";
+          version = "14.0.0";
 
           src = ./.;
 
@@ -62,7 +62,7 @@
           meta = with nixpkgs.lib; {
             description = "High-performance modular data commander";
             homepage = "https://github.com/DraconDev/tiles";
-            license = licenses.unfree;
+            license = licenses.mit;
             maintainers = [ ];
           };
         };
