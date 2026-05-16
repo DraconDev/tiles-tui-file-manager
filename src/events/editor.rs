@@ -256,7 +256,9 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                 }
 
                 // Ctrl+R: run the current file (full-screen mode)
-                if has_control && (key.code == KeyCode::Char('r') || key.code == KeyCode::Char('R')) {
+                if has_control && (key.code == KeyCode::Char('r') || key.code == KeyCode::Char('R'))
+                    && matches!(app.mode, AppMode::Normal)
+                {
                     let remote = app
                         .panes
                         .get(app.focused_pane_index)
