@@ -634,8 +634,7 @@ fn handle_generic_editor_shortcuts(
     path: &std::path::Path,
     evt: &Event,
     area: ratatui::layout::Rect,
-    app: &mut App,
-) -> bool {
+) -> (bool, Option<(PathBuf, (usize, usize, usize, usize))>) {
     let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
     let has_alt = key.modifiers.contains(KeyModifiers::ALT);
 
