@@ -417,11 +417,9 @@ pub fn handle_editor_mouse(
                     editor_area,
                     event_tx,
                     &preview.path,
+                    app,
                 );
                 app.editor_clipboard = clipboard;
-                if handled {
-                    app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
-                }
                 return handled;
             }
         }
@@ -509,10 +507,8 @@ pub fn handle_editor_mouse(
                             editor_area,
                             event_tx,
                             &preview.path,
+                            app,
                         );
-                        if handled {
-                            app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
-                        }
                         app.editor_clipboard = clipboard;
                         return handled;
                     }
@@ -536,6 +532,7 @@ fn handle_text_editor_mouse(
     area: ratatui::layout::Rect,
     event_tx: &mpsc::Sender<AppEvent>,
     path: &std::path::Path,
+    app: &mut App,
 ) -> bool {
     let to_runtime_mouse = |mouse: MouseEvent| -> dracon_terminal_engine::input::event::MouseEvent {
         match dracon_terminal_engine::input::mapping::to_runtime_event(&Event::Mouse(mouse)) {
