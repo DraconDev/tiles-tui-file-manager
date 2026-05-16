@@ -655,9 +655,8 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
 
                 KeyCode::Enter => {
-                    if key.modifiers.contains(KeyModifiers::CONTROL) {
-                        // Ctrl+Enter (Kitty/modifyOtherKeys): run the currently selected file
-                        // NOTE: Only works in terminals with Kitty keyboard protocol or modifyOtherKeys enabled
+                    if key.modifiers.contains(KeyModifiers::ALT) {
+                        // Alt+Enter: run the currently selected file (works in all terminals)
                         if let Some(fs) = app.current_file_state() {
                             if let Some(idx) = fs.selection.selected {
                                 if let Some(path) = fs.files.get(idx) {

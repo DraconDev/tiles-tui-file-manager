@@ -71,6 +71,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
     };
 
     let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
+    let has_alt = key.modifiers.contains(KeyModifiers::ALT);
 
     // 1. View-Specific Esc Handling
     if key.code == KeyCode::Esc && matches!(app.mode, AppMode::Normal) {
@@ -255,8 +256,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     return true;
                 }
 
-                // Ctrl+Enter: run the current file (full-screen mode)
-                if has_control && key.code == KeyCode::Enter {
+                // Alt+Enter: run the current file (full-screen mode)
+                if has_alt && key.code == KeyCode::Enter {
                     let remote = app
                         .panes
                         .get(app.focused_pane_index)
