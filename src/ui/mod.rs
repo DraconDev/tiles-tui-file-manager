@@ -4416,6 +4416,11 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
                 None => Style::default().fg(Color::Cyan),
             };
 
+            let key_display = if opt.read_only || opt.key.is_empty() {
+                "-".to_string()
+            } else {
+                opt.key.to_string()
+            };
             if is_selected {
                 style = style
                     .bg(crate::ui::theme::accent_primary())
@@ -4430,7 +4435,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             Row::new(vec![
                 Cell::from(format!("  {}", opt.label)).style(style),
                 Cell::from(format!(" [ {} ] ", opt.status)).style(status_style),
-                Cell::from(format!("({})", opt.key)).style(if is_selected {
+                Cell::from(format!("({})", key_display)).style(if is_selected {
                     style
                 } else {
                     Style::default().fg(Color::DarkGray)
