@@ -60,6 +60,8 @@ pub struct App {
     /// Stores per-folder state: (selected_index, scroll_offset).
     /// When re-entering a folder, both selection and scroll are restored.
     pub folder_selections: HashMap<PathBuf, (usize, usize)>,
+    /// Stores scroll position per file path to survive editor state destruction
+    pub scroll_positions: HashMap<PathBuf, (usize, usize, usize, usize)>,
     pub path_colors: HashMap<PathBuf, u8>,
     pub confirm_delete: bool,
     pub smart_date: bool,
