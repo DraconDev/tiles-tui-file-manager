@@ -4253,8 +4253,16 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         status: String,
         key: &'static str,
         bool_state: Option<bool>,
+        read_only: bool,
     }
     let options = [
+        GeneralOption {
+            label: "Version",
+            status: format!("{}  (press ? for help)", env!("CARGO_PKG_VERSION")),
+            key: "",
+            bool_state: None,
+            read_only: true,
+        },
         GeneralOption {
             label: "Show Hidden Files",
             status: if app.default_show_hidden {
@@ -4264,6 +4272,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "h",
             bool_state: Some(app.default_show_hidden),
+            read_only: false,
         },
         GeneralOption {
             label: "Confirm Delete",
@@ -4274,6 +4283,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             },
             key: "d",
             bool_state: Some(app.confirm_delete),
+            read_only: false,
         },
         GeneralOption {
             label: "Smart Date Formatting",
