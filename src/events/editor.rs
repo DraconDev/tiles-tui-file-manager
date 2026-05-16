@@ -496,7 +496,7 @@ pub fn handle_editor_mouse(
                                     actions,
                                     selected_index: Some(0),
                                 };
-return (true, None);
+return true;
                             }
                         }
                         let mut clipboard = app.editor_clipboard.clone();
@@ -654,7 +654,7 @@ fn handle_generic_editor_shortcuts(
                 editor.move_line_up();
                 editor.modified = true;
                 editor.invalidate_from(editor.cursor_row);
-                return true;
+                return (true, None);
             }
             KeyCode::Down => {
                 editor.move_line_down();
