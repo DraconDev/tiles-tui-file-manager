@@ -1850,10 +1850,13 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 let base_style = if is_active_tab {
                     if is_focused_pane {
                         Style::default()
+                            .bg(if is_modified { crate::ui::theme::selection_bg() } else { Color::Reset })
                             .fg(crate::ui::theme::accent_primary())
                             .add_modifier(Modifier::BOLD)
                     } else {
-                        Style::default().fg(crate::ui::theme::accent_primary())
+                        Style::default()
+                            .bg(if is_modified { crate::ui::theme::selection_bg() } else { Color::Reset })
+                            .fg(crate::ui::theme::accent_primary())
                     }
                 } else {
                     Style::default().fg(Color::DarkGray)
@@ -1887,12 +1890,6 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 };
 
                 let mut spans = vec![Span::styled(format!(" {}", base_name), base_style)];
-                if is_modified {
-                    spans.push(Span::styled(
-                        " ●",
-                        Style::default().fg(crate::ui::theme::accent_secondary()),
-                    ));
-                }
 
                 // Show git branch in Editor view tabs too
                 if let Some(branch) = &tab.git_branch {
