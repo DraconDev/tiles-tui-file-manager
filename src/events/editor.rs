@@ -495,6 +495,9 @@ pub fn handle_editor_mouse(
                             event_tx,
                             &preview.path,
                         );
+                        if handled {
+                            app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+                        }
                         app.editor_clipboard = clipboard;
                         return handled;
                     }
