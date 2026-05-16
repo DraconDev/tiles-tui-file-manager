@@ -300,26 +300,29 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                 let mut mode = app.mode.clone();
                 let mut prev_mode = app.previous_mode.clone();
 
-let handled = handle_generic_editor_shortcuts(
-                            key,
-                            editor,
-                            &mut clipboard,
-                            auto_save,
-                            &mut mode,
-                            &mut prev_mode,
-                            &mut app.input,
-                            &mut app.replace_buffer,
-                            event_tx,
-                            &preview.path,
-                            evt,
-                            editor_area,
-                            app,
-                        );
+                let (handled, scroll_opt) = handle_generic_editor_shortcuts(
+                    key,
+                    editor,
+                    &mut clipboard,
+                    auto_save,
+                    &mut mode,
+                    &mut prev_mode,
+                    &mut app.input,
+                    &mut app.replace_buffer,
+                    event_tx,
+                    &preview.path,
+                    evt,
+                    editor_area,
+                );
 
-                        app.editor_clipboard = clipboard;
-                        app.mode = mode;
-                        app.previous_mode = prev_mode;
-                        return handled;
+                if let Some((path, pos)) = scroll_opt {
+                    app.scroll_positions.insert(path, pos);
+                }
+
+                app.editor_clipboard = clipboard;
+                app.mode = mode;
+                app.previous_mode = prev_mode;
+                return handled;
             }
         }
     }
@@ -531,8 +534,7 @@ fn handle_text_editor_mouse(
     area: ratatui::layout::Rect,
     event_tx: &mpsc::Sender<AppEvent>,
     path: &std::path::Path,
-    app: &mut App,
-) -> bool {
+) -> (bool, Option<(PathBuf, (usize, usize, usize, usize))>) {
     let to_runtime_mouse = |mouse: MouseEvent| -> dracon_terminal_engine::input::event::MouseEvent {
         match dracon_terminal_engine::input::mapping::to_runtime_event(&Event::Mouse(mouse)) {
             dracon_terminal_engine::input::event::Event::Mouse(m) => m,
