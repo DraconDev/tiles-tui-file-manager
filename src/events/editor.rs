@@ -85,7 +85,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             app.load_view_prefs(CurrentView::Files);
             app.editor_state = None;
             app.set_input_shield(50);
-            return (true, None);
+            return true;
         }
     }
 
@@ -358,7 +358,7 @@ pub fn handle_editor_mouse(
                     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
                         if column >= w.saturating_sub(10) {
                             app.running = false;
-                            return (true, None);
+                            return true;
                         } else if column >= w.saturating_sub(20) {
                             app.mode = AppMode::Normal;
                             app.editor_state = None;
