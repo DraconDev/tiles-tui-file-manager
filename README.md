@@ -136,4 +136,4 @@ Settings are stored in `~/.config/tiles/settings.toml`. Toggle sidebar sections,
 
 ## License
 
-Dracon License v1.1 — see [LICENSE](LICENSE).
+MIT License — see [LICENSE](LICENSE).
