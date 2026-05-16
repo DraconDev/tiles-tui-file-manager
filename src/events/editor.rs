@@ -64,7 +64,7 @@ fn commit_editor_area(app: &App) -> ratatui::layout::Rect {
     content_block.inner(layout[4])
 }
 
-pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) (bool, Option<(PathBuf, (usize, usize, usize, usize))>)
+pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     let key = match evt {
         Event::Key(k) => k,
         _ => return false,
