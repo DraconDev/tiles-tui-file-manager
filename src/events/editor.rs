@@ -79,11 +79,6 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             app.current_view = CurrentView::Files;
             app.load_view_prefs(CurrentView::Files);
             app.editor_state = None;
-            for pane in &mut app.panes {
-                for fs in &mut pane.tabs {
-                    fs.preview = None;
-                }
-            }
             app.set_input_shield(50);
             return true;
         }
