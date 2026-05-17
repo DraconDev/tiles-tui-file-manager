@@ -123,12 +123,8 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 // Tree is always rooted at home (Dolphin-style) regardless of current pane path
                 let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
 
-                // Compute cache key: hash of expanded folders + show_hidden state
-                let show_hidden = app.panes
-                    .get(app.focused_pane_index)
-                    .and_then(|p| p.current_state())
-                    .map(|fs| fs.nav.show_hidden)
-                    .unwrap_or(app.settings.default_show_hidden);
+                // Compute cache key: hash of expanded folders
+                // Note: sidebar always hides dotfiles, so show_hidden is not part of the key
                 let cache_key = {
                     use std::collections::hash_map::DefaultHasher;
                     use std::hash::{Hash, Hasher};
@@ -138,7 +134,6 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     for path in paths {
                         path.hash(&mut hasher);
                     }
-                    show_hidden.hash(&mut hasher);
                     hasher.finish()
                 };
 
@@ -939,14 +934,8 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
             let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
             let name = p.file_name().unwrap_or_default().to_string_lossy();
 
-            // Use focused pane's show_hidden state so sidebar matches file pane
-            let show_hidden = app.panes
-                .get(app.focused_pane_index)
-                .and_then(|p| p.current_state())
-                .map(|fs| fs.nav.show_hidden)
-                .unwrap_or(app.settings.default_show_hidden);
-
-            if !show_hidden && name.starts_with('.') {
+            // Sidebar never shows dotfiles — only the file pane toggles hidden visibility
+            if name.starts_with('.') {
                 continue;
             }
 
