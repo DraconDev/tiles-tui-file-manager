@@ -74,7 +74,7 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
         Span::styled("Send", Style::default().fg(theme::accent_secondary())),
         Span::raw("    "),
         Span::styled(" Esc ", Style::default().fg(theme::muted())),
-        Span::styled("Cancel", Style::default().fg(theme::danger())),
+        Span::styled("Cancel", Style::default().fg(theme::accent_primary())),
     ]));
 
     f.render_widget(Paragraph::new(text), inner);
