@@ -13,25 +13,25 @@ pub fn handle_monitor_events(
         if key.modifiers.is_empty() {
             match key.code {
                 KeyCode::Char('1') => {
-                    app.monitor_subview = MonitorSubview::Overview;
+                    app.monitor.monitor_subview = MonitorSubview::Overview;
                     return true;
                 }
                 KeyCode::Char('2') => {
-                    app.monitor_subview = MonitorSubview::Processes;
+                    app.monitor.monitor_subview = MonitorSubview::Processes;
                     return true;
                 }
                 KeyCode::Char('3') => {
-                    app.monitor_subview = MonitorSubview::Applications;
+                    app.monitor.monitor_subview = MonitorSubview::Applications;
                     return true;
                 }
-                KeyCode::Up => match app.monitor_subview {
+                KeyCode::Up => match app.monitor.monitor_subview {
                     MonitorSubview::Overview => {
-                        app.overview_scroll_offset = app.overview_scroll_offset.saturating_sub(1);
+                        app.monitor.overview_scroll_offset = app.monitor.overview_scroll_offset.saturating_sub(1);
                         return true;
                     }
                     MonitorSubview::Processes | MonitorSubview::Applications => {
-                        app.process_table_state.select(
-                            app.process_table_state
+                        app.monitor.process_table_state.select(
+                            app.monitor.process_table_state
                                 .selected()
                                 .map(|s| s.saturating_sub(1))
                                 .or(Some(0)),
@@ -39,15 +39,15 @@ pub fn handle_monitor_events(
                         return true;
                     }
                 },
-                KeyCode::Down => match app.monitor_subview {
+                KeyCode::Down => match app.monitor.monitor_subview {
                     MonitorSubview::Overview => {
-                        app.overview_scroll_offset = app.overview_scroll_offset.saturating_add(1).min(1000);
+                        app.monitor.overview_scroll_offset = app.monitor.overview_scroll_offset.saturating_add(1).min(1000);
                         return true;
                     }
                     MonitorSubview::Processes | MonitorSubview::Applications => {
                         let len = app.system_state.processes.len();
-                        app.process_table_state.select(
-                            app.process_table_state
+                        app.monitor.process_table_state.select(
+                            app.monitor.process_table_state
                                 .selected()
                                 .map(|s| (s + 1).min(len.saturating_sub(1)))
                                 .or(Some(0)),
@@ -56,13 +56,13 @@ pub fn handle_monitor_events(
                     }
                 },
                 KeyCode::Char('k') => {
-                    if matches!(app.monitor_subview, MonitorSubview::Processes | MonitorSubview::Applications)
-                        && app.process_table_state.selected().is_some()
+                    if matches!(app.monitor.monitor_subview, MonitorSubview::Processes | MonitorSubview::Applications)
+                        && app.monitor.process_table_state.selected().is_some()
                     {
                         if let Some(p) = app.system_state.processes.get(
-                            app.process_table_state.selected().unwrap(),
+                            app.monitor.process_table_state.selected().unwrap(),
                         ) {
-                            app.mode = crate::app::AppMode::SignalSelect {
+                            app.core.mode = crate::app::AppMode::SignalSelect {
                                 pid: p.pid,
                                 name: p.name.clone(),
                                 selected_index: 1,
@@ -72,8 +72,8 @@ pub fn handle_monitor_events(
                     }
                 }
                 KeyCode::Char('t') => {
-                    if matches!(app.monitor_subview, MonitorSubview::Processes | MonitorSubview::Applications) {
-                        app.process_tree_view = !app.process_tree_view;
+                    if matches!(app.monitor.monitor_subview, MonitorSubview::Processes | MonitorSubview::Applications) {
+                        app.monitor.process_tree_view = !app.monitor.process_tree_view;
                         return true;
                     }
                 }
@@ -90,12 +90,12 @@ pub fn handle_monitor_mouse(
     _event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
     if let dracon_terminal_engine::contracts::MouseEventKind::Down(_) = me.kind {
-        for (rect, sv) in &app.monitor_subview_bounds {
+        for (rect, sv) in &app.monitor.monitor_subview_bounds {
             if rect.contains(ratatui::layout::Position {
                 x: me.column,
                 y: me.row,
             }) {
-                app.monitor_subview = *sv;
+                app.monitor.monitor_subview = *sv;
                 return true;
             }
         }

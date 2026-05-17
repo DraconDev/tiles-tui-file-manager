@@ -12,7 +12,7 @@ use crate::app::{App, AppMode, CurrentView, DropTarget};
 use dracon_terminal_engine::utils::{get_visual_width, squarify, truncate_to_width};
 
 pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx: usize) {
-    let _is_focused = pane_idx == app.focused_pane_index && !app.sidebar_focus;
+    let _is_focused = pane_idx == app.focused_pane_index && !app.sidebar.sidebar_focus;
 
     let active_tab_idx = app.panes.get(pane_idx).map(|p| p.active_tab_index).unwrap_or(0);
     let (mut path, mut search_filter) = {
@@ -23,7 +23,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
         }
     };
 
-    if app.current_view == CurrentView::Editor {
+    if app.core.current_view == CurrentView::Editor {
         if let Some(pane) = app.panes.get(pane_idx) {
             if let Some(fs) = pane.current_state() {
                 if let Some(preview) = &fs.preview {
@@ -37,24 +37,24 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
     let mut search_color = Color::Cyan;
 
     // IDE Mode Search Integration
-    if app.current_view == CurrentView::Editor && search_filter.is_empty() {
+    if app.core.current_view == CurrentView::Editor && search_filter.is_empty() {
         if let Some(pane) = app.panes.get(pane_idx) {
             if let Some(fs) = pane.current_state() {
                 if let Some(preview) = &fs.preview {
                     if let Some(editor) = &preview.editor {
                         if _is_focused {
-                            match app.mode {
+                            match app.core.mode {
                                 AppMode::EditorSearch => {
-                                    search_filter = app.input.value.clone();
+                                    search_filter = app.core.input.value.clone();
                                     search_label = "";
                                 }
                                 AppMode::EditorGoToLine => {
-                                    search_filter = app.input.value.clone();
+                                    search_filter = app.core.input.value.clone();
                                     search_label = "LINE: ";
                                 }
                                 AppMode::EditorReplace => {
-                                    search_filter = app.input.value.clone();
-                                    search_label = if app.replace_buffer.is_empty() {
+                                    search_filter = app.core.input.value.clone();
+                                    search_label = if app.editor_global.replace_buffer.is_empty() {
                                         ""
                                     } else {
                                         "WITH: "
@@ -86,8 +86,8 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
     }
 
     if _is_focused
-        && app.current_view == CurrentView::Files
-        && matches!(app.mode, AppMode::PathInput)
+        && app.core.current_view == CurrentView::Files
+        && matches!(app.core.mode, AppMode::PathInput)
     {
         // Render editable path input styled like the breadcrumb bar
         use ratatui::text::Line;
@@ -95,7 +95,7 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
         let input_widget = Paragraph::new(Line::from(vec![
             Span::styled(" ", Style::default().fg(Color::Rgb(100, 100, 110))),
             Span::styled(
-                app.input.value.as_str(),
+                app.core.input.value.as_str(),
                 Style::default()
                     .fg(crate::ui::theme::accent_secondary())
                     .add_modifier(Modifier::BOLD),
@@ -106,8 +106,7 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
         // Render cursor
         let cursor_x = area.x
             + 1
-            + app
-                .input
+            + app.core.input
                 .cursor_position
                 .min(area.width.saturating_sub(2) as usize) as u16;
         if cursor_x < area.x + area.width {
@@ -164,8 +163,8 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
             if is_last {
                 style = style.add_modifier(Modifier::BOLD);
             }
-            if matches!(&app.hovered_drop_target, Some(DropTarget::Folder(p)) if p == &s_path)
-                && app.is_dragging
+            if matches!(&app.drag.hovered_drop_target, Some(DropTarget::Folder(p)) if p == &s_path)
+                && app.drag.is_dragging
             {
                 style = style
                     .bg(crate::ui::theme::accent_secondary())

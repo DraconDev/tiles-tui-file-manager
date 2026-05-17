@@ -23,10 +23,10 @@ pub fn handle_event(
     panes_needing_refresh: &mut HashSet<usize>,
 ) -> bool {
     // 1. Input Shield / Cooldown
-    if let Some(until) = app.input_shield_until {
+    if let Some(until) = app.output.input_shield_until {
         if std::time::Instant::now() < until {
             if let Event::Resize(w, h) = evt {
-                app.terminal_size = (w, h);
+                app.core.terminal_size = (w, h);
             }
             return true;
         }
@@ -34,12 +34,12 @@ pub fn handle_event(
 
     // 2. Global Resize
     if let Event::Resize(w, h) = evt {
-        app.terminal_size = (w, h);
+        app.core.terminal_size = (w, h);
         return true;
     }
 
     // 3. Mode-specific logic (Modals, Overlays)
-    if !matches!(app.mode, AppMode::Normal)
+    if !matches!(app.core.mode, AppMode::Normal)
         && modals::handle_modal_events(&evt, app, &event_tx) {
             return true;
         }
@@ -55,14 +55,14 @@ pub fn handle_event(
 
             // Global Quit
             if (key.code == KeyCode::Char('q') || key.code == KeyCode::Char('Q')) && has_control {
-                app.running = false;
+                app.core.running = false;
                 return true;
             }
 
             // Plain Escape should exit non-files views.
             if key.code == KeyCode::Esc
                 && matches!(
-                    app.current_view,
+                    app.core.current_view,
                     CurrentView::Git
                         | CurrentView::Processes
                         | CurrentView::Editor
@@ -81,16 +81,16 @@ pub fn handle_event(
             // --- GLOBAL OVERRIDES (High Priority) ---
             if has_control {
                 if key.code == KeyCode::Char('d') || key.code == KeyCode::Char('D') {
-                    app.current_view = if app.current_view == CurrentView::Debug {
+                    app.core.current_view = if app.core.current_view == CurrentView::Debug {
                         CurrentView::Files
                     } else {
                         CurrentView::Debug
                     };
-                    app.mode = AppMode::Normal;
+                    app.core.mode = AppMode::Normal;
                     return true;
                 }
                 match key.code {
-                    KeyCode::Char('m') | KeyCode::Char('M') if app.current_view == CurrentView::Editor => {
+                    KeyCode::Char('m') | KeyCode::Char('M') if app.core.current_view == CurrentView::Editor => {
                         app.show_main_stage = !app.show_main_stage;
                         return true;
                     }
@@ -104,7 +104,7 @@ pub fn handle_event(
                     }
                     KeyCode::Char('b') | KeyCode::Char('B') => {
                         if key.modifiers.contains(KeyModifiers::CONTROL) {
-                            app.show_sidebar = !app.show_sidebar;
+                            app.sidebar.show_sidebar = !app.sidebar.show_sidebar;
                             app.save_current_view_prefs();
                         }
                         return true;
@@ -121,7 +121,7 @@ pub fn handle_event(
                 }
             }
 
-            match app.current_view {
+            match app.core.current_view {
                 CurrentView::Editor => {
                     if editor::handle_editor_events(&evt, app, &event_tx) {
                         return true;
@@ -156,11 +156,11 @@ pub fn handle_event(
             return handle_general_mouse(me, app, &event_tx, panes_needing_refresh);
         }
         Event::Paste(text) => {
-            if let AppMode::Editor = app.mode {
-                if let Some(preview) = &mut app.editor_state {
+            if let AppMode::Editor = app.core.mode {
+                if let Some(preview) = &mut app.editor_global.editor_state {
                     if let Some(editor) = &mut preview.editor {
                         editor.insert_string(text);
-                        if app.auto_save {
+                        if app.settings.auto_save {
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(
                                 preview.path.clone(),
                                 editor.get_content(),
@@ -179,19 +179,19 @@ pub fn handle_event(
 }
 
 fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
-    if app.is_dragging {
-        app.is_dragging = false;
-        app.drag_source = None;
-        app.drag_start_pos = None;
-        app.hovered_drop_target = None;
+    if app.drag.is_dragging {
+        app.drag.is_dragging = false;
+        app.drag.drag_source = None;
+        app.drag.drag_start_pos = None;
+        app.drag.hovered_drop_target = None;
         return true;
     }
-    if app.current_view == CurrentView::Commit {
-        app.current_view = CurrentView::Git;
-        app.mode = AppMode::Normal;
-        app.editor_state = None;
-        app.sidebar_focus = false;
-        app.input.clear();
+    if app.core.current_view == CurrentView::Commit {
+        app.core.current_view = CurrentView::Git;
+        app.core.mode = AppMode::Normal;
+        app.editor_global.editor_state = None;
+        app.sidebar.sidebar_focus = false;
+        app.core.input.clear();
         app.set_input_shield(60);
         for pane in &mut app.panes {
             for fs in &mut pane.tabs {
@@ -206,8 +206,8 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
         return true;
     }
 
-    if matches!(app.mode, AppMode::Normal) {
-        match app.current_view {
+    if matches!(app.core.mode, AppMode::Normal) {
+        match app.core.current_view {
             CurrentView::Git | CurrentView::Processes | CurrentView::Debug => {
                 if let Some(fs) = app.current_file_state_mut() {
                     fs.search_filter.clear();
@@ -224,15 +224,15 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                         }
                     }
                 }
-                app.mode = AppMode::Normal;
-                app.input.clear();
-                app.current_view = CurrentView::Files;
+                app.core.mode = AppMode::Normal;
+                app.core.input.clear();
+                app.core.current_view = CurrentView::Files;
                 app.set_input_shield(150);
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                 return true;
             }
             CurrentView::Editor => {
-                if let Some(preview) = &app.editor_state {
+                if let Some(preview) = &app.editor_global.editor_state {
                     if let Some(editor) = &preview.editor {
                         if editor.modified {
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(
@@ -259,10 +259,10 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                 }
 
                 app.save_current_view_prefs();
-                app.current_view = CurrentView::Files;
+                app.core.current_view = CurrentView::Files;
                 app.load_view_prefs(CurrentView::Files);
-                app.editor_state = None;
-                app.input.clear(); // Ensure no stray inputs remain
+                app.editor_global.editor_state = None;
+                app.core.input.clear(); // Ensure no stray inputs remain
                                    // Increase shield to catch escape sequences
                 app.set_input_shield(150);
                 // Force a refresh to prevent "path display" glitches or empty lists
@@ -272,9 +272,9 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
             _ => {}
         }
     } else {
-        app.mode = AppMode::Normal;
-        app.input.clear();
-        app.rename_selected = false;
+        app.core.mode = AppMode::Normal;
+        app.core.input.clear();
+        app.selection.rename_selected = false;
         return true;
     }
     false
@@ -288,21 +288,21 @@ fn handle_general_mouse(
 ) -> bool {
     let column = me.column;
     let row = me.row;
-    let (w, _) = app.terminal_size;
-    app.mouse_pos = (column, row);
+    let (w, _) = app.core.terminal_size;
+    app.core.mouse_pos = (column, row);
 
     if let MouseEventKind::Down(MouseButton::Middle) = me.kind {}
 
     // 1. Sidebar Resizing
-    if app.is_resizing_sidebar {
+    if app.mouse.is_resizing_sidebar {
         match me.kind {
             MouseEventKind::Drag(_) | MouseEventKind::Moved => {
-                app.sidebar_width_percent = (column as f32 / w as f32 * 100.0) as u16;
-                app.sidebar_width_percent = app.sidebar_width_percent.clamp(5, 50);
+                app.sidebar.sidebar_width_percent = (column as f32 / w as f32 * 100.0) as u16;
+                app.sidebar.sidebar_width_percent = app.sidebar.sidebar_width_percent.clamp(5, 50);
                 return true;
             }
             MouseEventKind::Up(_) => {
-                app.is_resizing_sidebar = false;
+                app.mouse.is_resizing_sidebar = false;
                 crate::config::save_state_quiet(app);
                 return true;
             }
@@ -311,21 +311,20 @@ fn handle_general_mouse(
     }
 
     // 2. View-specific routing
-    if app.current_view == CurrentView::Processes {
+    if app.core.current_view == CurrentView::Processes {
         return monitor::handle_monitor_mouse(me, app, event_tx);
     }
-    if app.current_view == CurrentView::Git {
+    if app.core.current_view == CurrentView::Git {
         return git::handle_git_mouse(me, app, event_tx);
     }
-    if app.current_view == CurrentView::Commit {
+    if app.core.current_view == CurrentView::Commit {
         return editor::handle_editor_mouse(me, app, event_tx);
     }
 
     // 3. Header Icons (Row 0)
     if row == 0 {
         if let MouseEventKind::Down(_) = me.kind {
-            if let Some((_, action_id)) = app
-                .header_icon_bounds
+            if let Some((_, action_id)) = app.layout.header_icon_bounds
                 .iter()
                 .find(|(r, _)| column >= r.x && column < r.x + r.width && row == r.y)
             {
@@ -347,8 +346,8 @@ fn handle_general_mouse(
                     }
                     "burger" => {
                         app.save_current_view_prefs();
-                        app.mode = AppMode::Settings;
-                        app.settings_scroll = 0;
+                        app.core.mode = AppMode::Settings;
+                        app.settings.settings_scroll = 0;
                     }
                     "monitor" => {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::SystemMonitor);
@@ -361,25 +360,23 @@ fn handle_general_mouse(
                     }
                     _ => {}
                 }
-                app.sidebar_focus = false;
+                app.sidebar.sidebar_focus = false;
                 return true;
             }
         }
         // Hover
-        if let Some((_, id)) = app
-            .header_icon_bounds
+        if let Some((_, id)) = app.layout.header_icon_bounds
             .iter()
             .find(|(r, _)| r.contains(ratatui::layout::Position { x: column, y: row }))
         {
-            app.hovered_header_icon = Some(id.clone());
+            app.layout.hovered_header_icon = Some(id.clone());
         } else {
-            app.hovered_header_icon = None;
+            app.layout.hovered_header_icon = None;
         }
     }
 
     // 4. Tabs
-    if let Some((_, p_idx, t_idx)) = app
-        .tab_bounds
+    if let Some((_, p_idx, t_idx)) = app.layout.tab_bounds
         .iter()
         .find(|(r, _, _)| r.contains(ratatui::layout::Position { x: column, y: row }))
         .cloned()
@@ -391,7 +388,7 @@ fn handle_general_mouse(
                     app.focused_pane_index = p_idx;
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(p_idx));
                 }
-                app.sidebar_focus = false;
+                app.sidebar.sidebar_focus = false;
                 return true;
             }
             MouseEventKind::Down(MouseButton::Right) => {
@@ -412,7 +409,7 @@ fn handle_general_mouse(
 
     // 5. Sidebar vs Panes
     let sw = app.sidebar_width();
-    if app.current_view == CurrentView::Editor
+    if app.core.current_view == CurrentView::Editor
         && matches!(me.kind, MouseEventKind::Down(_))
         && column >= sw
     {
@@ -426,8 +423,8 @@ fn handle_general_mouse(
                     pane_idx = pane_count - 1;
                 }
                 app.focused_pane_index = pane_idx;
-                app.sidebar_focus = false;
-                app.mouse_click_pos = (column, row);
+                app.sidebar.sidebar_focus = false;
+                app.mouse.mouse_click_pos = (column, row);
             }
         }
     }
@@ -435,7 +432,7 @@ fn handle_general_mouse(
     // Check this BEFORE routing to sidebar mouse, so clicks on the sidebar's right border start resize
     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
         if column >= sw.saturating_sub(1) && column <= sw {
-            app.is_resizing_sidebar = true;
+            app.mouse.is_resizing_sidebar = true;
             return true;
         }
     }
@@ -445,14 +442,14 @@ fn handle_general_mouse(
     } else {
 
         let is_editor_mode = matches!(
-            app.mode,
+            app.core.mode,
             AppMode::Editor
                 | AppMode::Viewer
                 | AppMode::EditorSearch
                 | AppMode::EditorReplace
                 | AppMode::EditorGoToLine
         );
-        if app.current_view == CurrentView::Editor || is_editor_mode {
+        if app.core.current_view == CurrentView::Editor || is_editor_mode {
             editor::handle_editor_mouse(me, app, event_tx)
         } else {
             file_manager::handle_file_mouse(me, app, event_tx, panes_needing_refresh)
@@ -470,20 +467,20 @@ fn handle_sidebar_mouse(
 
     match me.kind {
         MouseEventKind::Down(button) => {
-            app.is_dragging = false;
-            app.hovered_drop_target = None;
-            app.drag_source = None;
-            app.sidebar_focus = true;
+            app.drag.is_dragging = false;
+            app.drag.hovered_drop_target = None;
+            app.drag.drag_source = None;
+            app.sidebar.sidebar_focus = true;
             if button == MouseButton::Left {
-                app.drag_start_pos = Some((column, row));
+                app.drag.drag_start_pos = Some((column, row));
             }
-            if let Some(b) = app.sidebar_bounds.iter().find(|b| b.y == row).cloned() {
-                app.sidebar_index = b.index;
+            if let Some(b) = app.sidebar.sidebar_bounds.iter().find(|b| b.y == row).cloned() {
+                app.sidebar.sidebar_index = b.index;
                 match button {
                     MouseButton::Left => match &b.target {
                         SidebarTarget::Header(name) if name == "REMOTES" => {
-                            app.mode = AppMode::ImportServers;
-                            app.input.clear();
+                            app.core.mode = AppMode::ImportServers;
+                            app.core.input.clear();
                         }
                         SidebarTarget::Favorite(path) => {
                             if let Some(fs) = app.current_file_state_mut() {
@@ -500,14 +497,14 @@ fn handle_sidebar_mouse(
                             if path.is_dir() {
                                 let path_ref = path.clone();
                                 let clicked_arrow = b.arrow_end_x > 0 && column < b.arrow_end_x;
-                                let was_expanded = app.tree_expanded_folders.contains(&path_ref);
+                                let was_expanded = app.sidebar.tree_expanded_folders.contains(&path_ref);
 
                                 if clicked_arrow {
                                     // Arrow click: toggle expand/collapse only
                                     if was_expanded {
-                                        app.tree_expanded_folders.remove(&path_ref);
+                                        app.sidebar.tree_expanded_folders.remove(&path_ref);
                                     } else {
-                                        app.tree_expanded_folders.insert(path_ref.clone());
+                                        app.sidebar.tree_expanded_folders.insert(path_ref.clone());
                                     }
                                 } else {
                                     // Name click: navigate to folder (and expand if collapsed)
@@ -522,10 +519,10 @@ fn handle_sidebar_mouse(
                                         ));
                                     }
                                     if !was_expanded {
-                                        app.tree_expanded_folders.insert(path_ref.clone());
+                                        app.sidebar.tree_expanded_folders.insert(path_ref.clone());
                                     }
                                 }
-                                app.sidebar_focus = false;
+                                app.sidebar.sidebar_focus = false;
                             } else {
                                 let target_pane = {
                                     let pane_count = app.panes.len();
@@ -534,12 +531,12 @@ fn handle_sidebar_mouse(
                                     } else {
                                         let sidebar_w = app.sidebar_width();
                                         let content_w =
-                                            app.terminal_size.0.saturating_sub(sidebar_w);
+                                            app.core.terminal_size.0.saturating_sub(sidebar_w);
                                         let pane_w = content_w / pane_count as u16;
                                         if pane_w == 0 {
                                             app.focused_pane_index.min(pane_count - 1)
-                                        } else if app.mouse_click_pos.0 >= sidebar_w {
-                                            ((app.mouse_click_pos.0.saturating_sub(sidebar_w)
+                                        } else if app.mouse.mouse_click_pos.0 >= sidebar_w {
+                                            ((app.mouse.mouse_click_pos.0.saturating_sub(sidebar_w)
                                                 / pane_w)
                                                 as usize)
                                                 .min(pane_count - 1)
@@ -553,7 +550,7 @@ fn handle_sidebar_mouse(
                                     target_pane,
                                     path.clone(),
                                 ));
-                                app.sidebar_focus = false;
+                                app.sidebar.sidebar_focus = false;
                             }
                         }
                         _ => {}
@@ -563,7 +560,7 @@ fn handle_sidebar_mouse(
                             let target = ContextMenuTarget::SidebarFavorite(path.clone());
                             let actions =
                                 crate::event_helpers::get_context_menu_actions(&target, app);
-                            app.mode = AppMode::ContextMenu {
+                            app.core.mode = AppMode::ContextMenu {
                                 x: column,
                                 y: row,
                                 target,
@@ -576,24 +573,24 @@ fn handle_sidebar_mouse(
                 }
                 if let SidebarTarget::Favorite(ref p) = b.target {
                     if button == MouseButton::Left {
-                        app.drag_source = Some(p.clone());
+                        app.drag.drag_source = Some(p.clone());
                     }
                 }
             }
             true
         }
         MouseEventKind::Up(_) => {
-            if let Some(target) = app.hovered_drop_target.take() {
-                if let Some(source_path) = app.drag_source.take() {
+            if let Some(target) = app.drag.hovered_drop_target.take() {
+                if let Some(source_path) = app.drag.drag_source.take() {
                     match target {
                         DropTarget::ReorderFavorite(target_idx) => {
                             // Find source index
                             if let Some(source_idx) =
-                                app.starred.iter().position(|p| p == &source_path)
+                                app.nav.starred.iter().position(|p| p == &source_path)
                             {
                                 // Bounds check to prevent crash
-                                if target_idx < app.starred.len() && source_idx != target_idx {
-                                    let item = app.starred.remove(source_idx);
+                                if target_idx < app.nav.starred.len() && source_idx != target_idx {
+                                    let item = app.nav.starred.remove(source_idx);
                                     // After removal, if source was before target, indices shift down
                                     // Fix: When dragging DOWN (source < target), we want to insert at target_idx
                                     // because items shifted. That places it AFTER the original target item (which moved up).
@@ -602,8 +599,8 @@ fn handle_sidebar_mouse(
                                     let insert_idx = target_idx;
 
                                     // Ensure we don't exceed bounds
-                                    let insert_idx = insert_idx.min(app.starred.len());
-                                    app.starred.insert(insert_idx, item);
+                                    let insert_idx = insert_idx.min(app.nav.starred.len());
+                                    app.nav.starred.insert(insert_idx, item);
                                     crate::config::save_state_quiet(app);
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 }
@@ -611,8 +608,8 @@ fn handle_sidebar_mouse(
                         }
                         DropTarget::Favorites => {
                             // Add folder to favorites when dropped on FAVORITES header
-                            if source_path.is_dir() && !app.starred.contains(&source_path) {
-                                app.starred.push(source_path.clone());
+                            if source_path.is_dir() && !app.nav.starred.contains(&source_path) {
+                                app.nav.starred.push(source_path.clone());
                                 crate::config::save_state_quiet(app);
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -628,51 +625,51 @@ fn handle_sidebar_mouse(
                     }
                 }
             }
-            app.is_dragging = false;
-            app.drag_source = None;
-            app.hovered_drop_target = None;
+            app.drag.is_dragging = false;
+            app.drag.drag_source = None;
+            app.drag.hovered_drop_target = None;
             true
         }
         MouseEventKind::Drag(_) => {
-            if let Some((sx, sy)) = app.drag_start_pos {
+            if let Some((sx, sy)) = app.drag.drag_start_pos {
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
                 if dist_sq >= 4.0
-                    && !app.is_dragging {
-                        app.is_dragging = true;
+                    && !app.drag.is_dragging {
+                        app.drag.is_dragging = true;
                     }
             }
             // Update hovered drop target during drag for visual feedback
-            if app.is_dragging {
-                let prev_target = app.hovered_drop_target.clone();
-                app.hovered_drop_target = None;
+            if app.drag.is_dragging {
+                let prev_target = app.drag.hovered_drop_target.clone();
+                app.drag.hovered_drop_target = None;
                 // Find what sidebar item we're hovering over
-                for bound in &app.sidebar_bounds {
+                for bound in &app.sidebar.sidebar_bounds {
                     if bound.y == row {
                         match &bound.target {
                             SidebarTarget::Favorite(ref _path) => {
                                 // Find the favorite index from its position in starred
-                                if let Some(fav_idx) = app.starred.iter().position(|p| {
+                                if let Some(fav_idx) = app.nav.starred.iter().position(|p| {
                                     if let SidebarTarget::Favorite(ref bp) = bound.target {
                                         p == bp
                                     } else {
                                         false
                                     }
                                 }) {
-                                    app.hovered_drop_target =
+                                    app.drag.hovered_drop_target =
                                         Some(DropTarget::ReorderFavorite(fav_idx));
                                 }
                             }
                             SidebarTarget::Header(name) if name == "FAVORITES" => {
                                 // Dragging over FAVORITES header - allow adding to favorites
-                                app.hovered_drop_target = Some(DropTarget::Favorites);
+                                app.drag.hovered_drop_target = Some(DropTarget::Favorites);
                             }
                             _ => {}
                         }
                         break;
                     }
                 }
-                if app.hovered_drop_target != prev_target {
+                if app.drag.hovered_drop_target != prev_target {
                     return true;
                 }
                 // Keep repainting while dragging to move drag ghost with cursor.
@@ -681,25 +678,25 @@ fn handle_sidebar_mouse(
             false
         }
         MouseEventKind::ScrollUp => {
-            if app.sidebar_scroll_offset > 0 {
-                app.sidebar_scroll_offset -= 1;
+            if app.sidebar.sidebar_scroll_offset > 0 {
+                app.sidebar.sidebar_scroll_offset -= 1;
                 return true;
             }
             false
         }
         MouseEventKind::ScrollDown => {
             // Allow scrolling even beyond current bounds; draw_sidebar will clamp
-            app.sidebar_scroll_offset += 1;
+            app.sidebar.sidebar_scroll_offset += 1;
             true
         }
         MouseEventKind::Moved => {
-            if app.is_dragging {
-                app.is_dragging = false;
-                app.drag_source = None;
-                app.drag_start_pos = None;
-                app.hovered_drop_target = None;
+            if app.drag.is_dragging {
+                app.drag.is_dragging = false;
+                app.drag.drag_source = None;
+                app.drag.drag_start_pos = None;
+                app.drag.hovered_drop_target = None;
             }
-            app.drag_start_pos = None;
+            app.drag.drag_start_pos = None;
             true
         }
         _ => false,
@@ -726,8 +723,8 @@ mod tests {
     fn esc_exits_git_view_to_files() {
         let (tx, mut rx) = mpsc::channel(8);
         let mut app = test_app();
-        app.current_view = CurrentView::Git;
-        app.mode = AppMode::Normal;
+        app.core.current_view = CurrentView::Git;
+        app.core.mode = AppMode::Normal;
 
         let mut refresh = HashSet::new();
         let changed = handle_event(
@@ -742,7 +739,7 @@ mod tests {
         );
 
         assert!(changed);
-        assert_eq!(app.current_view, CurrentView::Files);
+        assert_eq!(app.core.current_view, CurrentView::Files);
         match rx.try_recv() {
             Ok(AppEvent::RefreshFiles(_)) => {}
             other => panic!("expected RefreshFiles event, got {:?}", other),
@@ -753,14 +750,14 @@ mod tests {
     fn editor_sidebar_open_targets_last_clicked_pane() {
         let (tx, mut rx) = mpsc::channel(8);
         let mut app = test_app();
-        app.current_view = CurrentView::Editor;
-        app.mode = AppMode::Normal;
-        app.terminal_size = (120, 40);
+        app.core.current_view = CurrentView::Editor;
+        app.core.mode = AppMode::Normal;
+        app.core.terminal_size = (120, 40);
         app.apply_split_mode(true);
         app.focused_pane_index = 0;
-        app.mouse_click_pos = (90, 10); // right pane side
+        app.mouse.mouse_click_pos = (90, 10); // right pane side
         let test_path = PathBuf::from("/tmp/tiles_editor_sidebar_target.txt");
-        app.sidebar_bounds.push(SidebarBounds {
+        app.sidebar.sidebar_bounds.push(SidebarBounds {
             y: 5,
             index: 0,
             target: SidebarTarget::Project(test_path.clone()),
@@ -794,8 +791,8 @@ mod tests {
     fn esc_from_commit_view_returns_to_git() {
         let (tx, _rx) = mpsc::channel(8);
         let mut app = test_app();
-        app.current_view = CurrentView::Commit;
-        app.mode = AppMode::Viewer;
+        app.core.current_view = CurrentView::Commit;
+        app.core.mode = AppMode::Viewer;
 
         let mut refresh = HashSet::new();
         let changed = handle_event(
@@ -810,21 +807,21 @@ mod tests {
         );
 
         assert!(changed);
-        assert_eq!(app.current_view, CurrentView::Git);
+        assert_eq!(app.core.current_view, CurrentView::Git);
     }
 
     #[test]
     fn sidebar_project_directory_click_opens_folder() {
         let (tx, mut rx) = mpsc::channel(8);
         let mut app = test_app();
-        app.current_view = CurrentView::Files;
-        app.mode = AppMode::Normal;
-        app.terminal_size = (120, 40);
-        app.show_sidebar = true;
-        app.sidebar_focus = true;
+        app.core.current_view = CurrentView::Files;
+        app.core.mode = AppMode::Normal;
+        app.core.terminal_size = (120, 40);
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_focus = true;
         let project_dir = std::env::temp_dir().join("tiles-sidebar-open-test");
         let _ = std::fs::create_dir_all(&project_dir);
-        app.sidebar_bounds.push(SidebarBounds {
+        app.sidebar.sidebar_bounds.push(SidebarBounds {
             y: 4,
             index: 0,
             target: SidebarTarget::Project(project_dir.clone()),

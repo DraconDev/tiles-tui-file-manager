@@ -126,7 +126,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         }
         
         // Also watch expanded folders in sidebar for editor view
-        for path in &app.expanded_folders {
+        for path in &app.layout.expanded_folders {
             current_paths.insert(path.clone());
         }
 
@@ -259,9 +259,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     // Initial State Setup
     let pane_count = {
         let mut app_guard = app.lock();
-        app_guard.running = true;
+        app_guard.core.running = true;
         if let Ok(size) = terminal.size() {
-            app_guard.terminal_size = (size.width, size.height);
+            app_guard.core.terminal_size = (size.width, size.height);
         }
         app_guard.panes.len()
     };
@@ -322,7 +322,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
                     let remote_opt = {
                         let app_guard = app.lock();
-                        app_guard.remote_bookmarks.get(bookmark_idx).cloned()
+                        app_guard.remote.remote_bookmarks.get(bookmark_idx).cloned()
                     };
                     if let Some(remote) = remote_opt {
                         let tx = event_tx.clone();
@@ -374,8 +374,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let t_lock = std::time::Instant::now();
                         let mut app_guard = app.lock();
                         crate::app::log_debug(&format!("RefreshFiles lock took {:?}", t_lock.elapsed()));
-                        let path = app_guard
-                            .panes
+                        let path = app_guard.panes
                             .get(pane_idx)
                             .and_then(|pane| pane.current_state())
                             .map(|fs| fs.current_path.clone());
@@ -447,7 +446,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         }
                     }
 
-                    if let Some(preview) = &app_guard.editor_state {
+                    if let Some(preview) = &app_guard.editor_global.editor_state {
                         if preview.path == path {
                             if let Some(editor) = &preview.editor {
                                 if !editor.modified && !last_self_save.contains_key(&path) {
@@ -581,9 +580,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         {
                             let mut app_guard = app_clone.lock();
 
-                            let old_scroll = app_guard.scroll_positions.get(&path).copied();
+                            let old_scroll = app_guard.editor_global.scroll_positions.get(&path).copied();
 
-                            let fallback_scroll = app_guard.editor_state.as_ref()
+                            let fallback_scroll = app_guard.editor_global.editor_state.as_ref()
                                 .and_then(|p| p.editor.as_ref())
                                 .filter(|e| !e.modified)
                                 .map(|e| (e.scroll_row, e.scroll_col, e.cursor_row, e.cursor_col))
@@ -618,11 +617,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let is_git_url = path_str.starts_with("git://")
                                 || path_str.starts_with("git-diff://");
                             if is_git_url
-                                || app_guard.current_view == CurrentView::Editor
-                                || app_guard.current_view == CurrentView::Commit
+                                || app_guard.core.current_view == CurrentView::Editor
+                                || app_guard.core.current_view == CurrentView::Commit
                             {
-                                app_guard.editor_state = Some(preview);
-                                app_guard.sidebar_focus = false;
+                                app_guard.editor_global.editor_state = Some(preview);
+                                app_guard.sidebar.sidebar_focus = false;
                             }
                         }
                         let _ = tx.send(AppEvent::Tick).await;
@@ -631,8 +630,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::SaveFile(path, content) => {
                     let remote_for_save = {
                         let app_guard = app.lock();
-                        app_guard
-                            .panes
+                        app_guard.panes
                             .iter()
                             .find_map(|pane| {
                                 let fs = pane.current_state()?;
@@ -645,7 +643,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             })
                             .or_else(|| {
                                 let fs = app_guard.current_file_state()?;
-                                app_guard.editor_state.as_ref()?;
+                                app_guard.editor_global.editor_state.as_ref()?;
                                 fs.remote_session.clone()
                             })
                     };
@@ -670,7 +668,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 }
                             }
                             let mut app_guard = app.lock();
-                            if let Some(ref mut preview) = app_guard.editor_state {
+                            if let Some(ref mut preview) = app_guard.editor_global.editor_state {
                                 if preview.path == path {
                                     preview.last_saved = Some(std::time::Instant::now());
                                     if let Some(ref mut editor) = preview.editor {
@@ -708,7 +706,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let mut app_guard = app.lock();
                             let msg = format!("Failed to save file: {}", e);
                             crate::app::log_debug(&msg);
-                            app_guard.last_action_msg = Some((msg, std::time::Instant::now()));
+                            app_guard.output.last_action_msg = Some((msg, std::time::Instant::now()));
                         }
                     }
                     needs_draw = true;
@@ -716,8 +714,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::CreateFile(path) => {
                     let remote = {
                         let app_guard = app.lock();
-                        app_guard
-                            .current_file_state()
+                        app_guard.current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
@@ -736,8 +733,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::CreateFolder(path) => {
                     let remote = {
                         let app_guard = app.lock();
-                        app_guard
-                            .current_file_state()
+                        app_guard.current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
@@ -756,8 +752,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::Rename(old, new) => {
                     let remote = {
                         let app_guard = app.lock();
-                        app_guard
-                            .current_file_state()
+                        app_guard.current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let rename_res = if let Some(remote) = &remote {
@@ -769,10 +764,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         Ok(_) => {
                             let mut app_guard = app.lock();
                             // Undo should move the path back to its original location.
-                            app_guard
-                                .undo_stack
+                            app_guard.undo_state.undo_stack
                                 .push(crate::app::UndoAction::Move(new.clone(), old.clone()));
-                            app_guard.redo_stack.clear();
+                            app_guard.undo_state.redo_stack.clear();
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app_guard.focused_pane_index));
                         }
                         Err(e) => {
@@ -783,8 +777,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::Delete(path) => {
                     let remote = {
                         let app_guard = app.lock();
-                        app_guard
-                            .current_file_state()
+                        app_guard.current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
@@ -807,8 +800,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::TrashFile(path) => {
                     let remote = {
                         let app_guard = app.lock();
-                        app_guard
-                            .current_file_state()
+                        app_guard.current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     let focused = app.lock().focused_pane_index;
@@ -848,8 +840,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     tokio::spawn(async move {
                         let remote = {
                             let app_guard = app_clone.lock();
-                            app_guard
-                                .current_file_state()
+                            app_guard.current_file_state()
                                 .and_then(|fs| fs.remote_session.clone())
                         };
 
@@ -861,10 +852,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
                         if copied {
                             let mut app_guard = app_clone.lock();
-                            app_guard
-                                .undo_stack
+                            app_guard.undo_state.undo_stack
                                 .push(crate::app::UndoAction::Copy(src.clone(), dest.clone()));
-                            app_guard.redo_stack.clear();
+                            app_guard.undo_state.redo_stack.clear();
                         }
 
                         // Finish task
@@ -893,8 +883,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::Symlink(src, dest) => {
                     let remote = {
                         let app_guard = app.lock();
-                        app_guard
-                            .current_file_state()
+                        app_guard.current_file_state()
                             .and_then(|fs| fs.remote_session.clone())
                     };
                     if remote.is_some() {
@@ -1001,11 +990,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::TaskProgress(id, progress, status) => {
                     let mut app_guard = app.lock();
-                    if let Some(task) = app_guard.background_tasks.iter_mut().find(|t| t.id == id) {
+                    if let Some(task) = app_guard.output.background_tasks.iter_mut().find(|t| t.id == id) {
                         task.progress = progress;
                         task.status = status;
                     } else {
-                        app_guard.background_tasks.push(crate::app::BackgroundTask {
+                        app_guard.output.background_tasks.push(crate::app::BackgroundTask {
                             id,
                             name: "Task".to_string(),
                             status,
@@ -1016,7 +1005,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::TaskFinished(id) => {
                     let mut app_guard = app.lock();
-                    app_guard.background_tasks.retain(|t| t.id != id);
+                    app_guard.output.background_tasks.retain(|t| t.id != id);
                     needs_draw = true;
                 }
                 AppEvent::GlobalSearchUpdated(pane_idx, files, _meta) => {
@@ -1031,13 +1020,13 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::SystemMonitor => {
                     let mut app_guard = app.lock();
                     app_guard.save_current_view_prefs();
-                    app_guard.current_view = CurrentView::Processes;
+                    app_guard.core.current_view = CurrentView::Processes;
                     needs_draw = true;
                 }
                 AppEvent::GitHistory => {
                     let mut app_guard = app.lock();
                     app_guard.save_current_view_prefs();
-                    app_guard.current_view = CurrentView::Git;
+                    app_guard.core.current_view = CurrentView::Git;
                     let pane_idx = app_guard.focused_pane_index;
                     needs_draw = true;
                     drop(app_guard);
@@ -1046,12 +1035,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::Editor => {
                     let mut app_guard = app.lock();
                     app_guard.save_current_view_prefs();
-                    app_guard.current_view = CurrentView::Editor;
+                    app_guard.core.current_view = CurrentView::Editor;
                     app_guard.load_view_prefs(CurrentView::Editor);
                     app_guard.apply_split_mode(false);
                     let pane_idx = app_guard.focused_pane_index;
-                    let dir_path = app_guard
-                        .panes
+                    let dir_path = app_guard.panes
                         .get(pane_idx)
                         .and_then(|p| p.current_state())
                         .map(|fs| fs.current_path.clone());
@@ -1063,14 +1051,14 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::StatusMsg(msg) => {
                     let mut app_guard = app.lock();
-                    app_guard.last_action_msg = Some((msg, std::time::Instant::now()));
+                    app_guard.output.last_action_msg = Some((msg, std::time::Instant::now()));
                     needs_draw = true;
                 }
                 AppEvent::AddToFavorites(path) => {
                     let mut app_guard = app.lock();
                     // Only add if path exists and not already in favorites
-                    if path.exists() && !app_guard.starred.contains(&path) {
-                        app_guard.starred.push(path.clone());
+                    if path.exists() && !app_guard.nav.starred.contains(&path) {
+                        app_guard.nav.starred.push(path.clone());
                         // Wrap save_state to prevent crash if serialization fails
                         crate::config::save_state_quiet(&app_guard);
                         let display_name = path
@@ -1098,8 +1086,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             fs.remote_session.clone(),
                             fs.search_filter.clone(),
                             fs.search_generation,
-                            matches!(app_guard.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
-                            app_guard.expanded_folders.clone(),
+                            matches!(app_guard.core.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
+                            app_guard.layout.expanded_folders.clone(),
                             fs.sort_column,
                             fs.sort_ascending,
                         )
@@ -1391,8 +1379,7 @@ paired = new_paired;
                     let _git_cache_ttl = Duration::from_secs(GIT_CACHE_TTL_SECONDS);
                     let should_fetch = {
                         let app_guard = app_for_git.lock();
-                        app_guard
-                            .panes
+                        app_guard.panes
                             .get(pane_idx)
                             .and_then(|pane| pane.current_state())
                             .map(|fs| {
@@ -1420,8 +1407,7 @@ paired = new_paired;
 
                     let path_still_active = {
                         let app_guard = app_for_git.lock();
-                        app_guard
-                            .panes
+                        app_guard.panes
                             .get(pane_idx)
                             .and_then(|pane| pane.current_state())
                             .map(|fs| fs.current_path == git_path)
@@ -1434,8 +1420,7 @@ paired = new_paired;
                     // Get the active tab index for this pane so git data lands in the right place
                     let active_tab_idx = {
                         let app_guard = app_for_git.lock();
-                        app_guard
-                            .panes
+                        app_guard.panes
                             .get(pane_idx)
                             .map(|p| p.active_tab_index)
                             .unwrap_or(0)
@@ -1483,7 +1468,7 @@ paired = new_paired;
 
         if needs_draw {
             let mut app_guard = app.lock();
-            if !app_guard.running {
+            if !app_guard.core.running {
                 shutdown.store(true, Ordering::Release);
                 break;
             }
@@ -1516,8 +1501,8 @@ fn setup_app(
                 pane.tabs.push(crate::state::FileState::new(
                     cwd,
                     None,
-                    app.default_show_hidden,
-                    app.single_columns.clone(),
+                    app.settings.default_show_hidden,
+                    app.layout.single_columns.clone(),
                     crate::state::FileColumn::Name,
                     true,
                 ));
@@ -1560,35 +1545,35 @@ fn setup_app(
 
         // Merge favorites (Defaults + Loaded)
         let mut loaded_starred = state.starred;
-        for def in app.starred {
+        for def in app.nav.starred {
             if !loaded_starred.contains(&def) {
                 loaded_starred.push(def);
             }
         }
-        app.starred = loaded_starred;
+        app.nav.starred = loaded_starred;
 
-        app.remote_bookmarks = state.remote_bookmarks;
-        crate::config::merge_ssh_config_bookmarks(&mut app.remote_bookmarks);
-        app.path_colors = state.path_colors;
-        app.external_tools = state.external_tools;
+        app.remote.remote_bookmarks = state.remote_bookmarks;
+        crate::config::merge_ssh_config_bookmarks(&mut app.remote.remote_bookmarks);
+        app.selection.path_colors = state.path_colors;
+        app.remote.external_tools = state.external_tools;
         if let Some(mode) = state.icon_mode {
-            app.icon_mode = mode;
+            app.core.icon_mode = mode;
         }
-        app.is_split_mode = state.is_split_mode;
-        app.semantic_coloring = state.semantic_coloring;
-        app.show_sidebar = state.show_sidebar;
-        app.sidebar_folders = state.sidebar_folders;
-        app.sidebar_favorites = state.sidebar_favorites;
-        app.sidebar_recent = state.sidebar_recent;
-        app.sidebar_storage = state.sidebar_storage;
-        app.sidebar_remotes = state.sidebar_remotes;
-        app.show_side_panel = state.show_side_panel;
-        app.default_show_hidden = state.default_show_hidden;
-        app.auto_save = state.auto_save;
+        app.core.is_split_mode = state.is_split_mode;
+        app.settings.semantic_coloring = state.semantic_coloring;
+        app.sidebar.show_sidebar = state.show_sidebar;
+        app.sidebar.sidebar_folders = state.sidebar_folders;
+        app.sidebar.sidebar_favorites = state.sidebar_favorites;
+        app.sidebar.sidebar_recent = state.sidebar_recent;
+        app.sidebar.sidebar_storage = state.sidebar_storage;
+        app.sidebar.sidebar_remotes = state.sidebar_remotes;
+        app.sidebar.show_side_panel = state.show_side_panel;
+        app.settings.default_show_hidden = state.default_show_hidden;
+        app.settings.auto_save = state.auto_save;
         app.preview_max_mb = state.preview_max_mb.max(1);
-        app.expanded_folders = state.expanded_folders.into_iter().collect();
-        app.sidebar_width_percent = state.sidebar_width_percent;
-        app.recent_folders = state.recent_folders;
+        app.layout.expanded_folders = state.expanded_folders.into_iter().collect();
+        app.sidebar.sidebar_width_percent = state.sidebar_width_percent;
+        app.nav.recent_folders = state.recent_folders;
         if let Some(theme_style) = state.theme_style {
             // Migration: users who had the previous default "Cool" should move to
             // the new default "Legacy Red", while preserving custom themes.

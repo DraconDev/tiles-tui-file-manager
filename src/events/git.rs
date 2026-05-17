@@ -5,10 +5,10 @@ use dracon_terminal_engine::contracts::{InputEvent as Event, KeyCode, MouseButto
 use tokio::sync::mpsc;
 
 pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
-    if let CurrentView::Git = app.current_view {
+    if let CurrentView::Git = app.core.current_view {
         if let Event::Key(key) = evt {
             match key.code {
-                KeyCode::Enter if matches!(app.mode, AppMode::Normal) => {
+                KeyCode::Enter if matches!(app.core.mode, AppMode::Normal) => {
                     let mut open_preview: Option<std::path::PathBuf> = None;
                     let mut open_commit_view = false;
                     if let Some(fs) = app.current_file_state() {
@@ -36,9 +36,9 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                     if let Some(path) = open_preview {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(app.focused_pane_index, path));
                         if open_commit_view {
-                            app.current_view = CurrentView::Commit;
-                            app.mode = AppMode::Viewer;
-                            app.sidebar_focus = false;
+                            app.core.current_view = CurrentView::Commit;
+                            app.core.mode = AppMode::Viewer;
+                            app.sidebar.sidebar_focus = false;
                         }
                         return true;
                     }
@@ -60,7 +60,7 @@ pub fn handle_git_mouse(
         if let Some(fs) = app.current_file_state() {
             let pending = &fs.git_pending;
             let pending_len = pending.len();
-            let inner_h = app.terminal_size.1.saturating_sub(2);
+            let inner_h = app.core.terminal_size.1.saturating_sub(2);
             let top_h = if pending_len == 0 {
                 0
             } else {
@@ -89,9 +89,9 @@ pub fn handle_git_mouse(
                                     app.focused_pane_index,
                                     std::path::PathBuf::from(format!("git://{}", commit.hash)),
                                 ));
-                                app.current_view = CurrentView::Commit;
-                                app.mode = AppMode::Viewer;
-                                app.sidebar_focus = false;
+                                app.core.current_view = CurrentView::Commit;
+                                app.core.mode = AppMode::Viewer;
+                                app.sidebar.sidebar_focus = false;
                             }
                             return true;
                         }

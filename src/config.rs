@@ -123,33 +123,33 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
             panes
         },
         focused_pane_index: app.focused_pane_index,
-        starred: app.starred.clone(),
-        remote_bookmarks: app.remote_bookmarks.clone(),
-        current_view: app.current_view.clone(),
-        window_size: if app.terminal_size.0 > 0 && app.terminal_size.1 > 0 {
-            Some(app.terminal_size)
+        starred: app.nav.starred.clone(),
+        remote_bookmarks: app.remote.remote_bookmarks.clone(),
+        current_view: app.core.current_view.clone(),
+        window_size: if app.core.terminal_size.0 > 0 && app.core.terminal_size.1 > 0 {
+            Some(app.core.terminal_size)
         } else {
             None
         },
-        path_colors: app.path_colors.clone(),
-        external_tools: app.external_tools.clone(),
-        icon_mode: Some(app.icon_mode),
-        is_split_mode: app.is_split_mode,
-        semantic_coloring: app.semantic_coloring,
-        show_sidebar: app.show_sidebar,
-        sidebar_folders: app.sidebar_folders,
-        sidebar_favorites: app.sidebar_favorites,
-        sidebar_recent: app.sidebar_recent,
-        sidebar_storage: app.sidebar_storage,
-        sidebar_remotes: app.sidebar_remotes,
-        show_side_panel: app.show_side_panel,
-        default_show_hidden: app.default_show_hidden,
-        auto_save: app.auto_save,
+        path_colors: app.selection.path_colors.clone(),
+        external_tools: app.remote.external_tools.clone(),
+        icon_mode: Some(app.core.icon_mode),
+        is_split_mode: app.core.is_split_mode,
+        semantic_coloring: app.settings.semantic_coloring,
+        show_sidebar: app.sidebar.show_sidebar,
+        sidebar_folders: app.sidebar.sidebar_folders,
+        sidebar_favorites: app.sidebar.sidebar_favorites,
+        sidebar_recent: app.sidebar.sidebar_recent,
+        sidebar_storage: app.sidebar.sidebar_storage,
+        sidebar_remotes: app.sidebar.sidebar_remotes,
+        show_side_panel: app.sidebar.show_side_panel,
+        default_show_hidden: app.settings.default_show_hidden,
+        auto_save: app.settings.auto_save,
         preview_max_mb: app.preview_max_mb,
         theme_style: Some(crate::ui::theme::style_settings()),
-        expanded_folders: app.expanded_folders.iter().cloned().collect(),
-        sidebar_width_percent: app.sidebar_width_percent,
-        recent_folders: app.recent_folders.clone(),
+        expanded_folders: app.layout.expanded_folders.iter().cloned().collect(),
+        sidebar_width_percent: app.sidebar.sidebar_width_percent,
+        recent_folders: app.nav.recent_folders.clone(),
     };
 
     let config_dir = dirs::config_dir()
@@ -168,8 +168,8 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
                 return Ok(());
             }
             // Debounce bursts while app is active/autosaving.
-            if app.running
-                && app.auto_save
+            if app.core.running
+                && app.settings.auto_save
                 && now.duration_since(*last_at) < Duration::from_millis(SAVE_DEBOUNCE_MS)
             {
                 return Ok(());

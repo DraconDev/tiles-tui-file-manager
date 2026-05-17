@@ -1,5 +1,5 @@
 use ratatui::widgets::TableState;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex as StdMutex};
 use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
@@ -14,118 +14,40 @@ pub use crate::state::{
     SystemState, UndoAction, ViewPreferences, ViewStatePersistence,
 };
 
-pub struct BackgroundTask {
-    pub id: uuid::Uuid,
-    pub name: String,
-    pub status: String,
-    pub progress: f32,
-}
+// Re-export sub-structs
+pub use crate::state::app_subtypes::{
+    AppCore, SidebarState, MonitorState, EditorGlobalState, UndoState, SettingsState,
+    LayoutState, OutputState, DragState, NavState, RemoteState, MouseState, SelectionState2,
+};
+
+// Re-export BackgroundTask from state so we don't duplicate it in app.rs
+pub use crate::state::BackgroundTask;
 
 pub struct App {
-    pub running: bool,
-    pub current_view: CurrentView,
-    pub mode: AppMode,
-    pub previous_mode: AppMode,
-    pub input: TextInput,
-    pub icon_mode: crate::icons::IconMode,
+    // --- Sub-structs ---
+    pub core: AppCore,
+    pub sidebar: SidebarState,
+    pub monitor: MonitorState,
+    pub editor_global: EditorGlobalState,
+    pub undo_state: UndoState,
+    pub settings: SettingsState,
+    pub layout: LayoutState,
+    pub output: OutputState,
+    pub drag: DragState,
+    pub nav: NavState,
+    pub remote: RemoteState,
+    pub mouse: MouseState,
+    pub selection: SelectionState2,
+
+    // --- Remaining fields ---
     pub panes: Vec<Pane>,
     pub focused_pane_index: usize,
-    pub is_split_mode: bool,
-    pub terminal_size: (u16, u16),
-    pub mouse_pos: (u16, u16),
     pub system_state: SystemState,
-    pub sidebar_focus: bool,
-    pub sidebar_index: usize,
-    pub starred: Vec<PathBuf>,
-    pub recent_folders: Vec<PathBuf>,
-    pub remote_bookmarks: Vec<RemoteBookmark>,
-    pub pending_remote: RemoteBookmark,
-    pub external_tools: HashMap<String, Vec<crate::config::ExternalTool>>,
-    pub show_sidebar: bool,
-    pub sidebar_folders: bool,
-    pub sidebar_favorites: bool,
-    pub sidebar_recent: bool,
-    pub sidebar_storage: bool,
-    pub sidebar_remotes: bool,
-    pub show_side_panel: bool,
-    pub show_main_stage: bool,
-    pub sidebar_width_percent: u16,
-    pub sidebar_bounds: Vec<SidebarBounds>,
-    pub sidebar_scroll_offset: usize,
-    pub drag_start_pos: Option<(u16, u16)>,
-    pub drag_source: Option<PathBuf>,
-    pub is_dragging: bool,
-    pub hovered_drop_target: Option<DropTarget>,
-    pub last_action_msg: Option<(String, std::time::Instant)>,
-    /// Stores per-folder state: (selected_index, scroll_offset).
-    /// When re-entering a folder, both selection and scroll are restored.
-    pub folder_selections: HashMap<PathBuf, (usize, usize)>,
-    /// Stores scroll position per file path to survive editor state destruction
-    pub scroll_positions: HashMap<PathBuf, (usize, usize, usize, usize)>,
-    pub path_colors: HashMap<PathBuf, u8>,
-    pub confirm_delete: bool,
-    pub smart_date: bool,
-    pub semantic_coloring: bool,
-    pub auto_save: bool,
-    pub default_show_hidden: bool,
     pub preview_max_mb: u16,
-    pub single_columns: Vec<FileColumn>,
-    pub split_columns: Vec<FileColumn>,
-    pub monitor_subview: MonitorSubview,
-    pub monitor_subview_bounds: Vec<(ratatui::layout::Rect, MonitorSubview)>,
-    pub overview_scroll_offset: u16,
-    pub process_sort_col: ProcessColumn,
-    pub process_sort_asc: bool,
-    pub process_column_bounds: Vec<(ratatui::layout::Rect, ProcessColumn)>,
-    pub process_selected_idx: Option<usize>,
-    pub process_table_state: TableState,
-    pub process_search_filter: String,
-    pub process_tree_view: bool,
-    pub undo_stack: Vec<UndoAction>,
-    pub redo_stack: Vec<UndoAction>,
-    pub header_icon_bounds: Vec<(ratatui::layout::Rect, String)>,
-    pub tab_bounds: Vec<(ratatui::layout::Rect, usize, usize)>,
-    pub hovered_header_icon: Option<String>,
-    /// Folders expanded in the main file pane view.
-    /// Controls expand/collapse in the file listing.
-    pub expanded_folders: HashSet<PathBuf>,
-    /// Folders expanded in the sidebar Tree view.
-/// Independent of `expanded_folders` — Tree scope maintains its own expansion state.
-    pub tree_expanded_folders: HashSet<PathBuf>,
-    /// Cached sidebar tree items to avoid re-reading directories every frame.
-    pub sidebar_tree_cache: Option<Vec<(PathBuf, u16, bool)>>,
-    /// Cache key for invalidation (hash of tree_expanded_folders + show_hidden).
-    pub sidebar_tree_cache_key: u64,
-    /// Cached editor sidebar tree items.
-    pub editor_sidebar_cache: Option<Vec<(PathBuf, u16, bool)>>,
-    /// Cache key for editor sidebar (includes base_path hash).
-    pub editor_sidebar_cache_key: u64,
-    pub mouse_last_click: std::time::Instant,
-    pub mouse_click_pos: (u16, u16),
-    pub mouse_click_count: usize,
-    pub is_resizing_sidebar: bool,
-    pub editor_clipboard: Option<String>,
-    pub clipboard: Option<(PathBuf, ClipboardOp)>,
-    pub rename_selected: bool,
-    pub editor_state: Option<PreviewState>,
-    pub selection_mode: bool,
-    pub prevent_mouse_up_selection_cleanup: bool,
-    pub input_shield_until: Option<std::time::Instant>,
-    pub input_shield_active_until: Option<std::time::Instant>,
-    pub command_index: usize,
-    pub filtered_commands: Vec<CommandItem>,
-    pub view_prefs: ViewStatePersistence,
-    pub settings_index: usize,
-    pub settings_section: SettingsSection,
-    pub settings_target: SettingsTarget,
-    pub settings_scroll: u16,
-    pub open_with_index: usize,
-    pub replace_buffer: String,
-    pub background_tasks: Vec<BackgroundTask>,
-    /// Queue for compositor tile placements. Written by app, read by terminal engine.
     #[allow(dead_code)]
     pub tile_queue: Arc<StdMutex<Vec<TilePlacement>>>,
     pub saved_pane: Option<Pane>,
+    pub show_main_stage: bool,
 }
 
 impl App {
@@ -145,189 +67,166 @@ impl App {
             true,
         );
 
-        let system_state = SystemState {
-            last_update: std::time::Instant::now(),
-            disks: Vec::new(),
-            disk_io: HashMap::new(),
-            last_disk_io: HashMap::new(),
-            disk_read_history: VecDeque::from(vec![0; 100]),
-            disk_write_history: VecDeque::from(vec![0; 100]),
-            processes: Vec::new(),
-            process_ppid: HashMap::new(),
-            cpu_usage: 0.0,
-            cpu_cores: Vec::new(),
-            cpu_temperature: None,
-            cpu_frequency: None,
-            mem_usage: 0.0,
-            total_mem: 0.0,
-            swap_usage: 0.0,
-            total_swap: 0.0,
-            cpu_history: VecDeque::from(vec![0; 100]),
-            core_history: Vec::new(),
-            mem_history: VecDeque::from(vec![0; 100]),
-            swap_history: VecDeque::from(vec![0; 100]),
-            net_in: 0,
-            net_out: 0,
-            net_in_history: VecDeque::from(vec![0; 100]),
-            net_out_history: VecDeque::from(vec![0; 100]),
-            last_net_in: 0,
-            last_net_out: 0,
-            net_interfaces: Vec::new(),
-            last_net_interfaces: Vec::new(),
-            uptime: 0,
-            os_name: String::new(),
-            os_version: String::new(),
-            kernel_version: String::new(),
-            hostname: String::new(),
-        };
-
         Self {
-            running: true,
-            current_view: CurrentView::Files,
-            mode: AppMode::Normal,
-            previous_mode: AppMode::Normal,
-            input: TextInput::default(),
-            icon_mode: crate::icons::IconMode::Nerd,
+            core: AppCore {
+                running: true,
+                current_view: CurrentView::Files,
+                mode: AppMode::Normal,
+                previous_mode: AppMode::Normal,
+                input: TextInput::default(),
+                icon_mode: crate::icons::IconMode::Nerd,
+                is_split_mode: false,
+                terminal_size: (80, 24),
+                mouse_pos: (0, 0),
+            },
+            sidebar: SidebarState {
+                show_sidebar: true,
+                sidebar_focus: false,
+                sidebar_index: 0,
+                sidebar_folders: true,
+                sidebar_favorites: true,
+                sidebar_recent: true,
+                sidebar_storage: true,
+                sidebar_remotes: true,
+                show_side_panel: true,
+                sidebar_width_percent: 15,
+                sidebar_bounds: Vec::new(),
+                sidebar_scroll_offset: 0,
+                tree_expanded_folders: HashSet::new(),
+                sidebar_tree_cache: None,
+                sidebar_tree_cache_key: 0,
+                editor_sidebar_cache: None,
+                editor_sidebar_cache_key: 0,
+            },
+            monitor: MonitorState {
+                monitor_subview: MonitorSubview::Overview,
+                monitor_subview_bounds: Vec::new(),
+                overview_scroll_offset: 0,
+                process_sort_col: ProcessColumn::Cpu,
+                process_sort_asc: false,
+                process_column_bounds: Vec::new(),
+                process_selected_idx: None,
+                process_table_state: TableState::default(),
+                process_search_filter: String::new(),
+                process_tree_view: false,
+            },
+            editor_global: EditorGlobalState {
+                editor_state: None,
+                scroll_positions: HashMap::new(),
+                replace_buffer: String::new(),
+                editor_clipboard: None,
+            },
+            undo_state: UndoState::default(),
+            settings: SettingsState {
+                settings_index: 0,
+                settings_section: SettingsSection::General,
+                settings_target: SettingsTarget::SingleMode,
+                settings_scroll: 0,
+                open_with_index: 0,
+                confirm_delete: true,
+                smart_date: true,
+                semantic_coloring: true,
+                auto_save: true,
+                default_show_hidden: false,
+            },
+            layout: LayoutState {
+                single_columns: vec![
+                    FileColumn::Name,
+                    FileColumn::Size,
+                    FileColumn::Modified,
+                    FileColumn::Permissions,
+                ],
+                split_columns: vec![FileColumn::Name, FileColumn::Size],
+                header_icon_bounds: Vec::new(),
+                tab_bounds: Vec::new(),
+                hovered_header_icon: None,
+                expanded_folders: HashSet::new(),
+            },
+            output: OutputState::default(),
+            drag: DragState::default(),
+            nav: NavState {
+                starred: [
+                    dirs::home_dir(),
+                    dirs::desktop_dir(),
+                    dirs::document_dir(),
+                    dirs::download_dir(),
+                    dirs::audio_dir(),
+                    dirs::picture_dir(),
+                    dirs::video_dir(),
+                    dirs::public_dir(),
+                ]
+                .into_iter()
+                .flatten()
+                .collect(),
+                recent_folders: Vec::new(),
+                command_index: 0,
+                filtered_commands: Vec::new(),
+                view_prefs: ViewStatePersistence {
+                    files: ViewPreferences {
+                        show_sidebar: true,
+                        is_split_mode: false,
+                    },
+                    editor: ViewPreferences {
+                        show_sidebar: true,
+                        is_split_mode: false,
+                    },
+                },
+            },
+            remote: RemoteState {
+                remote_bookmarks: Vec::new(),
+                pending_remote: RemoteBookmark {
+                    name: String::new(),
+                    host: String::new(),
+                    user: String::new(),
+                    port: 22,
+                    last_path: PathBuf::from("/"),
+                    key_path: None,
+                },
+                external_tools: HashMap::new(),
+            },
+            mouse: MouseState {
+                mouse_last_click: std::time::Instant::now(),
+                mouse_click_pos: (0, 0),
+                mouse_click_count: 0,
+                is_resizing_sidebar: false,
+            },
+            selection: SelectionState2 {
+                selection_mode: false,
+                prevent_mouse_up_selection_cleanup: false,
+                rename_selected: false,
+                clipboard: None,
+                path_colors: HashMap::new(),
+                folder_selections: HashMap::new(),
+            },
             panes: vec![Pane::new(initial_fs)],
             focused_pane_index: 0,
-            is_split_mode: false,
-            terminal_size: (80, 24),
-            mouse_pos: (0, 0),
-            system_state,
-            sidebar_focus: false,
-            sidebar_index: 0,
-            starred: vec![
-                dirs::home_dir(),
-                dirs::desktop_dir(),
-                dirs::document_dir(),
-                dirs::download_dir(),
-                dirs::audio_dir(),
-                dirs::picture_dir(),
-                dirs::video_dir(),
-                dirs::public_dir(),
-            ]
-            .into_iter()
-            .flatten()
-            .collect(),
-            recent_folders: Vec::new(),
-            remote_bookmarks: Vec::new(),
-            pending_remote: RemoteBookmark {
-                name: String::new(),
-                host: String::new(),
-                user: String::new(),
-                port: 22,
-                last_path: PathBuf::from("/"),
-                key_path: None,
-            },
-            external_tools: HashMap::new(),
-            show_sidebar: true,
-            sidebar_folders: true,
-            sidebar_favorites: true,
-            sidebar_recent: true,
-            sidebar_storage: true,
-            sidebar_remotes: true,
-            show_side_panel: true,
-            show_main_stage: true,
-            sidebar_width_percent: 15,
-            sidebar_bounds: Vec::new(),
-            sidebar_scroll_offset: 0,
-            drag_start_pos: None,
-            drag_source: None,
-            is_dragging: false,
-            hovered_drop_target: None,
-            last_action_msg: None,
-            folder_selections: HashMap::new(),
-            scroll_positions: HashMap::new(),
-            path_colors: HashMap::new(),
-            confirm_delete: true,
-            smart_date: true,
-            semantic_coloring: true,
-            auto_save: true,
-            default_show_hidden: false,
+            system_state: SystemState::default(),
             preview_max_mb: PREVIEW_MAX_MB,
-            single_columns: vec![
-                FileColumn::Name,
-                FileColumn::Size,
-                FileColumn::Modified,
-                FileColumn::Permissions,
-            ],
-            split_columns: vec![FileColumn::Name, FileColumn::Size],
-            monitor_subview: MonitorSubview::Overview,
-            monitor_subview_bounds: Vec::new(),
-            overview_scroll_offset: 0,
-            process_sort_col: ProcessColumn::Cpu,
-            process_sort_asc: false,
-            process_column_bounds: Vec::new(),
-            process_selected_idx: None,
-            process_table_state: TableState::default(),
-            process_search_filter: String::new(),
-            process_tree_view: false,
-            undo_stack: Vec::new(),
-            redo_stack: Vec::new(),
-            header_icon_bounds: Vec::new(),
-            tab_bounds: Vec::new(),
-            hovered_header_icon: None,
-            expanded_folders: HashSet::new(),
-            tree_expanded_folders: HashSet::new(),
-            sidebar_tree_cache: None,
-            sidebar_tree_cache_key: 0,
-            editor_sidebar_cache: None,
-            editor_sidebar_cache_key: 0,
-            mouse_last_click: std::time::Instant::now(),
-            mouse_click_pos: (0, 0),
-            mouse_click_count: 0,
-            is_resizing_sidebar: false,
-            editor_clipboard: None,
-            clipboard: None,
-            rename_selected: false,
-            editor_state: None,
-            selection_mode: false,
-            prevent_mouse_up_selection_cleanup: false,
-            input_shield_until: None,
-            input_shield_active_until: None,
-            command_index: 0,
-            filtered_commands: Vec::new(),
-            view_prefs: ViewStatePersistence {
-                files: ViewPreferences {
-                    show_sidebar: true,
-                    is_split_mode: false,
-                },
-editor: ViewPreferences {
-        show_sidebar: true,
-        is_split_mode: false,
-    },
-            },
-            settings_index: 0,
-            settings_section: SettingsSection::General,
-            settings_target: SettingsTarget::SingleMode,
-            settings_scroll: 0,
-            open_with_index: 0,
-            replace_buffer: String::new(),
-            background_tasks: Vec::new(),
             tile_queue,
             saved_pane: None,
+            show_main_stage: true,
         }
     }
 
     pub fn set_input_shield(&mut self, duration_ms: u64) {
         let now = std::time::Instant::now();
-        self.input_shield_until = Some(now + std::time::Duration::from_millis(duration_ms));
-        self.input_shield_active_until = Some(now + std::time::Duration::from_millis(duration_ms + 100));
+        self.output.input_shield_until = Some(now + std::time::Duration::from_millis(duration_ms));
+        self.output.input_shield_active_until =
+            Some(now + std::time::Duration::from_millis(duration_ms + 100));
     }
 
     pub fn in_soft_shield(&self) -> bool {
-        self.input_shield_active_until
+        self.output
+            .input_shield_active_until
             .map(|until| std::time::Instant::now() < until)
             .unwrap_or(false)
     }
 
     pub fn push_recent_folder(&mut self, path: PathBuf) {
-        // Don't call is_dir() here — it blocks on slow filesystems.
-        // Trust that paths coming from navigation are valid directories.
-        self.recent_folders.retain(|p| p != &path);
-        self.recent_folders.insert(0, path);
-        if self.recent_folders.len() > MAX_RECENT_FOLDERS {
-            self.recent_folders.truncate(MAX_RECENT_FOLDERS);
+        self.nav.recent_folders.retain(|p| p != &path);
+        self.nav.recent_folders.insert(0, path);
+        if self.nav.recent_folders.len() > MAX_RECENT_FOLDERS {
+            self.nav.recent_folders.truncate(MAX_RECENT_FOLDERS);
         }
     }
 
@@ -344,32 +243,32 @@ editor: ViewPreferences {
     }
 
     pub fn sidebar_width(&self) -> u16 {
-        if !self.show_sidebar {
+        if !self.sidebar.show_sidebar {
             return 0;
         }
-        (self.terminal_size.0 as f32 * (self.sidebar_width_percent as f32 / 100.0)) as u16
+        (self.core.terminal_size.0 as f32 * (self.sidebar.sidebar_width_percent as f32 / 100.0)) as u16
     }
 
     pub fn toggle_split(&mut self) {
-        self.is_split_mode = !self.is_split_mode;
-        if self.is_split_mode && self.panes.len() == 1 {
+        self.core.is_split_mode = !self.core.is_split_mode;
+        if self.core.is_split_mode && self.panes.len() == 1 {
             let initial_fs = self.panes[0].tabs[0].clone();
             self.panes.push(Pane::new(initial_fs));
-        } else if !self.is_split_mode && self.panes.len() > 1 {
+        } else if !self.core.is_split_mode && self.panes.len() > 1 {
             self.panes.truncate(1);
             self.focused_pane_index = 0;
         }
     }
 
     pub fn save_current_view_prefs(&mut self) {
-        match self.current_view {
+        match self.core.current_view {
             CurrentView::Files => {
-                self.view_prefs.files.show_sidebar = self.show_sidebar;
-                self.view_prefs.files.is_split_mode = self.is_split_mode;
+                self.nav.view_prefs.files.show_sidebar = self.sidebar.show_sidebar;
+                self.nav.view_prefs.files.is_split_mode = self.core.is_split_mode;
             }
             CurrentView::Editor => {
-                self.view_prefs.editor.show_sidebar = self.show_sidebar;
-                self.view_prefs.editor.is_split_mode = self.is_split_mode;
+                self.nav.view_prefs.editor.show_sidebar = self.sidebar.show_sidebar;
+                self.nav.view_prefs.editor.is_split_mode = self.core.is_split_mode;
             }
             _ => {}
         }
@@ -377,17 +276,16 @@ editor: ViewPreferences {
 
     pub fn load_view_prefs(&mut self, view: CurrentView) {
         let prefs = match view {
-            CurrentView::Files => &self.view_prefs.files,
-            CurrentView::Editor => &self.view_prefs.editor,
+            CurrentView::Files => &self.nav.view_prefs.files,
+            CurrentView::Editor => &self.nav.view_prefs.editor,
             _ => return,
         };
-        self.show_sidebar = prefs.show_sidebar;
+        self.sidebar.show_sidebar = prefs.show_sidebar;
         self.apply_split_mode(prefs.is_split_mode);
     }
 
     pub fn apply_split_mode(&mut self, split: bool) {
         if split && self.panes.len() == 1 {
-            // Restore saved pane if available, otherwise clone the current one
             if let Some(saved) = self.saved_pane.take() {
                 self.panes.push(saved);
             } else {
@@ -395,11 +293,10 @@ editor: ViewPreferences {
                 self.panes.push(Pane::new(initial_fs));
             }
         } else if !split && self.panes.len() > 1 {
-            // Save the second pane before removing it
             self.saved_pane = self.panes.pop();
             self.focused_pane_index = 0;
         }
-        self.is_split_mode = split;
+        self.core.is_split_mode = split;
     }
 
     pub fn toggle_hidden(&mut self) -> usize {
@@ -416,9 +313,9 @@ editor: ViewPreferences {
     }
 
     pub fn resize_sidebar(&mut self, delta: i16) {
-        let mut val = self.sidebar_width_percent as i16 + delta;
+        let mut val = self.sidebar.sidebar_width_percent as i16 + delta;
         val = val.clamp(5, 50);
-        self.sidebar_width_percent = val as u16;
+        self.sidebar.sidebar_width_percent = val as u16;
     }
 
     pub fn move_up(&mut self, shift: bool) {
@@ -426,7 +323,6 @@ editor: ViewPreferences {
             if let Some(sel) = fs.selection.selected {
                 if sel > 0 {
                     let mut next = sel - 1;
-                    // Skip divider
                     while next > 0
                         && fs
                             .files
@@ -436,7 +332,6 @@ editor: ViewPreferences {
                     {
                         next -= 1;
                     }
-                    // Final check if the skipped-to item is still a divider (shouldn't be at index 0, but safety first)
                     if fs
                         .files
                         .get(next)
@@ -445,7 +340,6 @@ editor: ViewPreferences {
                     {
                         return;
                     }
-
                     fs.selection.handle_move(next, shift);
                     fs.table_state.select(fs.selection.selected);
                     if next < fs.table_state.offset() {
@@ -462,7 +356,6 @@ editor: ViewPreferences {
             if let Some(sel) = fs.selection.selected {
                 if sel + 1 < fs.files.len() {
                     let mut next = sel + 1;
-                    // Skip divider
                     while next < fs.files.len() - 1
                         && fs
                             .files
@@ -472,7 +365,6 @@ editor: ViewPreferences {
                     {
                         next += 1;
                     }
-                    // Final check
                     if fs
                         .files
                         .get(next)
@@ -481,7 +373,6 @@ editor: ViewPreferences {
                     {
                         return;
                     }
-
                     fs.selection.handle_move(next, shift);
                     fs.table_state.select(fs.selection.selected);
                     if next >= fs.table_state.offset() + capacity {
@@ -494,20 +385,20 @@ editor: ViewPreferences {
     }
 
     pub fn sidebar_move_up(&mut self) {
-        if self.sidebar_index > 0 {
-            self.sidebar_index -= 1;
+        if self.sidebar.sidebar_index > 0 {
+            self.sidebar.sidebar_index -= 1;
         }
     }
 
     pub fn sidebar_move_down(&mut self, max: usize) {
-        if self.sidebar_index < max.saturating_sub(1) {
-            self.sidebar_index += 1;
+        if self.sidebar.sidebar_index < max.saturating_sub(1) {
+            self.sidebar.sidebar_index += 1;
         }
     }
 
     pub fn apply_process_sort(&mut self) {
-        let col = self.process_sort_col;
-        let asc = self.process_sort_asc;
+        let col = self.monitor.process_sort_col;
+        let asc = self.monitor.process_sort_asc;
         self.system_state.processes.sort_by(|a, b| {
             let ord = match col {
                 ProcessColumn::Pid => a.pid.cmp(&b.pid),

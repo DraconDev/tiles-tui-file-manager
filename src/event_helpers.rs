@@ -53,7 +53,7 @@ pub fn update_commands(app: &mut App) {
         },
     ];
 
-    for (i, bookmark) in app.remote_bookmarks.iter().enumerate() {
+    for (i, bookmark) in app.remote.remote_bookmarks.iter().enumerate() {
         commands.push(CommandItem {
             key: format!("r{}", i),
             desc: format!("Connect to {}", bookmark.name),
@@ -61,35 +61,34 @@ pub fn update_commands(app: &mut App) {
         });
     }
 
-    app.filtered_commands = commands
+    app.nav.filtered_commands = commands
         .into_iter()
         .filter(|cmd| {
             cmd.desc
                 .to_lowercase()
-                .contains(&app.input.value.to_lowercase())
+                .contains(&app.core.input.value.to_lowercase())
         })
         .collect();
-    app.command_index = app
-        .command_index
-        .min(app.filtered_commands.len().saturating_sub(1));
+    app.nav.command_index = app.nav.command_index
+        .min(app.nav.filtered_commands.len().saturating_sub(1));
 }
 
 pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sender<AppEvent>) {
     match action {
         CommandAction::Quit => {
-            app.running = false;
+            app.core.running = false;
         }
         CommandAction::ToggleZoom => app.toggle_split(),
-        CommandAction::SwitchView(view) => app.current_view = view,
+        CommandAction::SwitchView(view) => app.core.current_view = view,
         CommandAction::AddRemote => {
-            app.mode = AppMode::AddRemote(0);
-            app.input.clear();
+            app.core.mode = AppMode::AddRemote(0);
+            app.core.input.clear();
         }
         CommandAction::ConnectToRemote(idx) => {
             let _ = crate::app::try_send_event(&event_tx, AppEvent::ConnectToRemote(app.focused_pane_index, idx));
         }
         CommandAction::CommandPalette => {
-            app.mode = AppMode::CommandPalette;
+            app.core.mode = AppMode::CommandPalette;
         }
     }
 }
@@ -122,7 +121,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
                     }
 
                     // Toggle Add/Remove Favorites
-                    if app.starred.contains(path) {
+                    if app.nav.starred.contains(path) {
                         actions.push(ContextMenuAction::RemoveFromFavorites);
                     } else {
                         actions.push(ContextMenuAction::AddToFavorites);
@@ -160,7 +159,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
             if let Some(fs) = app.current_file_state() {
                 if let Some(path) = fs.files.get(*idx) {
                     // Toggle Add/Remove Favorites
-                    if app.starred.contains(path) {
+                    if app.nav.starred.contains(path) {
                         actions.push(ContextMenuAction::RemoveFromFavorites);
                     } else {
                         actions.push(ContextMenuAction::AddToFavorites);
@@ -195,7 +194,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
         }
         ContextMenuTarget::EmptySpace => {
             let mut actions = vec![ContextMenuAction::NewFile, ContextMenuAction::NewFolder];
-            if app.clipboard.is_some() {
+            if app.selection.clipboard.is_some() {
                 actions.push(ContextMenuAction::Paste);
             }
             actions.extend(vec![
@@ -251,7 +250,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
 }
 
 fn get_active_editor_mut(app: &mut App) -> Option<&mut dracon_terminal_engine::widgets::TextEditor> {
-    if app.current_view == CurrentView::Editor {
+    if app.core.current_view == CurrentView::Editor {
         if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
             if let Some(fs) = pane.current_state_mut() {
                 if let Some(preview) = &mut fs.preview {
@@ -262,7 +261,7 @@ fn get_active_editor_mut(app: &mut App) -> Option<&mut dracon_terminal_engine::w
             }
         }
     }
-    if let Some(preview) = &mut app.editor_state {
+    if let Some(preview) = &mut app.editor_global.editor_state {
         if let Some(editor) = &mut preview.editor {
             return Some(editor);
         }
@@ -271,7 +270,7 @@ fn get_active_editor_mut(app: &mut App) -> Option<&mut dracon_terminal_engine::w
 }
 
 fn get_active_editor_path(app: &App) -> Option<PathBuf> {
-    if app.current_view == CurrentView::Editor {
+    if app.core.current_view == CurrentView::Editor {
         if let Some(pane) = app.panes.get(app.focused_pane_index) {
             if let Some(fs) = pane.current_state() {
                 if let Some(preview) = &fs.preview {
@@ -280,7 +279,7 @@ fn get_active_editor_path(app: &App) -> Option<PathBuf> {
             }
         }
     }
-    if let Some(preview) = &app.editor_state {
+    if let Some(preview) = &app.editor_global.editor_state {
         return Some(preview.path.clone());
     }
     None
@@ -295,8 +294,7 @@ pub fn handle_context_menu_action(
     match action {
         ContextMenuAction::Open => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if path.is_dir() {
@@ -317,12 +315,11 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::AddToFavorites => {
             if let ContextMenuTarget::Folder(idx) | ContextMenuTarget::File(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
-                    if !app.starred.contains(&path) {
-                        app.starred.push(path);
+                    if !app.nav.starred.contains(&path) {
+                        app.nav.starred.push(path);
                         crate::config::save_state_quiet(app);
                         // Refresh to update sidebar
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
@@ -335,15 +332,15 @@ pub fn handle_context_menu_action(
             match target {
                 ContextMenuTarget::SidebarFavorite(path) => {
                     let path_clone = path.clone();
-                    app.starred.retain(|p| p != &path_clone);
+                    app.nav.starred.retain(|p| p != &path_clone);
                     removed = true;
                 }
                 ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) => {
                     if let Some(fs) = app.current_file_state() {
                         if let Some(path) = fs.files.get(*idx) {
                             let path_clone = path.clone();
-                            if app.starred.contains(&path_clone) {
-                                app.starred.retain(|p| p != &path_clone);
+                            if app.nav.starred.contains(&path_clone) {
+                                app.nav.starred.retain(|p| p != &path_clone);
                                 removed = true;
                             }
                         }
@@ -358,22 +355,20 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::Rename => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if let Some(name) = path.file_name() {
                         let name_str = name.to_string_lossy().to_string();
-                        app.mode = AppMode::Rename;
-                        app.input.set_value(name_str);
+                        app.core.mode = AppMode::Rename;
+                        app.core.input.set_value(name_str);
                     }
                 }
             }
         }
         ContextMenuAction::Delete => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if matches!(target, ContextMenuTarget::File(_)) {
@@ -413,7 +408,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::ToggleHidden => {
             if let Some(fs) = app.current_file_state_mut() {
                 fs.show_hidden = !fs.show_hidden;
-                app.default_show_hidden = fs.show_hidden;
+                app.settings.default_show_hidden = fs.show_hidden;
                 crate::config::save_state_quiet(app);
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
@@ -496,7 +491,7 @@ pub fn handle_context_menu_action(
                     }
                 }
                 ContextMenuTarget::SidebarRemote(idx) => {
-                    if let Some(bookmark) = app.remote_bookmarks.get(*idx) {
+                    if let Some(bookmark) = app.remote.remote_bookmarks.get(*idx) {
                         target_dir = Some(bookmark.last_path.clone());
                     }
                 }
@@ -506,36 +501,34 @@ pub fn handle_context_menu_action(
             if let (Some(fs), Some(dir)) = (app.current_file_state_mut(), target_dir) {
                 fs.current_path = dir;
             }
-            app.mode = if matches!(action, ContextMenuAction::NewFolder) {
+            app.core.mode = if matches!(action, ContextMenuAction::NewFolder) {
                 AppMode::NewFolder
             } else {
                 AppMode::NewFile
             };
-            app.input.clear();
-            app.rename_selected = false;
+            app.core.input.clear();
+            app.selection.rename_selected = false;
         }
         ContextMenuAction::Cut => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
-                    app.clipboard = Some((path, crate::app::ClipboardOp::Cut));
+                    app.selection.clipboard = Some((path, crate::app::ClipboardOp::Cut));
                 }
             }
         }
         ContextMenuAction::Copy => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
-                    app.clipboard = Some((path, crate::app::ClipboardOp::Copy));
+                    app.selection.clipboard = Some((path, crate::app::ClipboardOp::Copy));
                 }
             }
         }
         ContextMenuAction::Paste => {
-            if let Some((src, op)) = app.clipboard.clone() {
+            if let Some((src, op)) = app.selection.clipboard.clone() {
                 let target_dir = match target {
                     ContextMenuTarget::Folder(idx) => {
                         app.current_file_state()
@@ -559,7 +552,7 @@ pub fn handle_context_menu_action(
                         crate::app::ClipboardOp::Cut => {
                             let result = crate::app::try_send_event(&event_tx, AppEvent::Rename(src, dest));
                             if result {
-                                app.clipboard = None;
+                                app.selection.clipboard = None;
                             }
                         }
                     }
@@ -568,8 +561,7 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::Compress => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     let name = path.file_name()
@@ -589,8 +581,7 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::ExtractHere => {
             if let ContextMenuTarget::File(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if let Some(parent) = path.parent() {
@@ -634,19 +625,17 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::OpenWith => {
             if let ContextMenuTarget::File(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
-                    app.mode = AppMode::OpenWith(path.clone());
-                    app.input.clear();
+                    app.core.mode = AppMode::OpenWith(path.clone());
+                    app.core.input.clear();
                 }
             }
         }
         ContextMenuAction::Duplicate => {
             if let ContextMenuTarget::File(idx) = target {
-                let path_opt = app
-                    .current_file_state()
+                let path_opt = app.current_file_state()
                     .and_then(|fs| fs.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if let Some(parent) = path.parent() {
@@ -670,15 +659,13 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Run | ContextMenuAction::RunTerminal => {
             match target {
                 ContextMenuTarget::File(idx) => {
-                    let path_opt = app
-                        .current_file_state()
+                    let path_opt = app.current_file_state()
                         .and_then(|fs| fs.files.get(*idx).cloned());
                     if let Some(path) = path_opt {
                         if path.is_dir() {
                             return;
                         }
-                        let remote = app
-                            .current_file_state()
+                        let remote = app.current_file_state()
                             .and_then(|fs| fs.remote_session.clone());
                         if let Some((work_dir, program, args)) =
                             crate::modules::files::get_run_command(&path)
@@ -742,7 +729,7 @@ pub fn handle_context_menu_action(
                 }
             };
             if let Some(text) = text {
-                app.editor_clipboard = Some(text.clone());
+                app.editor_global.editor_clipboard = Some(text.clone());
                 let _ = copy_text_to_clipboard(&text);
             }
         }
@@ -755,7 +742,7 @@ pub fn handle_context_menu_action(
                 }
             };
             if let Some(text) = text {
-                app.editor_clipboard = Some(text.clone());
+                app.editor_global.editor_clipboard = Some(text.clone());
                 let _ = copy_text_to_clipboard(&text);
                 if let Some(editor) = get_active_editor_mut(app) {
                     editor.delete_selection();
@@ -763,7 +750,7 @@ pub fn handle_context_menu_action(
             }
         }
         ContextMenuAction::EditorPaste => {
-            let text = app.editor_clipboard.clone()
+            let text = app.editor_global.editor_clipboard.clone()
                 .or_else(dracon_terminal_engine::utils::get_clipboard_text);
             if let Some(text) = text {
                 if let Some(editor) = get_active_editor_mut(app) {
@@ -870,7 +857,7 @@ pub fn navigate_up(app: &mut App) {
         let new_path = parent.to_path_buf();
         (old_folder, old_idx, old_scroll, new_path)
     };
-    app.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
+    app.selection.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
     if let Some(fs) = app.current_file_state_mut() {
         fs.current_path = new_path.clone();
         fs.pending_select_path = Some((old_folder, old_scroll));
@@ -880,27 +867,26 @@ pub fn navigate_up(app: &mut App) {
 }
 
 pub fn open_path_input(app: &mut App) {
-    let value = app
-        .current_file_state()
+    let value = app.current_file_state()
         .map(|fs| fs.current_path.to_string_lossy().to_string())
         .unwrap_or_default();
-    app.input.set_value(value);
-    app.input.cursor_position = app.input.value.len();
+    app.core.input.set_value(value);
+    app.core.input.cursor_position = app.core.input.value.len();
     // Style input to match breadcrumb look
-    app.input.style = ratatui::style::Style::default()
+    app.core.input.style = ratatui::style::Style::default()
         .fg(crate::ui::theme::accent_secondary())
         .add_modifier(ratatui::style::Modifier::BOLD);
-    app.input.cursor_style = ratatui::style::Style::default()
+    app.core.input.cursor_style = ratatui::style::Style::default()
         .bg(crate::ui::theme::accent_secondary())
         .fg(ratatui::style::Color::Black);
-    app.mode = AppMode::PathInput;
+    app.core.mode = AppMode::PathInput;
     // No input shield — mouse escape sequences from the click that opened
     // PathInput are already consumed by the time the user starts typing.
 }
 
 pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Result<(), String> {
     let t0 = std::time::Instant::now();
-    let input = app.input.value.trim().to_string();
+    let input = app.core.input.value.trim().to_string();
     if input.is_empty() {
         return Err("Path is empty".to_string());
     }
@@ -1008,8 +994,7 @@ fn copy_target_text(
     app: &App,
 ) -> Result<String, String> {
     let path = match target {
-        ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) => app
-            .current_file_state()
+        ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) => app.current_file_state()
             .and_then(|fs| fs.files.get(*idx))
             .cloned()
             .ok_or_else(|| "No file selected".to_string())?,
@@ -1201,8 +1186,8 @@ mod tests {
         let mut app = crate::app::App::new(Arc::new(Mutex::new(Vec::new())));
         app.push_recent_folder(PathBuf::from("/home/user"));
         app.push_recent_folder(PathBuf::from("/etc"));
-        assert_eq!(app.recent_folders[0], PathBuf::from("/etc"));
-        assert_eq!(app.recent_folders[1], PathBuf::from("/home/user"));
+        assert_eq!(app.nav.recent_folders[0], PathBuf::from("/etc"));
+        assert_eq!(app.nav.recent_folders[1], PathBuf::from("/home/user"));
     }
 
     #[test]
@@ -1211,8 +1196,8 @@ mod tests {
         app.push_recent_folder(PathBuf::from("/home"));
         app.push_recent_folder(PathBuf::from("/etc"));
         app.push_recent_folder(PathBuf::from("/home")); // Move to front
-        assert_eq!(app.recent_folders.len(), 2);
-        assert_eq!(app.recent_folders[0], PathBuf::from("/home"));
+        assert_eq!(app.nav.recent_folders.len(), 2);
+        assert_eq!(app.nav.recent_folders[0], PathBuf::from("/home"));
     }
 
     #[test]
@@ -1221,8 +1206,8 @@ mod tests {
         for i in 0..15 {
             app.push_recent_folder(PathBuf::from(format!("/dir{}", i)));
         }
-        assert_eq!(app.recent_folders.len(), 10);
-        assert_eq!(app.recent_folders[0], PathBuf::from("/dir14"));
+        assert_eq!(app.nav.recent_folders.len(), 10);
+        assert_eq!(app.nav.recent_folders[0], PathBuf::from("/dir14"));
     }
 
     // ── breadcrumb bounds isolation ─────────────────────────────

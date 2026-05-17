@@ -11,7 +11,7 @@ use unicode_width::UnicodeWidthStr;
 const DOUBLE_CLICK_MS: u64 = 500;
 
 fn pane_editor_area(app: &App, pane_idx: usize) -> Option<ratatui::layout::Rect> {
-    let (w, h) = app.terminal_size;
+    let (w, h) = app.core.terminal_size;
     let sw = app.sidebar_width();
     let stage_y = 1;
     let stage_h = h.saturating_sub(3);
@@ -46,7 +46,7 @@ fn commit_editor_area(app: &App) -> ratatui::layout::Rect {
     use ratatui::layout::{Constraint, Direction, Layout, Rect};
     use ratatui::widgets::{Block, Borders};
 
-    let (w, h) = app.terminal_size;
+    let (w, h) = app.core.terminal_size;
     let area = Rect::new(0, 0, w, h);
     let outer = Block::default().borders(Borders::ALL);
     let inner = outer.inner(area);
@@ -73,26 +73,26 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
     let has_control = key.modifiers.contains(KeyModifiers::CONTROL);
 
     // 1. View-Specific Esc Handling
-    if key.code == KeyCode::Esc && matches!(app.mode, AppMode::Normal) {
-        if let CurrentView::Editor = app.current_view {
-            if let Some(preview) = &app.editor_state {
+    if key.code == KeyCode::Esc && matches!(app.core.mode, AppMode::Normal) {
+        if let CurrentView::Editor = app.core.current_view {
+            if let Some(preview) = &app.editor_global.editor_state {
                 if let Some(ref editor) = preview.editor {
-                    app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+                    app.editor_global.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
                 }
             }
             app.save_current_view_prefs();
-            app.current_view = CurrentView::Files;
+            app.core.current_view = CurrentView::Files;
             app.load_view_prefs(CurrentView::Files);
-            app.editor_state = None;
+            app.editor_global.editor_state = None;
             app.set_input_shield(50);
             return true;
         }
     }
 
     // 2. IDE/Editor Mode Key Handling (Pane Editor)
-    if app.current_view == CurrentView::Editor
-        && !app.sidebar_focus
-        && matches!(app.mode, AppMode::Normal)
+    if app.core.current_view == CurrentView::Editor
+        && !app.sidebar.sidebar_focus
+        && matches!(app.core.mode, AppMode::Normal)
     {
         let pane_idx = app.focused_pane_index;
 
@@ -156,8 +156,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     fs.current_path = base_dir;
                 }
             }
-            app.mode = AppMode::NewFile;
-            app.input.clear();
+            app.core.mode = AppMode::NewFile;
+            app.core.input.clear();
             return true;
         }
 
@@ -209,10 +209,10 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             if let Some(fs) = pane.current_state_mut() {
                 if let Some(preview) = &mut fs.preview {
                     if let Some(editor) = &mut preview.editor {
-                        let mut clipboard = app.editor_clipboard.clone();
-                        let auto_save = app.auto_save;
-                        let mut mode = app.mode.clone();
-                        let mut prev_mode = app.previous_mode.clone();
+                        let mut clipboard = app.editor_global.editor_clipboard.clone();
+                        let auto_save = app.settings.auto_save;
+                        let mut mode = app.core.mode.clone();
+                        let mut prev_mode = app.core.previous_mode.clone();
 
                         let (handled, scroll_opt) = handle_generic_editor_shortcuts(
                             key,
@@ -221,8 +221,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                             auto_save,
                             &mut mode,
                             &mut prev_mode,
-                            &mut app.input,
-                            &mut app.replace_buffer,
+                            &mut app.core.input,
+                            &mut app.editor_global.replace_buffer,
                             event_tx,
                             &preview.path,
                             evt,
@@ -230,12 +230,12 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                         );
 
                         if let Some((path, pos)) = scroll_opt {
-                            app.scroll_positions.insert(path, pos);
+                            app.editor_global.scroll_positions.insert(path, pos);
                         }
 
-                        app.editor_clipboard = clipboard;
-                        app.mode = mode;
-                        app.previous_mode = prev_mode;
+                        app.editor_global.editor_clipboard = clipboard;
+                        app.core.mode = mode;
+                        app.core.previous_mode = prev_mode;
                         return handled;
                     }
                 }
@@ -244,26 +244,25 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
     }
 
     // 3. Full-Screen Editor/Viewer Priority
-    if let AppMode::Editor | AppMode::Viewer = app.mode {
-        let editor_area = if app.current_view == CurrentView::Commit {
+    if let AppMode::Editor | AppMode::Viewer = app.core.mode {
+        let editor_area = if app.core.current_view == CurrentView::Commit {
             commit_editor_area(app)
         } else {
-            let (w, h) = app.terminal_size;
+            let (w, h) = app.core.terminal_size;
             ratatui::layout::Rect::new(1, 1, w.saturating_sub(2), h.saturating_sub(2))
         };
-        if let Some(preview) = &mut app.editor_state {
+        if let Some(preview) = &mut app.editor_global.editor_state {
             if let Some(editor) = &mut preview.editor {
                 if key.code == KeyCode::Esc {
-                    app.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
-                    app.mode = AppMode::Normal;
-                    app.editor_state = None;
+                    app.editor_global.scroll_positions.insert(preview.path.clone(), (editor.scroll_row, editor.scroll_col, editor.cursor_row, editor.cursor_col));
+                    app.core.mode = AppMode::Normal;
+                    app.editor_global.editor_state = None;
                     return true;
                 }
 
                 // Ctrl+R: run the current file (full-screen mode)
                 if has_control && (key.code == KeyCode::Char('r') || key.code == KeyCode::Char('R')) {
-                    let remote = app
-                        .panes
+                    let remote = app.panes
                         .get(app.focused_pane_index)
                         .and_then(|p| p.current_state())
                         .and_then(|fs| fs.remote_session.clone());
@@ -295,10 +294,10 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     return true;
                 }
 
-                let mut clipboard = app.editor_clipboard.clone();
-                let auto_save = app.auto_save;
-                let mut mode = app.mode.clone();
-                let mut prev_mode = app.previous_mode.clone();
+                let mut clipboard = app.editor_global.editor_clipboard.clone();
+                let auto_save = app.settings.auto_save;
+                let mut mode = app.core.mode.clone();
+                let mut prev_mode = app.core.previous_mode.clone();
 
                 let (handled, scroll_opt) = handle_generic_editor_shortcuts(
                     key,
@@ -307,8 +306,8 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     auto_save,
                     &mut mode,
                     &mut prev_mode,
-                    &mut app.input,
-                    &mut app.replace_buffer,
+                    &mut app.core.input,
+                    &mut app.editor_global.replace_buffer,
                     event_tx,
                     &preview.path,
                     evt,
@@ -316,12 +315,12 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                 );
 
                 if let Some((path, pos)) = scroll_opt {
-                    app.scroll_positions.insert(path, pos);
+                    app.editor_global.scroll_positions.insert(path, pos);
                 }
 
-                app.editor_clipboard = clipboard;
-                app.mode = mode;
-                app.previous_mode = prev_mode;
+                app.editor_global.editor_clipboard = clipboard;
+                app.core.mode = mode;
+                app.core.previous_mode = prev_mode;
                 return handled;
             }
         }
@@ -335,7 +334,7 @@ pub fn handle_editor_mouse(
     app: &mut App,
     event_tx: &mpsc::Sender<AppEvent>,
 ) -> bool {
-    let (w, h) = app.terminal_size;
+    let (w, h) = app.core.terminal_size;
     let column = me.column;
     let row = me.row;
 
@@ -344,24 +343,24 @@ pub fn handle_editor_mouse(
     | AppMode::Viewer
     | AppMode::EditorSearch
     | AppMode::EditorReplace
-    | AppMode::EditorGoToLine = app.mode
+    | AppMode::EditorGoToLine = app.core.mode
     {
-        let editor_area = if app.current_view == CurrentView::Commit {
+        let editor_area = if app.core.current_view == CurrentView::Commit {
             commit_editor_area(app)
         } else {
             ratatui::layout::Rect::new(1, 1, w.saturating_sub(2), h.saturating_sub(2))
         };
-        if let Some(preview) = &mut app.editor_state {
+        if let Some(preview) = &mut app.editor_global.editor_state {
             if let Some(editor) = &mut preview.editor {
                 // Header buttons
                 if row == 0 {
                     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
                         if column >= w.saturating_sub(10) {
-                            app.running = false;
+                            app.core.running = false;
                             return true;
                         } else if column >= w.saturating_sub(20) {
-                            app.mode = AppMode::Normal;
-                            app.editor_state = None;
+                            app.core.mode = AppMode::Normal;
+                            app.editor_global.editor_state = None;
                             return true;
                         }
                         return true;
@@ -396,7 +395,7 @@ pub fn handle_editor_mouse(
                                 ContextMenuAction::Run,
                             ]
                         };
-                        app.mode = AppMode::ContextMenu {
+                        app.core.mode = AppMode::ContextMenu {
                             x: column,
                             y: row,
                             target: ContextMenuTarget::Editor,
@@ -407,30 +406,30 @@ pub fn handle_editor_mouse(
                     }
                 }
 
-                let mut clipboard = app.editor_clipboard.clone();
+                let mut clipboard = app.editor_global.editor_clipboard.clone();
                 let (handled, scroll_opt) = handle_text_editor_mouse(
                     me,
                     editor,
                     &mut clipboard,
-                    &mut app.mouse_last_click,
-                    &mut app.mouse_click_pos,
-                    &mut app.mouse_click_count,
-                    app.auto_save,
+                    &mut app.mouse.mouse_last_click,
+                    &mut app.mouse.mouse_click_pos,
+                    &mut app.mouse.mouse_click_count,
+                    app.settings.auto_save,
                     editor_area,
                     event_tx,
                     &preview.path,
                 );
                 if let Some((path, pos)) = scroll_opt {
-                    app.scroll_positions.insert(path, pos);
+                    app.editor_global.scroll_positions.insert(path, pos);
                 }
-                app.editor_clipboard = clipboard;
+                app.editor_global.editor_clipboard = clipboard;
                 return handled;
             }
         }
     }
 
     // B. Check for IDE Mode (Pane Editor)
-    if app.current_view == CurrentView::Editor && column >= app.sidebar_width() {
+    if app.core.current_view == CurrentView::Editor && column >= app.sidebar_width() {
         let sw = app.sidebar_width();
         let pc = app.panes.len();
         if pc == 0 {
@@ -447,7 +446,7 @@ pub fn handle_editor_mouse(
                 cp = pc - 1;
             }
             app.focused_pane_index = cp;
-            app.sidebar_focus = false;
+            app.sidebar.sidebar_focus = false;
             cp
         } else {
             app.focused_pane_index.min(pc - 1)
@@ -489,7 +488,7 @@ pub fn handle_editor_mouse(
                                         ContextMenuAction::Run,
                                     ]
                                 };
-                                app.mode = AppMode::ContextMenu {
+                                app.core.mode = AppMode::ContextMenu {
                                     x: column,
                                     y: row,
                                     target: ContextMenuTarget::Editor,
@@ -499,23 +498,23 @@ pub fn handle_editor_mouse(
 return true;
                             }
                         }
-                        let mut clipboard = app.editor_clipboard.clone();
+                        let mut clipboard = app.editor_global.editor_clipboard.clone();
                         let (handled, scroll_opt) = handle_text_editor_mouse(
                             me,
                             editor,
                             &mut clipboard,
-                            &mut app.mouse_last_click,
-                            &mut app.mouse_click_pos,
-                            &mut app.mouse_click_count,
-                            app.auto_save,
+                            &mut app.mouse.mouse_last_click,
+                            &mut app.mouse.mouse_click_pos,
+                            &mut app.mouse.mouse_click_count,
+                            app.settings.auto_save,
                             editor_area,
                             event_tx,
                             &preview.path,
                         );
                         if let Some((path, pos)) = scroll_opt {
-                            app.scroll_positions.insert(path, pos);
+                            app.editor_global.scroll_positions.insert(path, pos);
                         }
-                        app.editor_clipboard = clipboard;
+                        app.editor_global.editor_clipboard = clipboard;
                         return handled;
                     }
                 }

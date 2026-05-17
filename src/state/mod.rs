@@ -1,3 +1,5 @@
+pub mod app_subtypes;
+
 use crate::config::MAX_TABS;
 use std::time::Instant;
 use dracon_terminal_engine::contracts::UiEvent;
@@ -82,8 +84,9 @@ pub enum AppEvent {
     Raw(dracon_terminal_engine::contracts::InputEvent),
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub enum CurrentView {
+    #[default]
     Files,
     Editor,
     Commit,
@@ -156,8 +159,9 @@ pub enum ContextMenuAction {
     Redo,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum SettingsSection {
+    #[default]
     General,
     Columns,
     Tabs,
@@ -166,14 +170,16 @@ pub enum SettingsSection {
     Style,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum SettingsTarget {
+    #[default]
     SingleMode,
     SplitMode,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 pub enum AppMode {
+    #[default]
     Normal,
     Editor,
     EditorSearch,
@@ -292,7 +298,7 @@ pub struct FileMetadata {
     pub is_dir: bool,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct RemoteBookmark {
     pub name: String,
     pub host: String,
@@ -474,6 +480,46 @@ pub struct SystemState {
     pub hostname: String,
 }
 
+impl Default for SystemState {
+    fn default() -> Self {
+        Self {
+            last_update: std::time::Instant::now(),
+            disks: Vec::new(),
+            disk_io: HashMap::new(),
+            last_disk_io: HashMap::new(),
+            disk_read_history: VecDeque::from(vec![0; 100]),
+            disk_write_history: VecDeque::from(vec![0; 100]),
+            processes: Vec::new(),
+            process_ppid: HashMap::new(),
+            cpu_usage: 0.0,
+            cpu_cores: Vec::new(),
+            cpu_temperature: None,
+            cpu_frequency: None,
+            mem_usage: 0.0,
+            total_mem: 0.0,
+            swap_usage: 0.0,
+            total_swap: 0.0,
+            cpu_history: VecDeque::from(vec![0; 100]),
+            core_history: Vec::new(),
+            mem_history: VecDeque::from(vec![0; 100]),
+            swap_history: VecDeque::from(vec![0; 100]),
+            net_in: 0,
+            net_out: 0,
+            net_in_history: VecDeque::from(vec![0; 100]),
+            net_out_history: VecDeque::from(vec![0; 100]),
+            last_net_in: 0,
+            last_net_out: 0,
+            net_interfaces: Vec::new(),
+            last_net_interfaces: Vec::new(),
+            uptime: 0,
+            os_name: String::new(),
+            os_version: String::new(),
+            kernel_version: String::new(),
+            hostname: String::new(),
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct PreviewState {
     pub path: PathBuf,
@@ -483,13 +529,13 @@ pub struct PreviewState {
     pub highlighted_lines: Option<Vec<ratatui::text::Line<'static>>>,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct ViewPreferences {
     pub show_sidebar: bool,
     pub is_split_mode: bool,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize, Default)]
 pub struct ViewStatePersistence {
     pub files: ViewPreferences,
     pub editor: ViewPreferences,
@@ -561,15 +607,17 @@ pub struct GitPendingChange {
     pub deletions: usize,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum MonitorSubview {
+    #[default]
     Overview,
     Processes,
     Applications,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize, Default)]
 pub enum ProcessColumn {
+    #[default]
     Pid,
     Name,
     Cpu,

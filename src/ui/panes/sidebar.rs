@@ -22,17 +22,16 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         vertical: 1,
         horizontal: 1,
     });
-    match app.current_view {
+    match app.core.current_view {
         CurrentView::Files => {
             let (mut sidebar_items, search_filter) = {
                 let items = Vec::new();
-                let filter = app
-                    .current_file_state()
+                let filter = app.current_file_state()
                     .map(|fs| fs.search_filter.clone())
                     .unwrap_or_default();
                 (items, filter)
             };
-            app.sidebar_bounds.clear();
+            app.sidebar.sidebar_bounds.clear();
             let mut current_y = inner.y;
 
             // 1. Collect markers ONLY for the active (visible) tab of each PANE
@@ -74,7 +73,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
 
             // Helper to check if name matches search filter
             let matches_filter = |name: &str| {
-                if !app.sidebar_focus || search_filter.is_empty() {
+                if !app.sidebar.sidebar_focus || search_filter.is_empty() {
                     return true;
                 }
                 if FUZZY_SEARCH {
@@ -84,21 +83,21 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 }
             };
 
-            let show_folders = app.sidebar_folders;
-            let show_favorites = app.sidebar_favorites;
-            let show_recent = app.sidebar_recent;
-            let show_storage = app.sidebar_storage;
-            let show_remotes = app.sidebar_remotes;
+            let show_folders = app.sidebar.sidebar_folders;
+            let show_favorites = app.sidebar.sidebar_favorites;
+            let show_recent = app.sidebar.sidebar_recent;
+            let show_storage = app.sidebar.sidebar_storage;
+            let show_remotes = app.sidebar.sidebar_remotes;
 
             // === FOLDERS Section (Tree) ===
             if show_folders {
                 let folder_header_idx = sidebar_items.len();
-                let folders_icon = Icon::Folder.get(app.icon_mode);
+                let folders_icon = Icon::Folder.get(app.core.icon_mode);
                 let mut line_style = Style::default().fg(Color::DarkGray);
                 let mut folders_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
-                if app.sidebar_index == folder_header_idx {
+                if app.sidebar.sidebar_index == folder_header_idx {
                     line_style = line_style.fg(crate::ui::theme::border_active());
                     folders_style = folders_style
                         .fg(crate::ui::theme::border_active())
@@ -112,7 +111,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     line_style,
                     folders_style,
                 )));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: folder_header_idx,
                     target: SidebarTarget::Header("FOLDERS".to_string()),
@@ -129,12 +128,12 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     .get(app.focused_pane_index)
                     .and_then(|p| p.current_state())
                     .map(|fs| fs.show_hidden)
-                    .unwrap_or(app.default_show_hidden);
+                    .unwrap_or(app.settings.default_show_hidden);
                 let cache_key = {
                     use std::collections::hash_map::DefaultHasher;
                     use std::hash::{Hash, Hasher};
                     let mut hasher = DefaultHasher::new();
-                    let mut paths: Vec<_> = app.tree_expanded_folders.iter().collect();
+                    let mut paths: Vec<_> = app.sidebar.tree_expanded_folders.iter().collect();
                     paths.sort();
                     for path in paths {
                         path.hash(&mut hasher);
@@ -143,13 +142,13 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     hasher.finish()
                 };
 
-if app.sidebar_tree_cache_key != cache_key {
+if app.sidebar.sidebar_tree_cache_key != cache_key {
             let mut items = Vec::new();
             collect_tree_items(&base_path, 0, app, &mut items);
-            app.sidebar_tree_cache = Some(items);
-            app.sidebar_tree_cache_key = cache_key;
+            app.sidebar.sidebar_tree_cache = Some(items);
+            app.sidebar.sidebar_tree_cache_key = cache_key;
         }
-        let tree_items = app.sidebar_tree_cache.as_deref().unwrap_or(&[]);
+        let tree_items = app.sidebar.sidebar_tree_cache.as_deref().unwrap_or(&[]);
 
         for (path, depth, is_dir) in tree_items.iter().cloned() {
                     let name = path
@@ -162,7 +161,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     }
 
                     let current_idx = sidebar_items.len();
-                    let is_selected = app.sidebar_focus && app.sidebar_index == current_idx;
+                    let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
 
                     let style = if is_selected {
                         Style::default()
@@ -174,7 +173,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     };
 
                     let marker = if is_dir {
-                        if app.tree_expanded_folders.contains(&path) {
+                        if app.sidebar.tree_expanded_folders.contains(&path) {
                             "▾ "
                         } else {
                             "▸ "
@@ -183,7 +182,7 @@ if app.sidebar_tree_cache_key != cache_key {
                         "  "
                     };
 
-                    let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.icon_mode);
+                    let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.core.icon_mode);
                     let icon = if !is_dir && matches!(
                         path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
                         "package.json" | "package-lock.json"
@@ -202,7 +201,7 @@ if app.sidebar_tree_cache_key != cache_key {
                         Span::raw(name),
                     ]);
                     sidebar_items.push(ListItem::new(line).style(style));
-                    app.sidebar_bounds.push(SidebarBounds {
+                    app.sidebar.sidebar_bounds.push(SidebarBounds {
                         y: current_y,
                         index: current_idx,
                         target: SidebarTarget::Project(path.clone()),
@@ -217,12 +216,12 @@ if app.sidebar_tree_cache_key != cache_key {
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let fav_header_idx = sidebar_items.len();
-                let fav_icon = Icon::Star.get(app.icon_mode);
+                let fav_icon = Icon::Star.get(app.core.icon_mode);
                 let mut line_style = Style::default().fg(Color::DarkGray);
                 let mut fav_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
-                if app.sidebar_index == fav_header_idx {
+                if app.sidebar.sidebar_index == fav_header_idx {
                     line_style = line_style.fg(crate::ui::theme::border_active());
                     fav_style = fav_style
                         .fg(crate::ui::theme::border_active())
@@ -236,7 +235,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     line_style,
                     fav_style,
                 )));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: fav_header_idx,
                     target: SidebarTarget::Header("FAVORITES".to_string()),
@@ -247,7 +246,7 @@ if app.sidebar_tree_cache_key != cache_key {
 
             // Render Starred Folders (Favorites - NO markers as requested)
             if show_favorites {
-                for (starred_idx, path) in app.starred.iter().enumerate() {
+                for (starred_idx, path) in app.nav.starred.iter().enumerate() {
                     let name = path
                         .file_name()
                         .map(|n| n.to_string_lossy().to_string())
@@ -258,8 +257,8 @@ if app.sidebar_tree_cache_key != cache_key {
                     }
 
                     let current_idx = sidebar_items.len();
-                    let is_selected = app.sidebar_index == current_idx;
-                    let is_hovered = matches!(&app.hovered_drop_target, Some(DropTarget::Folder(p)) if p == path);
+                    let is_selected = app.sidebar.sidebar_index == current_idx;
+                    let is_hovered = matches!(&app.drag.hovered_drop_target, Some(DropTarget::Folder(p)) if p == path);
 
                     // Active highlighting for favorites
                     let mut style = Style::default().fg(THEME.fg);
@@ -268,21 +267,21 @@ if app.sidebar_tree_cache_key != cache_key {
                             .bg(selection_bg)
                             .fg(Color::Black)
                             .add_modifier(Modifier::BOLD);
-                    } else if is_hovered && app.is_dragging {
+                    } else if is_hovered && app.drag.is_dragging {
                         style = style
                             .bg(crate::ui::theme::accent_secondary())
                             .fg(Color::Black);
                     }
 
-                    if app.is_dragging
-                        && app.mouse_pos.1 == current_y
-                        && app.mouse_pos.0 < area.width
+                    if app.drag.is_dragging
+                        && app.core.mouse_pos.1 == current_y
+                        && app.core.mouse_pos.0 < area.width
                     {
-                        app.hovered_drop_target = Some(DropTarget::ReorderFavorite(starred_idx));
+                        app.drag.hovered_drop_target = Some(DropTarget::ReorderFavorite(starred_idx));
                     }
 
                     let cat = crate::modules::files::get_file_category(path);
-                    let icon = Icon::get_for_path(path, cat, path.is_dir(), app.icon_mode);
+                    let icon = Icon::get_for_path(path, cat, path.is_dir(), app.core.icon_mode);
                     let icon = if !path.is_dir() && matches!(
                         path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
                         "package.json" | "package-lock.json"
@@ -293,7 +292,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     };
 
                     sidebar_items.push(ListItem::new(format!("{}{}", icon, name)).style(style));
-                    app.sidebar_bounds.push(SidebarBounds {
+                    app.sidebar.sidebar_bounds.push(SidebarBounds {
                         y: current_y,
                         index: current_idx,
                         target: SidebarTarget::Favorite(path.clone()),
@@ -303,7 +302,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 }
             }
 
-            if show_favorites && show_recent && !app.recent_folders.is_empty() {
+            if show_favorites && show_recent && !app.nav.recent_folders.is_empty() {
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let idx = sidebar_items.len();
@@ -311,14 +310,14 @@ if app.sidebar_tree_cache_key != cache_key {
                 let mut recent_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
-                if app.sidebar_index == idx {
+                if app.sidebar.sidebar_index == idx {
                     line_style = line_style.fg(crate::ui::theme::border_active());
                     recent_style = recent_style
                         .fg(crate::ui::theme::border_active())
                         .add_modifier(Modifier::UNDERLINED);
                 }
                 let row_w = area.width.saturating_sub(2) as usize;
-                let recent_icon = Icon::Folder.get(app.icon_mode);
+                let recent_icon = Icon::Folder.get(app.core.icon_mode);
                 let recent_label = format!("{} RECENT", recent_icon);
                 sidebar_items.push(ListItem::new(section_header_line(
                     &recent_label,
@@ -326,7 +325,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     line_style,
                     recent_style,
                 )));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: idx,
                     target: SidebarTarget::Header("RECENT".to_string()),
@@ -334,8 +333,8 @@ if app.sidebar_tree_cache_key != cache_key {
                 });
                 current_y += 1;
 
-                for path in app.recent_folders.iter().take(8) {
-                    if app.starred.contains(path) {
+                for path in app.nav.recent_folders.iter().take(8) {
+                    if app.nav.starred.contains(path) {
                         continue;
                     }
                     let name = path
@@ -346,7 +345,7 @@ if app.sidebar_tree_cache_key != cache_key {
                         continue;
                     }
                     let current_idx = sidebar_items.len();
-                    let is_selected = app.sidebar_index == current_idx;
+                    let is_selected = app.sidebar.sidebar_index == current_idx;
                     let mut style = Style::default().fg(Color::Gray);
                     if is_selected {
                         style = style
@@ -354,9 +353,9 @@ if app.sidebar_tree_cache_key != cache_key {
                             .fg(Color::Black)
                             .add_modifier(Modifier::BOLD);
                     }
-                    let icon = Icon::Folder.get(app.icon_mode);
+                    let icon = Icon::Folder.get(app.core.icon_mode);
                     sidebar_items.push(ListItem::new(format!("{}{}", icon, name)).style(style));
-                    app.sidebar_bounds.push(SidebarBounds {
+                    app.sidebar.sidebar_bounds.push(SidebarBounds {
                         y: current_y,
                         index: current_idx,
                         target: SidebarTarget::Recent(path.clone()),
@@ -371,12 +370,12 @@ if app.sidebar_tree_cache_key != cache_key {
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let current_storage_header_idx = sidebar_items.len();
-                let storage_icon = Icon::Storage.get(app.icon_mode);
+                let storage_icon = Icon::Storage.get(app.core.icon_mode);
                 let mut line_style = Style::default().fg(Color::DarkGray);
                 let mut storage_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
-                if app.sidebar_index == current_storage_header_idx {
+                if app.sidebar.sidebar_index == current_storage_header_idx {
                     line_style = line_style.fg(crate::ui::theme::border_active());
                     storage_style = storage_style
                         .fg(crate::ui::theme::border_active())
@@ -390,7 +389,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     line_style,
                     storage_style,
                 )));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: current_storage_header_idx,
                     target: SidebarTarget::Header("STORAGES".to_string()),
@@ -417,7 +416,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 }
 
                 let current_disk_idx = sidebar_items.len();
-                let is_selected = app.sidebar_index == current_disk_idx;
+                let is_selected = app.sidebar.sidebar_index == current_disk_idx;
 
                 let markers = active_storage_markers.get(&disk.name);
 
@@ -454,7 +453,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     ));
                 }
 
-                let disk_icon = Icon::Storage.get(app.icon_mode);
+                let disk_icon = Icon::Storage.get(app.core.icon_mode);
                 if disk.is_mounted {
                     let available = (disk.available_space / 1_073_741_824.0).round() as u64;
                     let free_ratio = if disk.total_space > 0.0 {
@@ -485,7 +484,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 };
 
                 sidebar_items.push(ListItem::new(Line::from(spans)));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: current_disk_idx,
                     target: SidebarTarget::Storage(i),
@@ -503,13 +502,13 @@ if app.sidebar_tree_cache_key != cache_key {
                 let mut remotes_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
-                if app.sidebar_index == current_header_idx {
+                if app.sidebar.sidebar_index == current_header_idx {
                     line_style = line_style.fg(crate::ui::theme::border_active());
                     remotes_style = remotes_style
                         .fg(crate::ui::theme::border_active())
                         .add_modifier(Modifier::UNDERLINED);
                 }
-                let remote_icon = Icon::Remote.get(app.icon_mode);
+                let remote_icon = Icon::Remote.get(app.core.icon_mode);
                 let label = format!("{} REMOTES [Import]", remote_icon);
                 let row_w = area.width.saturating_sub(2) as usize;
                 sidebar_items.push(ListItem::new(section_header_line(
@@ -518,7 +517,7 @@ if app.sidebar_tree_cache_key != cache_key {
                     line_style,
                     remotes_style,
                 )));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: current_header_idx,
                     target: SidebarTarget::Header("REMOTES".to_string()),
@@ -526,7 +525,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 });
                 current_y += 1;
             }
-            for (i, bookmark) in app.remote_bookmarks.iter().enumerate() {
+            for (i, bookmark) in app.remote.remote_bookmarks.iter().enumerate() {
                 if !show_remotes {
                     break;
                 }
@@ -535,7 +534,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 }
 
                 let current_bookmark_idx = sidebar_items.len();
-                let is_selected = app.sidebar_index == current_bookmark_idx;
+                let is_selected = app.sidebar.sidebar_index == current_bookmark_idx;
 
                 let markers = active_remote_markers.get(&bookmark.host);
 
@@ -561,7 +560,7 @@ if app.sidebar_tree_cache_key != cache_key {
                             .add_modifier(Modifier::BOLD),
                     ));
                 }
-                let icon = Icon::Remote.get(app.icon_mode);
+                let icon = Icon::Remote.get(app.core.icon_mode);
                 spans.push(Span::styled(format!("{}{} ", icon, bookmark.name), style));
                 spans.push(Span::styled(
                     "[ssh]",
@@ -576,7 +575,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 ));
 
                 sidebar_items.push(ListItem::new(Line::from(spans)));
-                app.sidebar_bounds.push(SidebarBounds {
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
                     y: current_y,
                     index: current_bookmark_idx,
                     target: SidebarTarget::Remote(i),
@@ -584,7 +583,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 });
                 current_y += 1;
             }
-            if app.remote_bookmarks.is_empty() {
+            if app.remote.remote_bookmarks.is_empty() {
                 sidebar_items.push(
                     ListItem::new("(No remotes)").style(Style::default().fg(Color::DarkGray)),
                 );
@@ -602,20 +601,20 @@ if app.sidebar_tree_cache_key != cache_key {
             let total_items = sidebar_items.len();
 
             // Auto-scroll to keep selected item in view
-            if app.sidebar_index < app.sidebar_scroll_offset {
-                app.sidebar_scroll_offset = app.sidebar_index;
-            } else if app.sidebar_index >= app.sidebar_scroll_offset + visible_height {
-                app.sidebar_scroll_offset = app.sidebar_index.saturating_sub(visible_height - 1);
+            if app.sidebar.sidebar_index < app.sidebar.sidebar_scroll_offset {
+                app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index;
+            } else if app.sidebar.sidebar_index >= app.sidebar.sidebar_scroll_offset + visible_height {
+                app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height - 1);
             }
 
             let max_scroll = total_items.saturating_sub(visible_height);
-            app.sidebar_scroll_offset = app.sidebar_scroll_offset.min(max_scroll);
+            app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_scroll_offset.min(max_scroll);
 
-            let start = app.sidebar_scroll_offset;
+            let start = app.sidebar.sidebar_scroll_offset;
             let visible_items: Vec<_> = sidebar_items.into_iter().skip(start).take(visible_height).collect();
 
             // Adjust sidebar_bounds y coordinates for visible items; non-visible get sentinel
-            for b in app.sidebar_bounds.iter_mut() {
+            for b in app.sidebar.sidebar_bounds.iter_mut() {
                 if b.index >= start && b.index < start + visible_height {
                     b.y = inner.y + (b.index - start) as u16;
                 } else {
@@ -631,7 +630,7 @@ if app.sidebar_tree_cache_key != cache_key {
                 .borders(Borders::ALL)
                 .border_type(BorderType::Rounded)
                 .title(format!(" {} ", title_text))
-                .border_style(if app.sidebar_focus {
+                .border_style(if app.sidebar.sidebar_focus {
                     Style::default().fg(crate::ui::theme::border_active())
                 } else {
                     Style::default().fg(crate::ui::theme::border_inactive())
@@ -641,27 +640,24 @@ if app.sidebar_tree_cache_key != cache_key {
             let list_inner = list_block.inner(area);
             f.render_widget(List::new(visible_items).block(list_block), area);
 
-            let hint_target = app
-                .sidebar_bounds
+            let hint_target = app.sidebar.sidebar_bounds
                 .iter()
-                .find(|b| b.y == app.mouse_pos.1)
+                .find(|b| b.y == app.core.mouse_pos.1)
                 .or_else(|| {
-                    app.sidebar_bounds
+                    app.sidebar.sidebar_bounds
                         .iter()
-                        .find(|b| b.index == app.sidebar_index)
+                        .find(|b| b.index == app.sidebar.sidebar_index)
                 });
             if let Some(bound) = hint_target {
                 let hint = match &bound.target {
                     SidebarTarget::Favorite(path) | SidebarTarget::Recent(path) | SidebarTarget::Project(path) => {
                         path.to_string_lossy().to_string()
                     }
-                    SidebarTarget::Remote(idx) => app
-                        .remote_bookmarks
+                    SidebarTarget::Remote(idx) => app.remote.remote_bookmarks
                         .get(*idx)
                         .map(|r| format!("{}@{}:{}", r.user, r.host, r.port))
                         .unwrap_or_default(),
-                    SidebarTarget::Storage(idx) => app
-                        .system_state
+                    SidebarTarget::Storage(idx) => app.system_state
                         .disks
                         .get(*idx)
                         .map(|d| d.name.clone())
@@ -729,7 +725,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             return;
         }
-    } else if let Some(ref preview) = app.editor_state {
+    } else if let Some(ref preview) = app.editor_global.editor_state {
         if preview.path.is_dir() {
             (preview.path.clone(), preview.path.clone())
         } else {
@@ -763,7 +759,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .title(format!(" {} ", title_text))
-        .border_style(if app.sidebar_focus {
+        .border_style(if app.sidebar.sidebar_focus {
             Style::default().fg(crate::ui::theme::border_active())
         } else {
             Style::default().fg(crate::ui::theme::border_inactive())
@@ -776,22 +772,21 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     let editor_cache_key: u64 = {
         let mut h = DefaultHasher::new();
         base_path.hash(&mut h);
-        for p in app.tree_expanded_folders.iter() {
+        for p in app.sidebar.tree_expanded_folders.iter() {
             p.hash(&mut h);
         }
         h.finish()
     };
 
-if app.editor_sidebar_cache_key != editor_cache_key {
+if app.sidebar.editor_sidebar_cache_key != editor_cache_key {
             let mut items = Vec::new();
             collect_tree_items(&base_path, 0, app, &mut items);
-            app.editor_sidebar_cache = Some(items);
-            app.editor_sidebar_cache_key = editor_cache_key;
+            app.sidebar.editor_sidebar_cache = Some(items);
+            app.sidebar.editor_sidebar_cache_key = editor_cache_key;
         }
-        let tree_items = app.editor_sidebar_cache.as_deref().unwrap_or(&[]);
+        let tree_items = app.sidebar.editor_sidebar_cache.as_deref().unwrap_or(&[]);
 
-    let open_files: HashSet<PathBuf> = app
-        .panes
+    let open_files: HashSet<PathBuf> = app.panes
         .iter()
         .flat_map(|pane| {
             pane.tabs
@@ -801,7 +796,7 @@ if app.editor_sidebar_cache_key != editor_cache_key {
         .collect();
 
     let mut sidebar_items = Vec::new();
-    app.sidebar_bounds.clear();
+    app.sidebar.sidebar_bounds.clear();
     let mut current_y = inner.y;
 
 for (path, depth, is_dir) in tree_items.iter().cloned() {
@@ -810,12 +805,12 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or("?".to_string());
         let current_idx = sidebar_items.len();
-        let is_selected = app.sidebar_focus && app.sidebar_index == current_idx;
+        let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
         let is_hovered_drop =
-            matches!(&app.hovered_drop_target, Some(DropTarget::Folder(p)) if p == &path);
+            matches!(&app.drag.hovered_drop_target, Some(DropTarget::Folder(p)) if p == &path);
 
         let cat = crate::modules::files::get_file_category(&path);
-        let icon_mode = app.icon_mode;
+        let icon_mode = app.core.icon_mode;
 
         let is_open = !is_dir && open_files.contains(&path);
 
@@ -830,14 +825,14 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
                 .fg(Color::Black)
                 .add_modifier(Modifier::BOLD)
         } else if is_open {
-            let fg = if app.semantic_coloring {
+            let fg = if app.settings.semantic_coloring {
                 cat.cyber_color()
             } else {
                 THEME.fg
             };
             Style::default().fg(fg).bg(selection_bg)
         } else {
-            let fg = if app.semantic_coloring {
+            let fg = if app.settings.semantic_coloring {
                 if is_dir {
                     crate::ui::theme::accent_secondary()
                 } else {
@@ -851,7 +846,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
 
         // Show expansion marker for folders (use tree_expanded_folders for consistency)
         let marker = if is_dir {
-            if app.tree_expanded_folders.contains(&path) {
+            if app.sidebar.tree_expanded_folders.contains(&path) {
                 "▾ "
             } else {
                 "▸ "
@@ -883,7 +878,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
             spans
         });
         sidebar_items.push(ListItem::new(line).style(style));
-        app.sidebar_bounds.push(SidebarBounds {
+        app.sidebar.sidebar_bounds.push(SidebarBounds {
             y: current_y,
             index: current_idx,
             target: SidebarTarget::Project(path.clone()),
@@ -900,19 +895,19 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
     let visible_height = inner.height as usize;
     let total_items = sidebar_items.len();
 
-    if app.sidebar_index < app.sidebar_scroll_offset {
-        app.sidebar_scroll_offset = app.sidebar_index;
-    } else if app.sidebar_index >= app.sidebar_scroll_offset + visible_height {
-        app.sidebar_scroll_offset = app.sidebar_index.saturating_sub(visible_height - 1);
+    if app.sidebar.sidebar_index < app.sidebar.sidebar_scroll_offset {
+        app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index;
+    } else if app.sidebar.sidebar_index >= app.sidebar.sidebar_scroll_offset + visible_height {
+        app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height - 1);
     }
 
     let max_scroll = total_items.saturating_sub(visible_height);
-    app.sidebar_scroll_offset = app.sidebar_scroll_offset.min(max_scroll);
+    app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_scroll_offset.min(max_scroll);
 
-    let start = app.sidebar_scroll_offset;
+    let start = app.sidebar.sidebar_scroll_offset;
     let visible_items: Vec<_> = sidebar_items.into_iter().skip(start).take(visible_height).collect();
 
-    for b in app.sidebar_bounds.iter_mut() {
+    for b in app.sidebar.sidebar_bounds.iter_mut() {
         if b.index >= start && b.index < start + visible_height {
             b.y = inner.y + (b.index - start) as u16;
         } else {
@@ -949,19 +944,18 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
                 .get(app.focused_pane_index)
                 .and_then(|p| p.current_state())
                 .map(|fs| fs.show_hidden)
-                .unwrap_or(app.default_show_hidden);
+                .unwrap_or(app.settings.default_show_hidden);
 
             if !show_hidden && name.starts_with('.') {
                 continue;
             }
 
             // Check if matches search filter (if any)
-            let matches_filter = if let Some(fs) = app
-                .panes
+            let matches_filter = if let Some(fs) = app.panes
                 .get(app.focused_pane_index)
                 .and_then(|p| p.current_state())
             {
-                if !fs.search_filter.is_empty() && app.sidebar_focus {
+                if !fs.search_filter.is_empty() && app.sidebar.sidebar_focus {
                     if FUZZY_SEARCH {
                         fuzzy_contains(&name, &fs.search_filter)
                     } else {
@@ -978,7 +972,7 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
                 items.push((p.clone(), depth, is_dir));
             }
 
-            if is_dir && app.tree_expanded_folders.contains(&p) {
+            if is_dir && app.sidebar.tree_expanded_folders.contains(&p) {
                 collect_tree_items(&p, depth + 1, app, items);
             }
         }

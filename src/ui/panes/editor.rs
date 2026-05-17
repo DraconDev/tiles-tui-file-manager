@@ -121,7 +121,7 @@ pub fn draw_pane_editor(
                         editor.language = ext;
                         editor.invalidate_from(0);
                     }
-                    editor.wrap = app.is_split_mode;
+                    editor.wrap = app.core.is_split_mode;
 
                     let footer_height = 1u16;
                     let editor_area = Rect::new(inner.x, inner.y, inner.width, inner.height.saturating_sub(footer_height));

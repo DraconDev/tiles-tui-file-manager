@@ -32,21 +32,21 @@ pub use panes::breadcrumbs::draw_pane_breadcrumbs;
 pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(Clear, f.area());
 
-    if app.current_view == CurrentView::Commit {
+    if app.core.current_view == CurrentView::Commit {
         draw_commit_view(f, f.area(), app);
     } else if matches!(
-        app.mode,
+        app.core.mode,
         AppMode::Editor
             | AppMode::Viewer
             | AppMode::EditorSearch
             | AppMode::EditorGoToLine
             | AppMode::EditorReplace
     ) && app.show_main_stage
-        && !app.is_split_mode
+        && !app.core.is_split_mode
     {
         // --- FULL SCREEN EDITOR VIEW (Zen Mode / Overlay) ---
         let mut header_left = Vec::new();
-        let border_color = if let Some(preview) = &app.editor_state {
+        let border_color = if let Some(preview) = &app.editor_global.editor_state {
             if let Some(last_saved) = preview.last_saved {
                 if last_saved.elapsed().as_secs() < 2 {
                     crate::ui::theme::accent_secondary()
@@ -72,7 +72,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             crate::ui::theme::border_active()
         };
 
-        match app.mode {
+        match app.core.mode {
             AppMode::EditorSearch => {
                 header_left.push(Span::styled(
                     "SEARCH: ",
@@ -81,7 +81,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                         .add_modifier(Modifier::BOLD),
                 ));
                 header_left.push(Span::styled(
-                    &app.input.value,
+                    &app.core.input.value,
                     Style::default().fg(THEME.fg),
                 ));
             }
@@ -93,12 +93,12 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                         .add_modifier(Modifier::BOLD),
                 ));
                 header_left.push(Span::styled(
-                    &app.input.value,
+                    &app.core.input.value,
                     Style::default().fg(THEME.fg),
                 ));
             }
             AppMode::EditorReplace => {
-                if app.replace_buffer.is_empty() {
+                if app.editor_global.replace_buffer.is_empty() {
                     header_left.push(Span::styled(
                         "REPLACE [FIND]: ",
                         Style::default()
@@ -106,7 +106,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                             .add_modifier(Modifier::BOLD),
                     ));
                     header_left.push(Span::styled(
-                        &app.input.value,
+                        &app.core.input.value,
                         Style::default().fg(THEME.fg),
                     ));
                 } else {
@@ -117,7 +117,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                             .add_modifier(Modifier::BOLD),
                     ));
                     header_left.push(Span::styled(
-                        &app.input.value,
+                        &app.core.input.value,
                         Style::default().fg(THEME.fg),
                     ));
                 }
@@ -177,10 +177,10 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             footer_height,
         );
 
-        if let Some(preview) = &app.editor_state {
+        if let Some(preview) = &app.editor_global.editor_state {
             if let Some(editor) = &preview.editor {
                 let mut editor_clone = editor.clone();
-                editor_clone.wrap = app.is_split_mode;
+                editor_clone.wrap = app.core.is_split_mode;
                 f.render_widget(&editor_clone, editor_area);
 
                 // Footer bar: Ln X, Col Y | language | ^S Save ^R Run
@@ -209,7 +209,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             }
         }
 
-        if matches!(app.mode, AppMode::EditorSearch | AppMode::EditorGoToLine | AppMode::EditorReplace) {
+        if matches!(app.core.mode, AppMode::EditorSearch | AppMode::EditorGoToLine | AppMode::EditorReplace) {
             let search_footer_height = 2;
             let search_footer_area = Rect::new(
                 f.area().x,
@@ -220,7 +220,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             draw_footer(f, search_footer_area, app);
         }
     } else if matches!(
-        app.mode,
+        app.core.mode,
         AppMode::Settings | AppMode::StyleColorInput | AppMode::ResetSettingsConfirm
     ) {
         f.render_widget(
@@ -229,14 +229,14 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         );
         draw_settings_modal(f, app);
     } else if matches!(
-        app.current_view,
+        app.core.current_view,
         CurrentView::Processes | CurrentView::Git | CurrentView::Debug
     ) {
         f.render_widget(
             Block::default().style(Style::default().bg(Color::Black)),
             f.area(),
         );
-        match app.current_view {
+        match app.core.current_view {
             CurrentView::Processes => draw_monitor_page(f, f.area(), app),
             CurrentView::Git => draw_git_page(f, f.area(), app),
             CurrentView::Debug => draw_debug_page(f, f.area(), app),
@@ -259,7 +259,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .split(f.area());
 
         let workspace_constraints = if app.show_main_stage {
-            if app.show_sidebar {
+            if app.sidebar.show_sidebar {
                 [Constraint::Length(app.sidebar_width()), Constraint::Fill(1)]
             } else {
                 [Constraint::Length(0), Constraint::Fill(1)]
@@ -275,7 +275,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
 
         draw_global_header(f, chunks[0], workspace[0].width, app);
 
-        if app.show_sidebar || !app.show_main_stage {
+        if app.sidebar.show_sidebar || !app.show_main_stage {
             crate::ui::panes::sidebar::draw_sidebar(f, workspace[0], app);
         }
 
@@ -287,71 +287,71 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     }
 
     // --- OVERLAYS ---
-    if let AppMode::Hotkeys = app.mode {
+    if let AppMode::Hotkeys = app.core.mode {
         draw_hotkeys_modal(f, f.area());
     }
-    if matches!(app.mode, AppMode::ContextMenu { .. }) {
+    if matches!(app.core.mode, AppMode::ContextMenu { .. }) {
         if let AppMode::ContextMenu {
             x, y, ref target, ..
-        } = app.mode
+        } = app.core.mode
         {
             draw_context_menu(f, x, y, target, app);
         }
     }
-    if matches!(app.mode, AppMode::Highlight) {
+    if matches!(app.core.mode, AppMode::Highlight) {
         draw_highlight_modal(f, app);
     }
-    if matches!(app.mode, AppMode::Rename) {
+    if matches!(app.core.mode, AppMode::Rename) {
         draw_rename_modal(f, app);
     }
-    if matches!(app.mode, AppMode::BulkRename { .. }) {
+    if matches!(app.core.mode, AppMode::BulkRename { .. }) {
         draw_bulk_rename_modal(f, app);
     }
-    if matches!(app.mode, AppMode::Delete(_) | AppMode::DeleteFile(_)) {
+    if matches!(app.core.mode, AppMode::Delete(_) | AppMode::DeleteFile(_)) {
         draw_delete_modal(f, app);
     }
-    if matches!(app.mode, AppMode::Properties) {
+    if matches!(app.core.mode, AppMode::Properties) {
         draw_properties_modal(f, app);
     }
-    if matches!(app.mode, AppMode::NewFolder) {
+    if matches!(app.core.mode, AppMode::NewFolder) {
         draw_new_folder_modal(f, app);
     }
-    if matches!(app.mode, AppMode::NewFile) {
+    if matches!(app.core.mode, AppMode::NewFile) {
         draw_new_file_modal(f, app);
     }
-    if matches!(app.mode, AppMode::SaveAs(_)) {
+    if matches!(app.core.mode, AppMode::SaveAs(_)) {
         draw_save_as_modal(f, app);
     }
-    if matches!(app.mode, AppMode::CommandPalette) {
+    if matches!(app.core.mode, AppMode::CommandPalette) {
         draw_command_palette(f, app);
     }
-    if matches!(app.mode, AppMode::StyleColorInput) {
+    if matches!(app.core.mode, AppMode::StyleColorInput) {
         draw_style_color_modal(f, app);
     }
-    if matches!(app.mode, AppMode::ResetSettingsConfirm) {
+    if matches!(app.core.mode, AppMode::ResetSettingsConfirm) {
         draw_reset_settings_modal(f, app);
     }
-    if matches!(app.mode, AppMode::AddRemote(_)) {
+    if matches!(app.core.mode, AppMode::AddRemote(_)) {
         draw_add_remote_modal(f, app);
     }
-    if matches!(app.mode, AppMode::ImportServers) {
+    if matches!(app.core.mode, AppMode::ImportServers) {
         draw_import_servers_modal(f, app);
     }
-    if let AppMode::OpenWith(ref path) = app.mode {
+    if let AppMode::OpenWith(ref path) = app.core.mode {
         draw_open_with_modal(f, app, path);
     }
     if let AppMode::DragDropMenu {
         ref sources,
         ref target,
-    } = app.mode
+    } = app.core.mode
     {
         draw_drag_drop_modal(f, app, sources, target);
     }
-    if let AppMode::SignalSelect { pid, ref name, selected_index } = app.mode {
+    if let AppMode::SignalSelect { pid, ref name, selected_index } = app.core.mode {
         draw_signal_select_modal(f, app, pid, name, selected_index);
     }
 
-    if app.is_dragging {
+    if app.drag.is_dragging {
         draw_drag_ghost(f, app);
     }
 }
@@ -383,7 +383,7 @@ fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     );
     let mut touched_files: Vec<String> = Vec::new();
 
-    let content_source = app.editor_state.as_ref()
+    let content_source = app.editor_global.editor_state.as_ref()
         .or_else(|| {
             let pane_idx = app.focused_pane_index;
             app.panes.get(pane_idx).and_then(|p| p.current_state().and_then(|fs| fs.preview.as_ref()))
@@ -595,7 +595,7 @@ fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     let content_inner = content_block.inner(layout[4]);
     f.render_widget(content_block, layout[4]);
 
-    if let Some(preview) = &app.editor_state {
+    if let Some(preview) = &app.editor_global.editor_state {
         if let Some(editor) = &preview.editor {
             let mut editor_clone = editor.clone();
             editor_clone.wrap = false;
@@ -725,7 +725,7 @@ fn draw_drag_drop_modal(
         offset + 2 // + To: line + spacing line
     };
 
-    let (mx, my) = app.mouse_pos;
+    let (mx, my) = app.core.mouse_pos;
 
     let is_hover = |bx: u16, len: u16| {
         mx >= inner.x + bx && mx < inner.x + bx + len && my == inner.y + button_y_offset as u16
@@ -964,7 +964,7 @@ fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         .title(" Custom Command ")
         .border_style(Style::default().fg(crate::ui::theme::accent_primary()));
     f.render_widget(
-        Paragraph::new(app.input.value.as_str()).block(input_block),
+        Paragraph::new(app.core.input.value.as_str()).block(input_block),
         chunks[1],
     );
 
@@ -977,12 +977,12 @@ fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
     let mut suggestions = crate::event_helpers::get_open_with_suggestions(app, &ext);
 
     // Filter suggestions based on input
-    if !app.input.value.is_empty() {
-        let query = app.input.value.to_lowercase();
+    if !app.core.input.value.is_empty() {
+        let query = app.core.input.value.to_lowercase();
         suggestions.retain(|s| s.to_lowercase().contains(&query));
     }
 
-    let (mx, my) = app.mouse_pos;
+    let (mx, my) = app.core.mouse_pos;
     let list_items: Vec<ListItem> = suggestions
         .iter()
         .enumerate()
@@ -990,7 +990,7 @@ fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
             let item_y = chunks[2].y + i as u16;
             let is_mouse_hovered =
                 mx >= chunks[2].x && mx < chunks[2].x + chunks[2].width && my == item_y;
-            let is_selected = i == app.open_with_index;
+            let is_selected = i == app.settings.open_with_index;
 
             let style = if is_mouse_hovered || is_selected {
                 Style::default()
@@ -1005,7 +1005,7 @@ fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         })
         .collect();
 
-    let title = if app.input.value.is_empty() {
+    let title = if app.core.input.value.is_empty() {
         " Suggestions (Click to Launch) "
     } else {
         " Filtered Suggestions (Click to Launch) "
@@ -1069,10 +1069,10 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
         (MonitorSubview::Processes, "󰑮 PROCESSES"),
     ];
 
-    app.monitor_subview_bounds.clear();
+    app.monitor.monitor_subview_bounds.clear();
     let mut cur_x = nav_layout[0].x;
     for (view, name) in subviews {
-        let is_active = app.monitor_subview == view;
+        let is_active = app.monitor.monitor_subview == view;
         let width = name.chars().count() as u16 + 4;
         let rect = Rect::new(cur_x, nav_layout[0].y, width, 1);
 
@@ -1084,9 +1084,9 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             Style::default().fg(Color::Rgb(60, 65, 75))
         };
-        if app.mouse_pos.1 == nav_layout[0].y
-            && app.mouse_pos.0 >= rect.x
-            && app.mouse_pos.0 < rect.x + rect.width
+        if app.core.mouse_pos.1 == nav_layout[0].y
+            && app.core.mouse_pos.0 >= rect.x
+            && app.core.mouse_pos.0 < rect.x + rect.width
         {
             style = style.fg(Color::White);
         }
@@ -1100,24 +1100,24 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
             );
         }
 
-        app.monitor_subview_bounds.push((rect, view));
+        app.monitor.monitor_subview_bounds.push((rect, view));
         cur_x += width + 2;
     }
 
-    if app.monitor_subview != MonitorSubview::Overview {
-        let tree_indicator = if app.process_tree_view { " 󰁔 TREE" } else { "" };
-        let search_style = if app.process_search_filter.is_empty() {
+    if app.monitor.monitor_subview != MonitorSubview::Overview {
+        let tree_indicator = if app.monitor.process_tree_view { " 󰁔 TREE" } else { "" };
+        let search_style = if app.monitor.process_search_filter.is_empty() {
             Style::default().fg(Color::Rgb(40, 45, 55))
         } else {
             Style::default().fg(crate::ui::theme::accent_primary())
         };
-        let tree_style = if app.process_tree_view {
+        let tree_style = if app.monitor.process_tree_view {
             Style::default().fg(crate::ui::theme::accent_primary())
         } else {
             Style::default().fg(Color::Rgb(40, 45, 55))
         };
         let nav_text = Line::from(vec![
-            Span::styled(format!(" 󰍉 {}", app.process_search_filter), search_style),
+            Span::styled(format!(" 󰍉 {}", app.monitor.process_search_filter), search_style),
             Span::styled(tree_indicator.to_string(), tree_style),
         ]);
         f.render_widget(Paragraph::new(nav_text), nav_layout[1]);
@@ -1127,7 +1127,7 @@ fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
         horizontal: 1,
         vertical: 1,
     });
-    match app.monitor_subview {
+    match app.monitor.monitor_subview {
         MonitorSubview::Overview => draw_monitor_overview(f, content_area, app),
         MonitorSubview::Processes => draw_processes_view(f, content_area, app),
         MonitorSubview::Applications => draw_monitor_applications(f, content_area, app),
@@ -1470,9 +1470,9 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     let total_lines = lines.len() as u16;
     let visible_lines = inner.height;
     let max_scroll = total_lines.saturating_sub(visible_lines);
-    app.overview_scroll_offset = app.overview_scroll_offset.min(max_scroll);
+    app.monitor.overview_scroll_offset = app.monitor.overview_scroll_offset.min(max_scroll);
 
-    let start = app.overview_scroll_offset as usize;
+    let start = app.monitor.overview_scroll_offset as usize;
     let end = (start + visible_lines as usize).min(lines.len());
     let visible: Vec<Line> = lines[start..end].to_vec();
 
@@ -1486,7 +1486,7 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     // Scrollbar
     if total_lines > visible_lines {
         let mut state = ScrollbarState::new(total_lines as usize)
-            .position(app.overview_scroll_offset as usize);
+            .position(app.monitor.overview_scroll_offset as usize);
         f.render_stateful_widget(
             Scrollbar::default()
                 .orientation(ScrollbarOrientation::VerticalRight)
@@ -1500,17 +1500,16 @@ fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
 fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     let current_user = std::env::var("USER").unwrap_or_else(|_| "dracon".to_string());
-    let mut app_procs: Vec<_> = app
-        .system_state
+    let mut app_procs: Vec<_> = app.system_state
         .processes
         .iter()
         .filter(|p| {
-            let matches = if app.process_search_filter.is_empty() {
+            let matches = if app.monitor.process_search_filter.is_empty() {
                 true
             } else {
                 p.name
                     .to_lowercase()
-                    .contains(&app.process_search_filter.to_lowercase())
+                    .contains(&app.monitor.process_search_filter.to_lowercase())
             };
             p.user == current_user
                 && !p.name.starts_with('[')
@@ -1520,7 +1519,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         .cloned()
         .collect();
 
-    if app.process_tree_view {
+    if app.monitor.process_tree_view {
         crate::modules::system::tree_sort_processes(&mut app_procs, &app.system_state.process_ppid);
     }
 
@@ -1531,8 +1530,8 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             Style::default().fg(theme::monitor_row_odd())
         };
-        if app.process_selected_idx == Some(i)
-            && app.monitor_subview == MonitorSubview::Applications
+        if app.monitor.process_selected_idx == Some(i)
+            && app.monitor.monitor_subview == MonitorSubview::Applications
         {
             style = style
                 .bg(crate::ui::theme::accent_primary())
@@ -1547,14 +1546,14 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             crate::ui::theme::accent_secondary()
         };
-        let depth = if app.process_tree_view {
+        let depth = if app.monitor.process_tree_view {
             crate::modules::system::process_tree_depth(p.pid, &app.system_state.process_ppid)
         } else {
             0
         };
         let indent = "  ".repeat(depth.min(8));
         let prefix = if depth > 0 { "└ " } else { "" };
-        let name_display = if app.process_tree_view {
+        let name_display = if app.monitor.process_tree_view {
             format!("{}{}{}", indent, prefix, p.name)
         } else {
             p.name.clone()
@@ -1589,7 +1588,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         .constraints(column_constraints)
         .split(Rect::new(area.x, area.y, effective_width, 1));
 
-    app.process_column_bounds.clear();
+    app.monitor.process_column_bounds.clear();
     let mut current_col_x = area.x;
     let header_cells = [
         ("  Application", ProcessColumn::Name),
@@ -1602,12 +1601,12 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     .enumerate()
     .map(|(i, (h, col))| {
         let width = header_rects[i].width;
-        app.process_column_bounds
+        app.monitor.process_column_bounds
             .push((Rect::new(current_col_x, area.y, width, 1), *col));
         current_col_x += width + spacing;
         let mut text = h.to_string();
-        if app.process_sort_col == *col {
-            text.push_str(if app.process_sort_asc {
+        if app.monitor.process_sort_col == *col {
+            text.push_str(if app.monitor.process_sort_asc {
                 " 󰁝"
             } else {
                 " 󰁅"
@@ -1615,7 +1614,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         }
         Cell::from(text).style(
             Style::default()
-                .fg(if app.process_sort_col == *col {
+                .fg(if app.monitor.process_sort_col == *col {
                     crate::ui::theme::accent_primary()
                 } else {
                     Color::Rgb(60, 65, 75)
@@ -1634,7 +1633,7 @@ fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
 
 fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let mut procs = app.system_state.processes.clone();
-    if app.process_tree_view {
+    if app.monitor.process_tree_view {
         crate::modules::system::tree_sort_processes(&mut procs, &app.system_state.process_ppid);
     }
     let column_constraints = [
@@ -1650,7 +1649,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let total_spacing = (num_cols - 1) * spacing;
     let effective_width = area.width.saturating_sub(total_spacing);
 
-    app.process_column_bounds.clear();
+    app.monitor.process_column_bounds.clear();
     let header_rects = Layout::default()
         .direction(Direction::Horizontal)
         .constraints(column_constraints)
@@ -1670,12 +1669,12 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                 _ => ProcessColumn::Pid,
             };
             let width = header_rects[i].width;
-            app.process_column_bounds
+            app.monitor.process_column_bounds
                 .push((Rect::new(current_col_x, area.y, width, 1), col));
             current_col_x += width + spacing;
             let mut text = h.to_string();
-            if app.process_sort_col == col {
-                text.push_str(if app.process_sort_asc {
+            if app.monitor.process_sort_col == col {
+                text.push_str(if app.monitor.process_sort_asc {
                     " 󰁝"
                 } else {
                     " 󰁅"
@@ -1683,7 +1682,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
             }
             Cell::from(text).style(
                 Style::default()
-                    .fg(if app.process_sort_col == col {
+                    .fg(if app.monitor.process_sort_col == col {
                         crate::ui::theme::accent_primary()
                     } else {
                         Color::Rgb(60, 65, 75)
@@ -1698,7 +1697,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             Style::default().fg(theme::monitor_row_odd())
         };
-        if app.process_selected_idx == Some(i) && app.monitor_subview == MonitorSubview::Processes {
+        if app.monitor.process_selected_idx == Some(i) && app.monitor.monitor_subview == MonitorSubview::Processes {
             style = style
                 .bg(crate::ui::theme::accent_primary())
                 .fg(Color::Black)
@@ -1712,14 +1711,14 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         } else {
             crate::ui::theme::accent_secondary()
         };
-        let depth = if app.process_tree_view {
+        let depth = if app.monitor.process_tree_view {
             crate::modules::system::process_tree_depth(p.pid, &app.system_state.process_ppid)
         } else {
             0
         };
         let indent = "  ".repeat(depth.min(8));
         let prefix = if depth > 0 { "└ " } else { "" };
-        let name_display = if app.process_tree_view {
+        let name_display = if app.monitor.process_tree_view {
             format!("{}{}{}", indent, prefix, p.name)
         } else {
             p.name.clone()
@@ -1747,7 +1746,7 @@ fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
             .header(Row::new(header_cells).height(1).bottom_margin(1))
             .column_spacing(1),
         area,
-        &mut app.process_table_state,
+        &mut app.monitor.process_table_state,
     );
 }
 
@@ -1760,19 +1759,19 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
     let pane_count = app.panes.len();
 
     // Toolbar Icons Cluster (Far Left)
-    let back_icon = Icon::Back.get(app.icon_mode);
-    let forward_icon = Icon::Forward.get(app.icon_mode);
-    let split_icon = Icon::Split.get(app.icon_mode);
-    let burger_icon = Icon::Burger.get(app.icon_mode);
+    let back_icon = Icon::Back.get(app.core.icon_mode);
+    let forward_icon = Icon::Forward.get(app.core.icon_mode);
+    let split_icon = Icon::Split.get(app.core.icon_mode);
+    let burger_icon = Icon::Burger.get(app.core.icon_mode);
 
-    let monitor_icon = Icon::Monitor.get(app.icon_mode);
-    let git_icon = Icon::Git.get(app.icon_mode);
-    let editor_icon = Icon::Document.get(app.icon_mode);
+    let monitor_icon = Icon::Monitor.get(app.core.icon_mode);
+    let git_icon = Icon::Git.get(app.core.icon_mode);
+    let editor_icon = Icon::Document.get(app.core.icon_mode);
 
-    app.header_icon_bounds.clear();
+    app.layout.header_icon_bounds.clear();
     let mut cur_icon_x = area.x + 2;
 
-    let show_icons = app.show_sidebar;
+    let show_icons = app.sidebar.show_sidebar;
 
     if show_icons {
         let icons = [
@@ -1790,7 +1789,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
             let rect = Rect::new(cur_icon_x, area.y, width, 1);
 
             let mut style = Style::default().fg(crate::ui::theme::accent_secondary());
-            if let AppMode::Header(idx) = app.mode {
+            if let AppMode::Header(idx) = app.core.mode {
                 if idx == i {
                     style = style
                         .bg(crate::ui::theme::accent_primary())
@@ -1800,7 +1799,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
             }
 
             f.render_widget(Paragraph::new(icon).style(style), rect);
-            app.header_icon_bounds.push((rect, id.to_string()));
+            app.layout.header_icon_bounds.push((rect, id.to_string()));
             cur_icon_x += width + 2;
         }
     }
@@ -1824,19 +1823,19 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
             1,
         ));
 
-    app.tab_bounds.clear();
+    app.layout.tab_bounds.clear();
     let mut global_tab_idx = if show_icons { 6 } else { 0 };
     for (p_i, pane) in app.panes.iter().enumerate() {
         let chunk = pane_chunks[p_i];
         let mut current_x = chunk.x;
 
-        if app.current_view == CurrentView::Editor {
+        if app.core.current_view == CurrentView::Editor {
             if pane.tabs.is_empty() {
                 continue;
             }
             for (t_i, tab) in pane.tabs.iter().enumerate() {
                 let is_active_tab = t_i == pane.active_tab_index;
-                let is_focused_pane = p_i == app.focused_pane_index && !app.sidebar_focus;
+                let is_focused_pane = p_i == app.focused_pane_index && !app.sidebar.sidebar_focus;
 
                 let is_modified = tab
                     .preview
@@ -1956,7 +1955,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 if width > 0 {
                     let rect = Rect::new(current_x, area.y, width, 1);
                     f.render_widget(Paragraph::new(final_line), rect);
-                    app.tab_bounds.push((rect, p_i, t_i));
+                    app.layout.tab_bounds.push((rect, p_i, t_i));
                 }
             }
             continue;
@@ -1971,7 +1970,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 .unwrap_or_else(|| "/".to_string());
 
             let is_active_tab = t_i == pane.active_tab_index;
-            let is_focused_pane = p_i == app.focused_pane_index && !app.sidebar_focus;
+            let is_focused_pane = p_i == app.focused_pane_index && !app.sidebar.sidebar_focus;
 
             let mut base_style = if is_active_tab {
                 if is_focused_pane {
@@ -1985,7 +1984,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
                 Style::default().fg(Color::DarkGray)
             };
 
-            if let AppMode::Header(idx) = app.mode {
+            if let AppMode::Header(idx) = app.core.mode {
                 if idx == global_tab_idx {
                     base_style = base_style
                         .bg(crate::ui::theme::accent_primary())
@@ -1996,7 +1995,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
 
             spans.push(Span::styled(format!(" {} ", base_name), base_style));
 
-            if matches!(app.current_view, CurrentView::Files | CurrentView::Git) {
+            if matches!(app.core.current_view, CurrentView::Files | CurrentView::Git) {
                 if let Some(branch) = &tab.git_branch {
                     let pending = tab.git_pending.len();
                     let ahead = tab.git_ahead;
@@ -2071,7 +2070,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
             }
             let rect = Rect::new(current_x, area.y, width, 1);
             f.render_widget(Paragraph::new(final_line), rect);
-            app.tab_bounds.push((rect, p_i, t_i));
+            app.layout.tab_bounds.push((rect, p_i, t_i));
             current_x += width + 1;
             global_tab_idx += 1;
         }
@@ -2079,7 +2078,7 @@ fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut A
 }
 
 fn draw_main_stage(f: &mut Frame, area: Rect, app: &mut App) {
-    match app.current_view {
+    match app.core.current_view {
         CurrentView::Files => {
             let pane_count = app.panes.len();
             if pane_count == 0 {
@@ -2093,7 +2092,7 @@ fn draw_main_stage(f: &mut Frame, area: Rect, app: &mut App) {
                 .spacing(1) // Add 1-column gap between panes to prevent bleed-through
                 .split(area);
             for i in 0..pane_count {
-                let is_focused = i == app.focused_pane_index && !app.sidebar_focus;
+                let is_focused = i == app.focused_pane_index && !app.sidebar.sidebar_focus;
                 let borders = Borders::ALL;
                 draw_file_view(f, chunks[i], app, i, is_focused, borders);
             }
@@ -2239,8 +2238,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
         if pending_len > 0 {
             let active_title = format!(" ACTIVE ({} Affected) ", pending_len);
-            let pending_rows: Vec<_> = app
-                .panes
+            let pending_rows: Vec<_> = app.panes
                 .get(pane_idx)
                 .and_then(|p| p.tabs.get(tab_idx))
                 .map(|t| {
@@ -2324,8 +2322,7 @@ fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             history_area,
         );
     } else {
-        let rows: Vec<_> = app
-            .panes
+        let rows: Vec<_> = app.panes
             .get(pane_idx)
             .and_then(|p| p.tabs.get(tab_idx))
             .map(|t| {
@@ -2535,8 +2532,7 @@ fn draw_file_view(
 
     draw_pane_breadcrumbs(f, area, app, pane_idx);
 
-    if let Some(file_state) = app
-        .panes
+    if let Some(file_state) = app.panes
         .get_mut(pane_idx)
         .and_then(|p| p.current_state_mut())
     {
@@ -2663,7 +2659,7 @@ fn draw_file_view(
 
             let mut row_bg_style = Style::default();
             let is_hovered_drop =
-                matches!(&app.hovered_drop_target, Some(DropTarget::Folder(p)) if p == path);
+                matches!(&app.drag.hovered_drop_target, Some(DropTarget::Folder(p)) if p == path);
 
             if is_selected {
                 row_bg_style = row_bg_style.bg(crate::ui::theme::selection_bg());
@@ -2671,7 +2667,7 @@ fn draw_file_view(
                 row_bg_style = row_bg_style.bg(Color::Rgb(78, 58, 112));
             } else if is_hovered_drop {
                 row_bg_style = row_bg_style.bg(crate::ui::theme::accent_secondary());
-            } else if let Some(&c) = app.path_colors.get(path) {
+            } else if let Some(&c) = app.selection.path_colors.get(path) {
                 let color = match c {
                     1 => Color::Red,
                     2 => Color::Green,
@@ -2704,7 +2700,7 @@ fn draw_file_view(
                         Style::default()
                             .fg(Color::White)
                             .add_modifier(Modifier::BOLD)
-                    } else if is_hovered_drop || app.path_colors.contains_key(path) {
+                    } else if is_hovered_drop || app.selection.path_colors.contains_key(path) {
                         Style::default()
                             .fg(Color::Black)
                             .add_modifier(Modifier::BOLD)
@@ -2724,7 +2720,7 @@ fn draw_file_view(
                                     path.file_name().and_then(|n| n.to_str()).unwrap_or("..");
                                     let is_dir = metadata.map(|m| m.is_dir).unwrap_or(false);
                                     let cat = crate::modules::files::get_file_category(path);
-                                    let icon_str = Icon::get_for_path(path, cat, is_dir, app.icon_mode);
+                                    let icon_str = Icon::get_for_path(path, cat, is_dir, app.core.icon_mode);
                                     let icon_str = if !is_dir && matches!(
                                         path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
                                         "package.json" | "package-lock.json"
@@ -2736,7 +2732,7 @@ fn draw_file_view(
 
                                     let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
                                     let indent = "  ".repeat(depth);
-                                    let is_expanded = is_dir && app.expanded_folders.contains(path);
+                                    let is_expanded = is_dir && app.layout.expanded_folders.contains(path);
                                     let marker = if is_dir {
                                         if is_expanded { "▾ " } else { "▸ " }
                                     } else {
@@ -2748,14 +2744,14 @@ fn draw_file_view(
                                     );
 
                                     let mut suffix = String::new();
-                                    if app.starred.contains(path) {
+                                    if app.nav.starred.contains(path) {
                                         suffix.push_str(" [*]");
                                     }
                                     if !is_selected
                                         && !is_multi_selected
-                                        && !app.path_colors.contains_key(path)
+                                        && !app.selection.path_colors.contains_key(path)
                                         && !is_hovered_drop
-                                        && app.semantic_coloring
+                                        && app.settings.semantic_coloring
                                     {
                                         if is_dir {
                                             cell_style =
@@ -2823,7 +2819,7 @@ fn draw_file_view(
                                 metadata
                                     .map(|m| m.modified)
                                     .unwrap_or(SystemTime::UNIX_EPOCH),
-                                app.smart_date,
+                                app.settings.smart_date,
                             );
                             truncate_to_width(
                                 &text,
@@ -2845,7 +2841,7 @@ fn draw_file_view(
                                 metadata
                                     .map(|m| m.created)
                                     .unwrap_or(SystemTime::UNIX_EPOCH),
-                                app.smart_date,
+                                app.settings.smart_date,
                             );
                             truncate_to_width(
                                 &text,
@@ -2945,7 +2941,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
 
     // Log - If present, hide other shortcuts on the left
     let mut showing_log = false;
-    if let Some((msg, time)) = &app.last_action_msg {
+    if let Some((msg, time)) = &app.output.last_action_msg {
         if time.elapsed().as_secs() < 5 {
             left_spans.push(Span::styled(
                 format!(" [ SYSTEM ] {} ", msg),
@@ -2957,8 +2953,8 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         }
     }
 
-    if app.is_dragging {
-        if let Some(src) = &app.drag_source {
+    if app.drag.is_dragging {
+        if let Some(src) = &app.drag.drag_source {
             let name = src.file_name().and_then(|n| n.to_str()).unwrap_or("...");
             left_spans.push(Span::styled(
                 " DRAGGING ",
@@ -2974,7 +2970,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                     .add_modifier(Modifier::BOLD),
             ));
 
-            if let Some(target) = &app.hovered_drop_target {
+            if let Some(target) = &app.drag.hovered_drop_target {
                 left_spans.push(Span::raw(" to "));
                 let target_desc = match target {
                     DropTarget::Folder(p) => {
@@ -3000,11 +2996,11 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         let hidden_on = if let Some(fs) = app.current_file_state() {
             fs.show_hidden
         } else {
-            app.default_show_hidden
+            app.settings.default_show_hidden
         };
 
         let mut shortcuts = Vec::new();
-        if app.current_view == CurrentView::Editor {
+        if app.core.current_view == CurrentView::Editor {
             shortcuts.extend(HotkeyHint::render("Esc", "Back", Color::Red));
             shortcuts.extend(HotkeyHint::render(
                 "^B",
@@ -3105,7 +3101,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
     );
 
     // 2. Center Section: Selection Summary (Only in Files view)
-    if app.current_view == CurrentView::Files {
+    if app.core.current_view == CurrentView::Files {
         if let Some(fs) = app.current_file_state() {
             let sel_count = if !fs.selection.is_empty() {
                 fs.selection.multi.len()
@@ -3152,7 +3148,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             } else {
                 summary_plain
             };
-            let summary_style = if app.sidebar_focus {
+            let summary_style = if app.sidebar.sidebar_focus {
                 Style::default()
                     .bg(Color::Rgb(85, 80, 20))
                     .fg(Color::White)
@@ -3234,7 +3230,7 @@ fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
 
     // 5. Bottom Line: Background Tasks
     let mut task_spans = Vec::new();
-    for task in &app.background_tasks {
+    for task in &app.output.background_tasks {
         let pct = (task.progress * 100.0) as usize;
         let bar = "█".repeat(pct / 10) + &"░".repeat(10 - (pct / 10));
         task_spans.push(Span::styled(
@@ -3262,13 +3258,13 @@ fn draw_context_menu(
     use crate::app::ContextMenuAction;
     let mut items = Vec::new();
 
-    let actions = if let AppMode::ContextMenu { actions, .. } = &app.mode {
+    let actions = if let AppMode::ContextMenu { actions, .. } = &app.core.mode {
         actions.clone()
     } else {
         vec![]
     };
 
-    let selected_idx = if let AppMode::ContextMenu { selected_index, .. } = &app.mode {
+    let selected_idx = if let AppMode::ContextMenu { selected_index, .. } = &app.core.mode {
         *selected_index
     } else {
         None
@@ -3276,81 +3272,81 @@ fn draw_context_menu(
 
     for (i, action) in actions.iter().enumerate() {
         let label = match action {
-            ContextMenuAction::Open => format!(" {} Open", Icon::Folder.get(app.icon_mode)),
+            ContextMenuAction::Open => format!(" {} Open", Icon::Folder.get(app.core.icon_mode)),
             ContextMenuAction::OpenNewTab => {
-                format!(" {} Open in New Tab", Icon::Split.get(app.icon_mode))
+                format!(" {} Open in New Tab", Icon::Split.get(app.core.icon_mode))
             }
             ContextMenuAction::OpenWith => {
-                format!(" {} Open With...", Icon::Split.get(app.icon_mode))
+                format!(" {} Open With...", Icon::Split.get(app.core.icon_mode))
             }
-            ContextMenuAction::Edit => format!(" {} Edit", Icon::Document.get(app.icon_mode)),
-            ContextMenuAction::Run => format!(" {} Run", Icon::Video.get(app.icon_mode)),
+            ContextMenuAction::Edit => format!(" {} Edit", Icon::Document.get(app.core.icon_mode)),
+            ContextMenuAction::Run => format!(" {} Run", Icon::Video.get(app.core.icon_mode)),
             ContextMenuAction::RunTerminal => {
-                format!(" {} Run in Terminal", Icon::Script.get(app.icon_mode))
+                format!(" {} Run in Terminal", Icon::Script.get(app.core.icon_mode))
             }
             ContextMenuAction::ExtractHere => {
-                format!(" {} Extract Here", Icon::Archive.get(app.icon_mode))
+                format!(" {} Extract Here", Icon::Archive.get(app.core.icon_mode))
             }
             ContextMenuAction::NewFolder => {
-                format!(" {} New Folder", Icon::Folder.get(app.icon_mode))
+                format!(" {} New Folder", Icon::Folder.get(app.core.icon_mode))
             }
-            ContextMenuAction::NewFile => format!(" {} New File", Icon::File.get(app.icon_mode)),
-            ContextMenuAction::Cut => format!(" {} Cut", Icon::Cut.get(app.icon_mode)),
-            ContextMenuAction::Copy => format!(" {} Copy", Icon::Copy.get(app.icon_mode)),
-            ContextMenuAction::CopyPath => format!(" {} Copy Path", Icon::Copy.get(app.icon_mode)),
-            ContextMenuAction::CopyName => format!(" {} Copy Name", Icon::Copy.get(app.icon_mode)),
-            ContextMenuAction::Paste => format!(" {} Paste", Icon::Paste.get(app.icon_mode)),
-            ContextMenuAction::Rename => format!(" {} Rename", Icon::Rename.get(app.icon_mode)),
+            ContextMenuAction::NewFile => format!(" {} New File", Icon::File.get(app.core.icon_mode)),
+            ContextMenuAction::Cut => format!(" {} Cut", Icon::Cut.get(app.core.icon_mode)),
+            ContextMenuAction::Copy => format!(" {} Copy", Icon::Copy.get(app.core.icon_mode)),
+            ContextMenuAction::CopyPath => format!(" {} Copy Path", Icon::Copy.get(app.core.icon_mode)),
+            ContextMenuAction::CopyName => format!(" {} Copy Name", Icon::Copy.get(app.core.icon_mode)),
+            ContextMenuAction::Paste => format!(" {} Paste", Icon::Paste.get(app.core.icon_mode)),
+            ContextMenuAction::Rename => format!(" {} Rename", Icon::Rename.get(app.core.icon_mode)),
             ContextMenuAction::Duplicate => {
-                format!(" {} Duplicate", Icon::Duplicate.get(app.icon_mode))
+                format!(" {} Duplicate", Icon::Duplicate.get(app.core.icon_mode))
             }
             ContextMenuAction::Compress => {
-                format!(" {} Compress", Icon::Archive.get(app.icon_mode))
+                format!(" {} Compress", Icon::Archive.get(app.core.icon_mode))
             }
-            ContextMenuAction::Delete => format!(" {} Delete", Icon::Delete.get(app.icon_mode)),
+            ContextMenuAction::Delete => format!(" {} Delete", Icon::Delete.get(app.core.icon_mode)),
             ContextMenuAction::AddToFavorites => {
-                format!(" {} Add to Favorites", Icon::Star.get(app.icon_mode))
+                format!(" {} Add to Favorites", Icon::Star.get(app.core.icon_mode))
             }
             ContextMenuAction::RemoveFromFavorites => {
-                format!(" {} Remove from Favorites", Icon::Star.get(app.icon_mode))
+                format!(" {} Remove from Favorites", Icon::Star.get(app.core.icon_mode))
             }
             ContextMenuAction::Properties => {
-                format!(" {} Properties", Icon::Document.get(app.icon_mode))
+                format!(" {} Properties", Icon::Document.get(app.core.icon_mode))
             }
             ContextMenuAction::TerminalWindow => {
-                format!(" {} New Terminal Window", Icon::Script.get(app.icon_mode))
+                format!(" {} New Terminal Window", Icon::Script.get(app.core.icon_mode))
             }
             ContextMenuAction::TerminalTab => {
-                format!(" {} New Terminal Tab", Icon::Script.get(app.icon_mode))
+                format!(" {} New Terminal Tab", Icon::Script.get(app.core.icon_mode))
             }
-            ContextMenuAction::Refresh => format!(" {} Refresh", Icon::Refresh.get(app.icon_mode)),
+            ContextMenuAction::Refresh => format!(" {} Refresh", Icon::Refresh.get(app.core.icon_mode)),
             ContextMenuAction::SelectAll => {
-                format!(" {} Select All", Icon::SelectAll.get(app.icon_mode))
+                format!(" {} Select All", Icon::SelectAll.get(app.core.icon_mode))
             }
             ContextMenuAction::ToggleHidden => {
-                format!(" {} Toggle Hidden", Icon::ToggleHidden.get(app.icon_mode))
+                format!(" {} Toggle Hidden", Icon::ToggleHidden.get(app.core.icon_mode))
             }
             ContextMenuAction::ConnectRemote => {
-                format!(" {} Connect", Icon::Remote.get(app.icon_mode))
+                format!(" {} Connect", Icon::Remote.get(app.core.icon_mode))
             }
             ContextMenuAction::DeleteRemote => {
-                format!(" {} Delete Bookmark", Icon::Delete.get(app.icon_mode))
+                format!(" {} Delete Bookmark", Icon::Delete.get(app.core.icon_mode))
             }
-            ContextMenuAction::Mount => format!(" {} Mount", Icon::Storage.get(app.icon_mode)),
-            ContextMenuAction::Unmount => format!(" {} Unmount", Icon::Storage.get(app.icon_mode)),
+            ContextMenuAction::Mount => format!(" {} Mount", Icon::Storage.get(app.core.icon_mode)),
+            ContextMenuAction::Unmount => format!(" {} Unmount", Icon::Storage.get(app.core.icon_mode)),
             ContextMenuAction::SetWallpaper => {
-                format!(" {} Set as Wallpaper", Icon::Image.get(app.icon_mode))
+                format!(" {} Set as Wallpaper", Icon::Image.get(app.core.icon_mode))
             }
-            ContextMenuAction::GitInit => format!(" {} Git Init", Icon::Git.get(app.icon_mode)),
-            ContextMenuAction::GitStatus => format!(" {} Git Status", Icon::Git.get(app.icon_mode)),
+            ContextMenuAction::GitInit => format!(" {} Git Init", Icon::Git.get(app.core.icon_mode)),
+            ContextMenuAction::GitStatus => format!(" {} Git Status", Icon::Git.get(app.core.icon_mode)),
             ContextMenuAction::SystemMonitor => {
-                format!(" {} System Monitor", Icon::Monitor.get(app.icon_mode))
+                format!(" {} System Monitor", Icon::Monitor.get(app.core.icon_mode))
             }
             ContextMenuAction::Drag => {
-                format!(" {} Drag...", Icon::Remote.get(app.icon_mode))
+                format!(" {} Drag...", Icon::Remote.get(app.core.icon_mode))
             }
             ContextMenuAction::SetColor(_) => {
-                format!(" {} Highlight...", Icon::Image.get(app.icon_mode))
+                format!(" {} Highlight...", Icon::Image.get(app.core.icon_mode))
             }
             ContextMenuAction::SortBy(col) => {
                 let name = match col {
@@ -3371,17 +3367,17 @@ fn draw_context_menu(
                 }
                 label
             }
-            ContextMenuAction::Save => format!(" {} Save", Icon::Document.get(app.icon_mode)),
-            ContextMenuAction::EditorCut => format!(" {} Cut", Icon::Cut.get(app.icon_mode)),
-            ContextMenuAction::EditorCopy => format!(" {} Copy", Icon::Copy.get(app.icon_mode)),
-            ContextMenuAction::EditorPaste => format!(" {} Paste", Icon::Paste.get(app.icon_mode)),
-            ContextMenuAction::EditorUndo => format!(" {} Undo", Icon::Refresh.get(app.icon_mode)),
-            ContextMenuAction::EditorRedo => format!(" {} Redo", Icon::Refresh.get(app.icon_mode)),
+            ContextMenuAction::Save => format!(" {} Save", Icon::Document.get(app.core.icon_mode)),
+            ContextMenuAction::EditorCut => format!(" {} Cut", Icon::Cut.get(app.core.icon_mode)),
+            ContextMenuAction::EditorCopy => format!(" {} Copy", Icon::Copy.get(app.core.icon_mode)),
+            ContextMenuAction::EditorPaste => format!(" {} Paste", Icon::Paste.get(app.core.icon_mode)),
+            ContextMenuAction::EditorUndo => format!(" {} Undo", Icon::Refresh.get(app.core.icon_mode)),
+            ContextMenuAction::EditorRedo => format!(" {} Redo", Icon::Refresh.get(app.core.icon_mode)),
             ContextMenuAction::EditorSelectAll => {
-                format!(" {} Select All", Icon::SelectAll.get(app.icon_mode))
+                format!(" {} Select All", Icon::SelectAll.get(app.core.icon_mode))
             }
-            ContextMenuAction::Undo => format!(" {} Undo", Icon::Refresh.get(app.icon_mode)),
-            ContextMenuAction::Redo => format!(" {} Redo", Icon::Refresh.get(app.icon_mode)),
+            ContextMenuAction::Undo => format!(" {} Undo", Icon::Refresh.get(app.core.icon_mode)),
+            ContextMenuAction::Redo => format!(" {} Redo", Icon::Refresh.get(app.core.icon_mode)),
             ContextMenuAction::Separator => " ────────────────".to_string(),
         };
 
@@ -3395,7 +3391,7 @@ fn draw_context_menu(
         };
 
         let mut item = ListItem::new(label).style(style);
-        if (*action == ContextMenuAction::Paste) && app.clipboard.is_none() {
+        if (*action == ContextMenuAction::Paste) && app.selection.clipboard.is_none() {
             item = item.style(Style::default().fg(Color::DarkGray));
         }
         if *action == ContextMenuAction::Separator {
@@ -3481,7 +3477,7 @@ fn draw_import_servers_modal(f: &mut Frame, app: &App) {
         Rect::new(input_area.x, input_area.y, 2, 1),
     );
     f.render_widget(
-        &app.input,
+        &app.core.input,
         Rect::new(
             input_area.x + 2,
             input_area.y,
@@ -3532,16 +3528,15 @@ fn draw_command_palette(f: &mut Frame, app: &mut App) {
         Rect::new(inner.x, inner.y, 2, 1),
     );
     f.render_widget(
-        &app.input,
+        &app.core.input,
         Rect::new(inner.x + 2, inner.y, inner.width.saturating_sub(2), 1),
     );
 
-    let items: Vec<ListItem> = app
-        .filtered_commands
+    let items: Vec<ListItem> = app.nav.filtered_commands
         .iter()
         .enumerate()
         .map(|(i, cmd)| {
-            let style = if i == app.command_index {
+            let style = if i == app.nav.command_index {
                 Style::default().bg(Color::DarkGray).fg(Color::White)
             } else {
                 Style::default()
@@ -3566,11 +3561,11 @@ fn draw_rename_modal(f: &mut Frame, app: &App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    if app.rename_selected {
-        let text = if let Some(idx) = app.input.value.rfind('.') {
+    if app.selection.rename_selected {
+        let text = if let Some(idx) = app.core.input.value.rfind('.') {
             if idx > 0 {
-                let stem_part = &app.input.value[..idx];
-                let ext_part = &app.input.value[idx..];
+                let stem_part = &app.core.input.value[..idx];
+                let ext_part = &app.core.input.value[idx..];
                 Line::from(vec![
                     Span::styled(
                         stem_part,
@@ -3582,7 +3577,7 @@ fn draw_rename_modal(f: &mut Frame, app: &App) {
                 ])
             } else {
                 Line::from(vec![Span::styled(
-                    &app.input.value,
+                    &app.core.input.value,
                     Style::default()
                         .bg(crate::ui::theme::accent_primary())
                         .fg(Color::Black),
@@ -3590,7 +3585,7 @@ fn draw_rename_modal(f: &mut Frame, app: &App) {
             }
         } else {
             Line::from(vec![Span::styled(
-                &app.input.value,
+                &app.core.input.value,
                 Style::default()
                     .bg(crate::ui::theme::accent_primary())
                     .fg(Color::Black),
@@ -3598,7 +3593,7 @@ fn draw_rename_modal(f: &mut Frame, app: &App) {
         };
         f.render_widget(Paragraph::new(text), inner);
     } else {
-        f.render_widget(&app.input, inner);
+        f.render_widget(&app.core.input, inner);
     }
 }
 
@@ -3612,7 +3607,7 @@ fn draw_new_folder_modal(f: &mut Frame, app: &App) {
         .border_style(Style::default().fg(Color::Green));
     let inner = block.inner(area);
     f.render_widget(block, area);
-    f.render_widget(&app.input, inner);
+    f.render_widget(&app.core.input, inner);
 }
 
 fn draw_new_file_modal(f: &mut Frame, app: &App) {
@@ -3625,7 +3620,7 @@ fn draw_new_file_modal(f: &mut Frame, app: &App) {
         .border_style(Style::default().fg(Color::Green));
     let inner = block.inner(area);
     f.render_widget(block, area);
-    f.render_widget(&app.input, inner);
+    f.render_widget(&app.core.input, inner);
 }
 
 fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
@@ -3643,7 +3638,7 @@ fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     let label_style = Style::default().fg(Color::DarkGray);
     let input_style = Style::default().fg(THEME.fg);
 
-    let file_count = if let AppMode::BulkRename { ref files, .. } = app.mode {
+    let file_count = if let AppMode::BulkRename { ref files, .. } = app.core.mode {
         files.len()
     } else {
         0
@@ -3653,12 +3648,12 @@ fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     content.push(Line::from(vec![Span::styled(format!("{} files selected - Enter to apply", file_count), Style::default().fg(Color::Cyan))]));
     content.push(Line::from(vec![Span::raw("")]));
     content.push(Line::from(vec![Span::styled("Pattern: ", label_style)]));
-    content.push(Line::from(vec![Span::styled(&app.input.value, input_style)]));
+    content.push(Line::from(vec![Span::styled(&app.core.input.value, input_style)]));
     content.push(Line::from(vec![Span::raw("")]));
     content.push(Line::from(vec![Span::styled("Preview (first 5):", label_style)]));
 
     let mut preview_lines: Vec<String> = Vec::new();
-    if let AppMode::BulkRename { ref files, ref pattern, ref replacement, .. } = app.mode {
+    if let AppMode::BulkRename { ref files, ref pattern, ref replacement, .. } = app.core.mode {
         let re = regex::Regex::new(pattern);
         for (i, f) in files.iter().take(5).enumerate() {
             let name_str = f.file_name().unwrap_or_default().to_string_lossy().into_owned();
@@ -3697,14 +3692,14 @@ fn draw_save_as_modal(f: &mut Frame, app: &App) {
         .border_style(Style::default().fg(Color::Yellow));
     let inner = block.inner(area);
     f.render_widget(block, area);
-    f.render_widget(&app.input, inner);
+    f.render_widget(&app.core.input, inner);
 }
 
 fn draw_delete_modal(f: &mut Frame, app: &App) {
     let area = centered_rect(40, 10, f.area());
     f.render_widget(Clear, area);
 
-    let (title, message) = match &app.mode {
+    let (title, message) = match &app.core.mode {
         AppMode::DeleteFile(ref path) => {
             let name = path.file_name().unwrap_or_default().to_string_lossy();
             (format!(" Delete {}? ", name), "Confirm deletion? [Y/n]: ".to_string())
@@ -3717,7 +3712,7 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
         }
     };
 
-    let border_color = match &app.mode {
+    let border_color = match &app.core.mode {
         AppMode::Delete(ref mode) if mode == "trash" => Color::Yellow,
         _ => Color::Red,
     };
@@ -3733,13 +3728,13 @@ fn draw_delete_modal(f: &mut Frame, app: &App) {
 
     // Message
     f.render_widget(
-        Paragraph::new(format!("{}{}", message, app.input.value))
+        Paragraph::new(format!("{}{}", message, app.core.input.value))
             .alignment(Alignment::Center),
         inner,
     );
 
     // Buttons
-    let (mx, my) = app.mouse_pos;
+    let (mx, my) = app.core.mouse_pos;
     let button_y = inner.y + inner.height.saturating_sub(2);
 
     let is_hover =
@@ -3947,7 +3942,7 @@ fn draw_settings_modal(f: &mut Frame, app: &App) {
         ListItem::new(" 󰌌  Shortcuts "),
     ];
 
-    let sel = match app.settings_section {
+    let sel = match app.settings.settings_section {
         SettingsSection::Columns => 0,
         SettingsSection::Tabs => 1,
         SettingsSection::General => 2,
@@ -3979,7 +3974,7 @@ fn draw_settings_modal(f: &mut Frame, app: &App) {
         ),
         chunks[0],
     );
-    match app.settings_section {
+    match app.settings.settings_section {
         SettingsSection::Columns => draw_column_settings(f, chunks[1], app),
         SettingsSection::Tabs => draw_tab_settings(f, chunks[1], app),
         SettingsSection::General => draw_general_settings(f, chunks[1], app),
@@ -4109,7 +4104,7 @@ fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
         .constraints([Constraint::Length(3), Constraint::Min(0)])
         .split(area);
     let titles = vec![" [Single] ", " [Split] "];
-    let sel = match app.settings_target {
+    let sel = match app.settings.settings_target {
         SettingsTarget::SingleMode => 0,
         SettingsTarget::SplitMode => 1,
     };
@@ -4134,9 +4129,9 @@ fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
         (FileColumn::Created, "Created (c)"),
         (FileColumn::Permissions, "Permissions (p)"),
     ];
-    let target = match app.settings_target {
-        SettingsTarget::SingleMode => &app.single_columns,
-        SettingsTarget::SplitMode => &app.split_columns,
+    let target = match app.settings.settings_target {
+        SettingsTarget::SingleMode => &app.layout.single_columns,
+        SettingsTarget::SplitMode => &app.layout.split_columns,
     };
     let items: Vec<ListItem> = options
         .iter()
@@ -4144,7 +4139,7 @@ fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
         .map(|(i, (col, label))| {
             let prefix = if target.contains(col) { "[x] " } else { "[ ] " };
             let mut style = Style::default().fg(THEME.fg);
-            if i == app.settings_index && app.settings_section == SettingsSection::Columns {
+            if i == app.settings.settings_index && app.settings.settings_section == SettingsSection::Columns {
                 style = Style::default()
                     .bg(crate::ui::theme::accent_primary())
                     .fg(Color::Black)
@@ -4181,7 +4176,7 @@ fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
 
         for (t_idx, tab) in pane.tabs.iter().enumerate() {
             let is_selected =
-                tab_counter == app.settings_index && app.settings_section == SettingsSection::Tabs;
+                tab_counter == app.settings.settings_index && app.settings.settings_section == SettingsSection::Tabs;
             let mut style = Style::default().fg(THEME.fg);
             if is_selected {
                 style = style
@@ -4260,57 +4255,57 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         },
         GeneralOption {
             label: "Show Hidden Files",
-            status: if app.default_show_hidden {
+            status: if app.settings.default_show_hidden {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "h",
-            bool_state: Some(app.default_show_hidden),
+            bool_state: Some(app.settings.default_show_hidden),
             read_only: false,
         },
         GeneralOption {
             label: "Confirm Delete",
-            status: if app.confirm_delete {
+            status: if app.settings.confirm_delete {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "d",
-            bool_state: Some(app.confirm_delete),
+            bool_state: Some(app.settings.confirm_delete),
             read_only: false,
         },
         GeneralOption {
             label: "Smart Date Formatting",
-            status: if app.smart_date {
+            status: if app.settings.smart_date {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "t",
-            bool_state: Some(app.smart_date),
+            bool_state: Some(app.settings.smart_date),
             read_only: false,
         },
         GeneralOption {
             label: "Semantic Coloring",
-            status: if app.semantic_coloring {
+            status: if app.settings.semantic_coloring {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "s",
-            bool_state: Some(app.semantic_coloring),
+            bool_state: Some(app.settings.semantic_coloring),
             read_only: false,
         },
         GeneralOption {
             label: "Auto Save",
-            status: if app.auto_save {
+            status: if app.settings.auto_save {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "a",
-            bool_state: Some(app.auto_save),
+            bool_state: Some(app.settings.auto_save),
             read_only: false,
         },
         GeneralOption {
@@ -4322,7 +4317,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         },
         GeneralOption {
             label: "Icon Mode",
-            status: format!("{:?}", app.icon_mode),
+            status: format!("{:?}", app.core.icon_mode),
             key: "i",
             bool_state: None,
             read_only: false,
@@ -4336,57 +4331,57 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         },
         GeneralOption {
             label: "Sidebar Folders",
-            status: if app.sidebar_folders {
+            status: if app.sidebar.sidebar_folders {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "f",
-            bool_state: Some(app.sidebar_folders),
+            bool_state: Some(app.sidebar.sidebar_folders),
             read_only: false,
         },
         GeneralOption {
             label: "Sidebar Favorites",
-            status: if app.sidebar_favorites {
+            status: if app.sidebar.sidebar_favorites {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "v",
-            bool_state: Some(app.sidebar_favorites),
+            bool_state: Some(app.sidebar.sidebar_favorites),
             read_only: false,
         },
         GeneralOption {
             label: "Sidebar Recent",
-            status: if app.sidebar_recent {
+            status: if app.sidebar.sidebar_recent {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "c",
-            bool_state: Some(app.sidebar_recent),
+            bool_state: Some(app.sidebar.sidebar_recent),
             read_only: false,
         },
         GeneralOption {
             label: "Sidebar Storage",
-            status: if app.sidebar_storage {
+            status: if app.sidebar.sidebar_storage {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "g",
-            bool_state: Some(app.sidebar_storage),
+            bool_state: Some(app.sidebar.sidebar_storage),
             read_only: false,
         },
         GeneralOption {
             label: "Sidebar Remotes",
-            status: if app.sidebar_remotes {
+            status: if app.sidebar.sidebar_remotes {
                 "ENABLED ".to_string()
             } else {
                 "DISABLED".to_string()
             },
             key: "m",
-            bool_state: Some(app.sidebar_remotes),
+            bool_state: Some(app.sidebar.sidebar_remotes),
             read_only: false,
         },
         GeneralOption {
@@ -4403,7 +4398,7 @@ fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         .enumerate()
         .map(|(i, opt)| {
             let is_selected =
-                i == app.settings_index && app.settings_section == SettingsSection::General;
+                i == app.settings.settings_index && app.settings.settings_section == SettingsSection::General;
             let mut style = Style::default().fg(THEME.fg);
             let mut status_style = match opt.bool_state {
                 Some(true) => Style::default().fg(Color::Green),
@@ -4472,7 +4467,7 @@ fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     ];
 
     let mut rows: Vec<Row> = Vec::new();
-    let reset_selected = app.settings_index == 0 && app.settings_section == SettingsSection::Style;
+    let reset_selected = app.settings.settings_index == 0 && app.settings.settings_section == SettingsSection::Style;
     let reset_style = if reset_selected {
         Style::default()
             .bg(crate::ui::theme::accent_primary())
@@ -4500,7 +4495,7 @@ fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     for (i, (name, desc, color)) in preset_rows.iter().enumerate() {
         let row_idx = i + 1;
         let is_selected =
-            row_idx == app.settings_index && app.settings_section == SettingsSection::Style;
+            row_idx == app.settings.settings_index && app.settings.settings_section == SettingsSection::Style;
         let row_style = if is_selected {
             Style::default()
                 .bg(crate::ui::theme::accent_primary())
@@ -4523,7 +4518,7 @@ fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
             .map(|(i, (label, rgb))| {
                 let row_idx = i + STYLE_COLOR_START_INDEX;
                 let is_selected =
-                    row_idx == app.settings_index && app.settings_section == SettingsSection::Style;
+                    row_idx == app.settings.settings_index && app.settings.settings_section == SettingsSection::Style;
                 let mut left_style = Style::default().fg(THEME.fg);
                 let mut value_style = Style::default().fg(Color::Rgb(rgb.r, rgb.g, rgb.b));
                 if is_selected {
@@ -4569,7 +4564,7 @@ fn draw_style_color_modal(f: &mut Frame, app: &App) {
     f.render_widget(Clear, area);
 
     const STYLE_COLOR_START_INDEX: usize = 7;
-    let field_name = match app.settings_index.saturating_sub(STYLE_COLOR_START_INDEX) {
+    let field_name = match app.settings.settings_index.saturating_sub(STYLE_COLOR_START_INDEX) {
         0 => "Accent Primary",
         1 => "Accent Secondary",
         2 => "Selection Background",
@@ -4581,7 +4576,7 @@ fn draw_style_color_modal(f: &mut Frame, app: &App) {
 
     let color = {
         let style = crate::ui::theme::style_settings();
-        match app.settings_index.saturating_sub(STYLE_COLOR_START_INDEX) {
+        match app.settings.settings_index.saturating_sub(STYLE_COLOR_START_INDEX) {
             0 => style.accent_primary,
             1 => style.accent_secondary,
             2 => style.selection_bg,
@@ -4622,7 +4617,7 @@ fn draw_style_color_modal(f: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(crate::ui::theme::accent_secondary()));
     f.render_widget(
-        Paragraph::new(app.input.value.as_str()).block(input_block),
+        Paragraph::new(app.core.input.value.as_str()).block(input_block),
         Rect::new(inner.x, inner.y + 2, inner.width, 3),
     );
 
@@ -4640,7 +4635,7 @@ fn draw_style_color_modal(f: &mut Frame, app: &App) {
         Rect::new(inner.x, inner.y + 6, inner.width, 1),
     );
 
-    if let Some((msg, time)) = &app.last_action_msg {
+    if let Some((msg, time)) = &app.output.last_action_msg {
         if time.elapsed().as_secs() < 5 && msg.starts_with("Invalid color for ") {
             f.render_widget(
                 Paragraph::new(msg.as_str()).style(Style::default().fg(Color::Red)),
@@ -4685,7 +4680,7 @@ fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .border_style(Style::default().fg(crate::ui::theme::accent_primary()));
     f.render_widget(
-        Paragraph::new(app.input.value.as_str()).block(input_block),
+        Paragraph::new(app.core.input.value.as_str()).block(input_block),
         Rect::new(inner.x, inner.y + 5, inner.width, 3),
     );
 
@@ -4734,8 +4729,7 @@ fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(block, area);
 
     let pane_idx = app.focused_pane_index;
-    let (path, filter, remote) = app
-        .current_file_state()
+    let (path, filter, remote) = app.current_file_state()
         .map(|fs| {
             (
                 fs.current_path.display().to_string(),
@@ -4746,14 +4740,14 @@ fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
         .unwrap_or_else(|| ("-".to_string(), "".to_string(), false));
 
     let lines = vec![
-        Line::from(format!("view={:?} mode={:?}", app.current_view, app.mode)),
+        Line::from(format!("view={:?} mode={:?}", app.core.current_view, app.core.mode)),
         Line::from(format!(
             "pane={} sidebar_focus={}",
-            pane_idx, app.sidebar_focus
+            pane_idx, app.sidebar.sidebar_focus
         )),
         Line::from(format!(
             "split={} sidebar={} stage={}",
-            app.is_split_mode, app.show_sidebar, app.show_main_stage
+            app.core.is_split_mode, app.sidebar.show_sidebar, app.show_main_stage
         )),
         Line::from(format!("remote={} filter='{}'", remote, filter)),
         Line::from(format!(
@@ -4769,13 +4763,12 @@ fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
 }
 
 fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
-    let rows: Vec<_> = app
-        .remote_bookmarks
+    let rows: Vec<_> = app.remote.remote_bookmarks
         .iter()
         .enumerate()
         .map(|(i, b)| {
             let is_selected =
-                i == app.settings_index && app.settings_section == SettingsSection::Remotes;
+                i == app.settings.settings_index && app.settings.settings_section == SettingsSection::Remotes;
             let mut style = Style::default().fg(THEME.fg);
             if is_selected {
                 style = style
@@ -4784,7 +4777,7 @@ fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
                     .add_modifier(Modifier::BOLD);
             }
 
-            let icon = Icon::Remote.get(app.icon_mode);
+            let icon = Icon::Remote.get(app.core.icon_mode);
             Row::new(vec![
                 Cell::from(format!(" {} {}", icon, b.name)).style(style),
                 Cell::from(format!("{}@{}", b.user, b.host)).style(style),
@@ -4841,7 +4834,7 @@ fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
 
     f.render_widget(Paragraph::new(text), chunks[0]);
 
-    if app.remote_bookmarks.is_empty() {
+    if app.remote.remote_bookmarks.is_empty() {
         f.render_widget(
             Paragraph::new("\n (No remote servers configured)")
                 .style(Style::default().fg(Color::DarkGray)),
@@ -4875,20 +4868,20 @@ fn draw_add_remote_modal(f: &mut Frame, app: &App) {
         ])
         .split(inner);
 
-    let active_idx = if let AppMode::AddRemote(idx) = app.mode {
+    let active_idx = if let AppMode::AddRemote(idx) = app.core.mode {
         idx
     } else {
         0
     };
 
     let fields = [
-        ("Name", &app.pending_remote.name),
-        ("Host", &app.pending_remote.host),
-        ("User", &app.pending_remote.user),
-        ("Port", &app.pending_remote.port.to_string()),
+        ("Name", &app.remote.pending_remote.name),
+        ("Host", &app.remote.pending_remote.host),
+        ("User", &app.remote.pending_remote.user),
+        ("Port", &app.remote.pending_remote.port.to_string()),
         (
             "Key Path",
-            &app.pending_remote
+            &app.remote.pending_remote
                 .key_path
                 .as_ref()
                 .map(|p| p.to_string_lossy().to_string())
@@ -4911,7 +4904,7 @@ fn draw_add_remote_modal(f: &mut Frame, app: &App) {
 
         if is_active {
             f.render_widget(
-                Paragraph::new(app.input.value.as_str()).block(block),
+                Paragraph::new(app.core.input.value.as_str()).block(block),
                 field_area,
             );
         } else {
@@ -5029,8 +5022,8 @@ fn format_modified_time(time: SystemTime, smart: bool) -> String {
 }
 
 fn draw_drag_ghost(f: &mut Frame, app: &App) {
-    if let Some(path) = &app.drag_source {
-        let (col, row) = app.mouse_pos;
+    if let Some(path) = &app.drag.drag_source {
+        let (col, row) = app.core.mouse_pos;
         let name = path.file_name().unwrap_or_default().to_string_lossy();
         // Truncate name if too long
         let max_len = 20;
