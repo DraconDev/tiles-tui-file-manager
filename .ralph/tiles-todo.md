@@ -1,18 +1,32 @@
 ## Task: Work through remaining TODO items for Tiles TUI File Manager
 
-### Current state
-- P0 Architecture is ~85% done (3/4 big items complete, event loop extraction blocked)
-- P1 Quality items are untouched — quick wins available
-- P2 Hygiene items are untouched
-- All 54 tests pass, clippy clean
+### Progress this iteration
 
-### Priority order for this loop
-1. **P1 Quick wins** (guard unwrap, ScanResult struct, #[must_use])
-2. **P1 Tests** (add tests for untested critical modules)
-3. **P2 Hygiene** (cargo audit, XDG debug log, pin deps)
-4. **P0 EventLoopCtx** (if time permits — attempt the EventLoopCtx pattern for main.rs)
+| Item | Commit | Priority |
+|------|--------|----------|
+| Guard unwrap in monitor.rs | f95873c3 | P1 ✅ |
+| Replace tuple with TreeScanResult struct | f95873c3 | P1 ✅ |
+| Add #[must_use] to pure functions | e2f7721c | P2 ✅ |
+| Move debug log to XDG directory | 90bb96b4 | P2 ✅ |
+| Add unit tests for app.rs (6 tests) | 9feaff30 | P1 ✅ |
+| Add unit tests for state/mod.rs (6 tests) | 9feaff30 | P1 ✅ |
+| Run cargo audit | c81ef0a8 | P2 ✅ |
+| Pin dependency versions | c81ef0a8 | P2 ✅ |
+| Upgrade image 0.24 → 0.25 | c81ef0a8 | P2 ✅ |
 
-### Rules
-- Run `cargo build && cargo test && cargo clippy -- -D warnings` after every change
-- Keep commits small and descriptive
-- All 54 tests must pass at every step
+### Remaining items
+
+| Item | Priority | Effort |
+|------|----------|--------|
+| Tests for events/editor.rs | P1 | Medium |
+| Tests for modules/system.rs | P1 | Medium |
+| Fix terma clippy errors | P1 | Medium (different crate) |
+| Decompose event_helpers.rs | P2 | Blocked (circular deps) |
+| Add doc comments | P3 | Large |
+| Add criterion benchmarks | P3 | Large |
+| Tokio feature slim-down | P3 | Small |
+| EventLoopCtx for main.rs | P0 | Large |
+
+### Stats
+- Tests: 54 → 62
+- All green: build, test, clippy

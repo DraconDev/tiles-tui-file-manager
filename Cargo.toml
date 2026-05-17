@@ -43,7 +43,7 @@ dracon-files = "94.2"
 dracon-git = "94.2"
 dracon-system-lib = "94.2"
 
-tokio = { version = "1.41", features = ["full"] }
+tokio = { version = "1.41", features = ["rt-multi-thread", "macros", "sync", "time"] }
 parking_lot = "0.12.3"
 toml = "0.9.11"
 unicode-width = "0.2.0"
