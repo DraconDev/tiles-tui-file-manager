@@ -43,16 +43,16 @@ dracon-files = "94.2"
 dracon-git = "94.2"
 dracon-system-lib = "94.2"
 
-tokio = { version = "1.0", features = ["full"] }
-parking_lot = "0.12"
+tokio = { version = "1.41", features = ["full"] }
+parking_lot = "0.12.3"
 toml = "0.9.11"
 unicode-width = "0.2.0"
 uuid = { version = "1.11.0", features = ["v4"] }
-image = "0.24"
+image = "0.25"
 notify = "8.2.0"
 notify-debouncer-mini = "0.7.0"
 trash = "5.2"
-regex = "1"
+regex = "1.11"
 fuzzy-matcher = "0.3.7"
 
 [workspace]
