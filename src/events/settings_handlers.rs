@@ -43,7 +43,7 @@ pub fn style_preset_for_index(index: usize) -> Option<crate::ui::theme::ThemeSty
         3 => Some(crate::ui::theme::ThemeStyle::preset_forest()),
         4 => Some(crate::ui::theme::ThemeStyle::preset_sunset()),
         5 => Some(crate::ui::theme::ThemeStyle::preset_mono()),
-        6 => Some(crate::ui::theme::ThemeStyle::preset_legacy_red()),
+        6 => Some(crate::ui::theme::ThemeStyle::default_purple()),
         _ => None,
     }
 }
@@ -175,7 +175,7 @@ pub fn reset_all_settings_to_defaults(app: &mut App) {
     app.nav.view_prefs.editor.is_split_mode = false;
     app.settings.settings_section = SettingsSection::General;
     app.settings.settings_index = 0;
-    crate::ui::theme::set_style_settings(crate::ui::theme::ThemeStyle::preset_legacy_red());
+    crate::ui::theme::set_style_settings(crate::ui::theme::ThemeStyle::default_purple());
 
     for pane in &mut app.panes {
         for tab in &mut pane.tabs {

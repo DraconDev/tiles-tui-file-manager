@@ -111,15 +111,7 @@ pub fn setup_app(
         app.sidebar.sidebar_width_percent = state.sidebar_width_percent;
         app.nav.recent_folders = state.recent_folders;
         if let Some(theme_style) = state.theme_style {
-            // Migration: users who had the previous default "Cool" should move to
-            // the new default "Legacy Red", while preserving custom themes.
-            if theme_style == crate::ui::theme::ThemeStyle::preset_cool() {
-                crate::ui::theme::set_style_settings(
-                    crate::ui::theme::ThemeStyle::preset_legacy_red(),
-                );
-            } else {
-                crate::ui::theme::set_style_settings(theme_style);
-            }
+            crate::ui::theme::set_style_settings(theme_style);
         }
     }
 

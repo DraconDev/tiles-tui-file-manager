@@ -116,7 +116,17 @@ impl ThemeStyle {
     }
 
     pub fn default_purple() -> Self {
-        Self::preset_legacy_red()
+        // Match the original DraconTheme::cyberpunk() base colors —
+        // Warm Amber accent, not Legacy Red. The red preset was a later
+        // addition that incorrectly became the default.
+        Self {
+            accent_primary: RgbColor::new(224, 164, 90),   // Warm Amber
+            accent_secondary: RgbColor::new(94, 199, 178),  // Mint-Teal
+            selection_bg: RgbColor::new(178, 122, 64),      // Muted Bronze
+            border_active: RgbColor::new(224, 164, 90),     // Warm Amber
+            border_inactive: RgbColor::new(86, 88, 98),     // Neutral Slate
+            header_fg: RgbColor::new(240, 196, 138),        // Sand
+        }
     }
 
     fn apply_to_theme(&self, theme: &mut DraconTheme) {
