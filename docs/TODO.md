@@ -72,9 +72,9 @@ Updated with refactor progress — 2026-05-17
 - [x] **Add tests for untested critical modules** — PARTIAL (commit 9feaff30)
   - [x] `app.rs` — 6 new tests (defaults, pane, file state, split, sidebar, shield)
   - [x] `state/mod.rs` — 6 new tests (FileState, Pane, history, AppMode)
-  - [ ] `config.rs` — already has 11 tests ✅
-  - [ ] `events/editor.rs` — test keyboard shortcuts, undo/redo, search/replace
-  - [ ] `modules/system.rs` — test process parsing, disk stats formatting
+  - [x] `config.rs` — already has 11 tests ✅
+  - [ ] `events/editor.rs` — test keyboard shortcuts, undo/redo, search/replace (complex, needs editor state)
+  - [x] `modules/system.rs` — 7 new tests (process_tree_depth, parse_ppid_from_stat)
 
 - [x] **Guard the one production `unwrap()`** — DONE (commit f95873c3)
   - [x] `events/monitor.rs:63` — replaced with `if let Some(sel)` pattern
@@ -128,10 +128,9 @@ Updated with refactor progress — 2026-05-17
   - [ ] `fuzzy_contains()` — search matching
   - [ ] Add `[[bench]]` to Cargo.toml
 
-- [ ] **Consider `tokio` feature slim-down**
-  - [ ] `features = ["full"]` is convenient but pulls ~50 features
-  - [ ] Audit which features are actually used (likely: rt-multi-thread, macros, sync, fs, process, io-util)
-  - [ ] Reduces compile time and binary size
+- [x] **Consider `tokio` feature slim-down** — DONE (commit 099bd446)
+  - [x] `features = ["full"]` → `["rt-multi-thread", "macros", "sync", "time"]`
+  - [x] Reduces compile time and binary size
 
 - [ ] **Add `cargo clippy --release` to CI for release-specific warnings**
   - [ ] Already in CI ✅ — verify it runs on all branches
