@@ -10,7 +10,7 @@ use crate::state::IconMode;
 use crate::ui::theme as theme;
 use tokio::sync::mpsc;
 
-const STYLE_PRESET_COUNT: usize = 6;
+const STYLE_PRESET_COUNT: usize = 11;
 const STYLE_COLOR_FIELD_COUNT: usize = 6;
 const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_COUNT;
 pub const STYLE_MAX_INDEX: usize = STYLE_COLOR_START_INDEX + STYLE_COLOR_FIELD_COUNT - 1;
@@ -44,6 +44,11 @@ pub fn style_preset_for_index(index: usize) -> Option<crate::ui::theme::ThemeSty
         4 => Some(crate::ui::theme::ThemeStyle::preset_sunset()),
         5 => Some(crate::ui::theme::ThemeStyle::preset_mono()),
         6 => Some(crate::ui::theme::ThemeStyle::default_purple()),
+        7 => Some(crate::ui::theme::ThemeStyle::preset_nord()),
+        8 => Some(crate::ui::theme::ThemeStyle::preset_dracula()),
+        9 => Some(crate::ui::theme::ThemeStyle::preset_solarized_dark()),
+        10 => Some(crate::ui::theme::ThemeStyle::preset_one_dark()),
+        11 => Some(crate::ui::theme::ThemeStyle::preset_tokyo_night()),
         _ => None,
     }
 }

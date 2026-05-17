@@ -227,6 +227,116 @@ impl ThemeStyle {
         }
     }
 
+    pub fn preset_nord() -> Self {
+        Self {
+            accent_primary: RgbColor::new(136, 192, 208),   // Nord frost blue
+            accent_secondary: RgbColor::new(163, 190, 140),  // Nord aurora green
+            selection_bg: RgbColor::new(94, 129, 172),       // Nord blue
+            selection_fg: RgbColor::new(236, 239, 244),      // Nord snow
+            border_active: RgbColor::new(136, 192, 208),     // Frost
+            border_inactive: RgbColor::new(76, 86, 106),    // Nord polar night
+            header_fg: RgbColor::new(216, 222, 233),         // Nord snow 1
+            danger: RgbColor::new(235, 111, 146),            // Nord red aurora
+            warning: RgbColor::new(235, 203, 139),          // Nord yellow aurora
+            success: RgbColor::new(163, 190, 140),           // Nord green aurora
+            muted: RgbColor::new(108, 112, 134),            // Nord polar night 3
+            info: RgbColor::new(180, 142, 173),             // Nord purple aurora
+            file_code: RgbColor::new(136, 192, 208),        // Frost blue
+            file_config: RgbColor::new(180, 142, 173),      // Purple aurora
+            file_media: RgbColor::new(208, 135, 112),       // Nord orange aurora
+            file_archive: RgbColor::new(235, 111, 146),    // Red aurora
+            file_exec: RgbColor::new(163, 190, 140),        // Green aurora
+        }
+    }
+
+    pub fn preset_dracula() -> Self {
+        Self {
+            accent_primary: RgbColor::new(189, 147, 249),   // Dracula purple
+            accent_secondary: RgbColor::new(80, 250, 123),   // Dracula green
+            selection_bg: RgbColor::new(98, 114, 164),       // Dracula comment blue
+            selection_fg: RgbColor::new(248, 248, 242),      // Dracula foreground
+            border_active: RgbColor::new(189, 147, 249),    // Purple
+            border_inactive: RgbColor::new(68, 71, 90),     // Dracula current line
+            header_fg: RgbColor::new(248, 248, 242),         // Foreground
+            danger: RgbColor::new(255, 85, 85),             // Dracula red
+            warning: RgbColor::new(241, 250, 140),           // Dracula yellow
+            success: RgbColor::new(80, 250, 123),           // Dracula green
+            muted: RgbColor::new(98, 114, 164),             // Comment blue
+            info: RgbColor::new(139, 233, 253),             // Dracula cyan
+            file_code: RgbColor::new(255, 121, 198),        // Dracula pink
+            file_config: RgbColor::new(139, 233, 253),      // Dracula cyan
+            file_media: RgbColor::new(255, 184, 108),        // Dracula orange
+            file_archive: RgbColor::new(255, 85, 85),      // Dracula red
+            file_exec: RgbColor::new(80, 250, 123),        // Dracula green
+        }
+    }
+
+    pub fn preset_solarized_dark() -> Self {
+        Self {
+            accent_primary: RgbColor::new(181, 137, 0),     // Solarized yellow
+            accent_secondary: RgbColor::new(42, 161, 152),   // Solarized cyan
+            selection_bg: RgbColor::new(7, 54, 66),          // Solarized base02
+            selection_fg: RgbColor::new(147, 161, 161),      // Solarized base1
+            border_active: RgbColor::new(181, 137, 0),      // Yellow
+            border_inactive: RgbColor::new(54, 62, 68),     // Base02 variant
+            header_fg: RgbColor::new(147, 161, 161),        // Base1
+            danger: RgbColor::new(220, 50, 47),             // Solarized red
+            warning: RgbColor::new(203, 75, 22),           // Solarized orange
+            success: RgbColor::new(133, 153, 0),           // Solarized green
+            muted: RgbColor::new(88, 110, 117),            // Solarized base01
+            info: RgbColor::new(38, 139, 210),              // Solarized blue
+            file_code: RgbColor::new(181, 137, 0),          // Yellow
+            file_config: RgbColor::new(38, 139, 210),       // Blue
+            file_media: RgbColor::new(108, 113, 196),       // Solarized violet
+            file_archive: RgbColor::new(203, 75, 22),      // Orange
+            file_exec: RgbColor::new(133, 153, 0),        // Green
+        }
+    }
+
+    pub fn preset_one_dark() -> Self {
+        Self {
+            accent_primary: RgbColor::new(198, 120, 221),   // One Dark purple
+            accent_secondary: RgbColor::new(86, 182, 194),   // One Dark cyan
+            selection_bg: RgbColor::new(61, 68, 83),         // One Dark selection
+            selection_fg: RgbColor::new(255, 255, 255),      // White
+            border_active: RgbColor::new(198, 120, 221),    // Purple
+            border_inactive: RgbColor::new(55, 61, 74),     // One Dark gutter
+            header_fg: RgbColor::new(171, 178, 191),         // One Dark silver
+            danger: RgbColor::new(224, 108, 117),           // One Dark red
+            warning: RgbColor::new(209, 154, 102),          // One Dark yellow
+            success: RgbColor::new(152, 195, 121),          // One Dark green
+            muted: RgbColor::new(92, 99, 112),             // One Dark comment gray
+            info: RgbColor::new(86, 182, 194),             // One Dark cyan
+            file_code: RgbColor::new(224, 108, 117),        // Red (function)
+            file_config: RgbColor::new(86, 182, 194),       // Cyan (keyword)
+            file_media: RgbColor::new(209, 154, 102),       // Yellow (string)
+            file_archive: RgbColor::new(198, 120, 221),    // Purple (type)
+            file_exec: RgbColor::new(152, 195, 121),      // Green (variable)
+        }
+    }
+
+    pub fn preset_tokyo_night() -> Self {
+        Self {
+            accent_primary: RgbColor::new(125, 207, 255),   // Tokyo Night blue
+            accent_secondary: RgbColor::new(187, 154, 247),  // Tokyo Night purple
+            selection_bg: RgbColor::new(53, 59, 83),         // Tokyo Night selection
+            selection_fg: RgbColor::new(255, 255, 255),      // White
+            border_active: RgbColor::new(125, 207, 255),    // Blue
+            border_inactive: RgbColor::new(42, 45, 62),     // Tokyo Night dark
+            header_fg: RgbColor::new(192, 202, 245),         // Tokyo Night foreground dim
+            danger: RgbColor::new(247, 118, 142),           // Tokyo Night red
+            warning: RgbColor::new(255, 158, 100),          // Tokyo Night orange
+            success: RgbColor::new(158, 206, 106),          // Tokyo Night green
+            muted: RgbColor::new(82, 87, 113),             // Tokyo Night comment
+            info: RgbColor::new(125, 207, 255),            // Blue
+            file_code: RgbColor::new(247, 118, 142),        // Red
+            file_config: RgbColor::new(187, 154, 247),      // Purple
+            file_media: RgbColor::new(255, 158, 100),       // Orange
+            file_archive: RgbColor::new(224, 175, 224),    // Pink
+            file_exec: RgbColor::new(158, 206, 106),      // Green
+        }
+    }
+
     fn apply_to_theme(&self, theme: &mut DraconTheme) {
         theme.accent_primary = self.accent_primary.to_color();
         theme.accent_secondary = self.accent_secondary.to_color();

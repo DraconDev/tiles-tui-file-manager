@@ -585,7 +585,7 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
 
 pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     let style = theme::style_settings();
-    const STYLE_PRESET_ROWS: usize = 6;
+    const STYLE_PRESET_ROWS: usize = 11;
     const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_ROWS;
     let color_rows = [
         ("Accent Primary", style.accent_primary),
@@ -621,6 +621,11 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
         ("Sunset", "coral + plum", Color::LightRed),
         ("Mono", "steel grayscale", Color::Gray),
         ("Legacy Red", "classic red accent", theme::danger()),
+        ("Nord", "frost blue + aurora", theme::accent_primary()),
+        ("Dracula", "purple + neon green", theme::accent_primary()),
+        ("Solarized Dark", "yellow + cyan", theme::warning()),
+        ("One Dark", "purple + teal", theme::accent_primary()),
+        ("Tokyo Night", "blue + purple", theme::info()),
     ];
     for (i, (name, desc, color)) in preset_rows.iter().enumerate() {
         let row_idx = i + 1;
