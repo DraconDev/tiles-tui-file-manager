@@ -797,3 +797,60 @@ fn handle_generic_editor_shortcuts(
 
     (false, None)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::app::{App, AppMode, CurrentView};
+    use dracon_terminal_engine::compositor::engine::TilePlacement;
+    use dracon_terminal_engine::contracts::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
+    use std::sync::{Arc, Mutex};
+    use tokio::sync::mpsc;
+
+    fn test_app() -> App {
+        let queue: Arc<Mutex<Vec<TilePlacement>>> = Arc::new(Mutex::new(Vec::new()));
+        App::new(queue)
+    }
+
+    #[test]
+    fn editor_events_ignored_in_normal_mode() {
+        let mut app = test_app();
+        app.core.current_view = CurrentView::Files;
+        app.core.mode = AppMode::Normal;
+        let (tx, _) = mpsc::channel(8);
+        let evt = Event::Key(KeyEvent {
+            code: KeyCode::Char('i'),
+            modifiers: KeyModifiers::empty(),
+            kind: KeyEventKind::Press,
+        });
+        // Editor events should not be handled when not in editor view
+        assert!(!handle_editor_events(&evt, &mut app, &tx));
+    }
+
+    #[test]
+    fn editor_events_ignored_in_files_view() {
+        let mut app = test_app();
+        app.core.current_view = CurrentView::Files;
+        let (tx, _) = mpsc::channel(8);
+        let evt = Event::Key(KeyEvent {
+            code: KeyCode::Char('a'),
+            modifiers: KeyModifiers::empty(),
+            kind: KeyEventKind::Press,
+        });
+        assert!(!handle_editor_events(&evt, &mut app, &tx));
+    }
+
+    #[test]
+    fn editor_mouse_ignored_in_files_view() {
+        let mut app = test_app();
+        app.core.current_view = CurrentView::Files;
+        let (tx, _) = mpsc::channel(8);
+        let me = dracon_terminal_engine::contracts::MouseEvent {
+            kind: MouseEventKind::Down(MouseButton::Left),
+            column: 10,
+            row: 10,
+            modifiers: KeyModifiers::empty(),
+        };
+        assert!(!handle_editor_mouse(&me, &mut app, &tx));
+    }
+}
