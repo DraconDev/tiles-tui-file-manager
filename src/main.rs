@@ -13,6 +13,7 @@ use ratatui::Terminal;
 use crate::app::{App, AppEvent, CurrentView, PreviewState};
 use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH};
 use image::GenericImageView;
+mod tree_walk;
 mod setup;
 mod app;
 mod config;
@@ -1122,68 +1123,7 @@ let list_path_for_filter = path.clone();
                         let max_depth = MAX_TREE_DEPTH;
                         let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
                         #[allow(clippy::too_many_arguments)]
-                        fn walk_tree(
-                            path: &std::path::Path,
-                            depth: u16,
-                            max_depth: u16,
-                            expanded: &std::collections::HashSet<PathBuf>,
-                            hidden: bool,
-                            tree_files: &mut Vec<(PathBuf, u16)>,
-                            sort_column: crate::state::FileColumn,
-                            sort_ascending: bool,
-                        ) {
-                            if depth >= max_depth {
-                                return;
-                            }
-                            let Ok(entries) = std::fs::read_dir(path) else { return };
-                            let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
-                            sorted.sort_by(|a, b| {
-                                let a_is_dir = a.path().is_dir();
-                                let b_is_dir = b.path().is_dir();
-                                if a_is_dir != b_is_dir {
-                                    return if a_is_dir {
-                                        std::cmp::Ordering::Less
-                                    } else {
-                                        std::cmp::Ordering::Greater
-                                    };
-                                }
-                                let ordering = match sort_column {
-                                    crate::state::FileColumn::Name => {
-                                        let na = a.file_name().to_string_lossy().to_lowercase();
-                                        let nb = b.file_name().to_string_lossy().to_lowercase();
-                                        na.cmp(&nb)
-                                    }
-                                    crate::state::FileColumn::Size => {
-                                        let sa = a.path().metadata().map(|m| m.len()).unwrap_or(0);
-                                        let sb = b.path().metadata().map(|m| m.len()).unwrap_or(0);
-                                        sa.cmp(&sb)
-                                    }
-                                    crate::state::FileColumn::Modified | crate::state::FileColumn::Created => {
-                                        let da = a.path().metadata().ok().and_then(|m| m.modified().ok());
-                                        let db = b.path().metadata().ok().and_then(|m| m.modified().ok());
-                                        da.cmp(&db)
-                                    }
-                                    _ => a.file_name().cmp(&b.file_name()),
-                                };
-                                if sort_ascending {
-                                    ordering
-                                } else {
-                                    ordering.reverse()
-                                }
-                            });
-                            for entry in sorted {
-                                let p = entry.path();
-                                let name = p.file_name().unwrap_or_default().to_string_lossy();
-                                if !hidden && name.starts_with('.') {
-                                    continue;
-                                }
-                                tree_files.push((p.clone(), depth));
-                                if p.is_dir() && expanded.contains(&p) {
-                                    walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files, sort_column, sort_ascending);
-                                }
-                            }
-                        }
-                        walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files, sort_column, sort_ascending);
+                        tree_walk::walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files, sort_column, sort_ascending);
                         // Collect metadata for all tree items
                         let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
                         let (files_meta, g_files, g_meta) = {
