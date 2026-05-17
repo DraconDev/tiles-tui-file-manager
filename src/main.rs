@@ -1083,7 +1083,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
         // Handle Refreshes
         for pane_idx in panes_needing_refresh.drain() {
-            let (path, remote, current_filter, current_generation, git_view, tree_expanded, sort_column, sort_ascending) = {
+            let (path, remote, current_filter, current_generation, git_view, tree_expanded, sort_column, sort_ascending, show_hidden) = {
                 let app_guard = app.lock();
                 if let Some(pane) = app_guard.panes.get(pane_idx) {
                     if let Some(fs) = pane.current_state() {
@@ -1096,6 +1096,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             app_guard.layout.expanded_folders.clone(),
                             fs.nav.sort_column,
                             fs.nav.sort_ascending,
+                            fs.nav.show_hidden,
                         )
                     } else {
                         continue;
@@ -1130,7 +1131,7 @@ let list_path_for_filter = path.clone();
                         let max_depth = MAX_TREE_DEPTH;
                         let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
                         #[allow(clippy::too_many_arguments)]
-                        tree_walk::walk_tree(&list_path, 0, max_depth, &expanded_folders, false, &mut tree_files, sort_column, sort_ascending);
+                        tree_walk::walk_tree(&list_path, 0, max_depth, &expanded_folders, show_hidden, &mut tree_files, sort_column, sort_ascending);
                         // Collect metadata for all tree items
                         let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
                         let (files_meta, g_files, g_meta) = {
