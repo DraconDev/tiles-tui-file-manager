@@ -458,7 +458,7 @@ pub fn debug_logging_enabled() -> bool {
 
 use tokio::sync::mpsc::Sender;
 
-#[allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops, clippy::type_complexity)]
+#[allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
 pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
     if tx.try_send(evt).is_err() {
         log_debug("Channel send failed — event dropped");

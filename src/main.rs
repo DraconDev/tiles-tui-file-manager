@@ -25,12 +25,12 @@ mod modules;
 mod state;
 mod ui;
 
-type TreeScanResult = (
-    Vec<(PathBuf, u16)>,
-    std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
-    Vec<PathBuf>,
-    std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
-);
+struct TreeScanResult {
+    tree_files: Vec<(PathBuf, u16)>,
+    tree_metadata: std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
+    git_files: Vec<PathBuf>,
+    git_metadata: std::collections::HashMap<PathBuf, crate::state::FileMetadata>,
+}
 
 #[tokio::main]
 async fn main() -> color_eyre::Result<()> {
@@ -1108,7 +1108,7 @@ let list_path_for_filter = path.clone();
                 let list_remote = remote.clone();
                 let list_filter = current_filter.clone();
                 let start_generation = current_generation;
-                let (tree_files, mut metadata, g_files, g_meta): TreeScanResult =
+                let TreeScanResult { tree_files, tree_metadata: mut metadata, git_files: g_files, git_metadata: g_meta } =
                     tokio::task::spawn_blocking(move || {
                         let t_dir = std::time::Instant::now();
                         if let Some(session) = &list_remote {
@@ -1149,16 +1149,16 @@ let list_path_for_filter = path.clone();
                         };
 
                         crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
-(tree_files, files_meta, g_files, g_meta)
+TreeScanResult { tree_files, tree_metadata: files_meta, git_files: g_files, git_metadata: g_meta }
                     })
                     .await
                     .unwrap_or_else(|_| {
-                        (
-                            Vec::new(),
-                            std::collections::HashMap::new(),
-                            Vec::new(),
-                            std::collections::HashMap::new(),
-                        )
+                        TreeScanResult {
+                            tree_files: Vec::new(),
+                            tree_metadata: std::collections::HashMap::new(),
+                            git_files: Vec::new(),
+                            git_metadata: std::collections::HashMap::new(),
+                        }
                     });
 
                 {
