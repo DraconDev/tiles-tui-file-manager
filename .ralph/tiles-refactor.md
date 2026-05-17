@@ -19,23 +19,20 @@
 
 ### Phase 3 — ui/mod.rs split 🔲 IN PROGRESS
 **Extracted so far (5 modules):**
-- ✅ `header.rs`: draw_global_header (327 lines) — commit 6e612266
-- ✅ `footer.rs`: draw_stat_bar (54 lines) — commit 353e9545
-- ✅ `debug.rs`: 3 debug functions (233 lines) — commit 125c5ea5
-- ✅ `context_menu.rs`: draw_context_menu (197 lines) — commit ffdd9233
-- ✅ `monitor.rs`: 4 monitor functions (730 lines) — commit 28e63a35
+- ✅ `header.rs`: draw_global_header (327 lines)
+- ✅ `footer.rs`: draw_stat_bar (54 lines)
+- ✅ `debug.rs`: 3 debug functions (233 lines)
+- ✅ `context_menu.rs`: draw_context_menu (197 lines)
+- ✅ `monitor.rs`: 4 monitor functions (730 lines)
 
-**ui/mod.rs: 5,060 → 3,538 lines** (1,522 lines extracted)
+**ui/mod.rs: 5,060 → 3,538 lines** (1,522 lines extracted across 5 modules)
 
-**Remaining extraction targets:**
-1. git_view.rs — draw_commit_view + helpers + draw_git_page (~2521 lines) — FAILED (too many cross-deps)
-2. file_view.rs — draw_main_stage (27 lines) + draw_file_view (459 lines) — FAILED (too many cross-deps)
-3. footer.rs — draw_footer (327 lines) — FAILED (complex imports, nested use clauses)
-4. settings.rs — 10 functions (~976 lines)
-5. modals.rs — 15 functions (~957 lines)
-6. helpers (parse_commit_refs, style_for_ref_label, refs_line) — 50 lines
+**FAILED extractions (lessons learned):**
+- `draw_footer` — Complex imports from nested use clauses in function bodies
+- `draw_main_stage` — Calls `draw_file_view` (not extracted yet) and `draw_ide_editor`
+- `draw_git_page` — Calls `draw_commit_view` and 10+ other functions
 
-**Key technique (monitor.rs pattern):**
+**Key technique for nested `use` clauses:**
 ```rust
 #![allow(unused_imports)]
 use crate::ui::theme as theme;
@@ -55,3 +52,4 @@ use crate::ui::theme as theme;
 - `125c5ea5` refactor(ui): extract debug functions to src/ui/debug.rs
 - `ffdd9233` refactor(ui): extract draw_context_menu to src/ui/context_menu.rs
 - `28e63a35` refactor(ui): extract monitor functions to src/ui/monitor.rs
+- `5b5eb243` chore: update task state and preserve clean build
