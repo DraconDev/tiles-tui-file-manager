@@ -1,11 +1,8 @@
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex as StdMutex};
-use parking_lot::Mutex as PLMutex;
 use std::time::{Duration, Instant};
-use tokio::sync::mpsc;
 
-use dracon_terminal_engine::contracts::InputEvent as Event;
 use dracon_terminal_engine::input::parser::Parser as TuiParser;
 use dracon_terminal_engine::input::mapping::to_ui_event;
 use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBackend;
@@ -14,7 +11,7 @@ use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBacken
 use ratatui::Terminal;
 
 use crate::app::{App, AppEvent, CurrentView, PreviewState};
-use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
+use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH};
 use image::GenericImageView;
 mod setup;
 mod app;
@@ -1482,10 +1479,13 @@ paired = new_paired;
     Ok(())
 }
 
+#[cfg(test)]
 mod tests {
-    use super::*;
+    use std::sync::{Arc, Mutex as StdMutex};
     use dracon_terminal_engine::compositor::engine::TilePlacement;
-
+    use crate::app::App;
+    use crate::setup;
+    
     #[test]
     fn startup_prime_populates_first_pane_listing() {
         let tmp = std::env::temp_dir().join(format!("tiles-startup-prime-{}", std::process::id()));

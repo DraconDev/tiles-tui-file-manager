@@ -12,7 +12,7 @@ use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CA
 use crate::events;
 use crate::state::FileState;
 use dracon_terminal_engine::compositor::engine::TilePlacement;
-use crossterm::event::Event;
+use dracon_terminal_engine::contracts::InputEvent as Event;
 use tokio::sync::mpsc;
 
 pub type PLMutex<T> = parking_lot::Mutex<T>;
