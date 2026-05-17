@@ -11,7 +11,6 @@ use ratatui::{
 
 use crate::app::{App, CurrentView, DropTarget};
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::format_size;
 use dracon_terminal_engine::widgets::HotkeyHint;
 use unicode_width::UnicodeWidthStr;
@@ -48,14 +47,14 @@ pub fn draw_stat_bar(
         } else {
             spans.push(Span::styled(
                 symbol,
-                Style::default().fg(Color::Rgb(30, 30, 35)),
+                Style::default().fg(theme::muted()),
             ));
         }
     }
 
     spans.push(Span::styled(
         format!(" {:>3.0}%", ratio * 100.0),
-        Style::default().fg(THEME.fg).add_modifier(Modifier::BOLD),
+        Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD),
     ));
     Line::from(spans)
 }
@@ -86,7 +85,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                 format!(" [ SYSTEM ] {} ", msg),
                 Style::default()
                     .fg(theme::accent_secondary())
-                    .bg(Color::Rgb(20, 25, 30)),
+                    .bg(theme::bg()),
             ));
             showing_log = true;
         }
@@ -98,14 +97,14 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             left_spans.push(Span::styled(
                 " DRAGGING ",
                 Style::default()
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .bg(theme::accent_primary())
                     .add_modifier(Modifier::BOLD),
             ));
             left_spans.push(Span::styled(
                 format!(" {} ", name),
                 Style::default()
-                    .fg(Color::White)
+                    .fg(theme::fg())
                     .add_modifier(Modifier::BOLD),
             ));
 
@@ -205,7 +204,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             shortcuts.extend(HotkeyHint::render(
                 "Space",
                 "Expand/Edit",
-                Color::Rgb(88, 166, 255),
+                theme::stat_cpu_blue(),
             )); // GitHub Blue
         }
 
@@ -228,7 +227,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                 " REMOTE ",
                 Style::default()
                     .bg(theme::accent_secondary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD),
             ));
         }
@@ -289,13 +288,13 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             };
             let summary_style = if app.sidebar.sidebar_focus {
                 Style::default()
-                    .bg(Color::Rgb(85, 80, 20))
-                    .fg(Color::White)
+                    .bg(theme::stat_progress_bg())
+                    .fg(theme::fg())
                     .add_modifier(Modifier::BOLD)
             } else {
                 Style::default()
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD)
             };
             f.render_widget(
@@ -311,7 +310,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         "CPU",
         app.system_state.cpu_usage,
         100.0,
-        Color::Rgb(80, 200, 255),
+        theme::stat_cpu_cyan(),
         theme::warning(),
         theme::muted(),
     );
@@ -320,9 +319,9 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         "MEM",
         mem_usage,
         100.0,
-        Color::Rgb(88, 166, 255),
-        Color::Rgb(255, 170, 0),
-        Color::Rgb(140, 165, 210),
+        theme::stat_cpu_blue(),
+        theme::stat_cpu_yellow(),
+        theme::stat_cpu_light(),
     );
 
     let stats_layout = Layout::default()

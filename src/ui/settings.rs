@@ -17,7 +17,6 @@ use crate::app::App;
 use crate::app::{SettingsSection, SettingsTarget};
 use crate::icons::Icon;
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use crate::state::FileColumn;
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::format_size;
@@ -32,7 +31,7 @@ pub fn draw_settings_modal(f: &mut Frame, app: &App) {
         .title_top(Line::from(vec![Span::styled(
             " SETTINGS ",
             Style::default()
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .bg(theme::accent_primary())
                 .add_modifier(Modifier::BOLD),
         )]))
@@ -52,7 +51,7 @@ pub fn draw_settings_modal(f: &mut Frame, app: &App) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(theme::accent_primary()))
-        .style(Style::default().bg(Color::Rgb(0, 0, 0)));
+        .style(Style::default().bg(theme::bg()));
 
     let inner = block.inner(area);
 
@@ -88,7 +87,7 @@ pub fn draw_settings_modal(f: &mut Frame, app: &App) {
                 item.style(
                     Style::default()
                         .bg(theme::accent_primary())
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD),
                 )
             } else {
@@ -268,11 +267,11 @@ pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
         .enumerate()
         .map(|(i, (col, label))| {
             let prefix = if target.contains(col) { "[x] " } else { "[ ] " };
-            let mut style = Style::default().fg(THEME.fg);
+            let mut style = Style::default().fg(theme::fg());
             if i == app.settings.settings_index && app.settings.settings_section == SettingsSection::Columns {
                 style = Style::default()
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD);
             }
             ListItem::new(format!("{}{}", prefix, label)).style(style)
@@ -307,11 +306,11 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
         for (t_idx, tab) in pane.tabs.iter().enumerate() {
             let is_selected =
                 tab_counter == app.settings.settings_index && app.settings.settings_section == SettingsSection::Tabs;
-            let mut style = Style::default().fg(THEME.fg);
+            let mut style = Style::default().fg(theme::fg());
             if is_selected {
                 style = style
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD);
             }
 
@@ -360,7 +359,7 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .title(" OPEN TABS MANAGEMENT ")
             .borders(Borders::TOP)
-            .border_style(Style::default().fg(Color::Rgb(40, 45, 55))),
+            .border_style(Style::default().fg(theme::border_subtle())),
     )
     .column_spacing(2);
 
@@ -529,7 +528,7 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         .map(|(i, opt)| {
             let is_selected =
                 i == app.settings.settings_index && app.settings.settings_section == SettingsSection::General;
-            let mut style = Style::default().fg(THEME.fg);
+            let mut style = Style::default().fg(theme::fg());
             let mut status_style = match opt.bool_state {
                 Some(true) => Style::default().fg(theme::success()),
                 Some(false) => Style::default().fg(theme::danger()),
@@ -544,11 +543,11 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
             if is_selected {
                 style = style
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD);
                 status_style = status_style
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD);
             }
 
@@ -576,7 +575,7 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .title(" SYSTEM PARAMETERS ")
             .borders(Borders::TOP)
-            .border_style(Style::default().fg(Color::Rgb(40, 45, 55))),
+            .border_style(Style::default().fg(theme::border_subtle())),
     )
     .column_spacing(2);
 
@@ -601,7 +600,7 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     let reset_style = if reset_selected {
         Style::default()
             .bg(theme::accent_primary())
-            .fg(Color::Black)
+            .fg(theme::selection_fg())
             .add_modifier(Modifier::BOLD)
     } else {
         Style::default()
@@ -618,8 +617,8 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
         ("Warm", "amber + mint", theme::warning()),
         ("Cool", "violet + ice", theme::info()),
         ("Forest", "moss + pine", theme::success()),
-        ("Sunset", "coral + plum", Color::LightRed),
-        ("Mono", "steel grayscale", Color::Gray),
+        ("Sunset", "coral + plum", crate::ui::theme::ThemeStyle::preset_sunset().accent_primary.to_color()),
+        ("Mono", "steel grayscale", crate::ui::theme::ThemeStyle::preset_mono().accent_primary.to_color()),
         ("Legacy Red", "classic red accent", theme::danger()),
         ("Nord", "frost blue + aurora", theme::accent_primary()),
         ("Dracula", "purple + neon green", theme::accent_primary()),
@@ -634,7 +633,7 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
         let row_style = if is_selected {
             Style::default()
                 .bg(theme::accent_primary())
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD)
         } else {
             Style::default().fg(*color)
@@ -654,16 +653,16 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
                 let row_idx = i + STYLE_COLOR_START_INDEX;
                 let is_selected =
                     row_idx == app.settings.settings_index && app.settings.settings_section == SettingsSection::Style;
-                let mut left_style = Style::default().fg(THEME.fg);
+                let mut left_style = Style::default().fg(theme::fg());
                 let mut value_style = Style::default().fg(Color::Rgb(rgb.r, rgb.g, rgb.b));
                 if is_selected {
                     left_style = left_style
                         .bg(theme::accent_primary())
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD);
                     value_style = value_style
                         .bg(theme::accent_primary())
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD);
                 }
                 Row::new(vec![
@@ -687,7 +686,7 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .title(" STYLE (Preset themes + custom colors) ")
             .borders(Borders::TOP)
-            .border_style(Style::default().fg(Color::Rgb(40, 45, 55))),
+            .border_style(Style::default().fg(theme::border_subtle())),
     )
     .column_spacing(1);
 

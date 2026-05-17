@@ -19,7 +19,6 @@ use crate::app::{App, CurrentView, DropTarget};
 use crate::icons::Icon;
 use crate::state::{FileColumn, FileViewState};
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use crate::ui::footer::{draw_stat_bar, draw_footer};
 use crate::ui::git_view::draw_commit_view;
 use crate::ui::small_modals::draw_signal_select_modal;
@@ -105,12 +104,12 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(theme::accent_primary()))
-        .style(Style::default().bg(Color::Rgb(0, 0, 0)))
+        .style(Style::default().bg(theme::bg()))
         .title_top(Line::from(vec![
             Span::styled(
                 " GIT HUB ",
                 Style::default()
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .bg(theme::accent_primary())
                     .add_modifier(Modifier::BOLD),
             ),
@@ -131,7 +130,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                 Span::styled(
                     " Esc ",
                     Style::default()
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .bg(theme::danger())
                         .add_modifier(Modifier::BOLD),
                 ),
@@ -176,7 +175,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                                 "A" | "??" => theme::success(),
                                 "D" => theme::danger(),
                                 "R" => theme::info(),
-                                _ => Color::White,
+                                _ => theme::fg(),
                             };
 
                             let mut stats_spans = Vec::new();
@@ -197,10 +196,10 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                                 Cell::from(format!(" {} ", p.status)).style(
                                     Style::default()
                                         .bg(status_color)
-                                        .fg(Color::Black)
+                                        .fg(theme::selection_fg())
                                         .add_modifier(Modifier::BOLD),
                                 ),
-                                Cell::from(p.path.clone()).style(Style::default().fg(THEME.fg)),
+                                Cell::from(p.path.clone()).style(Style::default().fg(theme::fg())),
                                 Cell::from(Line::from(stats_spans)),
                             ])
                         })
@@ -219,12 +218,12 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             .block(
                 Block::default()
                     .title(active_title)
-                    .border_style(Style::default().fg(Color::Rgb(40, 45, 55)))
+                    .border_style(Style::default().fg(theme::border_subtle()))
                     .borders(Borders::RIGHT),
             )
             .row_highlight_style(
                 Style::default()
-                    .bg(Color::Rgb(40, 40, 50))
+                    .bg(theme::row_alt_bg())
                     .fg(theme::warning())
                     .add_modifier(Modifier::BOLD),
             );
@@ -289,7 +288,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                             ),
                             Cell::from(refs_compact),
                             Cell::from(act.author.clone()).style(Style::default().fg(theme::info())),
-                            Cell::from(act.message.clone()).style(Style::default().fg(THEME.fg)),
+                            Cell::from(act.message.clone()).style(Style::default().fg(theme::fg())),
                         ];
                         row_cells.extend(stats_cells);
 
@@ -327,11 +326,11 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             Block::default()
                 .title(" HISTORY ")
                 .borders(Borders::TOP)
-                .border_style(Style::default().fg(Color::Rgb(40, 45, 55))),
+                .border_style(Style::default().fg(theme::border_subtle())),
         )
         .row_highlight_style(
             Style::default()
-                .bg(Color::Rgb(40, 40, 50))
+                .bg(theme::row_alt_bg())
                 .fg(theme::accent_secondary())
                 .add_modifier(Modifier::BOLD),
         );

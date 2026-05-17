@@ -11,7 +11,6 @@ use ratatui::{
 use crate::app::{
     App, AppMode, CurrentView,
 };
-use crate::ui::theme::THEME;
 use dracon_terminal_engine::widgets::HotkeyHint;
 
 pub mod header;
@@ -119,7 +118,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 ));
                 header_left.push(Span::styled(
                     &app.core.input.value,
-                    Style::default().fg(THEME.fg),
+                    Style::default().fg(theme::fg()),
                 ));
             }
             AppMode::EditorGoToLine => {
@@ -131,7 +130,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 ));
                 header_left.push(Span::styled(
                     &app.core.input.value,
-                    Style::default().fg(THEME.fg),
+                    Style::default().fg(theme::fg()),
                 ));
             }
             AppMode::EditorReplace => {
@@ -144,7 +143,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     ));
                     header_left.push(Span::styled(
                         &app.core.input.value,
-                        Style::default().fg(THEME.fg),
+                        Style::default().fg(theme::fg()),
                     ));
                 } else {
                     header_left.push(Span::styled(
@@ -155,7 +154,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                     ));
                     header_left.push(Span::styled(
                         &app.core.input.value,
-                        Style::default().fg(THEME.fg),
+                        Style::default().fg(theme::fg()),
                     ));
                 }
             }
@@ -188,7 +187,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
             .title_top(Line::from(header_left))
             .title_top(Line::from(header_right).alignment(ratatui::layout::Alignment::Right))
             .border_style(Style::default().fg(border_color))
-            .style(Style::default().bg(Color::Rgb(0, 0, 0)));
+            .style(Style::default().bg(theme::bg()));
 
         f.render_widget(block.clone(), f.area());
 
@@ -261,7 +260,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         AppMode::Settings | AppMode::StyleColorInput | AppMode::ResetSettingsConfirm
     ) {
         f.render_widget(
-            Block::default().style(Style::default().bg(Color::Black)),
+            Block::default().style(Style::default().bg(theme::bg())),
             f.area(),
         );
         draw_settings_modal(f, app);
@@ -270,7 +269,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         CurrentView::Processes | CurrentView::Git | CurrentView::Debug
     ) {
         f.render_widget(
-            Block::default().style(Style::default().bg(Color::Black)),
+            Block::default().style(Style::default().bg(theme::bg())),
             f.area(),
         );
         match app.core.current_view {
@@ -282,7 +281,7 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     } else {
         // Normal File Manager Background
         f.render_widget(
-            Block::default().style(Style::default().bg(Color::Rgb(0, 0, 0))),
+            Block::default().style(Style::default().bg(theme::bg())),
             f.area(),
         );
 

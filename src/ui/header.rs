@@ -60,7 +60,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 if idx == i {
                     style = style
                         .bg(accent_primary())
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD);
                 }
             }
@@ -255,7 +255,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 if idx == global_tab_idx {
                     base_style = base_style
                         .bg(accent_primary())
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD);
                 }
             }

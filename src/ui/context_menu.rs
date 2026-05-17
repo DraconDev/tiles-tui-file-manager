@@ -3,7 +3,7 @@
 
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     widgets::{Block, BorderType, Borders, Clear, List, ListItem},
     Frame,
 };
@@ -12,7 +12,7 @@ use crate::app::App;
 use crate::icons::Icon;
 use crate::state::AppMode;
 use crate::ui::theme as theme;
-use crate::ui::theme::{accent_primary, accent_secondary, THEME};
+use crate::ui::theme::{accent_primary, accent_secondary};
 
 pub fn draw_context_menu(
     f: &mut Frame,
@@ -150,10 +150,10 @@ pub fn draw_context_menu(
         let style = if Some(i) == selected_idx {
             Style::default()
                 .bg(accent_primary())
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(THEME.fg)
+            Style::default().fg(theme::fg())
         };
 
         let mut item = ListItem::new(label).style(style);

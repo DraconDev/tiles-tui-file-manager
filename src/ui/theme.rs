@@ -37,6 +37,8 @@ pub struct DraconTheme {
     pub stat_cpu_yellow: Color,
     pub stat_cpu_light: Color,
     pub stat_progress_bg: Color,
+    // Row alternating bg (very subtle, not per-preset)
+    pub row_alt_bg: Color,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -496,6 +498,7 @@ impl DraconTheme {
             stat_cpu_yellow: Color::Rgb(255, 170, 0),    // CPU bar yellow
             stat_cpu_light: Color::Rgb(140, 165, 210),   // CPU bar light
             stat_progress_bg: Color::Rgb(85, 80, 20),    // Task progress bg
+            row_alt_bg: Color::Rgb(40, 40, 50),          // Subtle alternating row bg
         }
     }
 }
@@ -557,6 +560,8 @@ pub fn stat_cpu_cyan() -> Color { ACTIVE_THEME.read().stat_cpu_cyan }
 pub fn stat_cpu_yellow() -> Color { ACTIVE_THEME.read().stat_cpu_yellow }
 pub fn stat_cpu_light() -> Color { ACTIVE_THEME.read().stat_cpu_light }
 pub fn stat_progress_bg() -> Color { ACTIVE_THEME.read().stat_progress_bg }
+
+pub fn row_alt_bg() -> Color { ACTIVE_THEME.read().row_alt_bg }
 
 // --- Base colors (from DraconTheme, not per-preset) ---
 

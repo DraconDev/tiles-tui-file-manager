@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::Span,
     widgets::Paragraph,
     Frame,
@@ -9,6 +9,7 @@ use std::path::PathBuf;
 use unicode_width::UnicodeWidthStr;
 
 use crate::app::{App, AppMode, CurrentView, DropTarget};
+use crate::ui::theme as theme;
 use dracon_terminal_engine::utils::{get_visual_width, squarify, truncate_to_width};
 
 pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx: usize) {
@@ -93,7 +94,7 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
         use ratatui::text::Line;
         use ratatui::widgets::Block;
         let input_widget = Paragraph::new(Line::from(vec![
-            Span::styled(" ", Style::default().fg(Color::Rgb(100, 100, 110))),
+            Span::styled(" ", Style::default().fg(theme::muted())),
             Span::styled(
                 app.core.input.value.as_str(),
                 Style::default()
@@ -157,7 +158,7 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
             let fg_color = if is_last {
                 crate::ui::theme::accent_secondary()
             } else {
-                Color::Rgb(100, 100, 110)
+                theme::muted()
             };
             let mut style = Style::default().fg(fg_color);
             if is_last {
@@ -168,7 +169,7 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
             {
                 style = style
                     .bg(crate::ui::theme::accent_secondary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD);
             }
 
@@ -207,7 +208,7 @@ if let Some(tab) = app.panes.get_mut(pane_idx).and_then(|p| p.tabs.get_mut(activ
                     f.render_widget(
                         Paragraph::new(Span::styled(
                             sep,
-                            Style::default().fg(Color::Rgb(80, 80, 90)),
+                            Style::default().fg(theme::muted()),
                         )),
                         Rect::new(cur_x, breadcrumb_y, 1, 1),
                     );

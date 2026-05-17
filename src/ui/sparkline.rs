@@ -1,3 +1,4 @@
+use crate::ui::theme as theme;
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
 
@@ -12,7 +13,7 @@ impl Sparkline {
         Self {
             data: data.into_iter().collect(),
             width,
-            color: Color::White,
+            color: theme::fg(),
         }
     }
 

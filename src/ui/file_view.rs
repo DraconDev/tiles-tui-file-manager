@@ -21,7 +21,6 @@ use crate::app::{App, CurrentView, DropTarget};
 use crate::icons::Icon;
 use crate::state::FileColumn;
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use crate::ui::footer::draw_stat_bar;
 use crate::ui::panes::editor::draw_ide_editor;
 use crate::ui::panes::breadcrumbs::draw_pane_breadcrumbs;
@@ -88,7 +87,7 @@ pub fn draw_file_view(
                     let num = format!("{:>3} │ ", i + 1);
                     spans.insert(
                         0,
-                        Span::styled(num, Style::default().fg(Color::Rgb(60, 60, 70))),
+                        Span::styled(num, Style::default().fg(theme::muted())),
                     );
                     lines.push(Line::from(spans));
                 }
@@ -279,7 +278,7 @@ pub fn draw_file_view(
             if is_selected {
                 row_bg_style = row_bg_style.bg(theme::selection_bg());
             } else if is_multi_selected {
-                row_bg_style = row_bg_style.bg(Color::Rgb(78, 58, 112));
+                row_bg_style = row_bg_style.bg(theme::selection_alt_bg());
             } else if is_hovered_drop {
                 row_bg_style = row_bg_style.bg(theme::accent_secondary());
             } else if let Some(&c) = app.selection.path_colors.get(path) {
@@ -287,7 +286,7 @@ pub fn draw_file_view(
                     1 => theme::danger(),
                     2 => theme::success(),
                     3 => theme::warning(),
-                    4 => Color::Blue,
+                    4 => theme::stat_cpu_blue(),
                     5 => theme::accent_secondary(),
                     6 => theme::info(),
                     _ => Color::Reset,
@@ -309,18 +308,18 @@ pub fn draw_file_view(
                     let cell_rect = Rect::new(col_rect.x, row_y, col_rect.width, 1);
                     let mut cell_style = if is_selected {
                         Style::default()
-                            .fg(Color::Black)
+                            .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD)
                     } else if is_multi_selected {
                         Style::default()
-                            .fg(Color::White)
+                            .fg(theme::fg())
                             .add_modifier(Modifier::BOLD)
                     } else if is_hovered_drop || app.selection.path_colors.contains_key(path) {
                         Style::default()
-                            .fg(Color::Black)
+                            .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD)
                     } else {
-                        Style::default().fg(THEME.fg)
+                        Style::default().fg(theme::fg())
                     };
 
                     let content = match col_type {

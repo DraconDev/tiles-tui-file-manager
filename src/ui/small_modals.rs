@@ -41,25 +41,25 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
 
     let mut text = Vec::new();
     text.push(Line::from(vec![
-        Span::styled(" PID ", Style::default().fg(Color::Black).bg(theme::accent_secondary()).add_modifier(Modifier::BOLD)),
-        Span::styled(format!(" {} ", pid), Style::default().fg(Color::White)),
-        Span::styled(name, Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(" PID ", Style::default().fg(theme::selection_fg()).bg(theme::accent_secondary()).add_modifier(Modifier::BOLD)),
+        Span::styled(format!(" {} ", pid), Style::default().fg(theme::fg())),
+        Span::styled(name, Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD)),
     ]));
     text.push(Line::from(""));
 
     for (i, (sig, sig_name)) in signals.iter().enumerate() {
         let is_selected = i == selected_index;
         let style = if is_selected {
-            Style::default().bg(theme::accent_primary()).fg(Color::Black).add_modifier(Modifier::BOLD)
+            Style::default().bg(theme::accent_primary()).fg(theme::selection_fg()).add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::White)
+            Style::default().fg(theme::fg())
         };
         let danger_style = if is_selected {
-            Style::default().bg(theme::accent_primary()).fg(Color::Black).add_modifier(Modifier::BOLD)
+            Style::default().bg(theme::accent_primary()).fg(theme::selection_fg()).add_modifier(Modifier::BOLD)
         } else if *sig == 9 {
             Style::default().fg(theme::danger())
         } else {
-            Style::default().fg(Color::White)
+            Style::default().fg(theme::fg())
         };
         text.push(Line::from(vec![
             Span::styled(format!("  {} ", if is_selected { "▸" } else { " " }), style),
@@ -117,17 +117,17 @@ pub fn draw_drag_drop_modal(
     };
 
     let copy_style = if is_hover(0, 10) {
-        Style::default().bg(theme::success()).fg(Color::Black)
+        Style::default().bg(theme::success()).fg(theme::selection_fg())
     } else {
         Style::default().fg(theme::success())
     };
     let move_style = if is_hover(12, 10) {
-        Style::default().bg(theme::warning()).fg(Color::Black)
+        Style::default().bg(theme::warning()).fg(theme::selection_fg())
     } else {
         Style::default().fg(theme::warning())
     };
     let link_style = if is_hover(24, 10) {
-        Style::default().bg(theme::accent_secondary()).fg(Color::Black)
+        Style::default().bg(theme::accent_secondary()).fg(theme::selection_fg())
     } else {
         Style::default().fg(theme::accent_secondary())
     };
@@ -380,10 +380,10 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
             let style = if is_mouse_hovered || is_selected {
                 Style::default()
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD)
             } else {
-                Style::default().fg(Color::White)
+                Style::default().fg(theme::fg())
             };
 
             ListItem::new(format!("  󰀻  {}", s)).style(style)

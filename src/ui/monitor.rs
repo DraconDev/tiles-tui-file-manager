@@ -23,7 +23,7 @@ pub fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
         .title_top(Line::from(vec![Span::styled(
             " SYSTEM MONITOR ",
             Style::default()
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .bg(theme::accent_primary())
                 .add_modifier(Modifier::BOLD),
         )]))
@@ -77,16 +77,16 @@ pub fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
         let mut style = if is_active {
             Style::default()
                 .bg(theme::accent_primary())
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD)
         } else {
-            Style::default().fg(Color::Rgb(60, 65, 75))
+            Style::default().fg(theme::monitor_label())
         };
         if app.core.mouse_pos.1 == nav_layout[0].y
             && app.core.mouse_pos.0 >= rect.x
             && app.core.mouse_pos.0 < rect.x + rect.width
         {
-            style = style.fg(Color::White);
+            style = style.fg(theme::fg());
         }
 
         f.render_widget(Paragraph::new(name).style(style), rect);
@@ -105,14 +105,14 @@ pub fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
     if app.monitor.monitor_subview != MonitorSubview::Overview {
         let tree_indicator = if app.monitor.process_tree_view { " 󰁔 TREE" } else { "" };
         let search_style = if app.monitor.process_search_filter.is_empty() {
-            Style::default().fg(Color::Rgb(40, 45, 55))
+            Style::default().fg(theme::border_subtle())
         } else {
             Style::default().fg(theme::accent_primary())
         };
         let tree_style = if app.monitor.process_tree_view {
             Style::default().fg(theme::accent_primary())
         } else {
-            Style::default().fg(Color::Rgb(40, 45, 55))
+            Style::default().fg(theme::border_subtle())
         };
         let nav_text = Line::from(vec![
             Span::styled(format!(" 󰍉 {}", app.monitor.process_search_filter), search_style),
@@ -177,7 +177,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     lines.push(Line::from(vec![
         Span::styled("│  ", sep),
         Span::styled(gauge_bar(cpu_ratio, bar_w), Style::default().fg(cpu_color)),
-        Span::styled(format!("  {:>3.0}%", app.system_state.cpu_usage), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("  {:>3.0}%", app.system_state.cpu_usage), Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD)),
     ]));
 
     // CPU sparkline
@@ -192,7 +192,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         sys_info_parts.push(Span::styled(format!("{:>4.0}°C  ", temp), Style::default().fg(dim)));
     }
     if let Some(freq) = app.system_state.cpu_frequency {
-        sys_info_parts.push(Span::styled(format!("{:>4.1} GHz", freq), Style::default().fg(Color::White)));
+        sys_info_parts.push(Span::styled(format!("{:>4.1} GHz", freq), Style::default().fg(theme::fg())));
     }
     if sys_info_parts.len() > 1 {
         lines.push(Line::from(sys_info_parts));
@@ -253,7 +253,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         Span::styled(gauge_bar(mem_ratio, mem_bar_w), Style::default().fg(mem_color)),
         Span::styled(
             format!("  {:.1}G / {:.1}G [{:.0}%]", app.system_state.mem_usage, app.system_state.total_mem, mem_ratio * 100.0),
-            Style::default().fg(Color::White),
+            Style::default().fg(theme::fg()),
         ),
     ]));
 
@@ -269,7 +269,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         Span::styled(gauge_bar(swp_ratio, mem_bar_w), Style::default().fg(swp_color)),
         Span::styled(
             format!("  {:.1}G / {:.1}G [{:.0}%]", app.system_state.swap_usage, app.system_state.total_swap, swp_ratio * 100.0),
-            Style::default().fg(Color::White),
+            Style::default().fg(theme::fg()),
         ),
     ]));
 
@@ -303,7 +303,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         };
         lines.push(Line::from(vec![
             Span::styled("│  ", sep),
-            Span::styled(format!("{:14}", &disk.name), Style::default().fg(Color::White)),
+            Span::styled(format!("{:14}", &disk.name), Style::default().fg(theme::fg())),
             Span::styled(gauge_bar(ratio as f32, disk_bar_w), Style::default().fg(color)),
             Span::styled(
                 format!("  {:.0}G / {:.0}G [{:.0}%]", disk.used_space, disk.total_space, ratio * 100.0),
@@ -333,10 +333,10 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     lines.push(Line::from(vec![
         Span::styled("│  ", sep),
         Span::styled("R ▶ ", Style::default().fg(theme::accent_secondary())),
-        Span::styled(format!("{:>6.1} MB/s", read_mbps), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("{:>6.1} MB/s", read_mbps), Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD)),
         Span::raw("     "),
         Span::styled("W ◀ ", Style::default().fg(theme::accent_primary())),
-        Span::styled(format!("{:>6.1} MB/s", write_mbps), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(format!("{:>6.1} MB/s", write_mbps), Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD)),
     ]));
 
     let half_w = (w.saturating_sub(6)) / 2;
@@ -370,10 +370,10 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     lines.push(Line::from(vec![
         Span::styled("│  ", sep),
         Span::styled("RX ▼ ", Style::default().fg(theme::accent_secondary())),
-        Span::styled(format_size(rx), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(format_size(rx), Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD)),
         Span::raw("     "),
         Span::styled("TX ▲ ", Style::default().fg(theme::accent_primary())),
-        Span::styled(format_size(tx), Style::default().fg(Color::White).add_modifier(Modifier::BOLD)),
+        Span::styled(format_size(tx), Style::default().fg(theme::fg()).add_modifier(Modifier::BOLD)),
     ]));
 
     let half_w = (w.saturating_sub(6)) / 2;
@@ -391,9 +391,9 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     lines.push(Line::from(vec![
         Span::styled("│  ", sep),
         Span::styled("Total ↓ ", Style::default().fg(dim)),
-        Span::styled(format_size(app.system_state.net_in), Style::default().fg(Color::White)),
+        Span::styled(format_size(app.system_state.net_in), Style::default().fg(theme::fg())),
         Span::raw("   ↑ "),
-        Span::styled(format_size(app.system_state.net_out), Style::default().fg(Color::White)),
+        Span::styled(format_size(app.system_state.net_out), Style::default().fg(theme::fg())),
     ]));
 
     for iface in &app.system_state.net_interfaces {
@@ -411,7 +411,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         };
         lines.push(Line::from(vec![
             Span::styled("│  ", sep),
-            Span::styled(format!("{:10}", iface.name), Style::default().fg(Color::White)),
+            Span::styled(format!("{:10}", iface.name), Style::default().fg(theme::fg())),
             Span::styled(" ▼ ", Style::default().fg(theme::accent_secondary())),
             Span::styled(format!("{:>10}", rx_display), Style::default().fg(theme::accent_secondary())),
             Span::styled(" ▲ ", Style::default().fg(theme::accent_primary())),
@@ -424,7 +424,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
             let t_spark = Sparkline::new(iface.tx_history.iter().copied(), iface_half_w).color(theme::accent_primary()).render();
             lines.push(Line::from(vec![
                 Span::styled("│  ", sep),
-                Span::styled(format!("{:10}", ""), Style::default().fg(Color::White)),
+                Span::styled(format!("{:10}", ""), Style::default().fg(theme::fg())),
                 Span::styled(r_spark.to_string(), Style::default().fg(theme::accent_secondary())),
                 Span::raw("  "),
                 Span::styled(t_spark.to_string(), Style::default().fg(theme::accent_primary())),
@@ -455,7 +455,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
     );
     lines.push(Line::from(vec![
         Span::styled("│  ", sep),
-        Span::styled(info, Style::default().fg(Color::White)),
+        Span::styled(info, Style::default().fg(theme::fg())),
     ]));
 
     lines.push(Line::from(vec![
@@ -533,12 +533,12 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         {
             style = style
                 .bg(theme::accent_primary())
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD);
             is_selected = true;
         }
         let cpu_color = if is_selected {
-            Color::Black
+            theme::selection_fg()
         } else if p.cpu > 50.0 {
             theme::danger()
         } else {
@@ -561,9 +561,9 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
             Cell::from(format!("{:.1}%", p.cpu)).style(Style::default().fg(cpu_color)),
             Cell::from(format!("{:.1} MB", p.mem)),
             Cell::from(p.pid.to_string()).style(Style::default().fg(if is_selected {
-                Color::Black
+                theme::selection_fg()
             } else {
-                Color::Rgb(60, 65, 75)
+                theme::monitor_label()
             })),
             Cell::from(p.status.clone()),
         ])
@@ -615,7 +615,7 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
                 .fg(if app.monitor.process_sort_col == *col {
                     theme::accent_primary()
                 } else {
-                    Color::Rgb(60, 65, 75)
+                    theme::monitor_label()
                 })
                 .add_modifier(Modifier::BOLD),
         )
@@ -683,7 +683,7 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                     .fg(if app.monitor.process_sort_col == col {
                         theme::accent_primary()
                     } else {
-                        Color::Rgb(60, 65, 75)
+                        theme::monitor_label()
                     })
                     .add_modifier(Modifier::BOLD),
             )
@@ -698,12 +698,12 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         if app.monitor.process_selected_idx == Some(i) && app.monitor.monitor_subview == MonitorSubview::Processes {
             style = style
                 .bg(theme::accent_primary())
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD);
             is_selected = true;
         }
         let cpu_color = if is_selected {
-            Color::Black
+            theme::selection_fg()
         } else if p.cpu > 50.0 {
             theme::danger()
         } else {
@@ -723,13 +723,13 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         };
         Row::new(vec![
             Cell::from(format!("  {}", p.pid)).style(Style::default().fg(if is_selected {
-                Color::Black
+                theme::selection_fg()
             } else {
-                Color::Rgb(60, 65, 75)
+                theme::monitor_label()
             })),
             Cell::from(name_display).style(Style::default().add_modifier(Modifier::BOLD)),
             Cell::from(p.user.clone()).style(Style::default().fg(if is_selected {
-                Color::Black
+                theme::selection_fg()
             } else {
                 theme::accent_primary()
             })),

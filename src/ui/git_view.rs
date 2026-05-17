@@ -15,12 +15,11 @@ use std::vec::Vec;
 use crate::app::App;
 use crate::icons::Icon;
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::{format_permissions, truncate_to_width};
 
 pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(
-        Block::default().style(Style::default().bg(Color::Black)),
+        Block::default().style(Style::default().bg(theme::bg())),
         area,
     );
 
@@ -104,7 +103,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
         .title_top(Line::from(vec![Span::styled(
             " COMMIT ",
             Style::default()
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .bg(theme::accent_primary())
                 .add_modifier(Modifier::BOLD),
         )]))
@@ -155,12 +154,12 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 format!("{} ", short_hash),
                 Style::default()
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .bg(theme::accent_primary())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled("  ", Style::default()),
-            Span::styled(author, Style::default().fg(Color::White)),
+            Span::styled(author, Style::default().fg(theme::fg())),
         ])),
         layout[0],
     );
@@ -178,7 +177,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
         Paragraph::new(Line::from(vec![Span::styled(
             format!(" {}", subject_text),
             Style::default()
-                .fg(Color::White)
+                .fg(theme::fg())
                 .add_modifier(Modifier::BOLD),
         )])),
         layout[2],
@@ -207,7 +206,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 format!(" {} files ", files_changed),
                 Style::default()
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .bg(theme::accent_secondary())
                     .add_modifier(Modifier::BOLD),
             ),
@@ -215,7 +214,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 format!(" +{} ", additions),
                 Style::default()
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .bg(theme::success())
                     .add_modifier(Modifier::BOLD),
             ),
@@ -231,7 +230,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 format!(" @@ {} ", hunks),
                 Style::default()
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .bg(theme::header_fg())
                     .add_modifier(Modifier::BOLD),
             ),
@@ -250,7 +249,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
         .title_top(Line::from(vec![Span::styled(
             " PATCH ",
             Style::default()
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .bg(theme::accent_primary())
                 .add_modifier(Modifier::BOLD),
         )]));

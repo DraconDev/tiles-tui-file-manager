@@ -3,7 +3,7 @@
 
 use ratatui::{
     layout::{Alignment, Constraint, Direction, Layout, Rect},
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{
         Block, BorderType, Borders, Cell, Clear, Paragraph, Row, Table,
@@ -15,7 +15,7 @@ use crate::app::{App, SettingsSection};
 use crate::icons::Icon;
 use crate::state::AppMode;
 use crate::ui::theme as theme;
-use crate::ui::theme::{accent_primary, accent_secondary, border_inactive, THEME};
+use crate::ui::theme::{accent_primary, accent_secondary, border_inactive};
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::truncate_to_width;
 
@@ -24,7 +24,7 @@ pub fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
         .title_top(Line::from(vec![Span::styled(
             " DEBUG ",
             Style::default()
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .bg(accent_primary())
                 .add_modifier(Modifier::BOLD),
         )]))
@@ -44,7 +44,7 @@ pub fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .border_style(Style::default().fg(border_inactive()))
-        .style(Style::default().bg(Color::Rgb(8, 8, 12)));
+        .style(Style::default().bg(theme::bg()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -77,7 +77,7 @@ pub fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
         Line::from("Open/Close: Ctrl+D"),
     ];
     f.render_widget(
-        Paragraph::new(lines).style(Style::default().fg(Color::Rgb(190, 190, 200))),
+        Paragraph::new(lines).style(Style::default().fg(theme::fg())),
         inner,
     );
 }
@@ -89,11 +89,11 @@ pub fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
         .map(|(i, b)| {
             let is_selected =
                 i == app.settings.settings_index && app.settings.settings_section == SettingsSection::Remotes;
-            let mut style = Style::default().fg(THEME.fg);
+            let mut style = Style::default().fg(theme::fg());
             if is_selected {
                 style = style
                     .bg(accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD);
             }
 
@@ -127,7 +127,7 @@ pub fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
         Block::default()
             .title(" REMOTE SERVER BOOKMARKS ")
             .borders(Borders::TOP)
-            .border_style(Style::default().fg(Color::Rgb(40, 45, 55))),
+            .border_style(Style::default().fg(theme::border_subtle())),
     )
     .column_spacing(2);
 

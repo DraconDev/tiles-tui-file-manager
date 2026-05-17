@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Modifier, Style},
+    style::{Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, List, ListItem, Paragraph},
     Frame,
@@ -14,7 +14,6 @@ use crate::app::{App, CurrentView, DropTarget, SidebarBounds, SidebarTarget};
 use crate::config::{fuzzy_contains, FUZZY_SEARCH};
 use crate::icons::Icon;
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::truncate_to_width;
 
 pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
@@ -162,10 +161,10 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     let style = if is_selected {
                         Style::default()
                             .bg(selection_bg)
-                            .fg(Color::Black)
+                            .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD)
                     } else {
-                        Style::default().fg(THEME.fg)
+                        Style::default().fg(theme::fg())
                     };
 
                     let marker = if is_dir {
@@ -257,16 +256,16 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     let is_hovered = matches!(&app.drag.hovered_drop_target, Some(DropTarget::Folder(p)) if p == path);
 
                     // Active highlighting for favorites
-                    let mut style = Style::default().fg(THEME.fg);
+                    let mut style = Style::default().fg(theme::fg());
                     if is_selected {
                         style = style
                             .bg(selection_bg)
-                            .fg(Color::Black)
+                            .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD);
                     } else if is_hovered && app.drag.is_dragging {
                         style = style
                             .bg(crate::ui::theme::accent_secondary())
-                            .fg(Color::Black);
+                            .fg(theme::selection_fg());
                     }
 
                     if app.drag.is_dragging
@@ -342,11 +341,11 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     }
                     let current_idx = sidebar_items.len();
                     let is_selected = app.sidebar.sidebar_index == current_idx;
-                    let mut style = Style::default().fg(Color::Gray);
+                    let mut style = Style::default().fg(theme::muted());
                     if is_selected {
                         style = style
                             .bg(selection_bg)
-                            .fg(Color::Black)
+                            .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD);
                     }
                     let icon = Icon::Folder.get(app.core.icon_mode);
@@ -419,12 +418,12 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 let mut name_style = if !disk.is_mounted {
                     Style::default().fg(theme::muted())
                 } else {
-                    Style::default().fg(Color::White)
+                    Style::default().fg(theme::fg())
                 };
                 if is_selected {
                     name_style = name_style
                         .bg(selection_bg)
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD);
                 }
 
@@ -465,7 +464,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         Style::default().fg(theme::success())
                     };
                     if is_selected {
-                        free_style = free_style.fg(Color::Black).add_modifier(Modifier::BOLD);
+                        free_style = free_style.fg(theme::selection_fg()).add_modifier(Modifier::BOLD);
                     }
                     spans.push(Span::styled(
                         format!("{}{} ", disk_icon, display_name),
@@ -534,11 +533,11 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
 
                 let markers = active_remote_markers.get(&bookmark.host);
 
-                let mut style = Style::default().fg(THEME.fg);
+                let mut style = Style::default().fg(theme::fg());
                 if is_selected {
                     style = style
                         .bg(selection_bg)
-                        .fg(Color::Black)
+                        .fg(theme::selection_fg())
                         .add_modifier(Modifier::BOLD);
                 }
 
@@ -563,7 +562,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     if is_selected {
                         Style::default()
                             .bg(selection_bg)
-                            .fg(Color::Black)
+                            .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD)
                     } else {
                         Style::default().fg(theme::muted())
@@ -813,18 +812,18 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         let style = if is_selected {
             Style::default()
                 .bg(selection_bg)
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD)
         } else if is_hovered_drop {
             Style::default()
                 .bg(crate::ui::theme::accent_secondary())
-                .fg(Color::Black)
+                .fg(theme::selection_fg())
                 .add_modifier(Modifier::BOLD)
         } else if is_open {
             let fg = if app.settings.semantic_coloring {
                 cat.cyber_color()
             } else {
-                THEME.fg
+                theme::fg()
             };
             Style::default().fg(fg).bg(selection_bg)
         } else {
@@ -835,7 +834,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
                     cat.cyber_color()
                 }
             } else {
-                THEME.fg
+                theme::fg()
             };
             Style::default().fg(fg)
         };

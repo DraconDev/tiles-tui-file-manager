@@ -16,7 +16,6 @@ use std::time::SystemTime;
 
 use crate::app::{App, AppMode};
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::{format_size, format_time, format_permissions};
 use dracon_terminal_engine::widgets::HotkeyHint;
@@ -113,7 +112,7 @@ pub fn draw_command_palette(f: &mut Frame, app: &mut App) {
         .enumerate()
         .map(|(i, cmd)| {
             let style = if i == app.nav.command_index {
-                Style::default().bg(theme::muted()).fg(Color::White)
+                Style::default().bg(theme::muted()).fg(theme::fg())
             } else {
                 Style::default()
             };
@@ -147,7 +146,7 @@ pub fn draw_rename_modal(f: &mut Frame, app: &App) {
                         stem_part,
                         Style::default()
                             .bg(theme::accent_primary())
-                            .fg(Color::Black),
+                            .fg(theme::selection_fg()),
                     ),
                     Span::raw(ext_part),
                 ])
@@ -156,7 +155,7 @@ pub fn draw_rename_modal(f: &mut Frame, app: &App) {
                     &app.core.input.value,
                     Style::default()
                         .bg(theme::accent_primary())
-                        .fg(Color::Black),
+                        .fg(theme::selection_fg()),
                 )])
             }
         } else {
@@ -164,7 +163,7 @@ pub fn draw_rename_modal(f: &mut Frame, app: &App) {
                 &app.core.input.value,
                 Style::default()
                     .bg(theme::accent_primary())
-                    .fg(Color::Black),
+                    .fg(theme::selection_fg()),
             )])
         };
         f.render_widget(Paragraph::new(text), inner);
@@ -212,7 +211,7 @@ pub fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     f.render_widget(block, area);
 
     let label_style = Style::default().fg(theme::muted());
-    let input_style = Style::default().fg(THEME.fg);
+    let input_style = Style::default().fg(theme::fg());
 
     let file_count = if let AppMode::BulkRename { ref files, .. } = app.core.mode {
         files.len()
@@ -330,11 +329,11 @@ pub fn draw_delete_modal(f: &mut Frame, app: &App) {
 
     let no_style = if is_hover(25, 8) {
         Style::default()
-            .bg(Color::White)
-            .fg(Color::Black)
+            .bg(theme::selection_bg())
+            .fg(theme::selection_fg())
             .add_modifier(Modifier::BOLD)
     } else {
-        Style::default().fg(Color::White)
+        Style::default().fg(theme::fg())
     };
 
     f.render_widget(

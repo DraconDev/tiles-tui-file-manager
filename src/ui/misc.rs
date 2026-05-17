@@ -16,7 +16,6 @@ use std::time::SystemTime;
 
 use crate::app::App;
 use crate::ui::theme as theme;
-use crate::ui::theme::THEME;
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::format_time;
 use dracon_terminal_engine::widgets::HotkeyHint;
@@ -71,7 +70,7 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
         Line::from("Input: #RRGGBB or R,G,B"),
     ];
     f.render_widget(
-        Paragraph::new(lines).style(Style::default().fg(THEME.fg)),
+        Paragraph::new(lines).style(Style::default().fg(theme::fg())),
         Rect::new(inner.x, inner.y, inner.width, 2),
     );
 
@@ -86,7 +85,7 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
     let footer = Line::from(vec![
         Span::styled(
             " Enter ",
-            Style::default().fg(Color::Black).bg(theme::success()),
+            Style::default().fg(theme::selection_fg()).bg(theme::success()),
         ),
         Span::raw(" apply  "),
         Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::danger())),
@@ -134,7 +133,7 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
         ]),
     ];
     f.render_widget(
-        Paragraph::new(text).style(Style::default().fg(THEME.fg)),
+        Paragraph::new(text).style(Style::default().fg(theme::fg())),
         Rect::new(inner.x, inner.y, inner.width, 5),
     );
 
@@ -149,7 +148,7 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
     let footer = Line::from(vec![
         Span::styled(
             " Enter ",
-            Style::default().fg(Color::Black).bg(theme::success()),
+            Style::default().fg(theme::selection_fg()).bg(theme::success()),
         ),
         Span::raw(" apply  "),
         Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::danger())),
@@ -192,9 +191,9 @@ pub fn draw_highlight_modal(f: &mut Frame, _app: &App) {
     let mut spans = Vec::new();
     for (i, (code, label, color)) in colors.iter().enumerate() {
         let style = if *code == 0 {
-            Style::default().bg(theme::muted()).fg(Color::White)
+            Style::default().bg(theme::muted()).fg(theme::fg())
         } else {
-            Style::default().bg(*color).fg(Color::Black)
+            Style::default().bg(*color).fg(theme::selection_fg())
         };
         spans.push(Span::styled(*label, style));
         if i < colors.len() - 1 {
@@ -278,7 +277,7 @@ pub fn draw_drag_ghost(f: &mut Frame, app: &App) {
                 text,
                 Style::default()
                     .bg(theme::accent_primary())
-                    .fg(Color::Black)
+                    .fg(theme::selection_fg())
                     .add_modifier(Modifier::BOLD),
             )),
             area,
