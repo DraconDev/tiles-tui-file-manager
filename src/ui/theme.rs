@@ -28,6 +28,15 @@ pub struct DraconTheme {
     pub file_media: Color,
     pub file_archive: Color,
     pub file_exec: Color,
+    // Subtle/structural colors
+    pub border_subtle: Color,     // Very dark border (darker than border_inactive)
+    pub selection_alt_bg: Color,  // Multi-selection row bg
+    // Footer stat bar
+    pub stat_cpu_blue: Color,
+    pub stat_cpu_cyan: Color,
+    pub stat_cpu_yellow: Color,
+    pub stat_cpu_light: Color,
+    pub stat_progress_bg: Color,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -68,6 +77,15 @@ pub struct ThemeStyle {
     pub file_media: RgbColor,
     pub file_archive: RgbColor,
     pub file_exec: RgbColor,
+    // Subtle/structural colors
+    pub border_subtle: RgbColor,
+    pub selection_alt_bg: RgbColor,
+    // Footer stat bar
+    pub stat_cpu_blue: RgbColor,
+    pub stat_cpu_cyan: RgbColor,
+    pub stat_cpu_yellow: RgbColor,
+    pub stat_cpu_light: RgbColor,
+    pub stat_progress_bg: RgbColor,
 }
 
 impl ThemeStyle {
@@ -90,6 +108,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(201, 156, 244),       // Lilac
             file_archive: RgbColor::new(238, 132, 170),     // Rose
             file_exec: RgbColor::new(118, 203, 125),        // Green
+            border_subtle: RgbColor::new(40, 45, 55),
+            selection_alt_bg: RgbColor::new(78, 58, 112),
+            stat_cpu_blue: RgbColor::new(88, 166, 255),
+            stat_cpu_cyan: RgbColor::new(80, 200, 255),
+            stat_cpu_yellow: RgbColor::new(255, 170, 0),
+            stat_cpu_light: RgbColor::new(140, 165, 210),
+            stat_progress_bg: RgbColor::new(85, 80, 20),
         }
     }
 
@@ -112,6 +137,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(255, 140, 200),       // Pink
             file_archive: RgbColor::new(255, 170, 120),     // Peach
             file_exec: RgbColor::new(100, 240, 180),       // Aqua
+            border_subtle: RgbColor::new(48, 50, 68),
+            selection_alt_bg: RgbColor::new(72, 56, 110),
+            stat_cpu_blue: RgbColor::new(110, 160, 255),
+            stat_cpu_cyan: RgbColor::new(86, 184, 255),
+            stat_cpu_yellow: RgbColor::new(230, 180, 80),
+            stat_cpu_light: RgbColor::new(150, 170, 220),
+            stat_progress_bg: RgbColor::new(70, 60, 110),
         }
     }
 
@@ -134,6 +166,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(200, 160, 120),      // Wood
             file_archive: RgbColor::new(180, 140, 100),    // Bark
             file_exec: RgbColor::new(140, 220, 140),       // Leaf green
+            border_subtle: RgbColor::new(50, 58, 50),
+            selection_alt_bg: RgbColor::new(50, 72, 60),
+            stat_cpu_blue: RgbColor::new(100, 170, 230),
+            stat_cpu_cyan: RgbColor::new(80, 190, 200),
+            stat_cpu_yellow: RgbColor::new(210, 180, 60),
+            stat_cpu_light: RgbColor::new(150, 180, 160),
+            stat_progress_bg: RgbColor::new(60, 70, 30),
         }
     }
 
@@ -156,6 +195,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(255, 140, 180),      // Rose
             file_archive: RgbColor::new(220, 180, 140),    // Sand
             file_exec: RgbColor::new(160, 220, 160),      // Spring green
+            border_subtle: RgbColor::new(56, 46, 56),
+            selection_alt_bg: RgbColor::new(82, 52, 72),
+            stat_cpu_blue: RgbColor::new(130, 150, 255),
+            stat_cpu_cyan: RgbColor::new(200, 140, 220),
+            stat_cpu_yellow: RgbColor::new(240, 170, 80),
+            stat_cpu_light: RgbColor::new(180, 160, 200),
+            stat_progress_bg: RgbColor::new(82, 52, 52),
         }
     }
 
@@ -178,6 +224,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(180, 170, 200),      // Mauve gray
             file_archive: RgbColor::new(170, 160, 150),    // Warm gray
             file_exec: RgbColor::new(140, 200, 160),       // Pale green
+            border_subtle: RgbColor::new(50, 52, 62),
+            selection_alt_bg: RgbColor::new(66, 60, 80),
+            stat_cpu_blue: RgbColor::new(150, 180, 220),
+            stat_cpu_cyan: RgbColor::new(140, 180, 200),
+            stat_cpu_yellow: RgbColor::new(200, 200, 120),
+            stat_cpu_light: RgbColor::new(170, 175, 195),
+            stat_progress_bg: RgbColor::new(70, 70, 70),
         }
     }
 
@@ -200,6 +253,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(201, 156, 244),       // Lilac
             file_archive: RgbColor::new(238, 132, 170),    // Rose
             file_exec: RgbColor::new(118, 203, 125),       // Green
+            border_subtle: RgbColor::new(40, 45, 55),
+            selection_alt_bg: RgbColor::new(78, 58, 112),
+            stat_cpu_blue: RgbColor::new(88, 166, 255),
+            stat_cpu_cyan: RgbColor::new(80, 200, 255),
+            stat_cpu_yellow: RgbColor::new(255, 170, 0),
+            stat_cpu_light: RgbColor::new(140, 165, 210),
+            stat_progress_bg: RgbColor::new(85, 80, 20),
         }
     }
 
@@ -224,6 +284,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(201, 156, 244),       // Lilac
             file_archive: RgbColor::new(238, 132, 170),    // Rose
             file_exec: RgbColor::new(118, 203, 125),        // Green
+            border_subtle: RgbColor::new(40, 45, 55),
+            selection_alt_bg: RgbColor::new(78, 58, 112),
+            stat_cpu_blue: RgbColor::new(88, 166, 255),
+            stat_cpu_cyan: RgbColor::new(80, 200, 255),
+            stat_cpu_yellow: RgbColor::new(255, 170, 0),
+            stat_cpu_light: RgbColor::new(140, 165, 210),
+            stat_progress_bg: RgbColor::new(85, 80, 20),
         }
     }
 
@@ -246,6 +313,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(208, 135, 112),       // Nord orange aurora
             file_archive: RgbColor::new(235, 111, 146),    // Red aurora
             file_exec: RgbColor::new(163, 190, 140),        // Green aurora
+            border_subtle: RgbColor::new(46, 52, 64),
+            selection_alt_bg: RgbColor::new(60, 56, 90),
+            stat_cpu_blue: RgbColor::new(136, 192, 208),
+            stat_cpu_cyan: RgbColor::new(120, 180, 220),
+            stat_cpu_yellow: RgbColor::new(235, 203, 139),
+            stat_cpu_light: RgbColor::new(160, 180, 200),
+            stat_progress_bg: RgbColor::new(60, 66, 80),
         }
     }
 
@@ -268,6 +342,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(255, 184, 108),        // Dracula orange
             file_archive: RgbColor::new(255, 85, 85),      // Dracula red
             file_exec: RgbColor::new(80, 250, 123),        // Dracula green
+            border_subtle: RgbColor::new(48, 50, 68),
+            selection_alt_bg: RgbColor::new(68, 71, 90),
+            stat_cpu_blue: RgbColor::new(98, 114, 164),
+            stat_cpu_cyan: RgbColor::new(139, 233, 253),
+            stat_cpu_yellow: RgbColor::new(241, 250, 140),
+            stat_cpu_light: RgbColor::new(200, 180, 255),
+            stat_progress_bg: RgbColor::new(68, 71, 90),
         }
     }
 
@@ -290,6 +371,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(108, 113, 196),       // Solarized violet
             file_archive: RgbColor::new(203, 75, 22),      // Orange
             file_exec: RgbColor::new(133, 153, 0),        // Green
+            border_subtle: RgbColor::new(40, 45, 55),
+            selection_alt_bg: RgbColor::new(78, 58, 112),
+            stat_cpu_blue: RgbColor::new(88, 166, 255),
+            stat_cpu_cyan: RgbColor::new(80, 200, 255),
+            stat_cpu_yellow: RgbColor::new(255, 170, 0),
+            stat_cpu_light: RgbColor::new(140, 165, 210),
+            stat_progress_bg: RgbColor::new(85, 80, 20),
         }
     }
 
@@ -312,6 +400,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(209, 154, 102),       // Yellow (string)
             file_archive: RgbColor::new(198, 120, 221),    // Purple (type)
             file_exec: RgbColor::new(152, 195, 121),      // Green (variable)
+            border_subtle: RgbColor::new(50, 56, 72),
+            selection_alt_bg: RgbColor::new(55, 61, 78),
+            stat_cpu_blue: RgbColor::new(86, 182, 194),
+            stat_cpu_cyan: RgbColor::new(120, 160, 220),
+            stat_cpu_yellow: RgbColor::new(209, 154, 102),
+            stat_cpu_light: RgbColor::new(160, 170, 200),
+            stat_progress_bg: RgbColor::new(55, 61, 78),
         }
     }
 
@@ -334,6 +429,13 @@ impl ThemeStyle {
             file_media: RgbColor::new(255, 158, 100),       // Orange
             file_archive: RgbColor::new(224, 175, 224),    // Pink
             file_exec: RgbColor::new(158, 206, 106),      // Green
+            border_subtle: RgbColor::new(40, 45, 55),
+            selection_alt_bg: RgbColor::new(78, 58, 112),
+            stat_cpu_blue: RgbColor::new(88, 166, 255),
+            stat_cpu_cyan: RgbColor::new(80, 200, 255),
+            stat_cpu_yellow: RgbColor::new(255, 170, 0),
+            stat_cpu_light: RgbColor::new(140, 165, 210),
+            stat_progress_bg: RgbColor::new(85, 80, 20),
         }
     }
 
@@ -355,6 +457,13 @@ impl ThemeStyle {
         theme.file_media = self.file_media.to_color();
         theme.file_archive = self.file_archive.to_color();
         theme.file_exec = self.file_exec.to_color();
+        theme.border_subtle = self.border_subtle.to_color();
+        theme.selection_alt_bg = self.selection_alt_bg.to_color();
+        theme.stat_cpu_blue = self.stat_cpu_blue.to_color();
+        theme.stat_cpu_cyan = self.stat_cpu_cyan.to_color();
+        theme.stat_cpu_yellow = self.stat_cpu_yellow.to_color();
+        theme.stat_cpu_light = self.stat_cpu_light.to_color();
+        theme.stat_progress_bg = self.stat_progress_bg.to_color();
     }
 }
 
@@ -380,6 +489,13 @@ impl DraconTheme {
             file_media: Color::Rgb(201, 156, 244),      // Lilac
             file_archive: Color::Rgb(238, 132, 170),    // Rose
             file_exec: Color::Rgb(118, 203, 125),       // Green
+            border_subtle: Color::Rgb(40, 45, 55),       // Very dark border
+            selection_alt_bg: Color::Rgb(78, 58, 112),   // Purple-tint multi-select
+            stat_cpu_blue: Color::Rgb(88, 166, 255),     // CPU bar blue
+            stat_cpu_cyan: Color::Rgb(80, 200, 255),     // CPU bar cyan
+            stat_cpu_yellow: Color::Rgb(255, 170, 0),    // CPU bar yellow
+            stat_cpu_light: Color::Rgb(140, 165, 210),   // CPU bar light
+            stat_progress_bg: Color::Rgb(85, 80, 20),    // Task progress bg
         }
     }
 }
@@ -433,6 +549,19 @@ pub fn file_config() -> Color { ACTIVE_THEME.read().file_config }
 pub fn file_media() -> Color { ACTIVE_THEME.read().file_media }
 pub fn file_archive() -> Color { ACTIVE_THEME.read().file_archive }
 pub fn file_exec() -> Color { ACTIVE_THEME.read().file_exec }
+
+pub fn border_subtle() -> Color { ACTIVE_THEME.read().border_subtle }
+pub fn selection_alt_bg() -> Color { ACTIVE_THEME.read().selection_alt_bg }
+pub fn stat_cpu_blue() -> Color { ACTIVE_THEME.read().stat_cpu_blue }
+pub fn stat_cpu_cyan() -> Color { ACTIVE_THEME.read().stat_cpu_cyan }
+pub fn stat_cpu_yellow() -> Color { ACTIVE_THEME.read().stat_cpu_yellow }
+pub fn stat_cpu_light() -> Color { ACTIVE_THEME.read().stat_cpu_light }
+pub fn stat_progress_bg() -> Color { ACTIVE_THEME.read().stat_progress_bg }
+
+// --- Base colors (from DraconTheme, not per-preset) ---
+
+pub fn fg() -> Color { ACTIVE_THEME.read().fg }
+pub fn bg() -> Color { ACTIVE_THEME.read().bg }
 
 // --- Monitor-specific colors (not per-theme, kept as constants) ---
 
