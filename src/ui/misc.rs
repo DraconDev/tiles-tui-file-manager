@@ -223,12 +223,11 @@ pub fn format_modified_time(time: SystemTime, smart: bool) -> String {
         let duration = now.signed_duration_since(dt);
         let days = duration.num_days();
         if days == 0 {
-            if duration.num_hours() == 0 {
-                if duration.num_minutes() == 0 {
-                    "just now".to_string()
-                } else {
-                    format!("{}m ago", duration.num_minutes())
-                }
+            let total_minutes = duration.num_minutes();
+            if total_minutes < 1 {
+                "just now".to_string()
+            } else if total_minutes < 60 {
+                format!("{}m ago", total_minutes)
             } else {
                 format!("{}h ago", duration.num_hours())
             }
