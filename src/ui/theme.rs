@@ -1,3 +1,5 @@
+#![allow(unused_imports, dead_code)]
+
 use ratatui::style::Color;
 use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
@@ -14,6 +16,13 @@ pub struct DraconTheme {
     pub border_active: Color,
     pub border_inactive: Color,
     pub header_fg: Color,
+    // Semantic roles — wired through ThemeStyle
+    pub danger: Color,       // ESC, Quit, Delete, Kill
+    pub warning: Color,      // Modified, Caution, Unsaved
+    pub success: Color,      // Enabled, Saved, Connected
+    pub muted: Color,        // Dim labels, Hints, DarkGray replacements
+    pub info: Color,         // Informational, Cyan-type
+    // File-type colors
     pub file_code: Color,
     pub file_config: Color,
     pub file_media: Color,
@@ -43,89 +52,178 @@ pub struct ThemeStyle {
     pub accent_primary: RgbColor,
     pub accent_secondary: RgbColor,
     pub selection_bg: RgbColor,
+    pub selection_fg: RgbColor,
     pub border_active: RgbColor,
     pub border_inactive: RgbColor,
     pub header_fg: RgbColor,
+    // Semantic roles
+    pub danger: RgbColor,
+    pub warning: RgbColor,
+    pub success: RgbColor,
+    pub muted: RgbColor,
+    pub info: RgbColor,
+    // File-type colors
+    pub file_code: RgbColor,
+    pub file_config: RgbColor,
+    pub file_media: RgbColor,
+    pub file_archive: RgbColor,
+    pub file_exec: RgbColor,
 }
 
 impl ThemeStyle {
     pub fn preset_warm() -> Self {
         Self {
-            accent_primary: RgbColor::new(224, 164, 90), // Warm amber
-            accent_secondary: RgbColor::new(94, 199, 178), // Mint-teal
-            selection_bg: RgbColor::new(178, 122, 64),   // Muted bronze
-            border_active: RgbColor::new(224, 164, 90),  // Warm amber
-            border_inactive: RgbColor::new(86, 88, 98),  // Neutral slate
-            header_fg: RgbColor::new(240, 196, 138),     // Sand
+            accent_primary: RgbColor::new(224, 164, 90),   // Warm amber
+            accent_secondary: RgbColor::new(94, 199, 178),  // Mint-teal
+            selection_bg: RgbColor::new(178, 122, 64),      // Muted bronze
+            selection_fg: RgbColor::new(0, 0, 0),           // Black
+            border_active: RgbColor::new(224, 164, 90),     // Warm amber
+            border_inactive: RgbColor::new(86, 88, 98),     // Neutral slate
+            header_fg: RgbColor::new(240, 196, 138),         // Sand
+            danger: RgbColor::new(255, 80, 80),             // Bright red
+            warning: RgbColor::new(255, 190, 50),           // Amber yellow
+            success: RgbColor::new(80, 210, 120),           // Vivid green
+            muted: RgbColor::new(120, 120, 135),            // Warm gray
+            info: RgbColor::new(100, 200, 230),             // Sky cyan
+            file_code: RgbColor::new(236, 156, 116),       // Apricot
+            file_config: RgbColor::new(132, 190, 255),      // Sky blue
+            file_media: RgbColor::new(201, 156, 244),       // Lilac
+            file_archive: RgbColor::new(238, 132, 170),     // Rose
+            file_exec: RgbColor::new(118, 203, 125),        // Green
         }
     }
 
     pub fn preset_cool() -> Self {
         Self {
             accent_primary: RgbColor::new(160, 118, 255),   // Purple
-            accent_secondary: RgbColor::new(116, 184, 255), // Ice blue
+            accent_secondary: RgbColor::new(116, 184, 255),  // Ice blue
             selection_bg: RgbColor::new(104, 80, 150),      // Deep violet
+            selection_fg: RgbColor::new(255, 255, 255),     // White
             border_active: RgbColor::new(160, 118, 255),    // Purple
             border_inactive: RgbColor::new(82, 86, 104),    // Cool slate
             header_fg: RgbColor::new(198, 164, 255),        // Soft violet
+            danger: RgbColor::new(255, 80, 120),            // Hot pink
+            warning: RgbColor::new(255, 200, 80),           // Warm yellow
+            success: RgbColor::new(80, 230, 160),           // Mint green
+            muted: RgbColor::new(110, 112, 140),            // Cool gray
+            info: RgbColor::new(130, 200, 255),             // Light blue
+            file_code: RgbColor::new(200, 160, 255),        // Lavender
+            file_config: RgbColor::new(120, 200, 240),      // Cyan
+            file_media: RgbColor::new(255, 140, 200),       // Pink
+            file_archive: RgbColor::new(255, 170, 120),     // Peach
+            file_exec: RgbColor::new(100, 240, 180),       // Aqua
         }
     }
 
     pub fn preset_forest() -> Self {
         Self {
-            accent_primary: RgbColor::new(126, 196, 102), // Moss green
-            accent_secondary: RgbColor::new(86, 168, 142), // Pine teal
-            selection_bg: RgbColor::new(66, 116, 84),     // Deep fern
-            border_active: RgbColor::new(126, 196, 102),  // Moss green
-            border_inactive: RgbColor::new(76, 88, 82),   // Bark slate
-            header_fg: RgbColor::new(182, 226, 164),      // Pale leaf
+            accent_primary: RgbColor::new(126, 196, 102),   // Moss green
+            accent_secondary: RgbColor::new(86, 168, 142),  // Pine teal
+            selection_bg: RgbColor::new(66, 116, 84),       // Deep fern
+            selection_fg: RgbColor::new(255, 255, 255),     // White
+            border_active: RgbColor::new(126, 196, 102),    // Moss green
+            border_inactive: RgbColor::new(76, 88, 82),    // Bark slate
+            header_fg: RgbColor::new(182, 226, 164),        // Pale leaf
+            danger: RgbColor::new(230, 80, 80),            // Autumn red
+            warning: RgbColor::new(230, 180, 60),          // Golden
+            success: RgbColor::new(100, 220, 120),        // Bright green
+            muted: RgbColor::new(108, 118, 108),            // Moss gray
+            info: RgbColor::new(130, 200, 180),            // Sage
+            file_code: RgbColor::new(180, 210, 120),       // Lime
+            file_config: RgbColor::new(120, 180, 200),     // Forest blue
+            file_media: RgbColor::new(200, 160, 120),      // Wood
+            file_archive: RgbColor::new(180, 140, 100),    // Bark
+            file_exec: RgbColor::new(140, 220, 140),       // Leaf green
         }
     }
 
     pub fn preset_sunset() -> Self {
         Self {
-            accent_primary: RgbColor::new(236, 146, 98), // Orange coral
-            accent_secondary: RgbColor::new(236, 99, 141), // Pink coral
-            selection_bg: RgbColor::new(142, 74, 92),    // Plum dusk
-            border_active: RgbColor::new(236, 146, 98),  // Orange coral
-            border_inactive: RgbColor::new(94, 78, 92),  // Dusk slate
-            header_fg: RgbColor::new(255, 198, 156),     // Peach light
+            accent_primary: RgbColor::new(236, 146, 98),   // Orange coral
+            accent_secondary: RgbColor::new(236, 99, 141),  // Pink coral
+            selection_bg: RgbColor::new(142, 74, 92),       // Plum dusk
+            selection_fg: RgbColor::new(255, 255, 255),     // White
+            border_active: RgbColor::new(236, 146, 98),    // Orange coral
+            border_inactive: RgbColor::new(94, 78, 92),    // Dusk slate
+            header_fg: RgbColor::new(255, 198, 156),        // Peach light
+            danger: RgbColor::new(255, 70, 70),            // Fire red
+            warning: RgbColor::new(255, 200, 60),          // Sun yellow
+            success: RgbColor::new(100, 210, 140),         // Seafoam
+            muted: RgbColor::new(130, 112, 120),           // Dusk gray
+            info: RgbColor::new(200, 160, 220),            // Twilight purple
+            file_code: RgbColor::new(240, 160, 120),       // Salmon
+            file_config: RgbColor::new(180, 160, 240),     // Lavender
+            file_media: RgbColor::new(255, 140, 180),      // Rose
+            file_archive: RgbColor::new(220, 180, 140),    // Sand
+            file_exec: RgbColor::new(160, 220, 160),      // Spring green
         }
     }
 
     pub fn preset_mono() -> Self {
         Self {
-            accent_primary: RgbColor::new(210, 214, 224), // Soft silver
-            accent_secondary: RgbColor::new(162, 172, 188), // Steel blue-gray
-            selection_bg: RgbColor::new(82, 90, 108),     // Graphite
-            border_active: RgbColor::new(210, 214, 224),  // Soft silver
-            border_inactive: RgbColor::new(72, 78, 92),   // Slate dark
-            header_fg: RgbColor::new(228, 232, 240),      // Light silver
+            accent_primary: RgbColor::new(210, 214, 224),   // Soft silver
+            accent_secondary: RgbColor::new(162, 172, 188),  // Steel blue-gray
+            selection_bg: RgbColor::new(82, 90, 108),        // Graphite
+            selection_fg: RgbColor::new(255, 255, 255),     // White
+            border_active: RgbColor::new(210, 214, 224),    // Soft silver
+            border_inactive: RgbColor::new(72, 78, 92),    // Slate dark
+            header_fg: RgbColor::new(228, 232, 240),        // Light silver
+            danger: RgbColor::new(220, 80, 80),            // Bright red (needs contrast in mono)
+            warning: RgbColor::new(220, 200, 80),          // Bright yellow
+            success: RgbColor::new(80, 200, 120),          // Bright green
+            muted: RgbColor::new(100, 104, 116),           // Mid gray
+            info: RgbColor::new(140, 180, 220),            // Muted blue
+            file_code: RgbColor::new(190, 194, 206),       // Light gray
+            file_config: RgbColor::new(150, 160, 180),     // Steel
+            file_media: RgbColor::new(180, 170, 200),      // Mauve gray
+            file_archive: RgbColor::new(170, 160, 150),    // Warm gray
+            file_exec: RgbColor::new(140, 200, 160),       // Pale green
         }
     }
 
     pub fn preset_legacy_red() -> Self {
         Self {
-            accent_primary: RgbColor::new(226, 78, 86), // Legacy red
-            accent_secondary: RgbColor::new(72, 190, 182), // Legacy teal
-            selection_bg: RgbColor::new(226, 78, 86),   // Legacy red highlight
-            border_active: RgbColor::new(226, 78, 86),  // Legacy red
-            border_inactive: RgbColor::new(70, 88, 104), // Blue-gray slate
-            header_fg: RgbColor::new(156, 214, 206),    // Pale teal
+            accent_primary: RgbColor::new(226, 78, 86),    // Legacy red
+            accent_secondary: RgbColor::new(72, 190, 182),  // Legacy teal
+            selection_bg: RgbColor::new(226, 78, 86),       // Legacy red highlight
+            selection_fg: RgbColor::new(255, 255, 255),    // White
+            border_active: RgbColor::new(226, 78, 86),     // Legacy red
+            border_inactive: RgbColor::new(70, 88, 104),   // Blue-gray slate
+            header_fg: RgbColor::new(156, 214, 206),       // Pale teal
+            danger: RgbColor::new(255, 60, 60),            // Pure red
+            warning: RgbColor::new(255, 200, 50),          // Bright yellow
+            success: RgbColor::new(80, 200, 120),         // Green
+            muted: RgbColor::new(100, 110, 130),           // Blue-gray
+            info: RgbColor::new(100, 200, 220),            // Teal
+            file_code: RgbColor::new(236, 156, 116),       // Apricot
+            file_config: RgbColor::new(132, 190, 255),     // Sky blue
+            file_media: RgbColor::new(201, 156, 244),       // Lilac
+            file_archive: RgbColor::new(238, 132, 170),    // Rose
+            file_exec: RgbColor::new(118, 203, 125),       // Green
         }
     }
 
     pub fn default_purple() -> Self {
         // Match the original DraconTheme::cyberpunk() base colors —
-        // Warm Amber accent, not Legacy Red. The red preset was a later
-        // addition that incorrectly became the default.
+        // Warm Amber accent, not Legacy Red.
         Self {
             accent_primary: RgbColor::new(224, 164, 90),   // Warm Amber
             accent_secondary: RgbColor::new(94, 199, 178),  // Mint-Teal
             selection_bg: RgbColor::new(178, 122, 64),      // Muted Bronze
+            selection_fg: RgbColor::new(0, 0, 0),           // Black
             border_active: RgbColor::new(224, 164, 90),     // Warm Amber
             border_inactive: RgbColor::new(86, 88, 98),     // Neutral Slate
             header_fg: RgbColor::new(240, 196, 138),        // Sand
+            danger: RgbColor::new(255, 80, 80),            // Bright red
+            warning: RgbColor::new(255, 190, 50),          // Amber yellow
+            success: RgbColor::new(80, 210, 120),           // Vivid green
+            muted: RgbColor::new(120, 120, 135),            // Warm gray
+            info: RgbColor::new(100, 200, 230),            // Sky cyan
+            file_code: RgbColor::new(236, 156, 116),       // Apricot
+            file_config: RgbColor::new(132, 190, 255),     // Sky blue
+            file_media: RgbColor::new(201, 156, 244),       // Lilac
+            file_archive: RgbColor::new(238, 132, 170),    // Rose
+            file_exec: RgbColor::new(118, 203, 125),        // Green
         }
     }
 
@@ -133,9 +231,20 @@ impl ThemeStyle {
         theme.accent_primary = self.accent_primary.to_color();
         theme.accent_secondary = self.accent_secondary.to_color();
         theme.selection_bg = self.selection_bg.to_color();
+        theme.selection_fg = self.selection_fg.to_color();
         theme.border_active = self.border_active.to_color();
         theme.border_inactive = self.border_inactive.to_color();
         theme.header_fg = self.header_fg.to_color();
+        theme.danger = self.danger.to_color();
+        theme.warning = self.warning.to_color();
+        theme.success = self.success.to_color();
+        theme.muted = self.muted.to_color();
+        theme.info = self.info.to_color();
+        theme.file_code = self.file_code.to_color();
+        theme.file_config = self.file_config.to_color();
+        theme.file_media = self.file_media.to_color();
+        theme.file_archive = self.file_archive.to_color();
+        theme.file_exec = self.file_exec.to_color();
     }
 }
 
@@ -151,6 +260,11 @@ impl DraconTheme {
             border_active: Color::Rgb(224, 164, 90),    // Primary Accent
             border_inactive: Color::Rgb(86, 88, 98),    // Neutral Slate
             header_fg: Color::Rgb(240, 196, 138),       // Sand
+            danger: Color::Rgb(255, 80, 80),           // Bright red
+            warning: Color::Rgb(255, 190, 50),          // Amber yellow
+            success: Color::Rgb(80, 210, 120),          // Vivid green
+            muted: Color::Rgb(120, 120, 135),           // Warm gray
+            info: Color::Rgb(100, 200, 230),            // Sky cyan
             file_code: Color::Rgb(236, 156, 116),       // Apricot
             file_config: Color::Rgb(132, 190, 255),     // Sky Blue
             file_media: Color::Rgb(201, 156, 244),      // Lilac
@@ -188,54 +302,34 @@ pub fn set_style_settings(style: ThemeStyle) {
     }
 }
 
-pub fn accent_primary() -> Color {
-    ACTIVE_THEME.read().accent_primary
-}
+// --- Themed color accessors ---
 
-pub fn accent_secondary() -> Color {
-    ACTIVE_THEME.read().accent_secondary
-}
+pub fn accent_primary() -> Color { ACTIVE_THEME.read().accent_primary }
+pub fn accent_secondary() -> Color { ACTIVE_THEME.read().accent_secondary }
+pub fn selection_bg() -> Color { ACTIVE_THEME.read().selection_bg }
+pub fn selection_fg() -> Color { ACTIVE_THEME.read().selection_fg }
+pub fn border_active() -> Color { ACTIVE_THEME.read().border_active }
+pub fn border_inactive() -> Color { ACTIVE_THEME.read().border_inactive }
+pub fn header_fg() -> Color { ACTIVE_THEME.read().header_fg }
 
-pub fn selection_bg() -> Color {
-    ACTIVE_THEME.read().selection_bg
-}
+pub fn danger() -> Color { ACTIVE_THEME.read().danger }
+pub fn warning() -> Color { ACTIVE_THEME.read().warning }
+pub fn success() -> Color { ACTIVE_THEME.read().success }
+pub fn muted() -> Color { ACTIVE_THEME.read().muted }
+pub fn info() -> Color { ACTIVE_THEME.read().info }
 
-pub fn border_active() -> Color {
-    ACTIVE_THEME.read().border_active
-}
+pub fn file_code() -> Color { ACTIVE_THEME.read().file_code }
+pub fn file_config() -> Color { ACTIVE_THEME.read().file_config }
+pub fn file_media() -> Color { ACTIVE_THEME.read().file_media }
+pub fn file_archive() -> Color { ACTIVE_THEME.read().file_archive }
+pub fn file_exec() -> Color { ACTIVE_THEME.read().file_exec }
 
-pub fn border_inactive() -> Color {
-    ACTIVE_THEME.read().border_inactive
-}
+// --- Monitor-specific colors (not per-theme, kept as constants) ---
 
-pub fn header_fg() -> Color {
-    ACTIVE_THEME.read().header_fg
-}
-
-pub fn gauge_danger() -> Color {
-    Color::Rgb(255, 60, 60)
-}
-
-pub fn gauge_warning() -> Color {
-    Color::Rgb(255, 180, 0)
-}
-
-pub fn monitor_label() -> Color {
-    Color::Rgb(60, 65, 75)
-}
-
-pub fn monitor_dim() -> Color {
-    Color::Rgb(100, 100, 110)
-}
-
-pub fn monitor_separator() -> Color {
-    Color::Rgb(30, 30, 35)
-}
-
-pub fn monitor_row_even() -> Color {
-    Color::Rgb(180, 185, 190)
-}
-
-pub fn monitor_row_odd() -> Color {
-    Color::Rgb(140, 145, 150)
-}
+pub fn gauge_danger() -> Color { Color::Rgb(255, 60, 60) }
+pub fn gauge_warning() -> Color { Color::Rgb(255, 180, 0) }
+pub fn monitor_label() -> Color { Color::Rgb(60, 65, 75) }
+pub fn monitor_dim() -> Color { Color::Rgb(100, 100, 110) }
+pub fn monitor_separator() -> Color { Color::Rgb(30, 30, 35) }
+pub fn monitor_row_even() -> Color { Color::Rgb(180, 185, 190) }
+pub fn monitor_row_odd() -> Color { Color::Rgb(140, 145, 150) }
