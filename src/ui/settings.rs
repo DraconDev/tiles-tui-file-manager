@@ -329,7 +329,7 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
 
             rows.push(Row::new(vec![
                 Cell::from(format!("  Tab {}", t_idx + 1)).style(style),
-                Cell::from(tab.current_path.to_string_lossy().to_string()).style(style),
+                Cell::from(tab.nav.current_path.to_string_lossy().to_string()).style(style),
                 Cell::from(status).style(if is_selected { style } else { status_style }),
             ]));
             tab_counter += 1;

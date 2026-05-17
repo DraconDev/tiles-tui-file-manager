@@ -104,7 +104,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 let is_focused_pane = p_i == app.focused_pane_index && !app.sidebar.sidebar_focus;
 
                 let is_modified = tab
-                    .preview
+                    .view.preview
                     .as_ref()
                     .and_then(|p| p.editor.as_ref())
                     .map(|e| e.modified)
@@ -127,26 +127,26 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
 
                 let base_name = if is_active_tab {
                     if let Some(fs) = pane.current_state() {
-                        if let Some(preview) = &fs.preview {
+                        if let Some(preview) = &fs.view.preview {
                             preview
                                 .path
                                 .file_name()
                                 .map(|n| n.to_string_lossy().to_string())
                                 .unwrap_or_else(|| "Editor".to_string())
                         } else {
-                            tab.current_path
+                            tab.nav.current_path
                                 .file_name()
                                 .map(|n| n.to_string_lossy().to_string())
                                 .unwrap_or_else(|| "/".to_string())
                         }
                     } else {
-                        tab.current_path
+                        tab.nav.current_path
                             .file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_else(|| "/".to_string())
                     }
                 } else {
-                    tab.current_path
+                    tab.nav.current_path
                         .file_name()
                         .map(|n| n.to_string_lossy().to_string())
                         .unwrap_or_else(|| "/".to_string())
@@ -155,10 +155,10 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 let mut spans = vec![Span::styled(format!(" {}", base_name), base_style)];
 
                 // Show git branch in Editor view tabs too
-                if let Some(branch) = &tab.git_branch {
-                    let pending = tab.git_pending.len();
-                    let ahead = tab.git_ahead;
-                    let behind = tab.git_behind;
+                if let Some(branch) = &tab.git.git_branch {
+                    let pending = tab.git.git_pending.len();
+                    let ahead = tab.git.git_ahead;
+                    let behind = tab.git.git_behind;
 
                     let branch_color = if pending > 0 {
                         Color::Red
@@ -230,7 +230,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
         for (t_i, tab) in pane.tabs.iter().enumerate() {
             let mut spans = Vec::new();
             let base_name = tab
-                .current_path
+                .nav.current_path
                 .file_name()
                 .map(|n| n.to_string_lossy().to_string())
                 .unwrap_or_else(|| "/".to_string());
@@ -262,10 +262,10 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
             spans.push(Span::styled(format!(" {} ", base_name), base_style));
 
             if matches!(app.core.current_view, CurrentView::Files | CurrentView::Git) {
-                if let Some(branch) = &tab.git_branch {
-                    let pending = tab.git_pending.len();
-                    let ahead = tab.git_ahead;
-                    let behind = tab.git_behind;
+                if let Some(branch) = &tab.git.git_branch {
+                    let pending = tab.git.git_pending.len();
+                    let ahead = tab.git.git_ahead;
+                    let behind = tab.git.git_behind;
 
                     let branch_color = if pending > 0 {
                         Color::Red

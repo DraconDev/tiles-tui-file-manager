@@ -195,10 +195,10 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
         app.set_input_shield(60);
         for pane in &mut app.panes {
             for fs in &mut pane.tabs {
-                if let Some(preview) = &fs.preview {
+                if let Some(preview) = &fs.view.preview {
                     let p = preview.path.to_string_lossy();
                     if p.starts_with("git://") || p.starts_with("git-diff://") {
-                        fs.preview = None;
+                        fs.view.preview = None;
                     }
                 }
             }
@@ -210,16 +210,16 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
         match app.core.current_view {
             CurrentView::Git | CurrentView::Processes | CurrentView::Debug => {
                 if let Some(fs) = app.current_file_state_mut() {
-                    fs.search_filter.clear();
-                    fs.git_pending_state.select(None);
-                    fs.git_history_state.select(None);
+                    fs.nav.search_filter.clear();
+                    fs.git.git_pending_state.select(None);
+                    fs.git.git_history_state.select(None);
                 }
                 for pane in &mut app.panes {
                     for fs in &mut pane.tabs {
-                        if let Some(preview) = &fs.preview {
+                        if let Some(preview) = &fs.view.preview {
                             let p = preview.path.to_string_lossy();
                             if p.starts_with("git://") || p.starts_with("git-diff://") {
-                                fs.preview = None;
+                                fs.view.preview = None;
                             }
                         }
                     }
@@ -244,7 +244,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                 }
                 for pane in &mut app.panes {
                     for fs in &mut pane.tabs {
-                        if let Some(preview) = &fs.preview {
+                        if let Some(preview) = &fs.view.preview {
                             if let Some(editor) = &preview.editor {
                                 if editor.modified {
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::SaveFile(
@@ -254,7 +254,7 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
                                 }
                             }
                         }
-                        fs.preview = None;
+                        fs.view.preview = None;
                     }
                 }
 
@@ -484,8 +484,8 @@ fn handle_sidebar_mouse(
                         }
                         SidebarTarget::Favorite(path) => {
                             if let Some(fs) = app.current_file_state_mut() {
-                                fs.current_path = path.clone();
-                                fs.selection.clear();
+                                fs.nav.current_path = path.clone();
+                                fs.list.selection.clear();
                                 crate::event_helpers::push_history(fs, path.clone());
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
@@ -509,10 +509,10 @@ fn handle_sidebar_mouse(
                                 } else {
                                     // Name click: navigate to folder (and expand if collapsed)
                                     if let Some(fs) = app.current_file_state_mut() {
-                                        fs.current_path = path_ref.clone();
-                                        fs.selection.selected = Some(0);
-                                        fs.selection.anchor = Some(0);
-                                        fs.selection.clear_multi();
+                                        fs.nav.current_path = path_ref.clone();
+                                        fs.list.selection.selected = Some(0);
+                                        fs.list.selection.anchor = Some(0);
+                                        fs.list.selection.clear_multi();
                                         crate::event_helpers::push_history(fs, path_ref.clone());
                                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                                             app.focused_pane_index,
@@ -841,7 +841,7 @@ mod tests {
 
         assert!(handled);
         assert_eq!(
-            app.current_file_state().map(|fs| fs.current_path.clone()),
+            app.current_file_state().map(|fs| fs.nav.current_path.clone()),
             Some(project_dir.clone())
         );
 

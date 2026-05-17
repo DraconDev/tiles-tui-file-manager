@@ -133,7 +133,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         left_spans.extend(HotkeyHint::render("^Q", "Quit", Color::Red));
 
         let hidden_on = if let Some(fs) = app.current_file_state() {
-            fs.show_hidden
+            fs.nav.show_hidden
         } else {
             app.settings.default_show_hidden
         };
@@ -216,7 +216,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         // Add Remote Status Badge
         let is_remote = app.panes.iter().any(|p| {
             if let Some(fs) = p.current_state() {
-                fs.remote_session.is_some()
+                fs.nav.remote_session.is_some()
             } else {
                 false
             }
@@ -242,19 +242,19 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
     // 2. Center Section: Selection Summary (Only in Files view)
     if app.core.current_view == CurrentView::Files {
         if let Some(fs) = app.current_file_state() {
-            let sel_count = if !fs.selection.is_empty() {
-                fs.selection.multi.len()
-            } else if fs.selection.selected.is_some() {
+            let sel_count = if !fs.list.selection.is_empty() {
+                fs.list.selection.multi.len()
+            } else if fs.list.selection.selected.is_some() {
                 1
             } else {
                 0
             };
-            let total_count = fs.files.len();
-            let selected_bytes = if !fs.selection.is_empty() {
+            let total_count = fs.list.files.len();
+            let selected_bytes = if !fs.list.selection.is_empty() {
                 let mut sum = 0u64;
-                for &idx in fs.selection.multi_selected_indices() {
-                    if let Some(path) = fs.files.get(idx) {
-                        if let Some(meta) = fs.metadata.get(path) {
+                for &idx in fs.list.selection.multi_selected_indices() {
+                    if let Some(path) = fs.list.files.get(idx) {
+                        if let Some(meta) = fs.list.metadata.get(path) {
                             if !meta.is_dir {
                                 sum = sum.saturating_add(meta.size);
                             }
@@ -262,9 +262,9 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
                     }
                 }
                 sum
-            } else if let Some(idx) = fs.selection.selected {
-                if let Some(path) = fs.files.get(idx) {
-                    fs.metadata
+            } else if let Some(idx) = fs.list.selection.selected {
+                if let Some(path) = fs.list.files.get(idx) {
+                    fs.list.metadata
                         .get(path)
                         .map(|m| if m.is_dir { 0 } else { m.size })
                         .unwrap_or(0)

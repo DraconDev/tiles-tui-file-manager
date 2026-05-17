@@ -110,9 +110,9 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
                 let mut tabs = Vec::new();
                 for t in &p.tabs {
                     let mut tab_clone = t.clone();
-                    tab_clone.search_filter.clear();
-                    tab_clone.files.clear();
-                    tab_clone.local_count = 0;
+                    tab_clone.nav.search_filter.clear();
+                    tab_clone.list.files.clear();
+                    tab_clone.list.local_count = 0;
                     tabs.push(tab_clone);
                 }
                 panes.push(Pane {

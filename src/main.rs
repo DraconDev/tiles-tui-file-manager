@@ -120,7 +120,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         // Collect all paths from panes
         for pane in &app.panes {
             for tab in &pane.tabs {
-                current_paths.insert(tab.current_path.clone());
+                current_paths.insert(tab.nav.current_path.clone());
             }
         }
         
@@ -360,8 +360,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let mut app_guard = app.lock();
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
-                            fs.remote_session = Some(session);
-                            fs.current_path = PathBuf::from("/");
+                            fs.nav.remote_session = Some(session);
+                            fs.nav.current_path = PathBuf::from("/");
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                         }
                     }
@@ -376,7 +376,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let path = app_guard.panes
                             .get(pane_idx)
                             .and_then(|pane| pane.current_state())
-                            .map(|fs| fs.current_path.clone());
+                            .map(|fs| fs.nav.current_path.clone());
                         if let Some(ref p) = path {
                             app_guard.push_recent_folder(p.clone());
                         }
@@ -411,7 +411,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     for (i, pane) in app_guard.panes.iter().enumerate() {
                         if let Some(fs) = pane.current_state() {
                             // Check if the changed path is in or under the current directory
-                            let current_path = &fs.current_path;
+                            let current_path = &fs.nav.current_path;
                             let should_refresh = if let Some(parent) = path.parent() {
                                 // File changed - check if parent is current dir or path is in current dir
                                 parent == current_path.as_path() || path.starts_with(current_path)
@@ -433,7 +433,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
                         }
                         if let Some(fs) = pane.current_state() {
-                            if let Some(ref preview) = fs.preview {
+                            if let Some(ref preview) = fs.view.preview {
                                 if preview.path == path {
                                     if let Some(editor) = &preview.editor {
                                         if !editor.modified && !last_self_save.contains_key(&path) {
@@ -469,9 +469,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         if let Some(pane) = app_guard.panes.get(pane_idx) {
                             if let Some(fs) = pane.current_state() {
                                 (
-                                    fs.current_path.clone(),
+                                    fs.nav.current_path.clone(),
                                     app_guard.preview_max_mb.max(1),
-                                    fs.remote_session.clone(),
+                                    fs.nav.remote_session.clone(),
                                 )
                             } else {
                                 (PathBuf::from("."), app_guard.preview_max_mb.max(1), None)
@@ -588,7 +588,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 .or_else(|| {
                                     app_guard.panes.get(pane_idx)
                                         .and_then(|p| p.current_state())
-                                        .and_then(|fs| fs.preview.as_ref())
+                                        .and_then(|fs| fs.view.preview.as_ref())
                                         .and_then(|p| p.editor.as_ref())
                                         .filter(|e| !e.modified)
                                         .map(|e| (e.scroll_row, e.scroll_col, e.cursor_row, e.cursor_col))
@@ -610,7 +610,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
                              if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                                  if let Some(fs) = pane.current_state_mut() {
-                                     fs.preview = Some(preview.clone());
+                                     fs.view.preview = Some(preview.clone());
                                  }
                              }
                             let is_git_url = path_str.starts_with("git://")
@@ -633,9 +633,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .iter()
                             .find_map(|pane| {
                                 let fs = pane.current_state()?;
-                                let preview = fs.preview.as_ref()?;
+                                let preview = fs.view.preview.as_ref()?;
                                 if preview.path == path {
-                                    fs.remote_session.clone()
+                                    fs.nav.remote_session.clone()
                                 } else {
                                     None
                                 }
@@ -643,7 +643,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             .or_else(|| {
                                 let fs = app_guard.current_file_state()?;
                                 app_guard.editor_global.editor_state.as_ref()?;
-                                fs.remote_session.clone()
+                                fs.nav.remote_session.clone()
                             })
                     };
 
@@ -678,7 +678,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             }
                             for pane in &mut app_guard.panes {
                                 if let Some(fs) = pane.current_state_mut() {
-                                    if let Some(ref mut preview) = fs.preview {
+                                    if let Some(ref mut preview) = fs.view.preview {
                                         if preview.path == path {
                                             preview.last_saved = Some(std::time::Instant::now());
                                             if let Some(ref mut editor) = preview.editor {
@@ -694,7 +694,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             if let Some(parent) = path.parent() {
                                 for (i, pane) in app_guard.panes.iter().enumerate() {
                                     if let Some(fs) = pane.current_state() {
-                                        if fs.current_path == parent {
+                                        if fs.nav.current_path == parent {
                                             panes_needing_refresh.insert(i);
                                         }
                                     }
@@ -714,7 +714,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone())
+                            .and_then(|fs| fs.nav.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
                         crate::modules::remote::create_file(&remote, &path)
@@ -733,7 +733,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone())
+                            .and_then(|fs| fs.nav.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
                         crate::modules::remote::create_dir_all(&remote, &path)
@@ -752,7 +752,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone())
+                            .and_then(|fs| fs.nav.remote_session.clone())
                     };
                     let rename_res = if let Some(remote) = &remote {
                         crate::modules::remote::rename(remote, &old, &new)
@@ -777,7 +777,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone())
+                            .and_then(|fs| fs.nav.remote_session.clone())
                     };
                     let result: Result<(), std::io::Error> = if let Some(remote) = remote {
                         crate::modules::remote::remove_path(&remote, &path)
@@ -800,7 +800,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone())
+                            .and_then(|fs| fs.nav.remote_session.clone())
                     };
                     let focused = app.lock().focused_pane_index;
                     if remote.is_some() {
@@ -840,7 +840,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         let remote = {
                             let app_guard = app_clone.lock();
                             app_guard.current_file_state()
-                                .and_then(|fs| fs.remote_session.clone())
+                                .and_then(|fs| fs.nav.remote_session.clone())
                         };
 
                         let copied = if let Some(remote) = &remote {
@@ -864,7 +864,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             let app_guard = app_clone.lock();
                             for (i, pane) in app_guard.panes.iter().enumerate() {
                                 if let Some(fs) = pane.current_state() {
-                                    if fs.current_path == parent {
+                                    if fs.nav.current_path == parent {
                                         panes_to_refresh.insert(i);
                                     }
                                 }
@@ -883,7 +883,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let remote = {
                         let app_guard = app.lock();
                         app_guard.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone())
+                            .and_then(|fs| fs.nav.remote_session.clone())
                     };
                     if remote.is_some() {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
@@ -912,7 +912,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                 let app_guard = app.lock();
                                 for (i, pane) in app_guard.panes.iter().enumerate() {
                                     if let Some(fs) = pane.current_state() {
-                                        if fs.current_path == parent {
+                                        if fs.nav.current_path == parent {
                                             panes_needing_refresh.insert(i);
                                         }
                                     }
@@ -974,15 +974,15 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                         // Store git data in the specified tab, or active tab as fallback
                         let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
                         if let Some(fs) = pane.tabs.get_mut(tab_idx) {
-                            fs.git_history = history;
-                            fs.git_pending = pending;
-                            fs.git_branch = branch;
-                            fs.git_ahead = ahead;
-                            fs.git_behind = behind;
-                            fs.git_summary = summary;
-                            fs.git_remotes = remotes;
-                            fs.git_stashes = stashes;
-                            fs.git_cache_until = Some(Instant::now() + Duration::from_secs(GIT_CACHE_TTL_SECONDS));
+                            fs.git.git_history = history;
+                            fs.git.git_pending = pending;
+                            fs.git.git_branch = branch;
+                            fs.git.git_ahead = ahead;
+                            fs.git.git_behind = behind;
+                            fs.git.git_summary = summary;
+                            fs.git.git_remotes = remotes;
+                            fs.git.git_stashes = stashes;
+                            fs.git.git_cache_until = Some(Instant::now() + Duration::from_secs(GIT_CACHE_TTL_SECONDS));
                         }
                     }
                     needs_draw = true;
@@ -1011,7 +1011,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let mut app_guard = app.lock();
                     if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                         if let Some(fs) = pane.current_state_mut() {
-                            fs.files = files;
+                            fs.list.files = files;
                         }
                     }
                     needs_draw = true;
@@ -1041,7 +1041,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     let dir_path = app_guard.panes
                         .get(pane_idx)
                         .and_then(|p| p.current_state())
-                        .map(|fs| fs.current_path.clone());
+                        .map(|fs| fs.nav.current_path.clone());
                     needs_draw = true;
                     drop(app_guard);
                     if let Some(path) = dir_path {
@@ -1081,14 +1081,14 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 if let Some(pane) = app_guard.panes.get(pane_idx) {
                     if let Some(fs) = pane.current_state() {
                         (
-                            fs.current_path.clone(),
-                            fs.remote_session.clone(),
-                            fs.search_filter.clone(),
-                            fs.search_generation,
+                            fs.nav.current_path.clone(),
+                            fs.nav.remote_session.clone(),
+                            fs.nav.search_filter.clone(),
+                            fs.nav.search_generation,
                             matches!(app_guard.core.current_view, CurrentView::Files | CurrentView::Git | CurrentView::Commit),
                             app_guard.layout.expanded_folders.clone(),
-                            fs.sort_column,
-                            fs.sort_ascending,
+                            fs.nav.sort_column,
+                            fs.nav.sort_ascending,
                         )
                     } else {
                         continue;
@@ -1169,7 +1169,7 @@ let list_path_for_filter = path.clone();
                             if let Some(fs) = pane.current_state_mut() {
                                 // RACE CONDITION CHECK:
                                 // If filter changed while we were reading, discard stale results
-                                if fs.search_generation != start_generation {
+                                if fs.nav.search_generation != start_generation {
                                     crate::app::log_debug(&format!(
                                         "RefreshFiles: generation mismatch (pane={}), dropping stale results",
                                         pane_idx
@@ -1185,19 +1185,19 @@ let list_path_for_filter = path.clone();
                                     .map(|s| s.starts_with('.'))
                                     .unwrap_or(false);
 
-                                if !fs.show_hidden && is_hidden {
+                                if !fs.nav.show_hidden && is_hidden {
                                     return false;
                                 }
 
-                                if !fs.search_filter.is_empty() {
+                                if !fs.nav.search_filter.is_empty() {
                                     let name = p
                                         .file_name()
                                         .and_then(|n| n.to_str())
                                         .unwrap_or("");
                                     let matches = if FUZZY_SEARCH {
-                                        fuzzy_contains(name, &fs.search_filter)
+                                        fuzzy_contains(name, &fs.nav.search_filter)
                                     } else {
-                                        name.to_lowercase().contains(&fs.search_filter.to_lowercase())
+                                        name.to_lowercase().contains(&fs.nav.search_filter.to_lowercase())
                                     };
                                     if !matches {
                                         return false;
@@ -1208,16 +1208,16 @@ let list_path_for_filter = path.clone();
                             }).collect();
 
                             // Search filter: include ancestor folders so matching children are visible
-                            if !fs.search_filter.is_empty() {
+                            if !fs.nav.search_filter.is_empty() {
                                 use std::collections::HashSet;
-                                let filter_lower = fs.search_filter.to_lowercase();
+                                let filter_lower = fs.nav.search_filter.to_lowercase();
                                 let mut keep: HashSet<PathBuf> = HashSet::new();
                                 for (p, _) in &paired {
                                     let name = p.file_name()
                                         .and_then(|n| n.to_str())
                                         .unwrap_or("");
                                     let matches = if FUZZY_SEARCH {
-                                        fuzzy_contains(name, &fs.search_filter)
+                                        fuzzy_contains(name, &fs.nav.search_filter)
                                     } else {
                                         name.to_lowercase().contains(&filter_lower)
                                     };
@@ -1250,7 +1250,7 @@ paired = new_paired;
                             // Do NOT re-sort the flat list — it would scatter children away
                             // from parent folders and break the tree structure.
 
-                            fs.local_count = paired.len();
+                            fs.list.local_count = paired.len();
 
                             if !g_files.is_empty() {
                                 for gf in &g_files {
@@ -1265,43 +1265,43 @@ paired = new_paired;
                             let tree_file_depths: Vec<u16> = paired.iter().map(|(_, d)| *d).collect();
                             let files: Vec<PathBuf> = paired.into_iter().map(|(p, _)| p).collect();
 
-                            fs.tree_file_depths = tree_file_depths;
-                            let prev_selected_path = fs.selection.selected
-                                .and_then(|idx| fs.files.get(idx).cloned());
-                            fs.files = files;
-                            fs.metadata = metadata;
+                            fs.list.tree_file_depths = tree_file_depths;
+                            let prev_selected_path = fs.list.selection.selected
+                                .and_then(|idx| fs.list.files.get(idx).cloned());
+                            fs.list.files = files;
+                            fs.list.metadata = metadata;
 
                             // Re-find the previously selected file by path after file list update
                             if let Some(path) = prev_selected_path {
-                                if let Some(new_idx) = fs.files.iter().position(|p| p == &path) {
-                                    fs.selection.selected = Some(new_idx);
-                                    fs.selection.anchor = Some(new_idx);
-                                    fs.table_state.select(Some(new_idx));
-                                    let capacity = fs.view_height.saturating_sub(3).max(1);
-                                    let offset = fs.table_state.offset();
+                                if let Some(new_idx) = fs.list.files.iter().position(|p| p == &path) {
+                                    fs.list.selection.selected = Some(new_idx);
+                                    fs.list.selection.anchor = Some(new_idx);
+                                    fs.view.table_state.select(Some(new_idx));
+                                    let capacity = fs.view.view_height.saturating_sub(3).max(1);
+                                    let offset = fs.view.table_state.offset();
                                     if new_idx < offset {
-                                        *fs.table_state.offset_mut() = new_idx;
+                                        *fs.view.table_state.offset_mut() = new_idx;
                                     } else if new_idx >= offset + capacity {
-                                        *fs.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+                                        *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
                                     }
                                 } else {
-                                    let max_idx = fs.files.len().saturating_sub(1);
-                                    fs.selection.selected = Some(max_idx);
-                                    fs.table_state.select(Some(max_idx));
+                                    let max_idx = fs.list.files.len().saturating_sub(1);
+                                    fs.list.selection.selected = Some(max_idx);
+                                    fs.view.table_state.select(Some(max_idx));
                                 }
                             }
-                            let max_offset = fs.files.len().saturating_sub(fs.view_height.saturating_sub(3).max(1));
-                            if fs.table_state.offset() > max_offset {
-                                *fs.table_state.offset_mut() = max_offset;
+                            let max_offset = fs.list.files.len().saturating_sub(fs.view.view_height.saturating_sub(3).max(1));
+                            if fs.view.table_state.offset() > max_offset {
+                                *fs.view.table_state.offset_mut() = max_offset;
                             }
 
                             // Apply pending selection and scroll (e.g., after navigate_up)
-                            if let Some((pending_path, pending_scroll)) = fs.pending_select_path.take() {
-                                if let Some(idx) = fs.files.iter().position(|p| p == &pending_path)
+                            if let Some((pending_path, pending_scroll)) = fs.view.pending_select_path.take() {
+                                if let Some(idx) = fs.list.files.iter().position(|p| p == &pending_path)
                                 {
-                                    fs.selection.selected = Some(idx);
-                                    fs.table_state.select(Some(idx));
-                                    *fs.table_state.offset_mut() = pending_scroll;
+                                    fs.list.selection.selected = Some(idx);
+                                    fs.view.table_state.select(Some(idx));
+                                    *fs.view.table_state.offset_mut() = pending_scroll;
                                 }
                             }
                         }
@@ -1321,7 +1321,7 @@ paired = new_paired;
                             .get(pane_idx)
                             .and_then(|pane| pane.current_state())
                             .map(|fs| {
-                                fs.git_cache_until
+                                fs.git.git_cache_until
                                     .map(|until| Instant::now() >= until)
                                     .unwrap_or(true)
                             })
@@ -1348,7 +1348,7 @@ paired = new_paired;
                         app_guard.panes
                             .get(pane_idx)
                             .and_then(|pane| pane.current_state())
-                            .map(|fs| fs.current_path == git_path)
+                            .map(|fs| fs.nav.current_path == git_path)
                             .unwrap_or(false)
                     };
                     if !path_still_active {
@@ -1436,21 +1436,21 @@ mod tests {
         let queue: Arc<StdMutex<Vec<TilePlacement>>> = Arc::new(StdMutex::new(Vec::new()));
         let mut app = App::new(queue);
         if let Some(fs) = app.current_file_state_mut() {
-            fs.current_path = tmp.clone();
-            fs.files.clear();
-            fs.metadata.clear();
-            fs.selection.selected = None;
+            fs.nav.current_path = tmp.clone();
+            fs.list.files.clear();
+            fs.list.metadata.clear();
+            fs.list.selection.selected = None;
         }
 
         setup::prime_visible_tabs(&mut app);
 
         let fs = app.current_file_state().unwrap();
         assert!(
-            !fs.files.is_empty(),
+            !fs.list.files.is_empty(),
             "startup should hydrate first pane file list"
         );
         assert!(fs
-            .files
+            .list.files
             .iter()
             .any(|p| p.file_name().and_then(|n| n.to_str()) == Some("example.txt")));
 

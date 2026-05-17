@@ -51,9 +51,9 @@ pub fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
     let (path, filter, remote) = app.current_file_state()
         .map(|fs| {
             (
-                fs.current_path.display().to_string(),
-                fs.search_filter.clone(),
-                fs.remote_session.is_some(),
+                fs.nav.current_path.display().to_string(),
+                fs.nav.search_filter.clone(),
+                fs.nav.remote_session.is_some(),
             )
         })
         .unwrap_or_else(|| ("-".to_string(), "".to_string(), false));

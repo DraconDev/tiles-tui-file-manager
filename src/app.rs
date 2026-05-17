@@ -301,7 +301,7 @@ impl App {
 
     pub fn toggle_hidden(&mut self) -> usize {
         if let Some(fs) = self.current_file_state_mut() {
-            fs.show_hidden = !fs.show_hidden;
+            fs.nav.show_hidden = !fs.nav.show_hidden;
         }
         self.focused_pane_index
     }
@@ -320,12 +320,12 @@ impl App {
 
     pub fn move_up(&mut self, shift: bool) {
         if let Some(fs) = self.current_file_state_mut() {
-            if let Some(sel) = fs.selection.selected {
+            if let Some(sel) = fs.list.selection.selected {
                 if sel > 0 {
                     let mut next = sel - 1;
                     while next > 0
                         && fs
-                            .files
+                            .list.files
                             .get(next)
                             .map(|p| p.to_string_lossy() == "__DIVIDER__")
                             .unwrap_or(false)
@@ -333,17 +333,17 @@ impl App {
                         next -= 1;
                     }
                     if fs
-                        .files
+                        .list.files
                         .get(next)
                         .map(|p| p.to_string_lossy() == "__DIVIDER__")
                         .unwrap_or(false)
                     {
                         return;
                     }
-                    fs.selection.handle_move(next, shift);
-                    fs.table_state.select(fs.selection.selected);
-                    if next < fs.table_state.offset() {
-                        *fs.table_state.offset_mut() = next;
+                    fs.list.selection.handle_move(next, shift);
+                    fs.view.table_state.select(fs.list.selection.selected);
+                    if next < fs.view.table_state.offset() {
+                        *fs.view.table_state.offset_mut() = next;
                     }
                 }
             }
@@ -352,13 +352,13 @@ impl App {
 
     pub fn move_down(&mut self, shift: bool) {
         if let Some(fs) = self.current_file_state_mut() {
-            let capacity = fs.view_height.saturating_sub(3);
-            if let Some(sel) = fs.selection.selected {
-                if sel + 1 < fs.files.len() {
+            let capacity = fs.view.view_height.saturating_sub(3);
+            if let Some(sel) = fs.list.selection.selected {
+                if sel + 1 < fs.list.files.len() {
                     let mut next = sel + 1;
-                    while next < fs.files.len() - 1
+                    while next < fs.list.files.len() - 1
                         && fs
-                            .files
+                            .list.files
                             .get(next)
                             .map(|p| p.to_string_lossy() == "__DIVIDER__")
                             .unwrap_or(false)
@@ -366,18 +366,18 @@ impl App {
                         next += 1;
                     }
                     if fs
-                        .files
+                        .list.files
                         .get(next)
                         .map(|p| p.to_string_lossy() == "__DIVIDER__")
                         .unwrap_or(false)
                     {
                         return;
                     }
-                    fs.selection.handle_move(next, shift);
-                    fs.table_state.select(fs.selection.selected);
-                    if next >= fs.table_state.offset() + capacity {
+                    fs.list.selection.handle_move(next, shift);
+                    fs.view.table_state.select(fs.list.selection.selected);
+                    if next >= fs.view.table_state.offset() + capacity {
                         let keep_visible = capacity.saturating_sub(1);
-                        *fs.table_state.offset_mut() = next.saturating_sub(keep_visible);
+                        *fs.view.table_state.offset_mut() = next.saturating_sub(keep_visible);
                     }
                 }
             }

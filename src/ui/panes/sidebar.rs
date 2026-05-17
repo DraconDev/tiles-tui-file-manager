@@ -27,7 +27,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             let (mut sidebar_items, search_filter) = {
                 let items = Vec::new();
                 let filter = app.current_file_state()
-                    .map(|fs| fs.search_filter.clone())
+                    .map(|fs| fs.nav.search_filter.clone())
                     .unwrap_or_default();
                 (items, filter)
             };
@@ -41,7 +41,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             for (p_idx, pane) in app.panes.iter().enumerate() {
                 let panel_num = p_idx + 1; // 1 for Left, 2 for Right
                 if let Some(fs) = pane.current_state() {
-                    if let Some(ref session) = fs.remote_session {
+                    if let Some(ref session) = fs.nav.remote_session {
                         active_remote_markers
                             .entry(session.host.clone())
                             .or_default()
@@ -52,7 +52,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                         let mut longest_prefix = 0;
 
                         for disk in &app.system_state.disks {
-                            if disk.is_mounted && fs.current_path.starts_with(&disk.name) {
+                            if disk.is_mounted && fs.nav.current_path.starts_with(&disk.name) {
                                 let len = disk.name.len();
                                 if len > longest_prefix {
                                     longest_prefix = len;
@@ -127,7 +127,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 let show_hidden = app.panes
                     .get(app.focused_pane_index)
                     .and_then(|p| p.current_state())
-                    .map(|fs| fs.show_hidden)
+                    .map(|fs| fs.nav.show_hidden)
                     .unwrap_or(app.settings.default_show_hidden);
                 let cache_key = {
                     use std::collections::hash_map::DefaultHasher;
@@ -623,7 +623,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
             }
 
             let title_text = app.current_file_state()
-                .map(|fs| fs.current_path.to_string_lossy().to_string())
+                .map(|fs| fs.nav.current_path.to_string_lossy().to_string())
                 .unwrap_or_else(|| "Files".to_string());
 
             let block = Block::default()
@@ -710,7 +710,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     let selection_bg = crate::ui::theme::selection_bg();
     let (base_path, title_path) = if let Some(pane) = app.panes.get(app.focused_pane_index) {
         if let Some(fs) = pane.current_state() {
-            if let Some(ref preview) = fs.preview {
+            if let Some(ref preview) = fs.view.preview {
                 if preview.path.is_dir() {
                     (preview.path.clone(), preview.path.clone())
                 } else {
@@ -720,7 +720,7 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                     )
                 }
             } else {
-                (fs.current_path.clone(), fs.current_path.clone())
+                (fs.nav.current_path.clone(), fs.nav.current_path.clone())
             }
         } else {
             return;
@@ -791,7 +791,7 @@ if app.sidebar.editor_sidebar_cache_key != editor_cache_key {
         .flat_map(|pane| {
             pane.tabs
                 .iter()
-                .filter_map(|tab| tab.preview.as_ref().map(|p| p.path.clone()))
+                .filter_map(|tab| tab.view.preview.as_ref().map(|p| p.path.clone()))
         })
         .collect();
 
@@ -943,7 +943,7 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
             let show_hidden = app.panes
                 .get(app.focused_pane_index)
                 .and_then(|p| p.current_state())
-                .map(|fs| fs.show_hidden)
+                .map(|fs| fs.nav.show_hidden)
                 .unwrap_or(app.settings.default_show_hidden);
 
             if !show_hidden && name.starts_with('.') {
@@ -955,11 +955,11 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
                 .get(app.focused_pane_index)
                 .and_then(|p| p.current_state())
             {
-                if !fs.search_filter.is_empty() && app.sidebar.sidebar_focus {
+                if !fs.nav.search_filter.is_empty() && app.sidebar.sidebar_focus {
                     if FUZZY_SEARCH {
-                        fuzzy_contains(&name, &fs.search_filter)
+                        fuzzy_contains(&name, &fs.nav.search_filter)
                     } else {
-                        name.to_lowercase().contains(&fs.search_filter.to_lowercase())
+                        name.to_lowercase().contains(&fs.nav.search_filter.to_lowercase())
                     }
                 } else {
                     true

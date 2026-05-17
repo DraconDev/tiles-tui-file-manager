@@ -49,14 +49,14 @@ pub fn setup_app(
 
             for tab in &mut pane.tabs {
                 // Never trust persisted transient tab data; force a clean first refresh.
-                tab.files.clear();
-                tab.metadata.clear();
-                tab.search_filter.clear();
-                tab.local_count = 0;
-                tab.selection.clear_multi();
-                tab.selection.anchor = None;
-                tab.selection.selected = None;
-                *tab.table_state.offset_mut() = 0;
+                tab.list.files.clear();
+                tab.list.metadata.clear();
+                tab.nav.search_filter.clear();
+                tab.list.local_count = 0;
+                tab.list.selection.clear_multi();
+                tab.list.selection.anchor = None;
+                tab.list.selection.selected = None;
+                *tab.view.table_state.offset_mut() = 0;
             }
         }
         app.focused_pane_index = state.focused_pane_index;
@@ -70,9 +70,9 @@ pub fn setup_app(
                 if let Some(fs) = pane.current_state_mut() {
                     // Always start local on pane 1/tab active, otherwise a persisted
                     // remote_session can make startup refresh return an empty listing.
-                    fs.remote_session = None;
-                    if fs.current_path != cwd {
-                        fs.current_path = cwd.clone();
+                    fs.nav.remote_session = None;
+                    if fs.nav.current_path != cwd {
+                        fs.nav.current_path = cwd.clone();
                         crate::event_helpers::push_history(fs, cwd);
                     }
                 }
@@ -149,11 +149,11 @@ pub fn prime_visible_tabs(app: &mut App) {
 }
 
 pub fn prime_local_file_state(fs: &mut crate::state::FileState) {
-    if fs.remote_session.is_some() {
+    if fs.nav.remote_session.is_some() {
         return;
     }
 
-    let (files, mut metadata) = crate::modules::files::read_dir_with_metadata(&fs.current_path);
+    let (files, mut metadata) = crate::modules::files::read_dir_with_metadata(&fs.nav.current_path);
     let mut filtered_files: Vec<_> = files
         .into_iter()
         .filter(|p| {
@@ -162,7 +162,7 @@ pub fn prime_local_file_state(fs: &mut crate::state::FileState) {
                 .and_then(|n| n.to_str())
                 .map(|s| s.starts_with('.'))
                 .unwrap_or(false);
-            fs.show_hidden || !is_hidden
+            fs.nav.show_hidden || !is_hidden
         })
         .collect();
 
@@ -179,7 +179,7 @@ pub fn prime_local_file_state(fs: &mut crate::state::FileState) {
             };
         }
 
-        let ord = match fs.sort_column {
+        let ord = match fs.nav.sort_column {
             crate::app::FileColumn::Name => {
                 let na = a
                     .file_name()
@@ -222,18 +222,18 @@ pub fn prime_local_file_state(fs: &mut crate::state::FileState) {
                 pa.cmp(&pb)
             }
         };
-        if fs.sort_ascending {
+        if fs.nav.sort_ascending {
             ord
         } else {
             ord.reverse()
         }
     });
 
-    fs.local_count = filtered_files.len();
-    fs.files = filtered_files;
-    fs.metadata = std::mem::take(&mut metadata);
-    if fs.selection.selected.is_none() && !fs.files.is_empty() {
-        fs.selection.selected = Some(0);
-        fs.table_state.select(Some(0));
+    fs.list.local_count = filtered_files.len();
+    fs.list.files = filtered_files;
+    fs.list.metadata = std::mem::take(&mut metadata);
+    if fs.list.selection.selected.is_none() && !fs.list.files.is_empty() {
+        fs.list.selection.selected = Some(0);
+        fs.view.table_state.select(Some(0));
     }
 }

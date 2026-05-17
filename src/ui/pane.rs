@@ -126,11 +126,11 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         return;
     };
 
-    let branch_name = tab.git_branch.as_deref().unwrap_or("HEAD");
-    let summary_text = tab.git_summary.as_deref().unwrap_or("");
-    let current_path_label = tab.current_path.to_string_lossy().to_string();
-    let history_len = tab.git_history.len();
-    let pending_len = tab.git_pending.len();
+    let branch_name = tab.git.git_branch.as_deref().unwrap_or("HEAD");
+    let summary_text = tab.git.git_summary.as_deref().unwrap_or("");
+    let current_path_label = tab.nav.current_path.to_string_lossy().to_string();
+    let history_len = tab.git.git_history.len();
+    let pending_len = tab.git.git_pending.len();
 
     let block = Block::default()
         .borders(Borders::ALL)
@@ -199,7 +199,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                 .get(pane_idx)
                 .and_then(|p| p.tabs.get(tab_idx))
                 .map(|t| {
-                    t.git_pending
+                    t.git.git_pending
                         .iter()
                         .map(|p| {
                             let status_color = match p.status.as_str() {
@@ -265,7 +265,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                     f.render_stateful_widget(
                         pending_table,
                         active_area,
-                        &mut tab.git_pending_state,
+                        &mut tab.git.git_pending_state,
                     );
                 }
             }
@@ -283,7 +283,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             .get(pane_idx)
             .and_then(|p| p.tabs.get(tab_idx))
             .map(|t| {
-                t.git_history
+                t.git.git_history
                     .iter()
                     .map(|act| {
                         let h_short = act.hash.chars().take(7).collect::<String>();
@@ -369,7 +369,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
         if let Some(pane) = app.panes.get_mut(pane_idx) {
             if let Some(tab) = pane.tabs.get_mut(tab_idx) {
-                f.render_stateful_widget(table, history_area, &mut tab.git_history_state);
+                f.render_stateful_widget(table, history_area, &mut tab.git.git_history_state);
             }
         }
     }
@@ -385,7 +385,7 @@ pub fn draw_file_view(
 ) {
     if let Some(pane) = app.panes.get_mut(pane_idx) {
         if let Some(fs) = pane.current_state_mut() {
-            if let Some(preview) = &mut fs.preview {
+            if let Some(preview) = &mut fs.view.preview {
             let block = Block::default()
                 .borders(borders)
                 .border_type(BorderType::Rounded)
@@ -493,25 +493,25 @@ pub fn draw_file_view(
         .get_mut(pane_idx)
         .and_then(|p| p.current_state_mut())
     {
-        file_state.view_height = area.height as usize;
+        file_state.view.view_height = area.height as usize;
 
         let mut render_state = TableState::default();
 
-        if let Some(sel) = file_state.selection.selected {
-            let offset = file_state.table_state.offset();
+        if let Some(sel) = file_state.list.selection.selected {
+            let offset = file_state.view.table_state.offset();
 
-            let capacity = file_state.view_height.saturating_sub(3);
+            let capacity = file_state.view.view_height.saturating_sub(3);
 
             if sel >= offset && sel < offset + capacity {
                 render_state.select(Some(sel));
             }
         }
 
-        *render_state.offset_mut() = file_state.table_state.offset();
+        *render_state.offset_mut() = file_state.view.table_state.offset();
 
         let mut display_columns = Vec::new();
 
-        for col in &file_state.columns {
+        for col in &file_state.list.columns {
             match col {
                 FileColumn::Name => display_columns.push(FileColumn::Name),
                 FileColumn::Size if area.width > 40 => display_columns.push(FileColumn::Size),
@@ -559,8 +559,8 @@ pub fn draw_file_view(
                     FileColumn::Created => "Created",
                     FileColumn::Permissions => "Permissions",
                 };
-                let name = if *c == file_state.sort_column {
-                    if file_state.sort_ascending {
+                let name = if *c == file_state.nav.sort_column {
+                    if file_state.nav.sort_ascending {
                         format!("{} ▲", base_name)
                     } else {
                         format!("{} ▼", base_name)
@@ -578,8 +578,8 @@ pub fn draw_file_view(
             .collect();
 
         // --- ABSOLUTE CELL ISOLATION RENDERING ---
-        file_state.column_bounds.clear();
-        file_state.file_row_bounds.clear();
+        file_state.view.column_bounds.clear();
+        file_state.view.file_row_bounds.clear();
         let header_y = inner_area.y;
         let content_y = header_y + 1;
         let visible_height = inner_area.height.saturating_sub(1) as usize;
@@ -587,7 +587,7 @@ pub fn draw_file_view(
         // 1. Render Headers
         for (col_idx, rect) in column_layout.iter().enumerate() {
             if let Some(col_type) = display_columns.get(col_idx) {
-                file_state.column_bounds.push((*rect, *col_type));
+                file_state.view.column_bounds.push((*rect, *col_type));
                 let header_line = header_lines.get(col_idx).cloned().unwrap_or(Line::from(""));
                 let header_rect = Rect::new(rect.x, header_y, rect.width, 1);
                 let alignment = match col_type {
@@ -602,17 +602,17 @@ pub fn draw_file_view(
         }
 
         // 2. Render Rows
-        let offset_val = file_state.table_state.offset();
-        let total_files = file_state.files.len();
+        let offset_val = file_state.view.table_state.offset();
+        let total_files = file_state.list.files.len();
         for i in 0..visible_height {
             let file_idx = offset_val + i;
             if file_idx >= total_files {
                 break;
             }
             let row_y = content_y + i as u16;
-            let path = &file_state.files[file_idx];
-            let is_selected = file_state.selection.selected == Some(file_idx);
-            let is_multi_selected = file_state.selection.multi.contains(&file_idx);
+            let path = &file_state.list.files[file_idx];
+            let is_selected = file_state.list.selection.selected == Some(file_idx);
+            let is_multi_selected = file_state.list.selection.multi.contains(&file_idx);
 
             let mut row_bg_style = Style::default();
             let is_hovered_drop =
@@ -645,7 +645,7 @@ pub fn draw_file_view(
                 );
             }
 
-            let metadata = file_state.metadata.get(path);
+            let metadata = file_state.list.metadata.get(path);
             for (col_idx, col_rect) in column_layout.iter().enumerate() {
                 if let Some(col_type) = display_columns.get(col_idx) {
                     let cell_rect = Rect::new(col_rect.x, row_y, col_rect.width, 1);
@@ -687,7 +687,7 @@ pub fn draw_file_view(
                                         icon_str
                                     };
 
-                                    let depth = file_state.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
+                                    let depth = file_state.list.tree_file_depths.get(file_idx).copied().unwrap_or(0) as usize;
                                     let indent = "  ".repeat(depth);
                                     let is_expanded = is_dir && app.layout.expanded_folders.contains(path);
                                     let marker = if is_dir {
@@ -721,7 +721,7 @@ pub fn draw_file_view(
                                     let marker_w = if expand_marker { 2 } else { 0 };
                                     if is_dir {
                                         let arrow_end_x = col_rect.x + 1 + (depth * 2) as u16 + marker_w as u16 + icon_w as u16;
-                                        file_state.file_row_bounds.push(crate::state::FileRowBounds {
+                                        file_state.view.file_row_bounds.push(crate::state::FileRowBounds {
                                             file_idx,
                                             arrow_end_x,
                                         });
@@ -731,7 +731,7 @@ pub fn draw_file_view(
                                     let available_width =
                                         (col_rect.width as usize).saturating_sub(icon_w + marker_w + CELL_TEXT_RESERVE);
 
-                                    let display_name = if file_idx > file_state.local_count {
+                                    let display_name = if file_idx > file_state.list.local_count {
                                         let full_str = path.to_string_lossy();
                                         let home = dirs::home_dir()
                                             .map(|p| p.to_string_lossy().to_string())
@@ -825,8 +825,8 @@ pub fn draw_file_view(
                 .begin_symbol(Some("▲"))
                 .end_symbol(Some("▼"));
 
-            let mut scroll_state = ScrollbarState::new(file_state.files.len())
-                .position(file_state.table_state.offset())
+            let mut scroll_state = ScrollbarState::new(file_state.list.files.len())
+                .position(file_state.view.table_state.offset())
                 .viewport_content_length(inner_area.height as usize);
 
             f.render_stateful_widget(scrollbar, area, &mut scroll_state);

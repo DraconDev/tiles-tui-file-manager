@@ -356,10 +356,10 @@ pub fn draw_properties_modal(f: &mut Frame, app: &App) {
 
     if let Some(fs) = app.current_file_state() {
         let target_path = fs
-            .selection
+            .list.selection
             .selected
-            .and_then(|idx| fs.files.get(idx))
-            .unwrap_or(&fs.current_path);
+            .and_then(|idx| fs.list.files.get(idx))
+            .unwrap_or(&fs.nav.current_path);
 
         let name = target_path
             .file_name()
@@ -386,7 +386,7 @@ pub fn draw_properties_modal(f: &mut Frame, app: &App) {
         ]));
         text.push(Line::from(""));
 
-        if let Some(meta) = fs.metadata.get(target_path) {
+        if let Some(meta) = fs.list.metadata.get(target_path) {
             let type_str = if meta.is_dir { "Folder" } else { "File" };
             text.push(Line::from(vec![
                 Span::styled(
@@ -423,8 +423,8 @@ pub fn draw_properties_modal(f: &mut Frame, app: &App) {
                 ),
                 Span::raw(format_permissions(meta.permissions)),
             ]));
-} else if fs.remote_session.is_none() {
-                if let Some(m) = fs.metadata.get(target_path) {
+} else if fs.nav.remote_session.is_none() {
+                if let Some(m) = fs.list.metadata.get(target_path) {
                     let is_dir = m.is_dir;
                     text.push(Line::from(vec![
                         Span::styled(

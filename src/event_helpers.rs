@@ -108,7 +108,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
             ];
 
             if let Some(fs) = app.current_file_state() {
-                if let Some(path) = fs.files.get(*idx) {
+                if let Some(path) = fs.list.files.get(*idx) {
                     let ext = path
                         .extension()
                         .and_then(|e| e.to_str())
@@ -157,7 +157,7 @@ pub fn get_context_menu_actions(target: &ContextMenuTarget, app: &App) -> Vec<Co
             ];
 
             if let Some(fs) = app.current_file_state() {
-                if let Some(path) = fs.files.get(*idx) {
+                if let Some(path) = fs.list.files.get(*idx) {
                     // Toggle Add/Remove Favorites
                     if app.nav.starred.contains(path) {
                         actions.push(ContextMenuAction::RemoveFromFavorites);
@@ -253,7 +253,7 @@ fn get_active_editor_mut(app: &mut App) -> Option<&mut dracon_terminal_engine::w
     if app.core.current_view == CurrentView::Editor {
         if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
             if let Some(fs) = pane.current_state_mut() {
-                if let Some(preview) = &mut fs.preview {
+                if let Some(preview) = &mut fs.view.preview {
                     if let Some(editor) = &mut preview.editor {
                         return Some(editor);
                     }
@@ -273,7 +273,7 @@ fn get_active_editor_path(app: &App) -> Option<PathBuf> {
     if app.core.current_view == CurrentView::Editor {
         if let Some(pane) = app.panes.get(app.focused_pane_index) {
             if let Some(fs) = pane.current_state() {
-                if let Some(preview) = &fs.preview {
+                if let Some(preview) = &fs.view.preview {
                     return Some(preview.path.clone());
                 }
             }
@@ -295,12 +295,12 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Open => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if path.is_dir() {
                         let path_clone = path.clone();
                         if let Some(fs_mut) = app.current_file_state_mut() {
-                            fs_mut.current_path = path_clone;
+                            fs_mut.nav.current_path = path_clone;
                             let _ =
                                 crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
@@ -316,7 +316,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::AddToFavorites => {
             if let ContextMenuTarget::Folder(idx) | ContextMenuTarget::File(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if !app.nav.starred.contains(&path) {
                         app.nav.starred.push(path);
@@ -337,7 +337,7 @@ pub fn handle_context_menu_action(
                 }
                 ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) => {
                     if let Some(fs) = app.current_file_state() {
-                        if let Some(path) = fs.files.get(*idx) {
+                        if let Some(path) = fs.list.files.get(*idx) {
                             let path_clone = path.clone();
                             if app.nav.starred.contains(&path_clone) {
                                 app.nav.starred.retain(|p| p != &path_clone);
@@ -356,7 +356,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Rename => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if let Some(name) = path.file_name() {
                         let name_str = name.to_string_lossy().to_string();
@@ -369,7 +369,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Delete => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if matches!(target, ContextMenuTarget::File(_)) {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::TrashFile(path.clone()));
@@ -407,8 +407,8 @@ pub fn handle_context_menu_action(
         }
         ContextMenuAction::ToggleHidden => {
             if let Some(fs) = app.current_file_state_mut() {
-                fs.show_hidden = !fs.show_hidden;
-                app.settings.default_show_hidden = fs.show_hidden;
+                fs.nav.show_hidden = !fs.nav.show_hidden;
+                app.settings.default_show_hidden = fs.nav.show_hidden;
                 crate::config::save_state_quiet(app);
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
@@ -419,18 +419,18 @@ pub fn handle_context_menu_action(
             let mut remote = None;
 
             if let Some(fs) = app.current_file_state() {
-                remote = fs.remote_session.clone();
+                remote = fs.nav.remote_session.clone();
             }
 
             match target {
                 ContextMenuTarget::Folder(idx) => {
                     if let Some(fs) = app.current_file_state() {
-                        path_to_open = fs.files.get(*idx).cloned();
+                        path_to_open = fs.list.files.get(*idx).cloned();
                     }
                 }
                 ContextMenuTarget::EmptySpace => {
                     if let Some(fs) = app.current_file_state() {
-                        path_to_open = Some(fs.current_path.clone());
+                        path_to_open = Some(fs.nav.current_path.clone());
                     }
                 }
                 ContextMenuTarget::ProjectTree(p) => {
@@ -452,11 +452,11 @@ pub fn handle_context_menu_action(
             if let ContextMenuTarget::Folder(idx) = target {
                 if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                     if let Some(fs) = pane.current_state() {
-                        if let Some(path) = fs.files.get(*idx).cloned() {
+                        if let Some(path) = fs.list.files.get(*idx).cloned() {
                             let mut new_fs = fs.clone();
-                            new_fs.current_path = path;
-                            new_fs.selection.clear();
-                            let current_path_clone = new_fs.current_path.clone();
+                            new_fs.nav.current_path = path;
+                            new_fs.list.selection.clear();
+                            let current_path_clone = new_fs.nav.current_path.clone();
                             crate::event_helpers::push_history(&mut new_fs, current_path_clone);
                             pane.open_tab(new_fs);
                             let _ =
@@ -467,18 +467,18 @@ pub fn handle_context_menu_action(
             }
         }
         ContextMenuAction::NewFile | ContextMenuAction::NewFolder => {
-            let mut target_dir = app.current_file_state().map(|fs| fs.current_path.clone());
+            let mut target_dir = app.current_file_state().map(|fs| fs.nav.current_path.clone());
             match target {
                 ContextMenuTarget::Folder(idx) => {
                     if let Some(fs) = app.current_file_state() {
-                        if let Some(p) = fs.files.get(*idx) {
+                        if let Some(p) = fs.list.files.get(*idx) {
                             target_dir = Some(p.clone());
                         }
                     }
                 }
                 ContextMenuTarget::File(idx) => {
                     if let Some(fs) = app.current_file_state() {
-                        if let Some(p) = fs.files.get(*idx) {
+                        if let Some(p) = fs.list.files.get(*idx) {
                             target_dir = p.parent().map(|pp| pp.to_path_buf());
                         }
                     }
@@ -499,7 +499,7 @@ pub fn handle_context_menu_action(
                 _ => {}
             }
             if let (Some(fs), Some(dir)) = (app.current_file_state_mut(), target_dir) {
-                fs.current_path = dir;
+                fs.nav.current_path = dir;
             }
             app.core.mode = if matches!(action, ContextMenuAction::NewFolder) {
                 AppMode::NewFolder
@@ -512,7 +512,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Cut => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     app.selection.clipboard = Some((path, crate::app::ClipboardOp::Cut));
                 }
@@ -521,7 +521,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Copy => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     app.selection.clipboard = Some((path, crate::app::ClipboardOp::Copy));
                 }
@@ -532,13 +532,13 @@ pub fn handle_context_menu_action(
                 let target_dir = match target {
                     ContextMenuTarget::Folder(idx) => {
                         app.current_file_state()
-                            .and_then(|fs| fs.files.get(*idx).cloned())
+                            .and_then(|fs| fs.list.files.get(*idx).cloned())
                     }
                     ContextMenuTarget::SidebarFavorite(path) => Some(path.clone()),
                     ContextMenuTarget::EmptySpace => {
-                        app.current_file_state().map(|fs| fs.current_path.clone())
+                        app.current_file_state().map(|fs| fs.nav.current_path.clone())
                     }
-                    _ => app.current_file_state().map(|fs| fs.current_path.clone()),
+                    _ => app.current_file_state().map(|fs| fs.nav.current_path.clone()),
                 };
                 if let Some(dest_dir) = target_dir {
                     let dest = dest_dir.join(
@@ -562,7 +562,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Compress => {
             if let ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     let name = path.file_name()
                         .and_then(|n| n.to_str())
@@ -582,7 +582,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::ExtractHere => {
             if let ContextMenuTarget::File(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if let Some(parent) = path.parent() {
                         let dest_dir = parent.join(
@@ -626,7 +626,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::OpenWith => {
             if let ContextMenuTarget::File(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     app.core.mode = AppMode::OpenWith(path.clone());
                     app.core.input.clear();
@@ -636,7 +636,7 @@ pub fn handle_context_menu_action(
         ContextMenuAction::Duplicate => {
             if let ContextMenuTarget::File(idx) = target {
                 let path_opt = app.current_file_state()
-                    .and_then(|fs| fs.files.get(*idx).cloned());
+                    .and_then(|fs| fs.list.files.get(*idx).cloned());
                 if let Some(path) = path_opt {
                     if let Some(parent) = path.parent() {
                         let stem = path.file_stem()
@@ -660,13 +660,13 @@ pub fn handle_context_menu_action(
             match target {
                 ContextMenuTarget::File(idx) => {
                     let path_opt = app.current_file_state()
-                        .and_then(|fs| fs.files.get(*idx).cloned());
+                        .and_then(|fs| fs.list.files.get(*idx).cloned());
                     if let Some(path) = path_opt {
                         if path.is_dir() {
                             return;
                         }
                         let remote = app.current_file_state()
-                            .and_then(|fs| fs.remote_session.clone());
+                            .and_then(|fs| fs.nav.remote_session.clone());
                         if let Some((work_dir, program, args)) =
                             crate::modules::files::get_run_command(&path)
                         {
@@ -697,7 +697,7 @@ pub fn handle_context_menu_action(
                         if let Some((work_dir, program, args)) =
                             crate::modules::files::get_run_command(&path)
                         {
-                            let remote = app.current_file_state().and_then(|fs| fs.remote_session.clone());
+                            let remote = app.current_file_state().and_then(|fs| fs.nav.remote_session.clone());
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                 path: work_dir,
                                 new_tab: true,
@@ -793,34 +793,34 @@ pub fn handle_context_menu_action(
 
 pub fn navigate_back(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
-        if fs.history_index > 0 {
-            fs.history_index -= 1;
-            fs.current_path = fs.history[fs.history_index].clone();
+        if fs.nav.history_index > 0 {
+            fs.nav.history_index -= 1;
+            fs.nav.current_path = fs.nav.history[fs.nav.history_index].clone();
         }
     }
 }
 
 pub fn navigate_forward(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
-        if fs.history_index + 1 < fs.history.len() {
-            fs.history_index += 1;
-            fs.current_path = fs.history[fs.history_index].clone();
+        if fs.nav.history_index + 1 < fs.nav.history.len() {
+            fs.nav.history_index += 1;
+            fs.nav.current_path = fs.nav.history[fs.nav.history_index].clone();
         }
     }
 }
 
 pub fn push_history(fs: &mut FileState, path: PathBuf) {
-    if fs.history_index + 1 < fs.history.len() {
-        fs.history.truncate(fs.history_index + 1);
+    if fs.nav.history_index + 1 < fs.nav.history.len() {
+        fs.nav.history.truncate(fs.nav.history_index + 1);
     }
-    if fs.history.last() != Some(&path) {
-        fs.history.push(path);
-        fs.history_index = fs.history.len() - 1;
+    if fs.nav.history.last() != Some(&path) {
+        fs.nav.history.push(path);
+        fs.nav.history_index = fs.nav.history.len() - 1;
     }
-    if fs.history.len() > MAX_HISTORY {
-        let excess = fs.history.len() - MAX_HISTORY;
-        fs.history.drain(0..excess);
-        fs.history_index = fs.history_index.saturating_sub(excess);
+    if fs.nav.history.len() > MAX_HISTORY {
+        let excess = fs.nav.history.len() - MAX_HISTORY;
+        fs.nav.history.drain(0..excess);
+        fs.nav.history_index = fs.nav.history_index.saturating_sub(excess);
     }
 }
 
@@ -828,10 +828,10 @@ const FILE_LIST_START_ROW: u16 = 3; // row 0=header icons, rows 1-2=breadcrumbs,
 
 pub fn fs_mouse_index(row: u16, app: &App) -> Option<usize> {
     let fs = app.current_file_state()?;
-    let offset = fs.table_state.offset();
+    let offset = fs.view.table_state.offset();
     let rel_row = row.saturating_sub(FILE_LIST_START_ROW) as usize;
     let idx = offset.saturating_add(rel_row);
-    if idx >= fs.files.len() {
+    if idx >= fs.list.files.len() {
         return None;
     }
     Some(idx)
@@ -847,28 +847,28 @@ pub fn navigate_up(app: &mut App) {
             Some(fs) => fs,
             None => return,
         };
-        let parent = match fs.current_path.parent() {
+        let parent = match fs.nav.current_path.parent() {
             Some(p) => p,
             None => return,
         };
-        let old_folder = fs.current_path.clone();
-        let old_idx = fs.selection.selected.unwrap_or(0);
-        let old_scroll = fs.table_state.offset();
+        let old_folder = fs.nav.current_path.clone();
+        let old_idx = fs.list.selection.selected.unwrap_or(0);
+        let old_scroll = fs.view.table_state.offset();
         let new_path = parent.to_path_buf();
         (old_folder, old_idx, old_scroll, new_path)
     };
     app.selection.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
     if let Some(fs) = app.current_file_state_mut() {
-        fs.current_path = new_path.clone();
-        fs.pending_select_path = Some((old_folder, old_scroll));
-        fs.git_cache_until = None;
+        fs.nav.current_path = new_path.clone();
+        fs.view.pending_select_path = Some((old_folder, old_scroll));
+        fs.git.git_cache_until = None;
         push_history(fs, new_path);
     }
 }
 
 pub fn open_path_input(app: &mut App) {
     let value = app.current_file_state()
-        .map(|fs| fs.current_path.to_string_lossy().to_string())
+        .map(|fs| fs.nav.current_path.to_string_lossy().to_string())
         .unwrap_or_default();
     app.core.input.set_value(value);
     app.core.input.cursor_position = app.core.input.value.len();
@@ -896,15 +896,15 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
         return Err("No active file pane".to_string());
     };
 
-    let remote = fs.remote_session.is_some();
-    let target = resolve_path_input(&input, &fs.current_path, remote);
+    let remote = fs.nav.remote_session.is_some();
+    let target = resolve_path_input(&input, &fs.nav.current_path, remote);
 
-    fs.current_path = target.clone();
-    fs.pending_select_path = None;
-    fs.selection.clear();
-    fs.search_filter.clear();
-    fs.git_cache_until = None;
-    *fs.table_state.offset_mut() = 0;
+    fs.nav.current_path = target.clone();
+    fs.view.pending_select_path = None;
+    fs.list.selection.clear();
+    fs.nav.search_filter.clear();
+    fs.git.git_cache_until = None;
+    *fs.view.table_state.offset_mut() = 0;
     push_history(fs, target);
 
     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
@@ -995,7 +995,7 @@ fn copy_target_text(
 ) -> Result<String, String> {
     let path = match target {
         ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) => app.current_file_state()
-            .and_then(|fs| fs.files.get(*idx))
+            .and_then(|fs| fs.list.files.get(*idx))
             .cloned()
             .ok_or_else(|| "No file selected".to_string())?,
         ContextMenuTarget::SidebarFavorite(path) | ContextMenuTarget::ProjectTree(path) => {
@@ -1120,8 +1120,8 @@ mod tests {
     fn push_history_basic() {
         let mut fs = make_fs("/home");
         push_history(&mut fs, PathBuf::from("/home"));
-        assert_eq!(fs.history.len(), 1);
-        assert_eq!(fs.history_index, 0);
+        assert_eq!(fs.nav.history.len(), 1);
+        assert_eq!(fs.nav.history_index, 0);
     }
 
     #[test]
@@ -1129,7 +1129,7 @@ mod tests {
         let mut fs = make_fs("/home");
         push_history(&mut fs, PathBuf::from("/home"));
         push_history(&mut fs, PathBuf::from("/home"));
-        assert_eq!(fs.history.len(), 1);
+        assert_eq!(fs.nav.history.len(), 1);
     }
 
     #[test]
@@ -1138,8 +1138,8 @@ mod tests {
         push_history(&mut fs, PathBuf::from("/home"));
         push_history(&mut fs, PathBuf::from("/etc"));
         push_history(&mut fs, PathBuf::from("/var"));
-        assert_eq!(fs.history.len(), 3);
-        assert_eq!(fs.history_index, 2);
+        assert_eq!(fs.nav.history.len(), 3);
+        assert_eq!(fs.nav.history_index, 2);
     }
 
     #[test]
@@ -1148,9 +1148,9 @@ mod tests {
         for i in 0..60 {
             push_history(&mut fs, PathBuf::from(format!("/dir{}", i)));
         }
-        assert_eq!(fs.history.len(), 50);
+        assert_eq!(fs.nav.history.len(), 50);
         // Most recent entries should be preserved
-        assert_eq!(fs.history.last().unwrap(), &PathBuf::from("/dir59"));
+        assert_eq!(fs.nav.history.last().unwrap(), &PathBuf::from("/dir59"));
     }
 
     #[test]
@@ -1159,7 +1159,7 @@ mod tests {
         for i in 0..55 {
             push_history(&mut fs, PathBuf::from(format!("/dir{}", i)));
         }
-        assert!(fs.history_index < fs.history.len());
+        assert!(fs.nav.history_index < fs.nav.history.len());
     }
 
     #[test]
@@ -1169,14 +1169,14 @@ mod tests {
         push_history(&mut fs, PathBuf::from("/b")); // ["/", "/a", "/b"]
         push_history(&mut fs, PathBuf::from("/c")); // ["/", "/a", "/b", "/c"]
                                                     // Simulate going back to "/b"
-        fs.history_index = 2;
+        fs.nav.history_index = 2;
         // Push new entry should truncate "/c"
         push_history(&mut fs, PathBuf::from("/d"));
-        assert_eq!(fs.history.len(), 4);
-        assert_eq!(fs.history[0], PathBuf::from("/"));
-        assert_eq!(fs.history[1], PathBuf::from("/a"));
-        assert_eq!(fs.history[2], PathBuf::from("/b"));
-        assert_eq!(fs.history[3], PathBuf::from("/d"));
+        assert_eq!(fs.nav.history.len(), 4);
+        assert_eq!(fs.nav.history[0], PathBuf::from("/"));
+        assert_eq!(fs.nav.history[1], PathBuf::from("/a"));
+        assert_eq!(fs.nav.history[2], PathBuf::from("/b"));
+        assert_eq!(fs.nav.history[3], PathBuf::from("/d"));
     }
 
     // ── push_recent_folder ──────────────────────────────────────
@@ -1269,15 +1269,15 @@ mod tests {
     #[test]
     fn push_history_empty_fs() {
         let fs = make_fs("/root");
-        assert_eq!(fs.history.len(), 1); // initialized with current_path
-        assert_eq!(fs.history[0], PathBuf::from("/root"));
+        assert_eq!(fs.nav.history.len(), 1); // initialized with current_path
+        assert_eq!(fs.nav.history[0], PathBuf::from("/root"));
     }
 
     #[test]
     fn push_history_same_path_twice_no_dup() {
         let mut fs = make_fs("/home");
         push_history(&mut fs, PathBuf::from("/home"));
-        assert_eq!(fs.history.len(), 1);
+        assert_eq!(fs.nav.history.len(), 1);
     }
 
     #[test]
@@ -1287,6 +1287,6 @@ mod tests {
         push_history(&mut fs, PathBuf::from("/a"));
         push_history(&mut fs, PathBuf::from("/b"));
         // Only consecutive dedup, so: ["/a" (init), "/b", "/a", "/b"]
-        assert_eq!(fs.history.len(), 4);
+        assert_eq!(fs.nav.history.len(), 4);
     }
 }

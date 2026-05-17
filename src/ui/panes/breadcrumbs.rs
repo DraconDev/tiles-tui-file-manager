@@ -18,7 +18,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
     let (mut path, mut search_filter) = {
         let tab = app.panes.get(pane_idx).and_then(|p| p.tabs.get(active_tab_idx));
         match tab {
-            Some(t) => (t.current_path.clone(), t.search_filter.clone()),
+            Some(t) => (t.nav.current_path.clone(), t.nav.search_filter.clone()),
             None => (PathBuf::new(), String::new()),
         }
     };
@@ -26,7 +26,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
     if app.core.current_view == CurrentView::Editor {
         if let Some(pane) = app.panes.get(pane_idx) {
             if let Some(fs) = pane.current_state() {
-                if let Some(preview) = &fs.preview {
+                if let Some(preview) = &fs.view.preview {
                     path = preview.path.clone();
                 }
             }
@@ -40,7 +40,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
     if app.core.current_view == CurrentView::Editor && search_filter.is_empty() {
         if let Some(pane) = app.panes.get(pane_idx) {
             if let Some(fs) = pane.current_state() {
-                if let Some(preview) = &fs.preview {
+                if let Some(preview) = &fs.view.preview {
                     if let Some(editor) = &preview.editor {
                         if _is_focused {
                             match app.core.mode {
@@ -80,8 +80,8 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
 
 if let Some(pane) = app.panes.get_mut(pane_idx) {
         if let Some(tab) = pane.tabs.get_mut(active_tab_idx) {
-            tab.breadcrumb_bounds.clear();
-            tab.breadcrumb_header_bounds = Some(Rect::new(area.x, area.y, area.width, 1));
+            tab.view.breadcrumb_bounds.clear();
+            tab.view.breadcrumb_header_bounds = Some(Rect::new(area.x, area.y, area.width, 1));
         }
     }
 
@@ -194,7 +194,7 @@ if let Some(pane) = app.panes.get_mut(pane_idx) {
             f.render_widget(Paragraph::new(Span::styled(segment, style)), bread_rect);
 
 if let Some(tab) = app.panes.get_mut(pane_idx).and_then(|p| p.tabs.get_mut(active_tab_idx)) {
-                tab.breadcrumb_bounds.push((bread_rect, s_path));
+                tab.view.breadcrumb_bounds.push((bread_rect, s_path));
             }
 
             cur_x += width;

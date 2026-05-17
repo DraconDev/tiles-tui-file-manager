@@ -118,18 +118,18 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                         pane.active_tab_index = pane.tabs.len() - 1;
                     }
                     if let Some(fs) = pane.current_state_mut() {
-                        fs.preview = None;
+                        fs.view.preview = None;
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                         "Closed: {}",
-                        removed.current_path.file_name()
+                        removed.nav.current_path.file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_default()
                     )));
                 } else {
                     if let Some(fs) = pane.current_state_mut() {
-                        fs.preview = None;
+                        fs.view.preview = None;
                     }
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg("No more tabs to close".to_string()));
                 }
@@ -140,20 +140,20 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
         if has_control && key.code == KeyCode::Char('n') {
             if let Some(pane) = app.panes.get(pane_idx) {
                 let base_dir = if let Some(fs) = pane.current_state() {
-                    if let Some(ref preview) = fs.preview {
+                    if let Some(ref preview) = fs.view.preview {
                         if preview.path.is_dir() {
                             preview.path.clone()
                         } else {
                             preview.path.parent().unwrap_or(&PathBuf::from("/")).to_path_buf()
                         }
                     } else {
-                        fs.current_path.clone()
+                        fs.nav.current_path.clone()
                     }
                 } else {
                     PathBuf::from(".")
                 };
                 if let Some(fs) = app.current_file_state_mut() {
-                    fs.current_path = base_dir;
+                    fs.nav.current_path = base_dir;
                 }
             }
             app.core.mode = AppMode::NewFile;
@@ -166,7 +166,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             let mut did_handle = false;
             if let Some(pane) = app.panes.get(pane_idx) {
                 if let Some(fs) = pane.current_state() {
-                    if let Some(ref preview) = fs.preview {
+                    if let Some(ref preview) = fs.view.preview {
                         did_handle = true;
                         if let Some((work_dir, program, args)) =
                             crate::modules::files::get_run_command(&preview.path)
@@ -174,7 +174,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                 path: work_dir,
                                 new_tab: true,
-                                remote: fs.remote_session.clone(),
+                                remote: fs.nav.remote_session.clone(),
                                 command: Some(format!("{} {}", program, args.join(" "))),
                             });
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -207,7 +207,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
 
         if let Some(pane) = app.panes.get_mut(pane_idx) {
             if let Some(fs) = pane.current_state_mut() {
-                if let Some(preview) = &mut fs.preview {
+                if let Some(preview) = &mut fs.view.preview {
                     if let Some(editor) = &mut preview.editor {
                         let mut clipboard = app.editor_global.editor_clipboard.clone();
                         let auto_save = app.settings.auto_save;
@@ -265,7 +265,7 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
                     let remote = app.panes
                         .get(app.focused_pane_index)
                         .and_then(|p| p.current_state())
-                        .and_then(|fs| fs.remote_session.clone());
+                        .and_then(|fs| fs.nav.remote_session.clone());
                     if let Some((work_dir, program, args)) =
                         crate::modules::files::get_run_command(&preview.path)
                     {
@@ -458,7 +458,7 @@ pub fn handle_editor_mouse(
 
         if let Some(pane) = app.panes.get_mut(pane_idx) {
             if let Some(fs) = pane.current_state_mut() {
-                if let Some(preview) = &mut fs.preview {
+                if let Some(preview) = &mut fs.view.preview {
                     if let Some(editor) = &mut preview.editor {
                         if let MouseEventKind::Down(MouseButton::Right) = me.kind {
                             if editor_area.x <= column

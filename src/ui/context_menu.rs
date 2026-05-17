@@ -122,8 +122,8 @@ pub fn draw_context_menu(
                 };
                 let mut label = format!(" 󰒺 Sort by {}", name);
                 if let Some(fs) = app.current_file_state() {
-                    if fs.sort_column == *col {
-                        label.push_str(if fs.sort_ascending {
+                    if fs.nav.sort_column == *col {
+                        label.push_str(if fs.nav.sort_ascending {
                             " (▲)"
                         } else {
                             " (▼)"

@@ -2,31 +2,32 @@
 //!
 //! FileState was ~42 fields split across: core nav, file list, view layout,
 //! and git state. This module decomposes it into 4 focused sub-structs.
-//! NOTE: All structs are #[allow(dead_code)] because FileState is not yet
-//! migrated to use them — they are available for the future migration.
 
 use std::collections::HashMap;
 use std::path::PathBuf;
 
 use crate::state::{
-    CommitInfo, FileColumn, FileMetadata, GitPendingChange, RemoteSession,
+    CommitInfo, FileColumn, FileMetadata, FileRowBounds, GitPendingChange,
+    PreviewState, RemoteSession,
 };
 
 // ---------------------------------------------------------------------------
 // FileNavState — navigation core: path, history, filters, sorting
 // ---------------------------------------------------------------------------
 
-#[allow(dead_code)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct FileNavState {
     pub current_path: PathBuf,
     pub remote_session: Option<RemoteSession>,
     pub show_hidden: bool,
     pub search_filter: String,
+    #[serde(skip)]
     pub search_generation: u64,
     pub history: Vec<PathBuf>,
     pub history_index: usize,
     pub sort_column: FileColumn,
     pub sort_ascending: bool,
+    #[serde(skip)]
     pub search_debounce_until: Option<std::time::Instant>,
 }
 
@@ -51,14 +52,17 @@ impl Default for FileNavState {
 // FileListState — file listing and selection (non-serialized)
 // ---------------------------------------------------------------------------
 
-#[allow(dead_code)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct FileListState {
     pub files: Vec<PathBuf>,
     pub selection: dracon_terminal_engine::utils::SelectionState,
     pub columns: Vec<FileColumn>,
     pub local_count: usize,
     pub tree_file_depths: Vec<u16>,
+    #[serde(skip)]
     pub metadata: HashMap<PathBuf, FileMetadata>,
+    #[serde(skip)]
+    #[allow(dead_code)]
     pub path_colors: HashMap<PathBuf, u8>,
 }
 
@@ -84,19 +88,25 @@ impl Default for FileListState {
 // ---------------------------------------------------------------------------
 // FileViewState — rendering/layout state (non-serialized UI state)
 // ---------------------------------------------------------------------------
-// NOTE: No #[derive(Default)] because PreviewState contains Instant (no Default).
-// Explicit impl below uses PreviewState::default() which fails — we use None instead.
 
-#[allow(dead_code)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct FileViewState {
-    pub preview: Option<crate::state::PreviewState>,
+    #[serde(skip)]
+    pub preview: Option<PreviewState>,
+    #[serde(skip)]
     pub view_height: usize,
+    #[serde(skip)]
     pub table_state: ratatui::widgets::TableState,
+    #[serde(skip)]
     pub column_bounds: Vec<(ratatui::layout::Rect, FileColumn)>,
+    #[serde(skip)]
     pub breadcrumb_bounds: Vec<(ratatui::layout::Rect, PathBuf)>,
+    #[serde(skip)]
     pub breadcrumb_header_bounds: Option<ratatui::layout::Rect>,
+    #[serde(skip)]
     pub pending_select_path: Option<(PathBuf, usize)>,
-    pub file_row_bounds: Vec<crate::state::FileRowBounds>,
+    #[serde(skip)]
+    pub file_row_bounds: Vec<FileRowBounds>,
 }
 
 // NOTE: Cannot derive Default — PreviewState contains Instant (no Default). Manual impl.
@@ -119,26 +129,34 @@ impl Default for FileViewState {
 // ---------------------------------------------------------------------------
 // FileGitState — git integration state (non-serialized)
 // ---------------------------------------------------------------------------
-// NOTE: No #[derive(Default)] because git_cache_until: Option<Instant>
-// can't derive Default. Explicit impl below.
 
-#[allow(dead_code)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug)]
 pub struct FileGitState {
+    #[serde(skip)]
     pub git_history: Vec<CommitInfo>,
+    #[serde(skip)]
     pub git_history_state: ratatui::widgets::TableState,
+    #[serde(skip)]
     pub git_pending_state: ratatui::widgets::TableState,
+    #[serde(skip)]
     pub git_branch: Option<String>,
+    #[serde(skip)]
     pub git_ahead: usize,
+    #[serde(skip)]
     pub git_behind: usize,
+    #[serde(skip)]
     pub git_pending: Vec<GitPendingChange>,
+    #[serde(skip)]
     pub git_summary: Option<String>,
+    #[serde(skip)]
     pub git_remotes: Vec<String>,
+    #[serde(skip)]
     pub git_stashes: Vec<String>,
+    #[serde(skip)]
     pub git_cache_until: Option<std::time::Instant>,
 }
 
 // NOTE: Cannot derive Default — Instant has no Default impl. Manual impl is required.
-// clippy: suppress "this impl can be derived" since derive isn't possible here.
 #[allow(clippy::derivable_impls)]
 impl Default for FileGitState {
     fn default() -> Self {

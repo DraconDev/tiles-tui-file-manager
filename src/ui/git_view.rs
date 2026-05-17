@@ -48,7 +48,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     let content_source = app.editor_global.editor_state.as_ref()
         .or_else(|| {
             let pane_idx = app.focused_pane_index;
-            app.panes.get(pane_idx).and_then(|p| p.current_state().and_then(|fs| fs.preview.as_ref()))
+            app.panes.get(pane_idx).and_then(|p| p.current_state().and_then(|fs| fs.view.preview.as_ref()))
         });
 
     if let Some(preview) = content_source {
@@ -273,7 +273,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
 
     if let Some(pane) = app.panes.get(app.focused_pane_index) {
         if let Some(fs) = pane.current_state() {
-            if let Some(preview) = &fs.preview {
+            if let Some(preview) = &fs.view.preview {
                 if let Some(editor) = &preview.editor {
                 let mut editor_clone = editor.clone();
                 editor_clone.wrap = false;

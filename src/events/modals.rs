@@ -186,7 +186,7 @@ fn reset_all_settings_to_defaults(app: &mut App) {
 
     for pane in &mut app.panes {
         for tab in &mut pane.tabs {
-            tab.show_hidden = app.settings.default_show_hidden;
+            tab.nav.show_hidden = app.settings.default_show_hidden;
         }
     }
 }
@@ -309,8 +309,8 @@ fn handle_search_keys(
     match key.code {
         KeyCode::Esc => {
             if let Some(fs) = app.current_file_state_mut() {
-                fs.search_filter.clear();
-                fs.search_generation += 1;
+                fs.nav.search_filter.clear();
+                fs.nav.search_generation += 1;
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
             app.core.mode = AppMode::Normal;
@@ -322,8 +322,8 @@ fn handle_search_keys(
             let query = app.core.input.value.clone();
             if !query.is_empty() {
                 if let Some(fs) = app.current_file_state_mut() {
-                    fs.search_filter = query;
-                    fs.search_generation += 1;
+                    fs.nav.search_filter = query;
+                    fs.nav.search_generation += 1;
                 }
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
@@ -339,7 +339,7 @@ fn handle_search_keys(
             if handled {
                 let filter = app.core.input.value.clone();
                 if let Some(fs) = app.current_file_state_mut() {
-                    fs.search_filter = filter;
+                    fs.nav.search_filter = filter;
                 }
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
             }
@@ -432,7 +432,7 @@ fn handle_save_as_keys(
                 };
                 let content = if let Some(pane) = app.panes.get(app.focused_pane_index) {
                     pane.current_state().and_then(|fs| {
-                        fs.preview.as_ref().and_then(|p| {
+                        fs.view.preview.as_ref().and_then(|p| {
                             p.editor.as_ref().map(|e| e.get_content())
                         })
                     })
@@ -442,7 +442,7 @@ fn handle_save_as_keys(
                 if let Some(content) = content {
                     if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                         if let Some(fs) = pane.current_state_mut() {
-                            if let Some(preview) = &mut fs.preview {
+                            if let Some(preview) = &mut fs.view.preview {
                                 if preview.path == *original_path {
                                     preview.path = target.clone();
                                 }
@@ -643,8 +643,8 @@ fn handle_drag_drop_keys(
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(source.clone(), dest));
             }
             if let Some(fs) = app.current_file_state_mut() {
-                fs.selection.clear_multi();
-                fs.selection.anchor = None;
+                fs.list.selection.clear_multi();
+                fs.list.selection.anchor = None;
             }
             app.core.mode = AppMode::Normal;
             true
@@ -719,7 +719,7 @@ fn handle_editor_replace_keys(
                 let focused_idx = app.focused_pane_index;
                 if let Some(pane) = app.panes.get_mut(focused_idx) {
                     if let Some(fs) = pane.current_state_mut() {
-                        if let Some(preview) = &mut fs.preview {
+                        if let Some(preview) = &mut fs.view.preview {
                             if let Some(editor) = &mut preview.editor {
                                 editor.push_history();
                                 if is_all {
@@ -766,7 +766,7 @@ fn handle_editor_search_keys(
             }
             if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                 if let Some(fs) = pane.current_state_mut() {
-                    if let Some(preview) = &mut fs.preview {
+                    if let Some(preview) = &mut fs.view.preview {
                         if let Some(editor) = &mut preview.editor {
                             clear_filter(editor);
                         }
@@ -775,7 +775,7 @@ fn handle_editor_search_keys(
             }
             if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                 if let Some(fs) = pane.current_state_mut() {
-                    if let Some(preview) = &mut fs.preview {
+                    if let Some(preview) = &mut fs.view.preview {
                         if let Some(editor) = &mut preview.editor {
                             editor.handle_event(
                                 &dracon_terminal_engine::input::mapping::to_runtime_event(evt),
@@ -787,7 +787,7 @@ fn handle_editor_search_keys(
             }
             if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                 if let Some(fs) = pane.current_state_mut() {
-                    if let Some(preview) = &mut fs.preview {
+                    if let Some(preview) = &mut fs.view.preview {
                         if let Some(editor) = &mut preview.editor {
                             editor.set_filter("");
                         }
@@ -814,7 +814,7 @@ fn handle_editor_search_keys(
             }
             if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                 if let Some(fs) = pane.current_state_mut() {
-                    if let Some(preview) = &mut fs.preview {
+                    if let Some(preview) = &mut fs.view.preview {
                         if let Some(editor) = &mut preview.editor {
                             editor.handle_event(
                                 &dracon_terminal_engine::input::mapping::to_runtime_event(evt),
@@ -843,7 +843,7 @@ fn handle_editor_search_keys(
                 }
                 if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                     if let Some(fs) = pane.current_state_mut() {
-                        if let Some(preview) = &mut fs.preview {
+                        if let Some(preview) = &mut fs.view.preview {
                             if let Some(editor) = &mut preview.editor {
                                 editor.set_filter(&filter);
                             }
@@ -880,7 +880,7 @@ fn handle_editor_goto_keys(
                 }
                 if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                     if let Some(fs) = pane.current_state_mut() {
-                        if let Some(preview) = &mut fs.preview {
+                        if let Some(preview) = &mut fs.view.preview {
                             if let Some(editor) = &mut preview.editor {
                                 editor.cursor_row =
                                     std::cmp::min(target, editor.lines.len().saturating_sub(1));
@@ -1072,14 +1072,14 @@ fn handle_highlight_keys(key: &dracon_terminal_engine::contracts::KeyEvent, app:
                 let color = if digit == 0 { None } else { Some(digit as u8) };
                 if let Some(fs) = app.current_file_state() {
                     let mut paths = Vec::new();
-                    if !fs.selection.is_empty() {
-                        for &idx in fs.selection.multi_selected_indices() {
-                            if let Some(p) = fs.files.get(idx) {
+                    if !fs.list.selection.is_empty() {
+                        for &idx in fs.list.selection.multi_selected_indices() {
+                            if let Some(p) = fs.list.files.get(idx) {
                                 paths.push(p.clone());
                             }
                         }
-                    } else if let Some(idx) = fs.selection.selected {
-                        if let Some(p) = fs.files.get(idx) {
+                    } else if let Some(idx) = fs.list.selection.selected {
+                        if let Some(p) = fs.list.files.get(idx) {
                             paths.push(p.clone());
                         }
                     }
@@ -1134,7 +1134,7 @@ fn handle_input_modals_keys(
             }
             let mode = app.core.mode.clone();
             if let Some(fs) = app.current_file_state() {
-                let path = fs.current_path.join(&input);
+                let path = fs.nav.current_path.join(&input);
                 match mode {
                     AppMode::NewFile => {
                         let pane_idx = app.focused_pane_index;
@@ -1150,8 +1150,8 @@ fn handle_input_modals_keys(
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFolder(path));
                     }
                     AppMode::Rename => {
-                        if let Some(idx) = fs.selection.selected {
-                            if let Some(old) = fs.files.get(idx) {
+                        if let Some(idx) = fs.list.selection.selected {
+                            if let Some(old) = fs.list.files.get(idx) {
                                 if let Some(parent) = old.parent() {
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(
                                         old.clone(),
@@ -1169,14 +1169,14 @@ fn handle_input_modals_keys(
                         if input.trim().to_lowercase() == "y" || input.is_empty() {
                             // Collect paths to delete
                             let mut paths = Vec::new();
-                            if !fs.selection.is_empty() {
-                                for &idx in fs.selection.multi_selected_indices() {
-                                    if let Some(p) = fs.files.get(idx) {
+                            if !fs.list.selection.is_empty() {
+                                for &idx in fs.list.selection.multi_selected_indices() {
+                                    if let Some(p) = fs.list.files.get(idx) {
                                         paths.push(p.clone());
                                     }
                                 }
-                            } else if let Some(idx) = fs.selection.selected {
-                                if let Some(p) = fs.files.get(idx) {
+                            } else if let Some(idx) = fs.list.selection.selected {
+                                if let Some(p) = fs.list.files.get(idx) {
                                     paths.push(p.clone());
                                 }
                             }
@@ -1344,7 +1344,7 @@ fn handle_settings_keys(
                             let new_val = app.settings.default_show_hidden;
                             // Sync focused tab's show_hidden to match global setting
                             if let Some(fs) = app.current_file_state_mut() {
-                                fs.show_hidden = new_val;
+                                fs.nav.show_hidden = new_val;
                             }
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
@@ -1476,14 +1476,14 @@ pub fn handle_modal_mouse(
                             };
                             if let Some(fs) = app.current_file_state() {
                                 let mut paths = Vec::new();
-                                if !fs.selection.is_empty() {
-                                    for &idx in fs.selection.multi_selected_indices() {
-                                        if let Some(p) = fs.files.get(idx) {
+                                if !fs.list.selection.is_empty() {
+                                    for &idx in fs.list.selection.multi_selected_indices() {
+                                        if let Some(p) = fs.list.files.get(idx) {
                                             paths.push(p.clone());
                                         }
                                     }
-                                } else if let Some(idx) = fs.selection.selected {
-                                    if let Some(p) = fs.files.get(idx) {
+                                } else if let Some(idx) = fs.list.selection.selected {
+                                    if let Some(p) = fs.list.files.get(idx) {
                                         paths.push(p.clone());
                                     }
                                 }
@@ -1728,14 +1728,14 @@ pub fn handle_modal_mouse(
                     // Collect paths to delete
                     if let Some(fs) = app.current_file_state() {
                         let mut paths = Vec::new();
-                        if !fs.selection.is_empty() {
-                            for &idx in fs.selection.multi_selected_indices() {
-                                if let Some(p) = fs.files.get(idx) {
+                        if !fs.list.selection.is_empty() {
+                            for &idx in fs.list.selection.multi_selected_indices() {
+                                if let Some(p) = fs.list.files.get(idx) {
                                     paths.push(p.clone());
                                 }
                             }
-                        } else if let Some(idx) = fs.selection.selected {
-                            if let Some(p) = fs.files.get(idx) {
+                        } else if let Some(idx) = fs.list.selection.selected {
+                            if let Some(p) = fs.list.files.get(idx) {
                                 paths.push(p.clone());
                             }
                         }

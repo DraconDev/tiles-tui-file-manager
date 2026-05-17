@@ -49,7 +49,7 @@ pub fn draw_pane_editor(
 ) {
     let (title, welcome_name) = if let Some(pane) = app.panes.get(pane_idx) {
         if let Some(fs) = pane.current_state() {
-            if let Some(ref preview) = fs.preview {
+            if let Some(ref preview) = fs.view.preview {
                 (
                     Line::from(vec![Span::styled(
                         format!(" {} ", preview.path.to_string_lossy()),
@@ -58,12 +58,12 @@ pub fn draw_pane_editor(
                     None,
                 )
             } else {
-                let dir_name = fs.current_path.file_name()
+                let dir_name = fs.nav.current_path.file_name()
                     .map(|n| n.to_string_lossy().to_string())
                     .unwrap_or_else(|| "/".to_string());
                 (
                     Line::from(vec![Span::styled(
-                        format!(" {} ", fs.current_path.to_string_lossy()),
+                        format!(" {} ", fs.nav.current_path.to_string_lossy()),
                         Style::default().fg(crate::ui::theme::accent_secondary()),
                     )]),
                     Some(dir_name),
@@ -103,7 +103,7 @@ pub fn draw_pane_editor(
 
     if let Some(pane) = app.panes.get_mut(pane_idx) {
         if let Some(fs) = pane.current_state_mut() {
-            if let Some(preview) = &mut fs.preview {
+            if let Some(preview) = &mut fs.view.preview {
                 if let Some(editor) = &mut preview.editor {
                     let path_str = preview.path.to_string_lossy();
                     let ext = if path_str.starts_with("git://") {

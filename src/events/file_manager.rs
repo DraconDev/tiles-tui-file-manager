@@ -26,24 +26,24 @@ fn is_valid_search_char(c: char) -> bool {
 
 fn reselect_after_filter(fs: &mut crate::state::FileState, old_path: Option<&std::path::Path>) {
     if let Some(path) = old_path {
-        if let Some(new_idx) = fs.files.iter().position(|p| p == path) {
-            fs.selection.selected = Some(new_idx);
-            fs.selection.anchor = Some(new_idx);
-            fs.table_state.select(Some(new_idx));
-            let capacity = fs.view_height.saturating_sub(3).max(1);
-            let offset = fs.table_state.offset();
+        if let Some(new_idx) = fs.list.files.iter().position(|p| p == path) {
+            fs.list.selection.selected = Some(new_idx);
+            fs.list.selection.anchor = Some(new_idx);
+            fs.view.table_state.select(Some(new_idx));
+            let capacity = fs.view.view_height.saturating_sub(3).max(1);
+            let offset = fs.view.table_state.offset();
             if new_idx < offset {
-                *fs.table_state.offset_mut() = new_idx;
+                *fs.view.table_state.offset_mut() = new_idx;
             } else if new_idx >= offset + capacity {
-                *fs.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+                *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
             }
             return;
         }
     }
-    fs.selection.selected = Some(0);
-    fs.selection.anchor = Some(0);
-    fs.table_state.select(Some(0));
-    *fs.table_state.offset_mut() = 0;
+    fs.list.selection.selected = Some(0);
+    fs.list.selection.anchor = Some(0);
+    fs.view.table_state.select(Some(0));
+    *fs.view.table_state.offset_mut() = 0;
 }
 
 fn is_double_click(
@@ -79,7 +79,7 @@ fn execute_undo(
 ) -> Option<&'static str> {
     let action = app.undo_state.undo_stack.pop()?;
     let active_remote = app.current_file_state()
-        .and_then(|fs| fs.remote_session.clone());
+        .and_then(|fs| fs.nav.remote_session.clone());
     let success;
     let action_name = match &action {
         UndoAction::Rename(old, new) | UndoAction::Move(old, new) => {
@@ -129,7 +129,7 @@ fn execute_redo(
 ) -> Option<&'static str> {
     let action = app.undo_state.redo_stack.pop()?;
     let active_remote = app.current_file_state()
-        .and_then(|fs| fs.remote_session.clone());
+        .and_then(|fs| fs.nav.remote_session.clone());
     let success;
     let action_name = match &action {
         UndoAction::Rename(old, new) | UndoAction::Move(old, new) => {
@@ -190,7 +190,7 @@ fn handle_global_shortcuts(
         KeyCode::Char('h') | KeyCode::Char('H') if has_control => {
             let idx = app.toggle_hidden();
             if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
-                app.settings.default_show_hidden = fs.show_hidden;
+                app.settings.default_show_hidden = fs.nav.show_hidden;
             }
             crate::config::save_state_quiet(app);
             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
@@ -199,7 +199,7 @@ fn handle_global_shortcuts(
         KeyCode::Backspace if has_control => {
             let idx = app.toggle_hidden();
             if let Some(fs) = app.panes.get(idx).and_then(|p| p.current_state()) {
-                app.settings.default_show_hidden = fs.show_hidden;
+                app.settings.default_show_hidden = fs.nav.show_hidden;
             }
             crate::config::save_state_quiet(app);
             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(idx));
@@ -213,9 +213,9 @@ fn handle_global_shortcuts(
         KeyCode::Char('n') | KeyCode::Char('N') if has_control => {
             if let Some(fs) = app.current_file_state() {
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
-                    path: fs.current_path.clone(),
+                    path: fs.nav.current_path.clone(),
                     new_tab: true,
-                    remote: fs.remote_session.clone(),
+                    remote: fs.nav.remote_session.clone(),
                     command: None,
                 });
             }
@@ -224,9 +224,9 @@ fn handle_global_shortcuts(
         KeyCode::Char('k') | KeyCode::Char('K') if has_control => {
             if let Some(fs) = app.current_file_state() {
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
-                    path: fs.current_path.clone(),
+                    path: fs.nav.current_path.clone(),
                     new_tab: false,
-                    remote: fs.remote_session.clone(),
+                    remote: fs.nav.remote_session.clone(),
                     command: None,
                 });
             }
@@ -253,7 +253,7 @@ fn handle_global_shortcuts(
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                         "Closed: {}",
-                        removed.current_path.file_name()
+                        removed.nav.current_path.file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_default()
                     )));
@@ -310,8 +310,8 @@ fn handle_clipboard_and_undo(
     match key.code {
         KeyCode::Char('c') => {
             if let Some(fs) = app.current_file_state() {
-                if let Some(idx) = fs.selection.selected {
-                    if let Some(path) = fs.files.get(idx) {
+                if let Some(idx) = fs.list.selection.selected {
+                    if let Some(path) = fs.list.files.get(idx) {
                         app.selection.clipboard = Some((path.clone(), crate::app::ClipboardOp::Copy));
                     }
                 }
@@ -320,8 +320,8 @@ fn handle_clipboard_and_undo(
         }
         KeyCode::Char('x') => {
             if let Some(fs) = app.current_file_state() {
-                if let Some(idx) = fs.selection.selected {
-                    if let Some(path) = fs.files.get(idx) {
+                if let Some(idx) = fs.list.selection.selected {
+                    if let Some(path) = fs.list.files.get(idx) {
                         app.selection.clipboard = Some((path.clone(), crate::app::ClipboardOp::Cut));
                     }
                 }
@@ -331,7 +331,7 @@ fn handle_clipboard_and_undo(
         KeyCode::Char('v') => {
             if let Some((src, op)) = app.selection.clipboard.clone() {
                 if let Some(fs) = app.current_file_state() {
-                    let dest = fs.current_path.join(
+                    let dest = fs.nav.current_path.join(
                         src.file_name().unwrap_or_else(|| std::ffi::OsStr::new("root")),
                     );
                     match op {
@@ -351,7 +351,7 @@ fn handle_clipboard_and_undo(
         }
         KeyCode::Char('a') => {
             if let Some(fs) = app.current_file_state_mut() {
-                fs.selection.select_all(fs.files.len());
+                fs.list.selection.select_all(fs.list.files.len());
             }
             Some(true)
         }
@@ -361,9 +361,9 @@ fn handle_clipboard_and_undo(
                     return Some(true);
                 }
                 if let Some(fs) = app.current_file_state_mut() {
-                    if !fs.search_filter.is_empty() {
-                        fs.search_filter.clear();
-                        fs.search_generation += 1;
+                    if !fs.nav.search_filter.is_empty() {
+                        fs.nav.search_filter.clear();
+                        fs.nav.search_generation += 1;
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                 }
@@ -407,11 +407,11 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
 
                 if let Some(fs) = app.current_file_state_mut() {
-                    fs.selection.clear_multi();
-                    fs.selection.anchor = None;
-                    if !fs.search_filter.is_empty() {
-                        fs.search_filter.clear();
-                        fs.search_generation += 1;
+                    fs.list.selection.clear_multi();
+                    fs.list.selection.anchor = None;
+                    if !fs.nav.search_filter.is_empty() {
+                        fs.nav.search_filter.clear();
+                        fs.nav.search_generation += 1;
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                 }
@@ -433,18 +433,18 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::Insert => {
                     let mut should_save = false;
                     if let Some(fs) = app.current_file_state_mut() {
-                        if let Some(idx) = fs.selection.selected {
-                            fs.selection.toggle(idx);
+                        if let Some(idx) = fs.list.selection.selected {
+                            fs.list.selection.toggle(idx);
                             should_save = true;
                             // Move down after toggle
-                            if idx < fs.files.len().saturating_sub(1) {
+                            if idx < fs.list.files.len().saturating_sub(1) {
                                 let next_idx = idx + 1;
-                                fs.selection.selected = Some(next_idx);
-                                fs.selection.anchor = Some(next_idx);
-                                fs.table_state.select(Some(next_idx));
-                                if next_idx >= fs.table_state.offset() + fs.view_height {
-                                    *fs.table_state.offset_mut() =
-                                        next_idx.saturating_sub(fs.view_height - 1);
+                                fs.list.selection.selected = Some(next_idx);
+                                fs.list.selection.anchor = Some(next_idx);
+                                fs.view.table_state.select(Some(next_idx));
+                                if next_idx >= fs.view.table_state.offset() + fs.view.view_height {
+                                    *fs.view.table_state.offset_mut() =
+                                        next_idx.saturating_sub(fs.view.view_height - 1);
                                 }
                             }
                         }
@@ -464,10 +464,10 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Char('/') => {
                     if let Some(fs) = app.current_file_state_mut() {
-                        fs.search_filter.clear();
-                        fs.search_generation += 1;
-                        fs.selection.selected = Some(0);
-                        *fs.table_state.offset_mut() = 0;
+                        fs.nav.search_filter.clear();
+                        fs.nav.search_generation += 1;
+                        fs.list.selection.selected = Some(0);
+                        *fs.view.table_state.offset_mut() = 0;
                     }
                     app.sidebar.sidebar_focus = false;
                     app.core.mode = AppMode::Normal;
@@ -542,18 +542,18 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::Home => {
                     if let Some(fs) = app.current_file_state_mut() {
-                        if !fs.files.is_empty() {
+                        if !fs.list.files.is_empty() {
                             let mut idx = 0usize;
-                            while idx < fs.files.len()
-                                && fs.files[idx].to_string_lossy() == "__DIVIDER__"
+                            while idx < fs.list.files.len()
+                                && fs.list.files[idx].to_string_lossy() == "__DIVIDER__"
                             {
                                 idx += 1;
                             }
-                            if idx < fs.files.len() {
-                                fs.selection.selected = Some(idx);
-                                fs.selection.anchor = Some(idx);
-                                fs.table_state.select(Some(idx));
-                                *fs.table_state.offset_mut() = idx;
+                            if idx < fs.list.files.len() {
+                                fs.list.selection.selected = Some(idx);
+                                fs.list.selection.anchor = Some(idx);
+                                fs.view.table_state.select(Some(idx));
+                                *fs.view.table_state.offset_mut() = idx;
                             }
                         }
                     }
@@ -561,17 +561,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::End => {
                     if let Some(fs) = app.current_file_state_mut() {
-                        if !fs.files.is_empty() {
-                            let mut idx = fs.files.len().saturating_sub(1);
-                            while idx > 0 && fs.files[idx].to_string_lossy() == "__DIVIDER__" {
+                        if !fs.list.files.is_empty() {
+                            let mut idx = fs.list.files.len().saturating_sub(1);
+                            while idx > 0 && fs.list.files[idx].to_string_lossy() == "__DIVIDER__" {
                                 idx = idx.saturating_sub(1);
                             }
-                            if fs.files[idx].to_string_lossy() != "__DIVIDER__" {
-                                fs.selection.selected = Some(idx);
-                                fs.selection.anchor = Some(idx);
-                                fs.table_state.select(Some(idx));
-                                let page = fs.view_height.saturating_sub(3).max(1);
-                                *fs.table_state.offset_mut() = idx.saturating_sub(page - 1);
+                            if fs.list.files[idx].to_string_lossy() != "__DIVIDER__" {
+                                fs.list.selection.selected = Some(idx);
+                                fs.list.selection.anchor = Some(idx);
+                                fs.view.table_state.select(Some(idx));
+                                let page = fs.view.view_height.saturating_sub(3).max(1);
+                                *fs.view.table_state.offset_mut() = idx.saturating_sub(page - 1);
                             }
                         }
                     }
@@ -579,24 +579,24 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::PageDown => {
                     if let Some(fs) = app.current_file_state_mut() {
-                        if !fs.files.is_empty() {
-                            let page = fs.view_height.saturating_sub(3).max(1);
-                            let cur = fs.selection.selected.unwrap_or(0);
-                            let mut idx = (cur + page).min(fs.files.len().saturating_sub(1));
-                            while idx + 1 < fs.files.len()
-                                && fs.files[idx].to_string_lossy() == "__DIVIDER__"
+                        if !fs.list.files.is_empty() {
+                            let page = fs.view.view_height.saturating_sub(3).max(1);
+                            let cur = fs.list.selection.selected.unwrap_or(0);
+                            let mut idx = (cur + page).min(fs.list.files.len().saturating_sub(1));
+                            while idx + 1 < fs.list.files.len()
+                                && fs.list.files[idx].to_string_lossy() == "__DIVIDER__"
                             {
                                 idx += 1;
                             }
-                            while idx > 0 && fs.files[idx].to_string_lossy() == "__DIVIDER__" {
+                            while idx > 0 && fs.list.files[idx].to_string_lossy() == "__DIVIDER__" {
                                 idx = idx.saturating_sub(1);
                             }
-                            if fs.files[idx].to_string_lossy() != "__DIVIDER__" {
-                                fs.selection.selected = Some(idx);
-                                fs.selection.anchor = Some(idx);
-                                fs.table_state.select(Some(idx));
-                                if idx >= fs.table_state.offset() + page {
-                                    *fs.table_state.offset_mut() = idx.saturating_sub(page - 1);
+                            if fs.list.files[idx].to_string_lossy() != "__DIVIDER__" {
+                                fs.list.selection.selected = Some(idx);
+                                fs.list.selection.anchor = Some(idx);
+                                fs.view.table_state.select(Some(idx));
+                                if idx >= fs.view.table_state.offset() + page {
+                                    *fs.view.table_state.offset_mut() = idx.saturating_sub(page - 1);
                                 }
                             }
                         }
@@ -605,19 +605,19 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 }
                 KeyCode::PageUp => {
                     if let Some(fs) = app.current_file_state_mut() {
-                        if !fs.files.is_empty() {
-                            let page = fs.view_height.saturating_sub(3).max(1);
-                            let cur = fs.selection.selected.unwrap_or(0);
+                        if !fs.list.files.is_empty() {
+                            let page = fs.view.view_height.saturating_sub(3).max(1);
+                            let cur = fs.list.selection.selected.unwrap_or(0);
                             let mut idx = cur.saturating_sub(page);
-                            while idx > 0 && fs.files[idx].to_string_lossy() == "__DIVIDER__" {
+                            while idx > 0 && fs.list.files[idx].to_string_lossy() == "__DIVIDER__" {
                                 idx = idx.saturating_sub(1);
                             }
-                            if fs.files[idx].to_string_lossy() != "__DIVIDER__" {
-                                fs.selection.selected = Some(idx);
-                                fs.selection.anchor = Some(idx);
-                                fs.table_state.select(Some(idx));
-                                if idx < fs.table_state.offset() {
-                                    *fs.table_state.offset_mut() = idx;
+                            if fs.list.files[idx].to_string_lossy() != "__DIVIDER__" {
+                                fs.list.selection.selected = Some(idx);
+                                fs.list.selection.anchor = Some(idx);
+                                fs.view.table_state.select(Some(idx));
+                                if idx < fs.view.table_state.offset() {
+                                    *fs.view.table_state.offset_mut() = idx;
                                 }
                             }
                         }
@@ -658,8 +658,8 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::Char('r') | KeyCode::Char('R') if has_control => {
                     // Ctrl+R: run the currently selected file
                     if let Some(fs) = app.current_file_state() {
-                        if let Some(idx) = fs.selection.selected {
-                            if let Some(path) = fs.files.get(idx) {
+                        if let Some(idx) = fs.list.selection.selected {
+                            if let Some(path) = fs.list.files.get(idx) {
                                 if !path.is_dir() {
                                     if let Some((work_dir, program, args)) =
                                         crate::modules::files::get_run_command(path)
@@ -667,7 +667,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                         let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
                                             path: work_dir,
                                             new_tab: true,
-                                            remote: fs.remote_session.clone(),
+                                            remote: fs.nav.remote_session.clone(),
                                             command: Some(format!("{} {}", program, args.join(" "))),
                                         });
                                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
@@ -693,9 +693,9 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::F(2) => {
                     let selected_count = app.current_file_state()
                         .map(|fs| {
-                            if !fs.selection.is_empty() {
-                                fs.selection.multi_selected_indices().len()
-                            } else if fs.selection.selected.is_some() { 1 } else { 0 }
+                            if !fs.list.selection.is_empty() {
+                                fs.list.selection.multi_selected_indices().len()
+                            } else if fs.list.selection.selected.is_some() { 1 } else { 0 }
                         })
                         .unwrap_or(0);
                     if selected_count > 1 {
@@ -703,9 +703,9 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         let files: Vec<PathBuf> = app.current_file_state()
                             .map(|fs| {
                                 let mut paths = Vec::new();
-                                if !fs.selection.is_empty() {
-                                    for &idx in fs.selection.multi_selected_indices() {
-                                        if let Some(p) = fs.files.get(idx) {
+                                if !fs.list.selection.is_empty() {
+                                    for &idx in fs.list.selection.multi_selected_indices() {
+                                        if let Some(p) = fs.list.files.get(idx) {
                                             paths.push(p.clone());
                                         }
                                     }
@@ -732,7 +732,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     app.selection.selection_mode = !app.selection.selection_mode;
                     if !app.selection.selection_mode {
                         if let Some(fs) = app.current_file_state_mut() {
-                            fs.selection.clear_multi();
+                            fs.list.selection.clear_multi();
                         }
                     }
                     return true;
@@ -748,11 +748,11 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::Char('~') => {
                     if let Some(fs) = app.current_file_state_mut() {
                         if let Some(home) = dirs::home_dir() {
-                            fs.current_path = home.clone();
-                            fs.selection.selected = Some(0);
-                            fs.selection.anchor = Some(0);
-                            fs.selection.clear_multi();
-                            *fs.table_state.offset_mut() = 0;
+                            fs.nav.current_path = home.clone();
+                            fs.list.selection.selected = Some(0);
+                            fs.list.selection.anchor = Some(0);
+                            fs.list.selection.clear_multi();
+                            *fs.view.table_state.offset_mut() = 0;
                             crate::event_helpers::push_history(fs, home);
                             let _ =
                                 crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
@@ -779,25 +779,25 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let old_path = if !is_sidebar {
                         app.current_file_state()
                             .and_then(|fs| {
-                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                                fs.list.selection.selected.and_then(|idx| fs.list.files.get(idx).cloned())
                             })
                     } else {
                         None
                     };
                     if let Some(fs) = app.current_file_state_mut() {
                         let now = std::time::Instant::now();
-                        let should_refresh = fs.search_debounce_until
+                        let should_refresh = fs.nav.search_debounce_until
                             .map(|until| now >= until)
                             .unwrap_or(true);
 
-                        fs.search_filter.push(c);
-                        fs.search_generation += 1;
+                        fs.nav.search_filter.push(c);
+                        fs.nav.search_generation += 1;
                         if !is_sidebar {
                             reselect_after_filter(fs, old_path.as_deref());
                             needs_refresh = should_refresh;
                         }
 
-                        fs.search_debounce_until = Some(now + Duration::from_millis(SEARCH_DEBOUNCE_MS));
+                        fs.nav.search_debounce_until = Some(now + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                     }
                     if is_sidebar {
                         app.sidebar.sidebar_index = 0;
@@ -813,18 +813,18 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let old_path = if !is_sidebar {
                         app.current_file_state()
                             .and_then(|fs| {
-                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                                fs.list.selection.selected.and_then(|idx| fs.list.files.get(idx).cloned())
                             })
                     } else {
                         None
                     };
                     if let Some(fs) = app.current_file_state_mut() {
-                        if !fs.search_filter.is_empty() {
-                            fs.search_filter.pop();
+                        if !fs.nav.search_filter.is_empty() {
+                            fs.nav.search_filter.pop();
                             if !is_sidebar {
                                 reselect_after_filter(fs, old_path.as_deref());
                             }
-                            fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
+                            fs.nav.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                             handled_search = true;
                         }
                     }
@@ -848,17 +848,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let old_path = if !is_sidebar {
                         app.current_file_state()
                             .and_then(|fs| {
-                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                                fs.list.selection.selected.and_then(|idx| fs.list.files.get(idx).cloned())
                             })
                     } else {
                         None
                     };
                     if let Some(fs) = app.current_file_state_mut() {
-                        delete_word_backwards(&mut fs.search_filter);
+                        delete_word_backwards(&mut fs.nav.search_filter);
                         if !is_sidebar {
                             reselect_after_filter(fs, old_path.as_deref());
                         }
-                        fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
+                        fs.nav.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                     }
                     if is_sidebar {
                         app.sidebar.sidebar_index = 0;
@@ -871,17 +871,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     let old_path = if !is_sidebar {
                         app.current_file_state()
                             .and_then(|fs| {
-                                fs.selection.selected.and_then(|idx| fs.files.get(idx).cloned())
+                                fs.list.selection.selected.and_then(|idx| fs.list.files.get(idx).cloned())
                             })
                     } else {
                         None
                     };
                     if let Some(fs) = app.current_file_state_mut() {
-                        delete_word_backwards(&mut fs.search_filter);
+                        delete_word_backwards(&mut fs.nav.search_filter);
                         if !is_sidebar {
                             reselect_after_filter(fs, old_path.as_deref());
                         }
-                        fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
+                        fs.nav.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                     }
                     if is_sidebar {
                         app.sidebar.sidebar_index = 0;
@@ -892,11 +892,11 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::Char('u') if has_control => {
                     let is_sidebar = app.sidebar.sidebar_focus;
                     if let Some(fs) = app.current_file_state_mut() {
-                        fs.search_filter.clear();
+                        fs.nav.search_filter.clear();
                         if !is_sidebar {
-                            fs.selection.selected = Some(0);
-                            fs.selection.anchor = Some(0);
-                            *fs.table_state.offset_mut() = 0;
+                            fs.list.selection.selected = Some(0);
+                            fs.list.selection.anchor = Some(0);
+                            *fs.view.table_state.offset_mut() = 0;
                         } else {
                             app.sidebar.sidebar_index = 0;
                         }
@@ -945,7 +945,7 @@ pub fn handle_file_mouse(
         MouseEventKind::Down(button) => {
             if matches!(app.core.mode, AppMode::PathInput) {
                 let keep_open = app.current_file_state()
-                    .and_then(|fs| fs.breadcrumb_header_bounds)
+                    .and_then(|fs| fs.view.breadcrumb_header_bounds)
                     .map(|rect| rect.contains(ratatui::layout::Position { x: column, y: row }))
                     .unwrap_or(false);
                 if keep_open {
@@ -962,35 +962,35 @@ pub fn handle_file_mouse(
             // 1. Breadcrumb Click
             if let Some(fs) = app.current_file_state_mut() {
                 let in_breadcrumb_row = fs
-                    .breadcrumb_header_bounds
+                    .view.breadcrumb_header_bounds
                     .map(|r| r.contains(ratatui::layout::Position { x: column, y: row }))
                     .unwrap_or(false);
 
                 if in_breadcrumb_row {
                     // Check breadcrumb segments first: clicking a segment navigates
                     let clicked_segment = fs
-                        .breadcrumb_bounds
+                        .view.breadcrumb_bounds
                         .iter()
                         .find(|(r, _)| r.contains(ratatui::layout::Position { x: column, y: row }))
                         .map(|(_, p)| p.clone());
 
                     if let Some(target_path) = clicked_segment {
-                        let current_path = fs.current_path.clone();
+                        let current_path = fs.nav.current_path.clone();
 
                         // Smart Selection
                         if current_path.starts_with(&target_path) && current_path != target_path {
                             if let Ok(prefix) = current_path.strip_prefix(&target_path) {
                                 if let Some(component) = prefix.components().next() {
                                     let child_name = component.as_os_str();
-                                    fs.pending_select_path = Some((target_path.join(child_name), 0));
+                                    fs.view.pending_select_path = Some((target_path.join(child_name), 0));
                                 }
                             }
                         }
 
-                        fs.current_path = target_path.clone();
-                        fs.selection.clear();
-                        fs.search_filter.clear();
-                        *fs.table_state.offset_mut() = 0;
+                        fs.nav.current_path = target_path.clone();
+                        fs.list.selection.clear();
+                        fs.nav.search_filter.clear();
+                        *fs.view.table_state.offset_mut() = 0;
                         crate::event_helpers::push_history(fs, target_path);
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         app.sidebar.sidebar_focus = false;
@@ -999,7 +999,7 @@ pub fn handle_file_mouse(
 
                     // Clicked breadcrumb row but not on a segment:
                     // copy path to clipboard and open path input
-                    let path = fs.current_path.to_string_lossy().to_string();
+                    let path = fs.nav.current_path.to_string_lossy().to_string();
                     crate::event_helpers::open_path_input(app);
                     crate::event_helpers::copy_text_to_clipboard_async(path);
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
@@ -1025,13 +1025,13 @@ pub fn handle_file_mouse(
                         let cp = (column.saturating_sub(sw) / pw) as usize;
                         if let Some(fs) = app.panes.get_mut(cp).and_then(|p| p.current_state_mut())
                         {
-                            for (r, col) in &fs.column_bounds {
+                            for (r, col) in &fs.view.column_bounds {
                                 if column >= r.x && column < r.x.saturating_add(r.width) {
-                                    if fs.sort_column == *col {
-                                        fs.sort_ascending = !fs.sort_ascending;
+                                    if fs.nav.sort_column == *col {
+                                        fs.nav.sort_ascending = !fs.nav.sort_ascending;
                                     } else {
-                                        fs.sort_column = *col;
-                                        fs.sort_ascending = true;
+                                        fs.nav.sort_column = *col;
+                                        fs.nav.sort_ascending = true;
                                     }
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(cp));
                                     return true;
@@ -1069,30 +1069,30 @@ pub fn handle_file_mouse(
 
                 let sel_mode = app.selection.selection_mode;
                 if let Some(fs) = app.current_file_state_mut() {
-                    let is_divider = is_virtual_divider(&fs.files[idx]);
+                    let is_divider = is_virtual_divider(&fs.list.files[idx]);
                     if is_divider {
                         return true;
                     }
 
                     if button == MouseButton::Left {
-                        fs.selection.handle_click(
+                        fs.list.selection.handle_click(
                             idx,
                             is_shift,
                             is_ctrl,
                             sel_mode && !is_shift,
                         );
-                        fs.table_state.select(fs.selection.selected);
+                        fs.view.table_state.select(fs.list.selection.selected);
                     }
 
-                    let p = fs.files[idx].clone();
-                    is_dir = fs.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
+                    let p = fs.list.files[idx].clone();
+                    is_dir = fs.list.metadata.get(&p).map(|m| m.is_dir).unwrap_or(false);
                     sp = Some(p.clone());
 
                     // Arrow click on folder: toggle expand/collapse only
                     if is_dir && button == MouseButton::Left {
-                        if let Some((name_rect, _)) = fs.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
+                        if let Some((name_rect, _)) = fs.view.column_bounds.iter().find(|(_, ct)| *ct == FileColumn::Name) {
                             if column >= name_rect.x && column < name_rect.x + name_rect.width {
-                                let clicked_arrow = fs.file_row_bounds.iter()
+                                let clicked_arrow = fs.view.file_row_bounds.iter()
                                     .find(|b| b.file_idx == idx)
                                     .is_some_and(|b| b.arrow_end_x > 0 && column < b.arrow_end_x);
                                 if clicked_arrow {
@@ -1134,8 +1134,8 @@ pub fn handle_file_mouse(
                             if let Some(p) = app.panes.get_mut(app.focused_pane_index) {
                                 if let Some(fs) = p.current_state() {
                                     let mut nfs = fs.clone();
-                                    nfs.current_path = path.clone();
-                                    nfs.selection.clear();
+                                    nfs.nav.current_path = path.clone();
+                                    nfs.list.selection.clear();
                                     crate::event_helpers::push_history(&mut nfs, path);
                                     p.open_tab(nfs);
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
@@ -1158,9 +1158,9 @@ pub fn handle_file_mouse(
                     {
                         if path.is_dir() {
                             if let Some(fs) = app.current_file_state_mut() {
-                                fs.current_path = path.clone();
-                                fs.selection.clear();
-                                fs.git_cache_until = None;
+                                fs.nav.current_path = path.clone();
+                                fs.list.selection.clear();
+                                fs.git.git_cache_until = None;
                                 crate::event_helpers::push_history(fs, path);
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
@@ -1177,9 +1177,9 @@ pub fn handle_file_mouse(
                 if let Some(text) = dracon_terminal_engine::utils::get_primary_selection_text() {
                     if let Some(fs) = app.current_file_state_mut() {
                         let sanitized: String = text.chars().filter(|&c| is_valid_search_char(c)).collect();
-                        fs.search_filter.push_str(&sanitized);
-                        fs.search_generation += 1;
-                        fs.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
+                        fs.nav.search_filter.push_str(&sanitized);
+                        fs.nav.search_generation += 1;
+                        fs.nav.search_debounce_until = Some(std::time::Instant::now() + Duration::from_millis(SEARCH_DEBOUNCE_MS));
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                 }
@@ -1211,12 +1211,12 @@ pub fn handle_file_mouse(
                     return true;
                 };
                 if let Some(fs) = app.current_file_state_mut() {
-                    if is_virtual_divider(&fs.files[idx]) {
+                    if is_virtual_divider(&fs.list.files[idx]) {
                         return true;
                     }
-                    fs.selection.clear();
-                    fs.selection.selected = Some(idx);
-                    fs.table_state.select(Some(idx));
+                    fs.list.selection.clear();
+                    fs.list.selection.selected = Some(idx);
+                    fs.view.table_state.select(Some(idx));
                 }
             }
             app.drag.drag_start_pos = None;
@@ -1256,7 +1256,7 @@ pub fn handle_file_mouse(
                 if column >= sw {
                     if let Some(fs) = app.current_file_state() {
                         // Breadcrumb drop target (e.g., move to parent path quickly).
-                        if let Some((_, crumb_path)) = fs.breadcrumb_bounds.iter().find(|(r, _)| {
+                        if let Some((_, crumb_path)) = fs.view.breadcrumb_bounds.iter().find(|(r, _)| {
                             r.contains(ratatui::layout::Position { x: column, y: row })
                         }) {
                             if let Some(src) = &app.drag.drag_source {
@@ -1272,7 +1272,7 @@ pub fn handle_file_mouse(
                     if app.drag.hovered_drop_target.is_none() && row >= 3 {
                         if let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) {
                             if let Some(fs) = app.current_file_state() {
-                                if let Some(path) = fs.files.get(idx) {
+                                if let Some(path) = fs.list.files.get(idx) {
                                     if path.is_dir() {
                                         if let Some(src) = &app.drag.drag_source {
                                             if src != path {
@@ -1302,18 +1302,18 @@ pub fn handle_file_mouse(
                     return true;
                 };
                 if let Some(fs) = app.current_file_state_mut() {
-                    if !fs.files.is_empty() {
-                        let idx = idx.min(fs.files.len().saturating_sub(1));
+                    if !fs.list.files.is_empty() {
+                        let idx = idx.min(fs.list.files.len().saturating_sub(1));
                         let anchor = fs
-                            .selection
+                            .list.selection
                             .anchor
-                            .unwrap_or(fs.selection.selected.unwrap_or(0));
-                        fs.selection.clear_multi();
+                            .unwrap_or(fs.list.selection.selected.unwrap_or(0));
+                        fs.list.selection.clear_multi();
                         for i in std::cmp::min(anchor, idx)..=std::cmp::max(anchor, idx) {
-                            fs.selection.add(i);
+                            fs.list.selection.add(i);
                         }
-                        fs.selection.selected = Some(idx);
-                        fs.table_state.select(Some(idx));
+                        fs.list.selection.selected = Some(idx);
+                        fs.view.table_state.select(Some(idx));
                         changed = true;
                     }
                 }
@@ -1328,19 +1328,19 @@ pub fn handle_file_mouse(
         }
         MouseEventKind::ScrollUp => {
             if let Some(fs) = app.current_file_state_mut() {
-                let new_offset = fs.table_state.offset().saturating_sub(1);
-                *fs.table_state.offset_mut() = new_offset;
+                let new_offset = fs.view.table_state.offset().saturating_sub(1);
+                *fs.view.table_state.offset_mut() = new_offset;
             }
             true
         }
         MouseEventKind::ScrollDown => {
             if let Some(fs) = app.current_file_state_mut() {
                 let max_offset = fs
-                    .files
+                    .list.files
                     .len()
-                    .saturating_sub(fs.view_height.saturating_sub(3));
-                let new_offset = fs.table_state.offset().saturating_add(1).min(max_offset);
-                *fs.table_state.offset_mut() = new_offset;
+                    .saturating_sub(fs.view.view_height.saturating_sub(3));
+                let new_offset = fs.view.table_state.offset().saturating_add(1).min(max_offset);
+                *fs.view.table_state.offset_mut() = new_offset;
             }
             true
         }
@@ -1369,14 +1369,14 @@ fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     }
 
     if let Some(fs) = app.current_file_state_mut() {
-        if fs.selection.selected.is_none() && !fs.files.is_empty() {
-            fs.selection.selected = Some(0);
-            fs.table_state.select(Some(0));
-            fs.selection.anchor = Some(0);
+        if fs.list.selection.selected.is_none() && !fs.list.files.is_empty() {
+            fs.list.selection.selected = Some(0);
+            fs.view.table_state.select(Some(0));
+            fs.list.selection.anchor = Some(0);
         }
 
-        if let Some(idx) = fs.selection.selected {
-            if let Some(path) = fs.files.get(idx).cloned() {
+        if let Some(idx) = fs.list.selection.selected {
+            if let Some(path) = fs.list.files.get(idx).cloned() {
                 if is_virtual_divider(&path) {
                     return;
                 }
@@ -1422,10 +1422,10 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             match target {
                 SidebarTarget::Favorite(path) | SidebarTarget::Recent(path) => {
                     if let Some(fs) = app.current_file_state_mut() {
-                        fs.current_path = path.clone();
-                        fs.selection.selected = Some(0);
-                        fs.selection.anchor = Some(0);
-                        fs.selection.clear_multi();
+                        fs.nav.current_path = path.clone();
+                        fs.list.selection.selected = Some(0);
+                        fs.list.selection.anchor = Some(0);
+                        fs.list.selection.clear_multi();
                         crate::event_helpers::push_history(fs, path.clone());
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         app.sidebar.sidebar_focus = false;
@@ -1441,10 +1441,10 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         let path_ref = path.clone();
                         let was_expanded = app.sidebar.tree_expanded_folders.contains(&path_ref);
                         if let Some(fs) = app.current_file_state_mut() {
-                            fs.current_path = path.clone();
-                            fs.selection.selected = Some(0);
-                            fs.selection.anchor = Some(0);
-                            fs.selection.clear_multi();
+                            fs.nav.current_path = path.clone();
+                            fs.list.selection.selected = Some(0);
+                            fs.list.selection.anchor = Some(0);
+                            fs.list.selection.clear_multi();
                             crate::event_helpers::push_history(fs, path.clone());
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
@@ -1465,8 +1465,8 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 
     let mut navigate_to = None;
     if let Some(fs) = app.current_file_state() {
-        if let Some(idx) = fs.selection.selected {
-            if let Some(path) = fs.files.get(idx) {
+        if let Some(idx) = fs.list.selection.selected {
+            if let Some(path) = fs.list.files.get(idx) {
                 if is_virtual_divider(path) {
                     return;
                 }
@@ -1480,26 +1480,26 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
         let restore = app.selection.folder_selections.get(&p).copied();
 
         if let Some(fs) = app.current_file_state() {
-            let path = fs.current_path.clone();
-            let idx = fs.selection.selected.unwrap_or(0);
-            let scroll = fs.table_state.offset();
+            let path = fs.nav.current_path.clone();
+            let idx = fs.list.selection.selected.unwrap_or(0);
+            let scroll = fs.view.table_state.offset();
             app.selection.folder_selections.insert(path, (idx, scroll));
         }
 
         if let Some(fs) = app.current_file_state_mut() {
-            fs.current_path = p.clone();
+            fs.nav.current_path = p.clone();
             if let Some((restore_sel, restore_scroll)) = restore {
-                fs.selection.selected = Some(restore_sel);
-                fs.selection.anchor = Some(restore_sel);
-                *fs.table_state.offset_mut() = restore_scroll;
+                fs.list.selection.selected = Some(restore_sel);
+                fs.list.selection.anchor = Some(restore_sel);
+                *fs.view.table_state.offset_mut() = restore_scroll;
             } else {
-                fs.selection.selected = Some(0);
-                fs.selection.anchor = Some(0);
-                *fs.table_state.offset_mut() = 0;
+                fs.list.selection.selected = Some(0);
+                fs.list.selection.anchor = Some(0);
+                *fs.view.table_state.offset_mut() = 0;
             }
-            fs.selection.clear_multi();
-            fs.search_filter.clear();
-            fs.search_generation += 1;
+            fs.list.selection.clear_multi();
+            fs.nav.search_filter.clear();
+            fs.nav.search_generation += 1;
             crate::event_helpers::push_history(fs, p);
             // Clear expanded folders when entering a new directory — start fresh
             app.layout.expanded_folders.clear();
@@ -1511,7 +1511,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 fn handle_rename_shortcut(app: &mut App) {
     let mut to_rename = None;
     if let Some(fs) = app.current_file_state() {
-        if let Some(p) = fs.selection.selected.and_then(|idx| fs.files.get(idx)) {
+        if let Some(p) = fs.list.selection.selected.and_then(|idx| fs.list.files.get(idx)) {
             to_rename = Some(
                 p.file_name()
                     .unwrap_or_else(|| std::ffi::OsStr::new("root"))
@@ -1534,19 +1534,19 @@ fn handle_rename_shortcut(app: &mut App) {
 
 fn handle_trash_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     if let Some(fs) = app.current_file_state() {
-        if fs.selection.selected.is_some() {
+        if fs.list.selection.selected.is_some() {
             if app.settings.confirm_delete {
                 app.core.mode = AppMode::Delete("trash".to_string());
             } else {
                 let mut paths = Vec::new();
-                if !fs.selection.is_empty() {
-                    for &idx in fs.selection.multi_selected_indices() {
-                        if let Some(p) = fs.files.get(idx) {
+                if !fs.list.selection.is_empty() {
+                    for &idx in fs.list.selection.multi_selected_indices() {
+                        if let Some(p) = fs.list.files.get(idx) {
                             paths.push(p.clone());
                         }
                     }
-                } else if let Some(idx) = fs.selection.selected {
-                    if let Some(p) = fs.files.get(idx) {
+                } else if let Some(idx) = fs.list.selection.selected {
+                    if let Some(p) = fs.list.files.get(idx) {
                         paths.push(p.clone());
                     }
                 }
@@ -1560,19 +1560,19 @@ fn handle_trash_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 
 fn handle_permanent_delete_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     if let Some(fs) = app.current_file_state() {
-        if fs.selection.selected.is_some() {
+        if fs.list.selection.selected.is_some() {
             if app.settings.confirm_delete {
                 app.core.mode = AppMode::Delete("permanent".to_string());
             } else {
                 let mut paths = Vec::new();
-                if !fs.selection.is_empty() {
-                    for &idx in fs.selection.multi_selected_indices() {
-                        if let Some(p) = fs.files.get(idx) {
+                if !fs.list.selection.is_empty() {
+                    for &idx in fs.list.selection.multi_selected_indices() {
+                        if let Some(p) = fs.list.files.get(idx) {
                             paths.push(p.clone());
                         }
                     }
-                } else if let Some(idx) = fs.selection.selected {
-                    if let Some(p) = fs.files.get(idx) {
+                } else if let Some(idx) = fs.list.selection.selected {
+                    if let Some(p) = fs.list.files.get(idx) {
                         paths.push(p.clone());
                     }
                 }
@@ -1589,18 +1589,18 @@ fn handle_quick_copy(app: &mut App, event_tx: &mpsc::Sender<AppEvent>, _to_left:
     if let Some(dest_path) = app.panes
         .get(other_pane_idx)
         .and_then(|p| p.current_state())
-        .map(|fs| fs.current_path.clone())
+        .map(|fs| fs.nav.current_path.clone())
     {
         if let Some(fs) = app.current_file_state() {
             let mut paths = Vec::new();
-            if !fs.selection.is_empty() {
-                for &idx in fs.selection.multi_selected_indices() {
-                    if let Some(p) = fs.files.get(idx) {
+            if !fs.list.selection.is_empty() {
+                for &idx in fs.list.selection.multi_selected_indices() {
+                    if let Some(p) = fs.list.files.get(idx) {
                         paths.push(p.clone());
                     }
                 }
-            } else if let Some(idx) = fs.selection.selected {
-                if let Some(p) = fs.files.get(idx) {
+            } else if let Some(idx) = fs.list.selection.selected {
+                if let Some(p) = fs.list.files.get(idx) {
                     paths.push(p.clone());
                 }
             }

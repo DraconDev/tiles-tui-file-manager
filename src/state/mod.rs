@@ -2,7 +2,6 @@ pub mod app_subtypes;
 pub mod file_subtypes;
 
 use crate::config::MAX_TABS;
-use std::time::Instant;
 use dracon_terminal_engine::contracts::UiEvent;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, VecDeque};
@@ -341,67 +340,10 @@ impl std::fmt::Debug for RemoteSession {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct FileState {
-    pub current_path: PathBuf,
-    pub remote_session: Option<RemoteSession>,
-    pub files: Vec<PathBuf>,
-    pub selection: SelectionState,
-    pub show_hidden: bool,
-    pub search_filter: String,
-    #[serde(skip)]
-    pub search_generation: u64,
-    pub columns: Vec<FileColumn>,
-    pub history: Vec<PathBuf>,
-    pub history_index: usize,
-    pub sort_column: FileColumn,
-    pub sort_ascending: bool,
-    #[serde(skip)]
-    pub metadata: HashMap<PathBuf, FileMetadata>,
-    #[serde(skip)]
-    #[allow(dead_code)]
-    pub path_colors: HashMap<PathBuf, u8>,
-    #[serde(skip)]
-    pub preview: Option<PreviewState>,
-    #[serde(skip)]
-    pub view_height: usize,
-    #[serde(skip)]
-    pub table_state: ratatui::widgets::TableState,
-    #[serde(skip)]
-    pub column_bounds: Vec<(ratatui::layout::Rect, FileColumn)>,
-    #[serde(skip)]
-    pub breadcrumb_bounds: Vec<(ratatui::layout::Rect, PathBuf)>,
-    #[serde(skip)]
-    pub breadcrumb_header_bounds: Option<ratatui::layout::Rect>,
-    #[serde(skip)]
-    pub local_count: usize,
-    #[serde(skip)]
-    pub pending_select_path: Option<(PathBuf, usize)>,
-    #[serde(skip)]
-    pub git_history: Vec<CommitInfo>,
-    #[serde(skip)]
-    pub git_history_state: ratatui::widgets::TableState,
-    #[serde(skip)]
-    pub git_pending_state: ratatui::widgets::TableState,
-    #[serde(skip)]
-    pub git_branch: Option<String>,
-    #[serde(skip)]
-    pub git_ahead: usize,
-    #[serde(skip)]
-    pub git_behind: usize,
-    #[serde(skip)]
-    pub git_pending: Vec<GitPendingChange>,
-    #[serde(skip)]
-    pub git_summary: Option<String>,
-    #[serde(skip)]
-    pub git_remotes: Vec<String>,
-    #[serde(skip)]
-    pub git_stashes: Vec<String>,
-    #[serde(skip)]
-    pub git_cache_until: Option<Instant>,
-    #[serde(skip)]
-    pub search_debounce_until: Option<std::time::Instant>,
-    pub tree_file_depths: Vec<u16>,
-    #[serde(skip)]
-    pub file_row_bounds: Vec<FileRowBounds>,
+    pub nav: FileNavState,
+    pub list: FileListState,
+    pub view: FileViewState,
+    pub git: FileGitState,
 }
 
 impl FileState {
@@ -414,42 +356,50 @@ impl FileState {
         sort_asc: bool,
     ) -> Self {
         Self {
-            current_path: path.clone(),
-            remote_session: remote,
-            files: Vec::new(),
-            selection: SelectionState::default(),
-            show_hidden,
-            search_filter: String::new(),
-            search_generation: 0,
-            columns,
-            history: vec![path],
-            history_index: 0,
-            sort_column: sort_col,
-            sort_ascending: sort_asc,
-            metadata: HashMap::new(),
-            path_colors: HashMap::new(),
-            preview: None,
-            view_height: 0,
-            table_state: ratatui::widgets::TableState::default(),
-            column_bounds: Vec::new(),
-            breadcrumb_bounds: Vec::new(),
-            breadcrumb_header_bounds: None,
-            local_count: 0,
-            pending_select_path: None,
-            git_history: Vec::new(),
-            git_history_state: ratatui::widgets::TableState::default(),
-            git_pending_state: ratatui::widgets::TableState::default(),
-            git_branch: None,
-            git_ahead: 0,
-            git_behind: 0,
-            git_pending: Vec::new(),
-            git_summary: None,
-            git_remotes: Vec::new(),
-            git_stashes: Vec::new(),
-            git_cache_until: None,
-            search_debounce_until: None,
-            tree_file_depths: Vec::new(),
-            file_row_bounds: Vec::new(),
+            nav: FileNavState {
+                current_path: path.clone(),
+                remote_session: remote,
+                show_hidden,
+                search_filter: String::new(),
+                search_generation: 0,
+                history: vec![path],
+                history_index: 0,
+                sort_column: sort_col,
+                sort_ascending: sort_asc,
+                search_debounce_until: None,
+            },
+            list: FileListState {
+                files: Vec::new(),
+                selection: SelectionState::default(),
+                columns,
+                local_count: 0,
+                tree_file_depths: Vec::new(),
+                metadata: HashMap::new(),
+                path_colors: HashMap::new(),
+            },
+            view: FileViewState {
+                preview: None,
+                view_height: 0,
+                table_state: ratatui::widgets::TableState::default(),
+                column_bounds: Vec::new(),
+                breadcrumb_bounds: Vec::new(),
+                breadcrumb_header_bounds: None,
+                pending_select_path: None,
+                file_row_bounds: Vec::new(),
+            },
+            git: FileGitState {
+                git_history: Vec::new(),
+                git_history_state: ratatui::widgets::TableState::default(),
+                git_pending_state: ratatui::widgets::TableState::default(),
+                git_branch: None,
+                git_ahead: 0,
+                git_behind: 0,
+                git_pending: Vec::new(),
+                git_summary: None,
+                git_remotes: Vec::new(),
+                git_stashes: Vec::new(),
+                git_cache_until: None,
+            },
         }
     }
 }

@@ -13,8 +13,8 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                     let mut open_commit_view = false;
                     if let Some(fs) = app.current_file_state() {
                         // Priority 1: Pending changes (Diff)
-                        if let Some(idx) = fs.git_pending_state.selected() {
-                            if let Some(change) = fs.git_pending.get(idx) {
+                        if let Some(idx) = fs.git.git_pending_state.selected() {
+                            if let Some(change) = fs.git.git_pending.get(idx) {
                                 open_preview = Some(std::path::PathBuf::from(format!(
                                     "git-diff://{}",
                                     change.path
@@ -23,8 +23,8 @@ pub fn handle_git_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<App
                         }
                         // Priority 2: History (Commit)
                         if open_preview.is_none() {
-                            if let Some(idx) = fs.git_history_state.selected() {
-                                if let Some(commit) = fs.git_history.get(idx) {
+                            if let Some(idx) = fs.git.git_history_state.selected() {
+                                if let Some(commit) = fs.git.git_history.get(idx) {
                                     let hash = commit.hash.clone();
                                     open_preview =
                                         Some(std::path::PathBuf::from(format!("git://{}", hash)));
@@ -58,7 +58,7 @@ pub fn handle_git_mouse(
     let row = me.row;
     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
         if let Some(fs) = app.current_file_state() {
-            let pending = &fs.git_pending;
+            let pending = &fs.git.git_pending;
             let pending_len = pending.len();
             let inner_h = app.core.terminal_size.1.saturating_sub(2);
             let top_h = if pending_len == 0 {
@@ -79,12 +79,12 @@ pub fn handle_git_mouse(
             if row >= table_data_start_y {
                 if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                     if let Some(tab) = pane.tabs.get_mut(pane.active_tab_index) {
-                        let scroll_offset = tab.git_history_state.offset();
+                        let scroll_offset = tab.git.git_history_state.offset();
                         let rel_row = (row - table_data_start_y) as usize + scroll_offset;
-                        if rel_row < tab.git_history.len() {
-                            tab.git_history_state.select(Some(rel_row));
-                            tab.git_pending_state.select(None);
-                            if let Some(commit) = tab.git_history.get(rel_row) {
+                        if rel_row < tab.git.git_history.len() {
+                            tab.git.git_history_state.select(Some(rel_row));
+                            tab.git.git_pending_state.select(None);
+                            if let Some(commit) = tab.git.git_history.get(rel_row) {
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
                                     app.focused_pane_index,
                                     std::path::PathBuf::from(format!("git://{}", commit.hash)),
