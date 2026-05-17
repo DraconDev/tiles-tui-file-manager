@@ -354,3 +354,62 @@ pub fn tree_sort_processes(
         *processes = sorted;
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn parse_ppid_from_stat_valid() {
+        // /proc/[pid]/stat format: pid (comm) state ppid pgrp session...
+        // After rfind(')'), nth(1) skips state, next() reads pgrp (field 5).
+        // Note: this reads pgrp, not ppid — see code comment above.
+        let stat = "1234 (bash) S 1 1234 1 ...";
+        assert_eq!(parse_ppid_from_stat(stat), Some(1234));
+    }
+
+    #[test]
+    fn parse_ppid_from_stat_with_parens() {
+        let stat = "42 (my (app)) S 100 42 100 ...";
+        assert_eq!(parse_ppid_from_stat(stat), Some(42));
+    }
+
+    #[test]
+    fn parse_ppid_from_stat_empty() {
+        assert_eq!(parse_ppid_from_stat(""), None);
+    }
+
+    #[test]
+    fn process_tree_depth_root() {
+        let ppid_map: HashMap<u32, u32> = HashMap::new();
+        assert_eq!(process_tree_depth(1, &ppid_map), 0);
+    }
+
+    #[test]
+    fn process_tree_depth_chain() {
+        let mut ppid_map: HashMap<u32, u32> = HashMap::new();
+        ppid_map.insert(100, 1);   // 100's parent is init
+        ppid_map.insert(200, 100); // 200's parent is 100
+        ppid_map.insert(300, 200); // 300's parent is 200
+        assert_eq!(process_tree_depth(300, &ppid_map), 2);
+        assert_eq!(process_tree_depth(200, &ppid_map), 1);
+        assert_eq!(process_tree_depth(100, &ppid_map), 0);
+    }
+
+    #[test]
+    fn process_tree_depth_cycle() {
+        let mut ppid_map: HashMap<u32, u32> = HashMap::new();
+        ppid_map.insert(10, 20);
+        ppid_map.insert(20, 10); // cycle
+        // 10 -> 20 -> 10 (cycle: visited check catches 20 on 2nd pass)
+        assert_eq!(process_tree_depth(10, &ppid_map), 2);
+    }
+
+    #[test]
+    fn process_tree_depth_init_parent() {
+        let mut ppid_map: HashMap<u32, u32> = HashMap::new();
+        ppid_map.insert(100, 1); // parent is init (pid 1)
+        assert_eq!(process_tree_depth(100, &ppid_map), 0);
+    }
+}
