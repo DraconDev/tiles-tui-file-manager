@@ -69,10 +69,10 @@ Updated with refactor progress — 2026-05-17
   - [ ] `terma/src/compositor/engine.rs` — too many arguments in `draw_rect` (introduce struct param)
   - [ ] `terma/src/compositor/engine.rs` — collapsible `else { if .. }` → `else if`
 
-- [ ] **Add tests for untested critical modules**
-  - [ ] `app.rs` — test App::new() default state, tab management, pane switching
-  - [ ] `config.rs` — test save/load round-trip, SSH config parsing, settings.toml parsing
-  - [ ] `state/mod.rs` — test AppMode transitions, FileState navigation history
+- [x] **Add tests for untested critical modules** — PARTIAL (commit 9feaff30)
+  - [x] `app.rs` — 6 new tests (defaults, pane, file state, split, sidebar, shield)
+  - [x] `state/mod.rs` — 6 new tests (FileState, Pane, history, AppMode)
+  - [ ] `config.rs` — already has 11 tests ✅
   - [ ] `events/editor.rs` — test keyboard shortcuts, undo/redo, search/replace
   - [ ] `modules/system.rs` — test process parsing, disk stats formatting
 
@@ -87,19 +87,21 @@ Updated with refactor progress — 2026-05-17
 
 ## P2 — Hygiene (security, correctness, polish)
 
-- [ ] **Run `cargo audit` and fix vulnerabilities**
-  - [ ] Add `cargo audit` step to CI
-  - [ ] Update `image` crate from 0.24 → 0.25
+- [x] **Run `cargo audit` and fix vulnerabilities** — DONE (commit c81ef0a8)
+  - [x] Add `cargo audit` step to CI
+  - [x] Update `image` crate from 0.24 → 0.25
+  - Note: 3 transitive warnings (bincode unmaintained, paste unmaintained, lru unsound) — all via ratatui/syntect, not fixable here
 
 - [x] **Move debug log to XDG data directory** — DONE (commit 90bb96b4)
   - [x] Change `"debug.log"` → `dirs::data_local_dir().join("tiles/debug.log")`
   - [x] Create directory on first write
 
-- [ ] **Pin dependency minor versions for reproducibility**
-  - [ ] `tokio = { version = "1.0", ... }` → `"1.41"` (or current)
-  - [ ] `regex = "1"` → `"1.11"`
-  - [ ] `base64 = "0.22.1"` — fine (pinned patch)
-  - [ ] Run `cargo update` + lock
+- [x] **Pin dependency minor versions for reproducibility** — DONE (commit c81ef0a8)
+  - [x] `tokio = { version = "1.0", ... }` → `"1.41"`
+  - [x] `regex = "1"` → `"1.11"`
+  - [x] `base64 = "0.22.1"` — fine (pinned patch)
+  - [x] `image = "0.24"` → `"0.25"`
+  - [x] `parking_lot = "0.12"` → `"0.12.3"`
 
 - [ ] **Decompose `event_helpers.rs` (1,292 lines)** — ATTEMPTED, BLOCKED
   - [ ] `src/helpers/path.rs` — resolve_relative_path, expand_tilde, path normalization
