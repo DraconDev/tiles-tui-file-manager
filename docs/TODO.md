@@ -143,7 +143,7 @@ Updated with refactor progress — 2026-05-17
 
 ---
 
-## Refactor Stats (23 commits)
+## Refactor Stats (30+ commits)
 
 | Metric | Before | After |
 |--------|--------|-------|
@@ -153,5 +153,5 @@ Updated with refactor progress — 2026-05-17
 | modals.rs | 1,929 lines | 991 lines (-49%) |
 | pane.rs | 836 lines | 43 lines (-95%) |
 | Total modules created | 0 | 21+ |
-| Tests | 54 | 54 ✅ |
+| Tests | 54 | 72 ✅ |
 | Clippy | Clean | Clean ✅ |
