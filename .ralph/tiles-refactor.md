@@ -3,7 +3,7 @@
 ### Goals
 1. ✅ Decompose `App` struct (~120 fields → 13 sub-structs) — DONE
 2. ✅ Define FileState sub-structs (4 sub-structs defined, not yet activated) — PARTIAL
-3. 🔲 Split `ui/mod.rs` (3096 lines → 8+ submodules) — IN PROGRESS
+3. 🔲 Split `ui/mod.rs` (1795 lines → 8+ submodules) — IN PROGRESS
 4. 🔲 Extract `run_tty()` event handlers into `src/handlers/`
 
 ### Rules
@@ -18,24 +18,25 @@
 - `952dec60` — FileState sub-structs defined (FileNavState, FileListState, FileViewState, FileGitState)
 
 ### Phase 3 — ui/mod.rs split 🔲 IN PROGRESS
-**Extracted so far (6 modules):**
+**Extracted so far (10 modules):**
 - ✅ `header.rs`: draw_global_header (327 lines) — commit 6e612266
 - ✅ `footer.rs`: draw_stat_bar (54 lines) — commit 353e9545
 - ✅ `debug.rs`: 3 debug functions (233 lines) — commit 125c5ea5
 - ✅ `context_menu.rs`: draw_context_menu (197 lines) — commit ffdd9233
 - ✅ `monitor.rs`: 4 monitor functions (730 lines) — commit 28e63a35
 - ✅ `modals.rs`: 9 modal functions (450 lines) — commit 07150b15
+- ✅ `small_modals.rs`: 4 small modals (385 lines) — commit 11875292
+- ✅ `misc.rs`: 5 misc functions (266 lines) — commit 963aa964
+- ✅ `settings.rs`: 6 settings functions (667 lines) — commit eec0a089
 
-**ui/mod.rs: 5,060 → 3,096 lines** (1,964 lines extracted)
+**ui/mod.rs: 5,060 → 1,795 lines** (3,265 lines extracted across 10 modules)
 
-**REMAINING in mod.rs (~14 functions, ~2,500 lines):**
-- git_view group (~2521 lines): draw_commit_view + parse_commit_refs + style_for_ref_label + refs_line + draw_git_page
+**REMAINING in mod.rs (~5 functions, ~1,250 lines):**
+- git_view group (~1000 lines): draw_commit_view + 4 helpers + draw_git_page
   - draw_git_page calls: draw_commit_view, draw_stat_bar, draw_footer, draw_signal_select_modal, draw_pane_breadcrumbs
 - file_view group (486 lines): draw_main_stage + draw_file_view
   - draw_main_stage calls: draw_file_view, draw_ide_editor
 - footer group (327 lines): draw_footer
-- settings group (~200 lines): draw_settings_modal + draw_shortcuts_settings + draw_column_settings + draw_tab_settings + draw_general_settings + draw_style_settings
-- misc remaining: draw_style_color_modal, draw_reset_settings_modal, draw_highlight_modal, draw_drag_ghost, format_modified_time, draw_signal_select_modal, draw_drag_drop_modal, draw_hotkeys_modal, draw_open_with_modal
 
 **Key technique for nested `use` clauses:**
 ```rust
@@ -43,6 +44,10 @@
 use crate::ui::theme as theme;
 // Then regex replace: crate::ui::theme::fn() -> theme::fn()
 ```
+
+**Cross-module calls:**
+- settings.rs → debug::draw_remote_settings (use `crate::ui::debug::draw_remote_settings`)
+- misc.rs → format_modified_time (re-exported, used by mod.rs)
 
 ### Phase 4 — event handlers extraction
 - Not started
@@ -58,4 +63,7 @@ use crate::ui::theme as theme;
 - `ffdd9233` refactor(ui): extract draw_context_menu to src/ui/context_menu.rs
 - `28e63a35` refactor(ui): extract monitor functions to src/ui/monitor.rs
 - `07150b15` refactor(ui): extract modal dialogs to src/ui/modals.rs
+- `11875292` refactor(ui): extract small modals to src/ui/small_modals.rs
+- `963aa964` refactor(ui): extract misc UI functions to src/ui/misc.rs
+- `eec0a089` refactor(ui): extract settings panel to src/ui/settings.rs
 - `5b5eb243` chore: update task state and preserve clean build
