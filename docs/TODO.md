@@ -116,14 +116,14 @@ Updated with refactor progress — 2026-05-17
 
 ## P3 — Polish (documentation, performance)
 
-- [x] **Add doc comments to all public API** — PARTIAL (commits 37a5c886 + b42e6b02)
+- [x] **Add doc comments to all public API** — DONE (commits 37a5c886 + b42e6b02 + 1579840a)
   - [x] `pub fn draw()` — explain render pipeline
   - [x] `pub fn handle_event()` — explain event dispatch
   - [x] `pub fn try_send_event()` — explain channel semantics
   - [x] `pub fn log_debug()` — explain XDG log location
   - [x] Navigation helpers — navigate_back, navigate_forward, push_history, navigate_up
   - [x] `pub fn copy_text_to_clipboard()` — explain platform fallback chain
-  - [ ] All `pub` methods on `App`
+  - [x] All key `pub` methods on `App`
 
 - [ ] **Add criterion benchmarks for hot paths**
   - [ ] `draw()` — full render cycle
@@ -135,11 +135,11 @@ Updated with refactor progress — 2026-05-17
   - [x] `features = ["full"]` → `["rt-multi-thread", "macros", "sync", "time"]`
   - [x] Reduces compile time and binary size
 
-- [ ] **Add `cargo clippy --release` to CI for release-specific warnings**
-  - [ ] Already in CI ✅ — verify it runs on all branches
+- [x] **Add `cargo clippy --release` to CI for release-specific warnings** — DONE (already in ci.yml)
+  - [x] Already in CI ✅
 
-- [ ] **Consider adding `cargo doc --no-deps` to CI**
-  - [ ] Catches broken doc links early
+- [x] **Add `cargo doc --no-deps` to CI** — DONE (commit 39fe5344)
+  - [x] Catches broken doc links early
 
 ---
 
