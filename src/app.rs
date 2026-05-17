@@ -424,12 +424,16 @@ pub fn log_debug(msg: &str) {
     static LOG_FILE: std::sync::LazyLock<
         parking_lot::Mutex<Option<std::io::BufWriter<std::fs::File>>>,
     > = std::sync::LazyLock::new(|| {
-        let path = "debug.log";
-        if let Ok(meta) = std::fs::metadata(path) {
+        let log_dir = dirs::data_local_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("."));
+        let log_dir = log_dir.join("tiles");
+        let _ = std::fs::create_dir_all(&log_dir);
+        let path = log_dir.join("debug.log");
+        if let Ok(meta) = std::fs::metadata(&path) {
             if meta.len() > MAX_LOG_SIZE_BYTES {
-                let _ = std::fs::rename(path, "debug.log.1");
-                let _ = std::fs::remove_file("debug.log.2");
-                let _ = std::fs::rename("debug.log.1", "debug.log.2");
+                let _ = std::fs::rename(&path, log_dir.join("debug.log.1"));
+                let _ = std::fs::remove_file(log_dir.join("debug.log.2"));
+                let _ = std::fs::rename(log_dir.join("debug.log.1"), log_dir.join("debug.log.2"));
             }
         }
         let file = std::fs::OpenOptions::new()
