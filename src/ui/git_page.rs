@@ -255,7 +255,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                 t.git.git_history
                     .iter()
                     .map(|act| {
-                        let h_short = act.hash.chars().take(7).collect::<String>();
+                        let hash_display = act.hash.clone();
                         let refs = parse_commit_refs(&act.decorations);
                         let refs_compact = refs_line(&refs, 2);
 
@@ -282,7 +282,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                         let mut row_cells = vec![
                             Cell::from(act.date.clone())
                                 .style(Style::default().fg(Color::DarkGray)),
-                            Cell::from(h_short).style(
+                            Cell::from(hash_display).style(
                                 Style::default()
                                     .fg(theme::accent_secondary())
                                     .add_modifier(Modifier::BOLD),
@@ -303,7 +303,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             rows,
             [
                 Constraint::Length(15),
-                Constraint::Length(8),
+                Constraint::Length(41),
                 Constraint::Length(20),
                 Constraint::Length(15),
                 Constraint::Fill(1),
