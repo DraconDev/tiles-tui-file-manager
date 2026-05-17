@@ -2,60 +2,51 @@
 
 ### Goals
 1. ✅ Decompose `App` struct (~120 fields → 13 sub-structs) — DONE
-2. 🔲 Decompose `FileState` (~42 fields → 4 sub-structs) — PARTIAL (sub-structs defined, not yet activated)
-3. 🔲 Split `ui/mod.rs` (5,066 lines → 8+ submodules)
+2. ✅ Define FileState sub-structs (4 sub-structs defined, not yet activated) — PARTIAL
+3. 🔲 Split `ui/mod.rs` (4266 lines → 8+ submodules) — IN PROGRESS
 4. 🔲 Extract `run_tty()` event handlers into `src/handlers/`
 
 ### Rules
-- Run `cargo build && cargo test` after every major change
+- Run `cargo build && cargo test` after every change
 - Run `cargo clippy` after every change (CI enforces `-D warnings`)
 - Preserve all existing behavior and tests
-- Keep commits small and descriptive (`refactor: extract FooState sub-struct`)
-- Add `#[derive(Default)]` to all new sub-structs, use `..Default::default()` in constructors
 
 ### Phase 1 — App struct decomposition ✅
-1. Read `src/app.rs` fully — identify field groupings ✅
-2. Create `src/state/app_subtypes.rs` with: `AppCore`, `SidebarState`, `MonitorState`, `EditorGlobalState`, `UndoState`, `SettingsState`, `LayoutState`, `OutputState`, `DragState`, `NavState`, `RemoteState`, `MouseState`, `SelectionState2` ✅
-3. Move fields into sub-structs ✅
-4. Add `Default` derive to each ✅ (explicit impls for AppCore, MouseState, RemoteState)
-5. Rewrite `App::new()` to use explicit field initialization ✅
-6. Run build, test, clippy ✅
-7. Commit ✅ (commit efa3a9e9)
+- `efa3a9e9` — App struct → 13 sub-structs
 
 ### Phase 2 — FileState decomposition 🔲 PARTIAL
-1. Read `src/state/mod.rs` fully — identify field groupings ✅
-2. Create `src/state/file_subtypes.rs` with: `FileNavState`, `FileListState`, `FileViewState`, `FileGitState` ✅
-3. Move fields — NOT YET (too large, would break 100+ file references)
-4. Add `Default` ✅ (explicit impls for types with Instant fields)
-5. Rewrite `FileState::new()` — NOT YET
-6. Run build, test, clippy — NOT YET
+- `952dec60` — FileState sub-structs defined (FileNavState, FileListState, FileViewState, FileGitState)
+- Sub-structs defined and re-exported but FileState uses flat fields
 
-**Status:** Sub-structs are defined and exported but `FileState` still uses flat fields.
-The sub-structs are ready for incremental migration — see `migrate_fs_fields.py` script
-for field reference migration. See `docs/TODO.md` Phase 2 items.
+### Phase 3 — ui/mod.rs split 🔲 IN PROGRESS
+**Extracted so far:**
+- ✅ `header.rs`: draw_global_header (~327 lines) — commit 6e612266
+- ✅ `footer.rs`: draw_stat_bar (54 lines) — commit 353e9545
+- ✅ `debug.rs`: draw_debug_page + draw_remote_settings + draw_add_remote_modal (233 lines) — commit 125c5ea5
+- ✅ `context_menu.rs`: draw_context_menu (197 lines) — commit ffdd9233
 
-**Migration plan (don't rush):**
-- For each `fs.*` field access, update to `fs.<sub>.<field>` using the sub-struct field mapping
-- Update `config.rs` serialization (clearing search_filter, files, local_count)
-- Update `FileState::new()` to use sub-structs
-- After migration, FileState will be 4 fields: `nav`, `list`, `view`, `git`
+**Remaining extraction targets (by size, smallest first):**
+1. git_view.rs — draw_commit_view + helpers + draw_git_page (~2521 lines) — FAILED (too many cross-module deps)
+2. monitor.rs — 4 functions (~730 lines) — FAILED (nested use clauses cause import issues)
+3. file_view.rs — draw_main_stage + draw_file_view (~845 lines) — save for last
+4. settings.rs — 10 functions (~976 lines)
+5. modals.rs — 15 functions (~957 lines)
 
-### Phase 3 — ui/mod.rs split
-1. Create `src/ui/` submodules: `modals.rs`, `settings.rs`, `monitor.rs`, `git_view.rs`, `file_view.rs`, `header.rs`, `footer.rs`, `context_menu.rs`, `debug.rs`
-2. Move one draw function group at a time, wire in via `pub use`
-3. Keep `ui/mod.rs` as thin dispatcher
-4. Run build, test, clippy after each move
-5. Commit per submodule
+**Key lessons learned:**
+- `#[allow(unused_imports)]` and `use crate::ui::theme as theme;` pattern unlocks `theme::` calls in nested scopes
+- Nested `use crate::ui::theme;` in function bodies cause module resolution to fail (needs `use crate::ui::theme as theme;`)
+- git_view and monitor both have complex nested imports that need careful handling
+- Prefer extracting smaller, self-contained groups first
 
 ### Phase 4 — event handlers extraction
-1. Create `src/handlers/mod.rs`
-2. Extract one handler group at a time from `run_tty()`
-3. Wire back via match arms
-4. Run build, test, clippy
-5. Commit per group
+- Not started
 
 ---
 
 ## Completed Commits
 - `efa3a9e9` refactor(app): decompose App struct into 13 logical sub-structs
-- `b6f8c2d1` refactor(file_subtypes): define FileState sub-structs (not yet activated)
+- `952dec60` refactor(file_subtypes): define FileState sub-structs
+- `6e612266` refactor(ui): extract draw_global_header to src/ui/header.rs
+- `353e9545` refactor(ui): extract draw_stat_bar to src/ui/footer.rs
+- `125c5ea5` refactor(ui): extract debug functions to src/ui/debug.rs
+- `ffdd9233` refactor(ui): extract draw_context_menu to src/ui/context_menu.rs
