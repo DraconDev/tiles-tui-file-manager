@@ -21,6 +21,8 @@ pub mod context_menu;
 pub mod monitor;
 pub mod modals;
 pub mod pane;
+pub mod git_page;
+pub mod file_view;
 pub mod git_view;
 pub mod small_modals;
 pub mod settings;
@@ -40,9 +42,10 @@ pub use modals::{
     draw_new_folder_modal, draw_new_file_modal, draw_bulk_rename_modal,
     draw_save_as_modal, draw_delete_modal, draw_properties_modal,
 };
-pub use pane::{
-    draw_main_stage, draw_git_page,
-};
+pub use pane::draw_main_stage;
+pub use git_page::draw_git_page;
+#[allow(unused_imports)]
+pub use file_view::draw_file_view;
 pub use git_view::draw_commit_view;
 pub use small_modals::{
     draw_signal_select_modal, draw_drag_drop_modal,

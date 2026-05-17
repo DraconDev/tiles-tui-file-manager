@@ -2,7 +2,7 @@
 
 ### Goals
 1. ✅ Decompose `App` struct (~120 fields → 13 sub-structs) — DONE
-2. 🔲 Activate FileState sub-structs (4 defined, ~675 field references to migrate) — PARTIAL
+2. ✅ Activate FileState sub-structs (nav, list, view, git) — DONE ✅
 3. ✅ Split `ui/mod.rs` (5,060 → 383 lines, 92% reduction) — DONE ✅
 4. 🔲 Extract `run_tty()` event handlers — IN PROGRESS
 
@@ -13,43 +13,34 @@
 
 ---
 
-### Phase 1 — App struct decomposition ✅
-### Phase 3 — ui/mod.rs split ✅ COMPLETE (14 modules, 4,672 lines extracted)
-
-### Phase 2 — FileState decomposition 🔲 PARTIAL
-- `952dec60` — FileState sub-structs defined (FileNavState, FileListState, FileViewState, FileGitState)
-- **NOT YET ACTIVATED**: fields still flat on FileState, sub-structs have `#[allow(dead_code)]`
-- **Migration required**: ~675 field references across src/ need updating
-  - Most common patterns: `fs.current_path` → `fs.nav.current_path`, `fs.files` → `fs.list.files`, etc.
-  - FileState struct has `#[serde(skip)]` on 20+ fields — serialization is a concern
-  - Variable names for FileState: `fs` (most common), `self` (in impl), `tab`, `file_state`
-  - Safest approach: write a Python script that handles each variable pattern separately
+### Phase 1 — App struct decomposition ✅ (commit efa3a9e9)
+### Phase 2 — FileState decomposition ✅ (commits 952dec60 + d9c8dcd3)
+### Phase 3 — ui/mod.rs split ✅ (14 modules, 4,672 lines extracted)
 
 ### Phase 4 — Event handler extraction 🔲 IN PROGRESS
 **Completed:**
-- `8362806b` — setup.rs (setup_app, handle_event, prime_visible_tabs, prime_local_file_state) — 222 lines
-- `58dc9cac` — tree_walk.rs (walk_tree function) — 61 lines
+- `8362806b` — setup.rs (222 lines)
+- `58dc9cac` — tree_walk.rs (61 lines)
 - **main.rs: 1,740 → 1,460 lines** (-280 lines)
 
-**Remaining in main.rs (1,460 lines):**
-- `run_tty()` event loop: ~1,340 lines
-  - Setup: 205 lines
-  - Event match block: 786 lines (29 AppEvent match arms)
-  - Post-match refresh: 330 lines
-  - Final draw: 14 lines
-- Event handler coupling analysis:
-  - Score 0 (trivial): Ui, SpawnTerminal, SpawnDetached, KillProcess
-  - Score 1 (easy): CreateFile, CreateFolder, Rename, Delete, TrashFile — only need app.lock() + event_tx
-  - Score 2 (moderate): SystemUpdated, RemoteConnected, RefreshFiles, Symlink, GitHistoryUpdated, etc.
-  - Score 3-6 (hard): Raw, AddToFavorites, FilesChangedOnDisk, SaveFile, Copy, Tick, ConnectToRemote, PreviewRequested
-- **Challenge**: Handlers access shared mutable state (app.lock(), last_self_save, debouncer, panes_needing_refresh). Simple function extraction requires passing many parameters.
-- **Possible approach**: Create an `EventLoopCtx` struct holding shared state, with handler methods.
+**Remaining:** run_tty() event loop (~1,340 lines) with 29 AppEvent match arms.
+Handlers are deeply coupled to shared mutable state — further extraction requires
+an EventLoopCtx struct or similar pattern.
 
 ---
 
-## Completed Commits (17 total)
+## Completed Commits (18 total)
 - `efa3a9e9` refactor(app): decompose App struct into 13 logical sub-structs
 - `952dec60` refactor(file_subtypes): define FileState sub-structs
 - `6e612266` → `0313dcc0` refactor(ui): extract 14 modules from ui/mod.rs
 - `8362806b` refactor(main): extract setup helpers to src/setup.rs
 - `58dc9cac` refactor(main): extract walk_tree to src/tree_walk.rs
+- `d9c8dcd3` refactor(state): activate FileState sub-structs (nav, list, view, git)
+
+## Summary of Changes
+- **App**: 120 fields → 13 sub-structs
+- **FileState**: 35 fields → 4 sub-structs (nav, list, view, git)
+- **ui/mod.rs**: 5,060 → 383 lines (92% reduction)
+- **main.rs**: 1,740 → 1,460 lines (16% reduction)
+- **Total files changed**: 25+ files across all phases
+- **All 54 tests pass, clippy clean at every step**
