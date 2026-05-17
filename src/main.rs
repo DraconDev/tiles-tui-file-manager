@@ -391,6 +391,11 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 AppEvent::FilesChangedOnDisk(path) => {
                     crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
                     
+                    // Self-save guard: skip events for files we just wrote.
+                    // Do NOT remove the entry — inotify may fire multiple events
+                    // per write, and removing the entry would let subsequent events
+                    // pass through and trigger a spurious editor reload.
+                    // Entries are pruned by the 5-second retain in the Tick handler.
                     if let Some((_saved_mtime, _saved_size, saved_at)) = last_self_save.get(&path) {
                         let exact_match = std::fs::metadata(&path).ok().and_then(|meta| {
                             meta.modified().ok().map(|mtime| {
@@ -399,8 +404,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             })
                         }).unwrap_or(false);
 
-                        if exact_match || saved_at.elapsed() < Duration::from_secs(2) {
-                            last_self_save.remove(&path);
+                        if exact_match || saved_at.elapsed() < Duration::from_secs(5) {
                             continue;
                         }
                     }
@@ -660,7 +664,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                     if let Ok(mtime) = meta.modified() {
                                         let size: u64 = meta.len();
                                         if last_self_save.len() > 100 {
-                                            last_self_save.clear();
+                                            // Prune entries older than 5 seconds instead of clearing all.
+                                            // Clearing all could lose entries for files still being auto-saved,
+                                            // allowing spurious editor reloads from subsequent file watcher events.
+                                            last_self_save.retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
                                         }
                                         last_self_save.insert(path.clone(), (mtime, size, std::time::Instant::now()));
                                     }

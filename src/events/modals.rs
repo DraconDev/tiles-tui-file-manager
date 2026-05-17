@@ -900,7 +900,7 @@ pub fn handle_settings_keys(
         }
         KeyCode::Down => {
             let max = match app.settings.settings_section {
-                SettingsSection::General => 13,
+                SettingsSection::General => 14,
                 SettingsSection::Columns => 3,
                 SettingsSection::Style => STYLE_MAX_INDEX,
                 _ => 0,
@@ -914,7 +914,8 @@ pub fn handle_settings_keys(
             match app.settings.settings_section {
                 SettingsSection::General => {
                     match app.settings.settings_index {
-                        0 => {
+                        // Index 0 = Version (read_only, no toggle action)
+                        1 => {
                             app.settings.default_show_hidden = !app.settings.default_show_hidden;
                             let new_val = app.settings.default_show_hidden;
                             // Sync focused tab's show_hidden to match global setting
@@ -923,30 +924,31 @@ pub fn handle_settings_keys(
                             }
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
-                        1 => app.settings.confirm_delete = !app.settings.confirm_delete,
-                        2 => app.settings.smart_date = !app.settings.smart_date,
-                        3 => app.settings.semantic_coloring = !app.settings.semantic_coloring,
-                        4 => app.settings.auto_save = !app.settings.auto_save,
-                        5 => app.preview_max_mb = cycle_preview_max_mb(app.preview_max_mb),
-                        6 => {
+                        2 => app.settings.confirm_delete = !app.settings.confirm_delete,
+                        3 => app.settings.smart_date = !app.settings.smart_date,
+                        4 => app.settings.semantic_coloring = !app.settings.semantic_coloring,
+                        5 => app.settings.auto_save = !app.settings.auto_save,
+                        6 => app.preview_max_mb = cycle_preview_max_mb(app.preview_max_mb),
+                        7 => {
                             app.core.icon_mode = match app.core.icon_mode {
                                 IconMode::Nerd => IconMode::Unicode,
                                 IconMode::Unicode => IconMode::ASCII,
                                 IconMode::ASCII => IconMode::Nerd,
                             }
                         }
-                        8 => app.sidebar.sidebar_folders = !app.sidebar.sidebar_folders,
-                        9 => app.sidebar.sidebar_favorites = !app.sidebar.sidebar_favorites,
-                        10 => app.sidebar.sidebar_recent = !app.sidebar.sidebar_recent,
-                        11 => app.sidebar.sidebar_storage = !app.sidebar.sidebar_storage,
-                        12 => app.sidebar.sidebar_remotes = !app.sidebar.sidebar_remotes,
-                        13 => {
+                        // Index 8 = Sidebar Sections separator (no toggle action)
+                        9 => app.sidebar.sidebar_folders = !app.sidebar.sidebar_folders,
+                        10 => app.sidebar.sidebar_favorites = !app.sidebar.sidebar_favorites,
+                        11 => app.sidebar.sidebar_recent = !app.sidebar.sidebar_recent,
+                        12 => app.sidebar.sidebar_storage = !app.sidebar.sidebar_storage,
+                        13 => app.sidebar.sidebar_remotes = !app.sidebar.sidebar_remotes,
+                        14 => {
                             app.core.mode = AppMode::ResetSettingsConfirm;
                             app.core.input.clear();
                         }
                         _ => {}
                     }
-                    if app.settings.settings_index != 13 {
+                    if app.settings.settings_index != 14 {
                         crate::config::save_state_quiet(app);
                     }
                 }
