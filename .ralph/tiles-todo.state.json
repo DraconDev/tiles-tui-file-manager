@@ -1,7 +1,7 @@
 {
   "name": "tiles-todo",
   "taskFile": ".ralph/tiles-todo.md",
-  "iteration": 2,
+  "iteration": 3,
   "maxIterations": 15,
   "itemsPerIteration": 3,
   "reflectEvery": 3,

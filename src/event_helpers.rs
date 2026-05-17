@@ -793,6 +793,7 @@ pub fn handle_context_menu_action(
     }
 }
 
+/// Navigate back in the folder history.
 pub fn navigate_back(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
         if fs.nav.history_index > 0 {
@@ -802,6 +803,7 @@ pub fn navigate_back(app: &mut App) {
     }
 }
 
+/// Navigate forward in the folder history.
 pub fn navigate_forward(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
         if fs.nav.history_index + 1 < fs.nav.history.len() {
@@ -811,6 +813,7 @@ pub fn navigate_forward(app: &mut App) {
     }
 }
 
+/// Push a path onto the navigation history, trimming entries beyond MAX_HISTORY.
 pub fn push_history(fs: &mut FileState, path: PathBuf) {
     if fs.nav.history_index + 1 < fs.nav.history.len() {
         fs.nav.history.truncate(fs.nav.history_index + 1);
@@ -826,6 +829,7 @@ pub fn push_history(fs: &mut FileState, path: PathBuf) {
     }
 }
 
+/// Navigate up to the parent directory of the current path.
 pub fn navigate_up(app: &mut App) {
     let (old_folder, old_idx, old_scroll, new_path) = {
         let fs = match app.current_file_state_mut() {
@@ -897,6 +901,10 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
     Ok(())
 }
 
+/// Copy text to the system clipboard using platform-specific tools.
+///
+/// Tries: wl-copy, xclip, xsel, pbcopy (in order).
+/// Returns an error message if all attempts fail.
 pub fn copy_text_to_clipboard(text: &str) -> Result<(), String> {
     let attempts: [(&str, &[&str]); 4] = [
         ("wl-copy", &[]),

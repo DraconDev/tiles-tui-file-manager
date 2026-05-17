@@ -57,6 +57,15 @@ pub use misc::{
     draw_highlight_modal, draw_drag_ghost,
 };
 
+/// Render the entire TUI frame.
+///
+/// Dispatches to sub-modules based on the current view and mode:
+/// - Files view → header + sidebar + file panes + footer
+/// - Editor view → header + sidebar + editor pane
+/// - Git view → git page layout
+/// - Processes view → system monitor
+/// - Debug view → debug overlay
+/// - Modals overlay on top of the current view.
 pub fn draw(f: &mut Frame, app: &mut App) {
     f.render_widget(Clear, f.area());
 

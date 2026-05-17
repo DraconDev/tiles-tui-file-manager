@@ -415,6 +415,10 @@ impl App {
 
 const MAX_LOG_SIZE_BYTES: u64 = 5 * 1024 * 1024;
 
+/// Log a debug message to the XDG data directory log file.
+///
+/// Messages are written to `$XDG_DATA_HOME/tiles/debug.log` with ISO timestamps.
+/// No-op if debug logging is disabled.
 pub fn log_debug(msg: &str) {
     if !debug_logging_enabled() {
         return;
@@ -451,6 +455,7 @@ pub fn log_debug(msg: &str) {
     }
 }
 
+/// Check if debug logging is enabled via the TILES_DEBUG environment variable.
 pub fn debug_logging_enabled() -> bool {
     static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
     *ENABLED.get_or_init(|| {
@@ -463,6 +468,10 @@ pub fn debug_logging_enabled() -> bool {
 use tokio::sync::mpsc::Sender;
 
 #[allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
+/// Attempt to send an event through the channel without blocking.
+///
+/// Returns `true` if the event was sent successfully, `false` if the channel
+/// is full (event is dropped and a log message is written).
 #[must_use = "try_send_event returns false if the channel is full"]
 pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
     if tx.try_send(evt).is_err() {
