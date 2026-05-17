@@ -1,4 +1,5 @@
 pub mod app_subtypes;
+pub mod file_subtypes;
 
 use crate::config::MAX_TABS;
 use std::time::Instant;
@@ -10,6 +11,17 @@ use dracon_terminal_engine::widgets::TextEditor;
 
 pub use dracon_terminal_engine::system::{DiskInfo, ProcessInfo};
 pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, SelectionState};
+
+// Sub-struct re-exports
+#[allow(unused_imports)]
+pub use app_subtypes::{
+    AppCore, SidebarState, MonitorState, EditorGlobalState, UndoState, SettingsState,
+    LayoutState, OutputState, DragState, NavState, RemoteState, MouseState, SelectionState2,
+};
+#[allow(unused_imports)]
+pub use file_subtypes::{
+    FileNavState, FileListState, FileViewState, FileGitState,
+};
 
 #[derive(Clone, Debug)]
 pub struct DiskIo {
