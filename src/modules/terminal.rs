@@ -5,10 +5,13 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
     let path_str = path.to_string_lossy().to_string();
 
     if new_tab {
-        if let Ok(service) = std::env::var("KONSOLE_DBUS_SERVICE") {
-            if command_exists("dbus-send") {
-                let mut konsole_args: Vec<String> = vec![
-                    "konsole".to_string(),
+        // When running inside Konsole, just call konsole --new-tab directly.
+        // The dbus-send path was broken (dbus-send can't encode QVariantMap) and always
+        // fell through. Direct invocation is simpler and more reliable.
+        if std::env::var("KONSOLE_DBUS_SERVICE").is_ok()
+            && command_exists("konsole")
+        {
+                let mut args: Vec<String> = vec![
                     "--new-tab".to_string(),
                     "--workdir".to_string(),
                     path_str.clone(),
@@ -16,29 +19,13 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
                 if let Some(cmd_str) = command {
                     let split = split_command(cmd_str);
                     if !split.is_empty() {
-                        konsole_args.push("-e".to_string());
-                        konsole_args.extend(split);
+                        args.push("-e".to_string());
+                        args.extend(split);
                     }
                 }
-
-                let dbus_args: Vec<String> = vec![
-                    "--session".to_string(),
-                    format!("--dest={}", service),
-                    "--type=method_call".to_string(),
-                    "--print-reply".to_string(),
-                    "/org/kde/konsole".to_string(),
-                    "org.kde.KDBusService.CommandLine".to_string(),
-                    format!("array:string:{}", konsole_args.join(",")),
-                    format!("string:{}", path_str),
-                    "dict:string:variant:".to_string(),
-                ];
-
-                if let Ok(output) = Command::new("dbus-send").args(&dbus_args).output() {
-                    if output.status.success() {
-                        return true;
-                    }
+                if Command::new("konsole").args(&args).spawn().is_ok() {
+                    return true;
                 }
-            }
         }
 
         if std::env::var("KITTY_WINDOW_ID").is_ok() {
