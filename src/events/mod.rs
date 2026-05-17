@@ -10,11 +10,14 @@ use std::collections::HashSet;
 use tokio::sync::mpsc;
 
 pub mod editor;
+pub mod editor_modals;
 pub mod file_manager;
 pub mod git;
 pub mod input;
 pub mod modals;
+pub mod modal_mouse;
 pub mod monitor;
+pub mod settings_handlers;
 
 pub fn handle_event(
     evt: Event,
