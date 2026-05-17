@@ -30,6 +30,7 @@ pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
 pub const GIT_CACHE_TTL_SECONDS: u64 = 30;
 pub const FUZZY_SEARCH: bool = true;
 
+#[must_use = "fuzzy_contains returns whether text matches pattern"]
 pub fn fuzzy_contains(text: &str, pattern: &str) -> bool {
     if pattern.is_empty() {
         return true;
