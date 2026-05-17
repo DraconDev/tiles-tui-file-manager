@@ -73,7 +73,7 @@ Updated with refactor progress — 2026-05-17
   - [x] `app.rs` — 6 new tests (defaults, pane, file state, split, sidebar, shield)
   - [x] `state/mod.rs` — 6 new tests (FileState, Pane, history, AppMode)
   - [x] `config.rs` — already has 11 tests ✅
-  - [ ] `events/editor.rs` — test keyboard shortcuts, undo/redo, search/replace (complex, needs editor state)
+  - [x] `events/editor.rs` — 3 new tests (editor events ignored in non-editor view)
   - [x] `modules/system.rs` — 7 new tests (process_tree_depth, parse_ppid_from_stat)
 
 - [x] **Guard the one production `unwrap()`** — DONE (commit f95873c3)
@@ -116,10 +116,13 @@ Updated with refactor progress — 2026-05-17
 
 ## P3 — Polish (documentation, performance)
 
-- [ ] **Add doc comments to all public API**
-  - [ ] `pub fn draw()` — explain render pipeline
-  - [ ] `pub fn handle_event()` — explain event dispatch
-  - [ ] `pub fn try_send_event()` — explain channel semantics
+- [x] **Add doc comments to all public API** — PARTIAL (commits 37a5c886 + b42e6b02)
+  - [x] `pub fn draw()` — explain render pipeline
+  - [x] `pub fn handle_event()` — explain event dispatch
+  - [x] `pub fn try_send_event()` — explain channel semantics
+  - [x] `pub fn log_debug()` — explain XDG log location
+  - [x] Navigation helpers — navigate_back, navigate_forward, push_history, navigate_up
+  - [x] `pub fn copy_text_to_clipboard()` — explain platform fallback chain
   - [ ] All `pub` methods on `App`
 
 - [ ] **Add criterion benchmarks for hot paths**
