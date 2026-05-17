@@ -1,22 +1,9 @@
 # Theme Overhaul TODO
 
-## Problem
-261 hardcoded `Color::` usages across `src/ui/`. Only 6 fields are wired through
-the theme system (`accent_primary`, `accent_secondary`, `selection_bg`,
-`border_active`, `border_inactive`, `header_fg`). The `DraconTheme` struct has
-15 fields but `ThemeStyle.apply_to_theme()` only overrides 6 of them.
+## Status: ✅ COMPLETE (Phase 1-4)
 
-Result: ESC/Quit buttons are always red, DarkGray labels are always gray,
-file-type colors don't follow themes, and adding new themes requires editing
-UI code across 15+ files instead of just adding a preset.
-
-## Goals
-1. **Every visible color goes through the theme** — zero hardcoded `Color::`
-   in `src/ui/` (except true black bg and true white fg).
-2. **High contrast** — themes must be distinguishable at a glance. No gray mud.
-   Semantic roles (danger, warning, muted, success) need strong, distinct colors.
-3. **ThemeStyle covers all 15+ DraconTheme fields** so presets fully define a look.
-4. **5+ new theme presets** beyond the current 6.
+All 4 phases completed. 261 hardcoded colors replaced with theme accessors.
+5 new high-contrast presets added. Zero hardcoded semantic colors remain.
 
 ---
 
