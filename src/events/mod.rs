@@ -20,6 +20,16 @@ pub mod monitor;
 pub mod mouse_helpers;
 pub mod settings_handlers;
 
+/// Top-level event dispatcher for keyboard and mouse input.
+///
+/// Priority order:
+/// 1. Input shield (cooldown after mode changes)
+/// 2. Resize events
+/// 3. Modal/overlay handling (if non-Normal mode)
+/// 4. View-specific keyboard dispatch
+/// 5. General mouse dispatch (sidebar, tabs, panes)
+///
+/// Returns `true` if the event was consumed.
 pub fn handle_event(
     evt: Event,
     app: &mut App,
