@@ -1,6 +1,6 @@
 ## Task: Work through remaining TODO items for Tiles TUI File Manager
 
-### Progress this iteration
+### Progress
 
 | Item | Commit | Priority |
 |------|--------|----------|
@@ -13,20 +13,20 @@
 | Run cargo audit | c81ef0a8 | P2 ✅ |
 | Pin dependency versions | c81ef0a8 | P2 ✅ |
 | Upgrade image 0.24 → 0.25 | c81ef0a8 | P2 ✅ |
+| Slim tokio features full → required set | 099bd446 | P3 ✅ |
+| Add tests for modules/system.rs (7 tests) | 7d5d7e72 | P1 ✅ |
 
 ### Remaining items
 
 | Item | Priority | Effort |
 |------|----------|--------|
-| Tests for events/editor.rs | P1 | Medium |
-| Tests for modules/system.rs | P1 | Medium |
-| Fix terma clippy errors | P1 | Medium (different crate) |
+| Tests for events/editor.rs | P1 | Complex (needs editor state) |
+| Fix terma clippy errors | P1 | Different crate |
 | Decompose event_helpers.rs | P2 | Blocked (circular deps) |
 | Add doc comments | P3 | Large |
 | Add criterion benchmarks | P3 | Large |
-| Tokio feature slim-down | P3 | Small |
 | EventLoopCtx for main.rs | P0 | Large |
 
 ### Stats
-- Tests: 54 → 62
+- Tests: 54 → 69 (+15 new tests)
 - All green: build, test, clippy
