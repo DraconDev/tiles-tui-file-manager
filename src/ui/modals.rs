@@ -75,7 +75,7 @@ port = 22"#;
 
     let mut footer_text = Vec::new();
     footer_text.extend(HotkeyHint::render("Enter", "Import", theme::success()));
-    footer_text.extend(HotkeyHint::render("Esc", "Cancel", theme::danger()));
+    footer_text.extend(HotkeyHint::render("Esc", "Cancel", theme::accent_primary()));
 
     f.render_widget(Paragraph::new(Line::from(footer_text)), chunks[3]);
 }

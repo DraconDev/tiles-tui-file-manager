@@ -178,8 +178,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         }
 
         let mut header_right = Vec::new();
-        header_right.extend(HotkeyHint::render("Esc", "Back", theme::danger()));
-        header_right.extend(HotkeyHint::render("^Q", "Quit", theme::danger()));
+        header_right.extend(HotkeyHint::render("Esc", "Back", crate::ui::theme::accent_primary()));
+        header_right.extend(HotkeyHint::render("^Q", "Quit", crate::ui::theme::accent_primary()));
 
         let block = Block::default()
             .borders(Borders::ALL)

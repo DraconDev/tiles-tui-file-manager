@@ -129,7 +129,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
     }
 
     if !showing_log {
-        left_spans.extend(HotkeyHint::render("^Q", "Quit", theme::danger()));
+        left_spans.extend(HotkeyHint::render("^Q", "Quit", theme::accent_primary()));
 
         let hidden_on = if let Some(fs) = app.current_file_state() {
             fs.nav.show_hidden
@@ -139,7 +139,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
 
         let mut shortcuts = Vec::new();
         if app.core.current_view == CurrentView::Editor {
-            shortcuts.extend(HotkeyHint::render("Esc", "Back", theme::danger()));
+            shortcuts.extend(HotkeyHint::render("Esc", "Back", theme::accent_primary()));
             shortcuts.extend(HotkeyHint::render(
                 "^B",
                 "Sidebar",

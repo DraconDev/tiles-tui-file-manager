@@ -74,7 +74,7 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
         Span::styled("Send", Style::default().fg(theme::accent_secondary())),
         Span::raw("    "),
         Span::styled(" Esc ", Style::default().fg(theme::muted())),
-        Span::styled("Cancel", Style::default().fg(theme::danger())),
+        Span::styled("Cancel", Style::default().fg(theme::accent_primary())),
     ]));
 
     f.render_widget(Paragraph::new(text), inner);
@@ -132,9 +132,9 @@ pub fn draw_drag_drop_modal(
         Style::default().fg(theme::accent_secondary())
     };
     let cancel_style = if is_hover(36, 14) {
-        Style::default().bg(theme::danger()).fg(theme::selection_fg())
+        Style::default().bg(theme::accent_primary()).fg(theme::selection_fg())
     } else {
-        Style::default().fg(theme::danger())
+        Style::default().fg(theme::accent_primary())
     };
 
     let mut text = Vec::new();

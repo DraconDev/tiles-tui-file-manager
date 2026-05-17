@@ -88,7 +88,7 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
             Style::default().fg(theme::selection_fg()).bg(theme::success()),
         ),
         Span::raw(" apply  "),
-        Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::danger())),
+        Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::accent_primary())),
         Span::raw(" cancel"),
     ]);
     f.render_widget(
@@ -151,7 +151,7 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
             Style::default().fg(theme::selection_fg()).bg(theme::success()),
         ),
         Span::raw(" apply  "),
-        Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::danger())),
+        Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::accent_primary())),
         Span::raw(" cancel"),
     ]);
     f.render_widget(

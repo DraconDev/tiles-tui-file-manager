@@ -33,10 +33,10 @@ pub fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
                     " Esc ",
                     Style::default()
                         .fg(theme::selection_fg())
-                        .bg(theme::danger())
+                        .bg(theme::accent_primary())
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled(" Back ", Style::default().fg(theme::danger())),
+                Span::styled(" Back ", Style::default().fg(theme::accent_primary())),
             ])
             .alignment(Alignment::Right),
         )
