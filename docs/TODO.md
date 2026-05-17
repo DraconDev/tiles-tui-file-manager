@@ -76,12 +76,12 @@ Updated with refactor progress — 2026-05-17
   - [ ] `events/editor.rs` — test keyboard shortcuts, undo/redo, search/replace
   - [ ] `modules/system.rs` — test process parsing, disk stats formatting
 
-- [ ] **Guard the one production `unwrap()`**
-  - [ ] `events/monitor.rs:63` — `app.process_table_state.selected().unwrap()` → use `if let Some(idx) = ...` or `unwrap_or(0)`
+- [x] **Guard the one production `unwrap()`** — DONE (commit f95873c3)
+  - [x] `events/monitor.rs:63` — replaced with `if let Some(sel)` pattern
 
-- [ ] **Replace `type_complexity` suppression with named structs**
-  - [ ] `ScanResult` 4-tuple in `main.rs` → define `struct ScanResult { entries, metadata, tree_files, tree_metadata }`
-  - [ ] Remove `#[allow(clippy::type_complexity)]` from `try_send_event`
+- [x] **Replace `type_complexity` suppression with named structs** — DONE (commit f95873c3)
+  - [x] `ScanResult` 4-tuple in `main.rs` → defined `struct TreeScanResult { tree_files, tree_metadata, git_files, git_metadata }`
+  - [x] Remove `#[allow(clippy::type_complexity)]` from `try_send_event`
 
 ---
 
@@ -91,9 +91,9 @@ Updated with refactor progress — 2026-05-17
   - [ ] Add `cargo audit` step to CI
   - [ ] Update `image` crate from 0.24 → 0.25
 
-- [ ] **Move debug log to XDG data directory**
-  - [ ] Change `"debug.log"` → `dirs::data_local_dir().join("tiles/debug.log")`
-  - [ ] Create directory on first write
+- [x] **Move debug log to XDG data directory** — DONE (commit 90bb96b4)
+  - [x] Change `"debug.log"` → `dirs::data_local_dir().join("tiles/debug.log")`
+  - [x] Create directory on first write
 
 - [ ] **Pin dependency minor versions for reproducibility**
   - [ ] `tokio = { version = "1.0", ... }` → `"1.41"` (or current)
@@ -107,8 +107,8 @@ Updated with refactor progress — 2026-05-17
   - [ ] `src/helpers/navigation.rs` — folder navigation, history, selection restore
   - **BLOCKER:** navigate_back, navigate_forward, push_history called from `events/mod.rs` dispatcher → circular dependency with `event_helpers.rs`. Would require restructuring event module hierarchy.
 
-- [ ] **Add `#[must_use]` to pure functions**
-  - [ ] `fuzzy_contains`, `resolve_relative_path`, `try_send_event`
+- [x] **Add `#[must_use]` to pure functions** — DONE (commit e2f7721c)
+  - [x] `fuzzy_contains`, `try_send_event`
 
 ---
 
