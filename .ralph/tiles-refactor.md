@@ -3,7 +3,7 @@
 ### Goals
 1. ✅ Decompose `App` struct (~120 fields → 13 sub-structs) — DONE
 2. ✅ Define FileState sub-structs (4 sub-structs defined, not yet activated) — PARTIAL
-3. 🔲 Split `ui/mod.rs` (1795 lines → 8+ submodules) — IN PROGRESS
+3. 🔲 Split `ui/mod.rs` (1465 lines → 8+ submodules) — IN PROGRESS
 4. 🔲 Extract `run_tty()` event handlers into `src/handlers/`
 
 ### Rules
@@ -18,9 +18,9 @@
 - `952dec60` — FileState sub-structs defined (FileNavState, FileListState, FileViewState, FileGitState)
 
 ### Phase 3 — ui/mod.rs split 🔲 IN PROGRESS
-**Extracted so far (10 modules):**
+**Extracted so far (11 modules):**
 - ✅ `header.rs`: draw_global_header (327 lines) — commit 6e612266
-- ✅ `footer.rs`: draw_stat_bar (54 lines) — commit 353e9545
+- ✅ `footer.rs`: draw_stat_bar + draw_footer (380 lines) — commits 353e9545 + 8b285e0d
 - ✅ `debug.rs`: 3 debug functions (233 lines) — commit 125c5ea5
 - ✅ `context_menu.rs`: draw_context_menu (197 lines) — commit ffdd9233
 - ✅ `monitor.rs`: 4 monitor functions (730 lines) — commit 28e63a35
@@ -29,14 +29,14 @@
 - ✅ `misc.rs`: 5 misc functions (266 lines) — commit 963aa964
 - ✅ `settings.rs`: 6 settings functions (667 lines) — commit eec0a089
 
-**ui/mod.rs: 5,060 → 1,795 lines** (3,265 lines extracted across 10 modules)
+**ui/mod.rs: 5,060 → 1,465 lines** (3,595 lines extracted across 11 modules)
 
-**REMAINING in mod.rs (~5 functions, ~1,250 lines):**
-- git_view group (~1000 lines): draw_commit_view + 4 helpers + draw_git_page
+**REMAINING in mod.rs (4 functions, ~1,250 lines):**
+- git_view group (~580 lines): draw_commit_view + 3 helpers + draw_git_page
   - draw_git_page calls: draw_commit_view, draw_stat_bar, draw_footer, draw_signal_select_modal, draw_pane_breadcrumbs
 - file_view group (486 lines): draw_main_stage + draw_file_view
   - draw_main_stage calls: draw_file_view, draw_ide_editor
-- footer group (327 lines): draw_footer
+- Note: draw_footer (now in footer.rs) is called from mod.rs draw_git_page
 
 **Key technique for nested `use` clauses:**
 ```rust
@@ -48,6 +48,11 @@ use crate::ui::theme as theme;
 **Cross-module calls:**
 - settings.rs → debug::draw_remote_settings (use `crate::ui::debug::draw_remote_settings`)
 - misc.rs → format_modified_time (re-exported, used by mod.rs)
+- mod.rs → draw_stat_bar, draw_footer (re-exported from footer.rs)
+
+**Module imports:**
+- `footer.rs`: uses `Paragraph` from ratatui, `App::{CurrentView, DropTarget}`, `HotkeyHint`, `UnicodeWidthStr`
+- `settings.rs`: uses `SettingsSection`/`SettingsTarget` from app, `FileColumn` from state, `Tabs` from ratatui
 
 ### Phase 4 — event handlers extraction
 - Not started
@@ -66,4 +71,4 @@ use crate::ui::theme as theme;
 - `11875292` refactor(ui): extract small modals to src/ui/small_modals.rs
 - `963aa964` refactor(ui): extract misc UI functions to src/ui/misc.rs
 - `eec0a089` refactor(ui): extract settings panel to src/ui/settings.rs
-- `5b5eb243` chore: update task state and preserve clean build
+- `8b285e0d` refactor(ui): extract draw_footer to src/ui/footer.rs
