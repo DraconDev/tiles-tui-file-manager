@@ -84,7 +84,16 @@ pub fn handle_editor_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<
             app.core.current_view = CurrentView::Files;
             app.load_view_prefs(CurrentView::Files);
             app.editor_global.editor_state = None;
+            // Clear the per-pane preview so the file list renders instead of
+            // the stale preview content.
+            let pane_idx = app.focused_pane_index;
+            if let Some(pane) = app.panes.get_mut(pane_idx) {
+                if let Some(fs) = pane.current_state_mut() {
+                    fs.view.preview = None;
+                }
+            }
             app.set_input_shield(50);
+            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
             return true;
         }
     }
