@@ -14,6 +14,7 @@ use ratatui::{
 use crate::app::{App, SettingsSection};
 use crate::icons::Icon;
 use crate::state::AppMode;
+use crate::ui::theme as theme;
 use crate::ui::theme::{accent_primary, accent_secondary, border_inactive, THEME};
 use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::truncate_to_width;
@@ -32,11 +33,11 @@ pub fn draw_debug_page(f: &mut Frame, area: Rect, app: &App) {
                 Span::styled(
                     " Esc ",
                     Style::default()
-                        .fg(Color::Black)
-                        .bg(Color::Red)
+                        .fg(theme::selection_fg())
+                        .bg(theme::danger())
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled(" Back ", Style::default().fg(Color::Red)),
+                Span::styled(" Back ", Style::default().fg(theme::danger())),
             ])
             .alignment(Alignment::Right),
         )
@@ -156,7 +157,7 @@ pub fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
     if app.remote.remote_bookmarks.is_empty() {
         f.render_widget(
             Paragraph::new("\n (No remote servers configured)")
-                .style(Style::default().fg(Color::DarkGray)),
+                .style(Style::default().fg(theme::muted())),
             chunks[1],
         );
     } else {
@@ -171,7 +172,7 @@ pub fn draw_add_remote_modal(f: &mut Frame, app: &App) {
         .title(" Add Remote Server ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Green));
+        .border_style(Style::default().fg(theme::success()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -210,9 +211,9 @@ pub fn draw_add_remote_modal(f: &mut Frame, app: &App) {
 
     for (i, (label, value)) in fields.iter().enumerate() {
         let is_active = i == active_idx;
-        let mut style = Style::default().fg(Color::DarkGray);
+        let mut style = Style::default().fg(theme::muted());
         if is_active {
-            style = Style::default().fg(Color::Yellow);
+            style = Style::default().fg(theme::warning());
         }
 
         let block = Block::default()
@@ -236,13 +237,13 @@ pub fn draw_add_remote_modal(f: &mut Frame, app: &App) {
             Span::styled(
                 " [Tab/Enter] ",
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(theme::info())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::raw("Next Field  "),
             Span::styled(
                 " [Esc] ",
-                Style::default().fg(Color::Red).add_modifier(Modifier::BOLD),
+                Style::default().fg(theme::danger()).add_modifier(Modifier::BOLD),
             ),
             Span::raw("Cancel"),
         ]),

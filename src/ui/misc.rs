@@ -86,10 +86,10 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
     let footer = Line::from(vec![
         Span::styled(
             " Enter ",
-            Style::default().fg(Color::Black).bg(Color::Green),
+            Style::default().fg(Color::Black).bg(theme::success()),
         ),
         Span::raw(" apply  "),
-        Span::styled(" Esc ", Style::default().fg(Color::Black).bg(Color::Red)),
+        Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::danger())),
         Span::raw(" cancel"),
     ]);
     f.render_widget(
@@ -100,7 +100,7 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
     if let Some((msg, time)) = &app.output.last_action_msg {
         if time.elapsed().as_secs() < 5 && msg.starts_with("Invalid color for ") {
             f.render_widget(
-                Paragraph::new(msg.as_str()).style(Style::default().fg(Color::Red)),
+                Paragraph::new(msg.as_str()).style(Style::default().fg(theme::danger())),
                 Rect::new(inner.x, inner.y + 7, inner.width, 1),
             );
         }
@@ -114,7 +114,7 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
         .title(" Reset All Settings ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Red));
+        .border_style(Style::default().fg(theme::danger()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -127,7 +127,7 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
             Span::styled(
                 "RESET",
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(theme::warning())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::raw(" and press Enter."),
@@ -149,10 +149,10 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
     let footer = Line::from(vec![
         Span::styled(
             " Enter ",
-            Style::default().fg(Color::Black).bg(Color::Green),
+            Style::default().fg(Color::Black).bg(theme::success()),
         ),
         Span::raw(" apply  "),
-        Span::styled(" Esc ", Style::default().fg(Color::Black).bg(Color::Red)),
+        Span::styled(" Esc ", Style::default().fg(theme::selection_fg()).bg(theme::danger())),
         Span::raw(" cancel"),
     ]);
     f.render_widget(
@@ -180,19 +180,19 @@ pub fn draw_highlight_modal(f: &mut Frame, _app: &App) {
     f.render_widget(block, area);
 
     let colors = [
-        (1, " R ", Color::Red),
-        (2, " G ", Color::Green),
-        (3, " Y ", Color::Yellow),
+        (1, " R ", theme::danger()),
+        (2, " G ", theme::success()),
+        (3, " Y ", theme::warning()),
         (4, " B ", Color::Blue),
-        (5, " M ", Color::Magenta),
-        (6, " C ", Color::Cyan),
+        (5, " M ", theme::accent_secondary()),
+        (6, " C ", theme::info()),
         (0, " X ", Color::Reset),
     ];
 
     let mut spans = Vec::new();
     for (i, (code, label, color)) in colors.iter().enumerate() {
         let style = if *code == 0 {
-            Style::default().bg(Color::DarkGray).fg(Color::White)
+            Style::default().bg(theme::muted()).fg(Color::White)
         } else {
             Style::default().bg(*color).fg(Color::Black)
         };
@@ -209,7 +209,7 @@ pub fn draw_highlight_modal(f: &mut Frame, _app: &App) {
     f.render_widget(
         Paragraph::new("1   2   3   4   5   6   0")
             .alignment(ratatui::layout::Alignment::Center)
-            .style(Style::default().fg(Color::DarkGray)),
+            .style(Style::default().fg(theme::muted())),
         Rect::new(inner.x, inner.y + 2, inner.width, 1),
     );
 }

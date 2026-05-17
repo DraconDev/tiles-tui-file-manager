@@ -18,16 +18,17 @@ Eliminate all 261 hardcoded `Color::` usages in `src/ui/` by routing every visib
 - [ ] cargo clippy + cargo test clean
 
 ### Phase 2: Replace hardcoded colors in UI code
-- [ ] Replace Color::Red (ESC/Back/Quit/Cancel) → theme::danger() (~15 occurrences)
-- [ ] Replace Color::DarkGray (muted labels) → theme::muted() (~20 occurrences)
-- [ ] Replace Color::Green (enabled/saved) → theme::success() (~10 occurrences)
-- [ ] Replace Color::Yellow (warning/modified) → theme::warning() (~5 occurrences)
-- [ ] Replace Color::Cyan (info) → theme::info() (~5 occurrences)
-- [ ] Replace file-type hardcoded colors → theme::file_code/config/media/archive/exec
-- [ ] Replace selection highlight hardcoded Rgbs → theme::selection_bg()
-- [ ] Replace git status/ref hardcoded colors → theme semantic colors
-- [ ] Verify zero remaining hardcoded Color::Red/DarkGray/Green/Yellow/Cyan in src/ui/
-- [ ] cargo clippy + cargo test clean after each sub-batch
+- [x] Replace Color::Red (ESC/Back/Quit/Cancel) → theme::danger() — all files
+- [x] Replace Color::DarkGray (muted labels) → theme::muted() — all files
+- [x] Replace Color::Green (enabled/saved) → theme::success() — all files
+- [x] Replace Color::Yellow (warning/modified) → theme::warning() — all files
+- [x] Replace Color::Cyan (info) → theme::info() — all files
+- [x] Replace Color::Magenta (accent) → theme::accent_secondary() — all files
+- [ ] Replace remaining file-type hardcoded colors → theme::file_code/config/media/archive/exec
+- [ ] Replace remaining selection highlight hardcoded Rgbs → theme::selection_bg()
+- [x] Replace in footer.rs, mod.rs, debug.rs, misc.rs, monitor.rs, settings.rs, file_view.rs, panes/sidebar.rs, sparkline.rs, panes/editor.rs, panes/breadcrumbs.rs, context_menu.rs
+- [x] Verify zero remaining hardcoded Color::Red/DarkGray/Green/Yellow/Cyan in src/ui/
+- [x] cargo clippy + cargo test clean after each sub-batch
 
 ### Phase 3: New theme presets
 - [ ] Add preset_nord()

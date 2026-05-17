@@ -40,7 +40,7 @@ pub fn draw_stat_bar(
         } else if ratio < 0.7 {
             mid_color
         } else {
-            Color::Red // Warning/Danger
+            theme::danger() // Warning/Danger
         };
 
         if i < filled {
@@ -130,7 +130,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
     }
 
     if !showing_log {
-        left_spans.extend(HotkeyHint::render("^Q", "Quit", Color::Red));
+        left_spans.extend(HotkeyHint::render("^Q", "Quit", theme::danger()));
 
         let hidden_on = if let Some(fs) = app.current_file_state() {
             fs.nav.show_hidden
@@ -140,7 +140,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
 
         let mut shortcuts = Vec::new();
         if app.core.current_view == CurrentView::Editor {
-            shortcuts.extend(HotkeyHint::render("Esc", "Back", Color::Red));
+            shortcuts.extend(HotkeyHint::render("Esc", "Back", theme::danger()));
             shortcuts.extend(HotkeyHint::render(
                 "^B",
                 "Sidebar",
@@ -200,7 +200,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
             shortcuts.extend(HotkeyHint::render(
                 "^H",
                 "Hidden",
-                if hidden_on { Color::Green } else { Color::Red },
+                if hidden_on { theme::success() } else { theme::danger() },
             ));
             shortcuts.extend(HotkeyHint::render(
                 "Space",
@@ -312,8 +312,8 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         app.system_state.cpu_usage,
         100.0,
         Color::Rgb(80, 200, 255),
-        Color::Yellow,
-        Color::DarkGray,
+        theme::warning(),
+        theme::muted(),
     );
     let mem_usage = (app.system_state.mem_usage / app.system_state.total_mem.max(1.0)) * 100.0;
     let mem_bar = draw_stat_bar(
@@ -355,7 +355,7 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
     let pulse_char = pulse_frames[pulse_idx as usize];
 
     let pulse_spans = vec![
-        Span::styled(" PULSE ", Style::default().fg(Color::DarkGray)),
+        Span::styled(" PULSE ", Style::default().fg(theme::muted())),
         Span::styled(
             pulse_char.repeat(3),
             Style::default().fg(theme::accent_primary()),
@@ -374,11 +374,11 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
         let bar = "█".repeat(pct / 10) + &"░".repeat(10 - (pct / 10));
         task_spans.push(Span::styled(
             format!(" {} [{}%] ", task.name, pct),
-            Style::default().fg(Color::Cyan),
+            Style::default().fg(theme::info()),
         ));
         task_spans.push(Span::styled(
             format!("{} ", bar),
-            Style::default().fg(Color::Cyan),
+            Style::default().fg(theme::info()),
         ));
     }
 

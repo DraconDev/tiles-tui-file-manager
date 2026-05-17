@@ -13,6 +13,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::app::{App, CurrentView, DropTarget, SidebarBounds, SidebarTarget};
 use crate::config::{fuzzy_contains, FUZZY_SEARCH};
 use crate::icons::Icon;
+use crate::ui::theme as theme;
 use crate::ui::theme::THEME;
 use dracon_terminal_engine::utils::truncate_to_width;
 
@@ -93,7 +94,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             if show_folders {
                 let folder_header_idx = sidebar_items.len();
                 let folders_icon = Icon::Folder.get(app.core.icon_mode);
-                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut line_style = Style::default().fg(theme::muted());
                 let mut folders_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
@@ -212,7 +213,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 current_y += 1;
                 let fav_header_idx = sidebar_items.len();
                 let fav_icon = Icon::Star.get(app.core.icon_mode);
-                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut line_style = Style::default().fg(theme::muted());
                 let mut fav_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
@@ -301,7 +302,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let idx = sidebar_items.len();
-                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut line_style = Style::default().fg(theme::muted());
                 let mut recent_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
@@ -366,7 +367,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 current_y += 1;
                 let current_storage_header_idx = sidebar_items.len();
                 let storage_icon = Icon::Storage.get(app.core.icon_mode);
-                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut line_style = Style::default().fg(theme::muted());
                 let mut storage_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
@@ -416,7 +417,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 let markers = active_storage_markers.get(&disk.name);
 
                 let mut name_style = if !disk.is_mounted {
-                    Style::default().fg(Color::DarkGray)
+                    Style::default().fg(theme::muted())
                 } else {
                     Style::default().fg(Color::White)
                 };
@@ -443,7 +444,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     spans.push(Span::styled(
                         format!("{}| ", m_str),
                         Style::default()
-                            .fg(Color::Magenta)
+                            .fg(theme::accent_secondary())
                             .add_modifier(Modifier::BOLD),
                     ));
                 }
@@ -457,11 +458,11 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         0.0
                     };
                     let mut free_style = if free_ratio < 0.15 {
-                        Style::default().fg(Color::Red)
+                        Style::default().fg(theme::danger())
                     } else if free_ratio < 0.35 {
-                        Style::default().fg(Color::Yellow)
+                        Style::default().fg(theme::warning())
                     } else {
-                        Style::default().fg(Color::Green)
+                        Style::default().fg(theme::success())
                     };
                     if is_selected {
                         free_style = free_style.fg(Color::Black).add_modifier(Modifier::BOLD);
@@ -493,7 +494,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 sidebar_items.push(ListItem::new(""));
                 current_y += 1;
                 let current_header_idx = sidebar_items.len();
-                let mut line_style = Style::default().fg(Color::DarkGray);
+                let mut line_style = Style::default().fg(theme::muted());
                 let mut remotes_style = Style::default()
                     .fg(crate::ui::theme::accent_primary())
                     .add_modifier(Modifier::BOLD);
@@ -565,7 +566,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                             .fg(Color::Black)
                             .add_modifier(Modifier::BOLD)
                     } else {
-                        Style::default().fg(Color::DarkGray)
+                        Style::default().fg(theme::muted())
                     },
                 ));
 
@@ -580,14 +581,14 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
             }
             if app.remote.remote_bookmarks.is_empty() {
                 sidebar_items.push(
-                    ListItem::new("(No remotes)").style(Style::default().fg(Color::DarkGray)),
+                    ListItem::new("(No remotes)").style(Style::default().fg(theme::muted())),
                 );
             }
 
             if sidebar_items.is_empty() {
                 sidebar_items.push(
                     ListItem::new("(All sections hidden. Enable in Settings.)")
-                        .style(Style::default().fg(Color::DarkGray)),
+                        .style(Style::default().fg(theme::muted())),
                 );
             }
 
@@ -663,7 +664,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     let text =
                         truncate_to_width(&hint, list_inner.width.saturating_sub(1) as usize, "..");
                     f.render_widget(
-                        Paragraph::new(Span::styled(text, Style::default().fg(Color::DarkGray))),
+                        Paragraph::new(Span::styled(text, Style::default().fg(theme::muted()))),
                         Rect::new(
                             list_inner.x,
                             list_inner.y + list_inner.height.saturating_sub(1),

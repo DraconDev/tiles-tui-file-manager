@@ -14,6 +14,7 @@ use unicode_width::UnicodeWidthStr;
 use crate::state::CurrentView;
 use crate::{state::AppMode, App};
 use crate::icons::Icon;
+use crate::ui::theme as theme;
 use crate::ui::theme::{accent_primary, accent_secondary, selection_bg};
 
 pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut App) {
@@ -122,7 +123,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                             .fg(accent_primary())
                     }
                 } else {
-                    Style::default().fg(Color::DarkGray)
+                    Style::default().fg(theme::muted())
                 };
 
                 let base_name = if is_active_tab {
@@ -161,11 +162,11 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     let behind = tab.git.git_behind;
 
                     let branch_color = if pending > 0 {
-                        Color::Red
+                        theme::danger()
                     } else if ahead > 0 || behind > 0 {
-                        Color::Yellow
+                        theme::warning()
                     } else {
-                        Color::Green
+                        theme::success()
                     };
 
                     let mut branch_style = Style::default().fg(branch_color);
@@ -178,19 +179,19 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     if pending > 0 {
                         spans.push(Span::styled(
                             format!(" +{}", pending),
-                            Style::default().fg(Color::Red),
+                            Style::default().fg(theme::danger()),
                         ));
                     }
                     if ahead > 0 {
                         spans.push(Span::styled(
                             format!(" ↑{}", ahead),
-                            Style::default().fg(Color::Yellow),
+                            Style::default().fg(theme::warning()),
                         ));
                     }
                     if behind > 0 {
                         spans.push(Span::styled(
                             format!(" ↓{}", behind),
-                            Style::default().fg(Color::Yellow),
+                            Style::default().fg(theme::warning()),
                         ));
                     }
                     spans.push(Span::raw(" "));
@@ -206,7 +207,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     for span in spans {
                         let span_w = span.content.width() as u16;
                         if current_w + span_w > max_width - 1 {
-                            truncated.push(Span::styled("…", Style::default().fg(Color::DarkGray)));
+                            truncated.push(Span::styled("\u{2026}", Style::default().fg(theme::muted())));
                             break;
                         }
                         truncated.push(span);
@@ -247,7 +248,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     Style::default().fg(accent_primary())
                 }
             } else {
-                Style::default().fg(Color::DarkGray)
+                Style::default().fg(theme::muted())
             };
 
             if let AppMode::Header(idx) = app.core.mode {
@@ -268,11 +269,11 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     let behind = tab.git.git_behind;
 
                     let branch_color = if pending > 0 {
-                        Color::Red
+                        theme::danger()
                     } else if ahead > 0 || behind > 0 {
-                        Color::Yellow
+                        theme::warning()
                     } else {
-                        Color::Green
+                        theme::success()
                     };
 
                     let mut branch_style = Style::default().fg(branch_color);
@@ -285,19 +286,19 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     if pending > 0 {
                         spans.push(Span::styled(
                             format!(" +{}", pending),
-                            Style::default().fg(Color::Red),
+                            Style::default().fg(theme::danger()),
                         ));
                     }
                     if ahead > 0 {
                         spans.push(Span::styled(
                             format!(" ↑{}", ahead),
-                            Style::default().fg(Color::Yellow),
+                            Style::default().fg(theme::warning()),
                         ));
                     }
                     if behind > 0 {
                         spans.push(Span::styled(
                             format!(" ↓{}", behind),
-                            Style::default().fg(Color::Yellow),
+                            Style::default().fg(theme::warning()),
                         ));
                     }
                     spans.push(Span::raw(" "));
@@ -319,7 +320,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     let span_w = span.content.width() as u16;
                     if current_w + span_w > max_available - 1 {
                         // Add ellipsis and stop
-                        truncated.push(Span::styled("…", Style::default().fg(Color::DarkGray)));
+                        truncated.push(Span::styled("\u{2026}", Style::default().fg(theme::muted())));
                         break;
                     }
                     truncated.push(span);

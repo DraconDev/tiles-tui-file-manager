@@ -70,13 +70,13 @@ user = "admin"
 port = 22"#;
 
     f.render_widget(
-        Paragraph::new(example_toml).style(Style::default().fg(Color::DarkGray)),
+        Paragraph::new(example_toml).style(Style::default().fg(theme::muted())),
         chunks[2],
     );
 
     let mut footer_text = Vec::new();
-    footer_text.extend(HotkeyHint::render("Enter", "Import", Color::Green));
-    footer_text.extend(HotkeyHint::render("Esc", "Cancel", Color::Red));
+    footer_text.extend(HotkeyHint::render("Enter", "Import", theme::success()));
+    footer_text.extend(HotkeyHint::render("Esc", "Cancel", theme::danger()));
 
     f.render_widget(Paragraph::new(Line::from(footer_text)), chunks[3]);
 }
@@ -88,19 +88,19 @@ pub fn draw_command_palette(f: &mut Frame, app: &mut App) {
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
         .title(" Command Palette ")
-        .border_style(Style::default().fg(Color::Magenta))
+        .border_style(Style::default().fg(theme::accent_secondary()))
         .inner(area);
     f.render_widget(
         Block::default()
             .borders(Borders::ALL)
             .border_type(BorderType::Rounded)
             .title(" Command Palette ")
-            .border_style(Style::default().fg(Color::Magenta)),
+            .border_style(Style::default().fg(theme::accent_secondary())),
         area,
     );
 
     f.render_widget(
-        Paragraph::new("> ").style(Style::default().fg(Color::Yellow)),
+        Paragraph::new("> ").style(Style::default().fg(theme::warning())),
         Rect::new(inner.x, inner.y, 2, 1),
     );
     f.render_widget(
@@ -113,7 +113,7 @@ pub fn draw_command_palette(f: &mut Frame, app: &mut App) {
         .enumerate()
         .map(|(i, cmd)| {
             let style = if i == app.nav.command_index {
-                Style::default().bg(Color::DarkGray).fg(Color::White)
+                Style::default().bg(theme::muted()).fg(Color::White)
             } else {
                 Style::default()
             };
@@ -133,7 +133,7 @@ pub fn draw_rename_modal(f: &mut Frame, app: &App) {
         .title(" Rename ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(theme::warning()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -180,7 +180,7 @@ pub fn draw_new_folder_modal(f: &mut Frame, app: &App) {
         .title(" New Folder ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Green));
+        .border_style(Style::default().fg(theme::success()));
     let inner = block.inner(area);
     f.render_widget(block, area);
     f.render_widget(&app.core.input, inner);
@@ -193,7 +193,7 @@ pub fn draw_new_file_modal(f: &mut Frame, app: &App) {
         .title(" New File ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Green));
+        .border_style(Style::default().fg(theme::success()));
     let inner = block.inner(area);
     f.render_widget(block, area);
     f.render_widget(&app.core.input, inner);
@@ -207,11 +207,11 @@ pub fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
         .title(" Bulk Rename ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Cyan));
+        .border_style(Style::default().fg(theme::info()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    let label_style = Style::default().fg(Color::DarkGray);
+    let label_style = Style::default().fg(theme::muted());
     let input_style = Style::default().fg(THEME.fg);
 
     let file_count = if let AppMode::BulkRename { ref files, .. } = app.core.mode {
@@ -221,7 +221,7 @@ pub fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
     };
 
     let mut content = Vec::new();
-    content.push(Line::from(vec![Span::styled(format!("{} files selected - Enter to apply", file_count), Style::default().fg(Color::Cyan))]));
+    content.push(Line::from(vec![Span::styled(format!("{} files selected - Enter to apply", file_count), Style::default().fg(theme::info()))]));
     content.push(Line::from(vec![Span::raw("")]));
     content.push(Line::from(vec![Span::styled("Pattern: ", label_style)]));
     content.push(Line::from(vec![Span::styled(&app.core.input.value, input_style)]));
@@ -246,12 +246,12 @@ pub fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
         }
     }
     for line in preview_lines {
-        content.push(Line::from(vec![Span::styled(line, Style::default().fg(Color::DarkGray))]));
+        content.push(Line::from(vec![Span::styled(line, Style::default().fg(theme::muted()))]));
     }
 
     f.render_widget(Paragraph::new(content), inner);
 
-    let hint_style = Style::default().fg(Color::DarkGray);
+    let hint_style = Style::default().fg(theme::muted());
     f.render_widget(
         Paragraph::new("Enter = Apply  Esc = Cancel").style(hint_style),
         Rect::new(inner.x, inner.y + inner.height.saturating_sub(1), inner.width, 1),
@@ -265,7 +265,7 @@ pub fn draw_save_as_modal(f: &mut Frame, app: &App) {
         .title(" Save As ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(theme::warning()));
     let inner = block.inner(area);
     f.render_widget(block, area);
     f.render_widget(&app.core.input, inner);
@@ -289,8 +289,8 @@ pub fn draw_delete_modal(f: &mut Frame, app: &App) {
     };
 
     let border_color = match &app.core.mode {
-        AppMode::Delete(ref mode) if mode == "trash" => Color::Yellow,
-        _ => Color::Red,
+        AppMode::Delete(ref mode) if mode == "trash" => theme::warning(),
+        _ => theme::danger(),
     };
 
     let block = Block::default()
@@ -321,11 +321,11 @@ pub fn draw_delete_modal(f: &mut Frame, app: &App) {
 
     let yes_style = if is_hover(5, 9) {
         Style::default()
-            .bg(Color::Red)
-            .fg(Color::Black)
+            .bg(theme::danger())
+            .fg(theme::selection_fg())
             .add_modifier(Modifier::BOLD)
     } else {
-        Style::default().fg(Color::Red).add_modifier(Modifier::BOLD)
+        Style::default().fg(theme::danger()).add_modifier(Modifier::BOLD)
     };
 
     let no_style = if is_hover(25, 8) {
@@ -450,13 +450,13 @@ pub fn draw_properties_modal(f: &mut Frame, app: &App) {
                 } else {
                     text.push(Line::from(Span::styled(
                         "No metadata available",
-                        Style::default().fg(Color::DarkGray),
+                        Style::default().fg(theme::muted()),
                     )));
                 }
         } else {
             text.push(Line::from(Span::styled(
                 "No metadata available (Remote)",
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(theme::muted()),
             )));
         }
     }

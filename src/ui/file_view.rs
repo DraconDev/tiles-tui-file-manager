@@ -284,12 +284,12 @@ pub fn draw_file_view(
                 row_bg_style = row_bg_style.bg(theme::accent_secondary());
             } else if let Some(&c) = app.selection.path_colors.get(path) {
                 let color = match c {
-                    1 => Color::Red,
-                    2 => Color::Green,
-                    3 => Color::Yellow,
+                    1 => theme::danger(),
+                    2 => theme::success(),
+                    3 => theme::warning(),
                     4 => Color::Blue,
-                    5 => Color::Magenta,
-                    6 => Color::Cyan,
+                    5 => theme::accent_secondary(),
+                    6 => theme::info(),
                     _ => Color::Reset,
                 };
                 if color != Color::Reset {
@@ -327,7 +327,7 @@ pub fn draw_file_view(
                         FileColumn::Name => {
                             if path.to_string_lossy() == "__DIVIDER__" {
                                 cell_style = Style::default()
-                                    .fg(Color::Yellow)
+                                    .fg(theme::warning())
                                     .add_modifier(Modifier::BOLD);
                                 "> Global results".to_string()
 } else {

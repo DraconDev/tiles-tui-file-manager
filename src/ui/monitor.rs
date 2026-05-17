@@ -32,11 +32,11 @@ pub fn draw_monitor_page(f: &mut Frame, area: Rect, app: &mut App) {
                 Span::styled(
                     " Esc ",
                     Style::default()
-                        .fg(Color::Black)
-                        .bg(Color::Red)
+                        .fg(theme::selection_fg())
+                        .bg(theme::danger())
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled(" Back ", Style::default().fg(Color::Red)),
+                Span::styled(" Back ", Style::default().fg(theme::danger())),
             ])
             .alignment(Alignment::Right),
         )
@@ -540,7 +540,7 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         let cpu_color = if is_selected {
             Color::Black
         } else if p.cpu > 50.0 {
-            Color::Red
+            theme::danger()
         } else {
             theme::accent_secondary()
         };
@@ -705,7 +705,7 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         let cpu_color = if is_selected {
             Color::Black
         } else if p.cpu > 50.0 {
-            Color::Red
+            theme::danger()
         } else {
             theme::accent_secondary()
         };

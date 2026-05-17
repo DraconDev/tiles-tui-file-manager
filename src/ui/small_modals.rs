@@ -35,7 +35,7 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
         .title(" Send Signal ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(theme::warning()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -57,7 +57,7 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
         let danger_style = if is_selected {
             Style::default().bg(theme::accent_primary()).fg(Color::Black).add_modifier(Modifier::BOLD)
         } else if *sig == 9 {
-            Style::default().fg(Color::Red)
+            Style::default().fg(theme::danger())
         } else {
             Style::default().fg(Color::White)
         };
@@ -70,11 +70,11 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
 
     text.push(Line::from(""));
     text.push(Line::from(vec![
-        Span::styled("  Enter ", Style::default().fg(Color::DarkGray)),
+        Span::styled("  Enter ", Style::default().fg(theme::muted())),
         Span::styled("Send", Style::default().fg(theme::accent_secondary())),
         Span::raw("    "),
-        Span::styled(" Esc ", Style::default().fg(Color::DarkGray)),
-        Span::styled("Cancel", Style::default().fg(Color::Red)),
+        Span::styled(" Esc ", Style::default().fg(theme::muted())),
+        Span::styled("Cancel", Style::default().fg(theme::danger())),
     ]));
 
     f.render_widget(Paragraph::new(text), inner);
@@ -92,7 +92,7 @@ pub fn draw_drag_drop_modal(
         .title(" Choice Action ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(theme::warning()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -117,24 +117,24 @@ pub fn draw_drag_drop_modal(
     };
 
     let copy_style = if is_hover(0, 10) {
-        Style::default().bg(Color::Green).fg(Color::Black)
+        Style::default().bg(theme::success()).fg(Color::Black)
     } else {
-        Style::default().fg(Color::Green)
+        Style::default().fg(theme::success())
     };
     let move_style = if is_hover(12, 10) {
-        Style::default().bg(Color::Yellow).fg(Color::Black)
+        Style::default().bg(theme::warning()).fg(Color::Black)
     } else {
-        Style::default().fg(Color::Yellow)
+        Style::default().fg(theme::warning())
     };
     let link_style = if is_hover(24, 10) {
-        Style::default().bg(Color::Magenta).fg(Color::Black)
+        Style::default().bg(theme::accent_secondary()).fg(Color::Black)
     } else {
-        Style::default().fg(Color::Magenta)
+        Style::default().fg(theme::accent_secondary())
     };
     let cancel_style = if is_hover(36, 14) {
-        Style::default().bg(Color::Red).fg(Color::Black)
+        Style::default().bg(theme::danger()).fg(theme::selection_fg())
     } else {
-        Style::default().fg(Color::Red)
+        Style::default().fg(theme::danger())
     };
 
     let mut text = Vec::new();
@@ -146,7 +146,7 @@ pub fn draw_drag_drop_modal(
             Span::styled(
                 src_name,
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(theme::info())
                     .add_modifier(Modifier::BOLD),
             ),
         ]));
@@ -156,7 +156,7 @@ pub fn draw_drag_drop_modal(
             Span::styled(
                 format!("{} files/folders", sources.len()),
                 Style::default()
-                    .fg(Color::Cyan)
+                    .fg(theme::info())
                     .add_modifier(Modifier::BOLD),
             ),
         ]));
@@ -165,7 +165,7 @@ pub fn draw_drag_drop_modal(
             let name = source.file_name().unwrap_or_default().to_string_lossy();
             text.push(Line::from(vec![
                 Span::raw("  - "),
-                Span::styled(name, Style::default().fg(Color::DarkGray)),
+                Span::styled(name, Style::default().fg(theme::muted())),
             ]));
         }
         if sources.len() > 3 {
@@ -177,7 +177,7 @@ pub fn draw_drag_drop_modal(
         Span::raw("To:    "),
         Span::styled(
             truncate_to_width(&dest_path, (inner.width as usize).saturating_sub(7), "..."),
-            Style::default().fg(Color::Cyan),
+            Style::default().fg(theme::info()),
         ),
     ]));
 
@@ -218,7 +218,7 @@ pub fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
 
     f.render_widget(
         Paragraph::new("Press ESC or F1 to Close")
-            .style(Style::default().fg(Color::DarkGray))
+            .style(Style::default().fg(theme::muted()))
             .alignment(ratatui::layout::Alignment::Center),
         chunks[0],
     );
@@ -304,7 +304,7 @@ pub fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
             rows.push(Row::new(vec![
                 Cell::from(Span::styled(
                     format!("  {}", key),
-                    Style::default().fg(Color::Yellow),
+                    Style::default().fg(theme::warning()),
                 )),
                 Cell::from(desc),
             ]));
@@ -328,7 +328,7 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         .title(" Open With... ")
         .borders(Borders::ALL)
         .border_type(BorderType::Rounded)
-        .border_style(Style::default().fg(Color::Yellow));
+        .border_style(Style::default().fg(theme::warning()));
     let inner = block.inner(area);
     f.render_widget(block, area);
 
@@ -400,7 +400,7 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         Block::default()
             .title(title)
             .borders(Borders::TOP)
-            .border_style(Style::default().fg(Color::DarkGray)),
+            .border_style(Style::default().fg(theme::muted())),
     );
     f.render_widget(list, chunks[2]);
 }

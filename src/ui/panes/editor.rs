@@ -9,6 +9,7 @@ use ratatui::layout::Alignment;
 use ratatui::style::Color;
 
 use crate::app::App;
+use crate::ui::theme as theme;
 
 pub fn draw_ide_editor(f: &mut Frame, area: Rect, app: &mut App) {
     let pc = app.panes.len();
@@ -139,16 +140,16 @@ pub fn draw_pane_editor(
                     };
 
                     let footer_line = Line::from(vec![
-                        Span::styled(" ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                        Span::styled(format!("Ln {}, Col {}", cursor_row, cursor_col), Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                        Span::styled(" | ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled(" ", Style::default().fg(theme::muted()).bg(footer_bg)),
+                        Span::styled(format!("Ln {}, Col {}", cursor_row, cursor_col), Style::default().fg(theme::muted()).bg(footer_bg)),
+                        Span::styled(" | ", Style::default().fg(theme::muted()).bg(footer_bg)),
                         Span::styled(format!(" {} ", language), Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
-                        Span::styled(" | ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                        Span::styled("  ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                        Span::styled("^S ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled(" | ", Style::default().fg(theme::muted()).bg(footer_bg)),
+                        Span::styled("  ", Style::default().fg(theme::muted()).bg(footer_bg)),
+                        Span::styled("^S ", Style::default().fg(theme::muted()).bg(footer_bg)),
                         Span::styled("Save", Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
-                        Span::styled("  ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                        Span::styled("^R ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                        Span::styled("  ", Style::default().fg(theme::muted()).bg(footer_bg)),
+                        Span::styled("^R ", Style::default().fg(theme::muted()).bg(footer_bg)),
                         Span::styled("Run", Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
                     ]);
                     f.render_widget(Paragraph::new(footer_line).alignment(Alignment::Left), footer_area);

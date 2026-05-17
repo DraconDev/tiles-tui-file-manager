@@ -179,8 +179,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
         }
 
         let mut header_right = Vec::new();
-        header_right.extend(HotkeyHint::render("Esc", "Back", Color::Red));
-        header_right.extend(HotkeyHint::render("^Q", "Quit", Color::Red));
+        header_right.extend(HotkeyHint::render("Esc", "Back", theme::danger()));
+        header_right.extend(HotkeyHint::render("^Q", "Quit", theme::danger()));
 
         let block = Block::default()
             .borders(Borders::ALL)
@@ -230,16 +230,16 @@ pub fn draw(f: &mut Frame, app: &mut App) {
                 };
 
                 let footer_line = Line::from(vec![
-                    Span::styled(" ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                    Span::styled(format!("Ln {}, Col {}", cursor_row, cursor_col), Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                    Span::styled(" | ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                    Span::styled(" ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
+                    Span::styled(format!("Ln {}, Col {}", cursor_row, cursor_col), Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
+                    Span::styled(" | ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
                     Span::styled(format!(" {} ", editor.language), Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
-                    Span::styled(" | ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                    Span::styled("  ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                    Span::styled("^S ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                    Span::styled(" | ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
+                    Span::styled("  ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
+                    Span::styled("^S ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
                     Span::styled("Save", Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
-                    Span::styled("  ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
-                    Span::styled("^R ", Style::default().fg(Color::DarkGray).bg(footer_bg)),
+                    Span::styled("  ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
+                    Span::styled("^R ", Style::default().fg(crate::ui::theme::muted()).bg(footer_bg)),
                     Span::styled("Run", Style::default().fg(crate::ui::theme::accent_secondary()).bg(footer_bg)),
                 ]);
                 f.render_widget(Paragraph::new(footer_line).alignment(Alignment::Left), footer_area);

@@ -34,7 +34,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
     }
 
     let mut search_label = "";
-    let mut search_color = Color::Cyan;
+    let mut search_color = crate::ui::theme::info();
 
     // IDE Mode Search Integration
     if app.core.current_view == CurrentView::Editor && search_filter.is_empty() {
@@ -59,7 +59,7 @@ pub fn draw_pane_breadcrumbs(f: &mut Frame, area: Rect, app: &mut App, pane_idx:
                                     } else {
                                         "WITH: "
                                     };
-                                    search_color = Color::Magenta;
+                                    search_color = crate::ui::theme::accent_secondary();
                                 }
                                 _ => {
                                     if !editor.filter_query.is_empty() {

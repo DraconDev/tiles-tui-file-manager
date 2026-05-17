@@ -11,6 +11,7 @@ use ratatui::{
 use crate::app::App;
 use crate::icons::Icon;
 use crate::state::AppMode;
+use crate::ui::theme as theme;
 use crate::ui::theme::{accent_primary, accent_secondary, THEME};
 
 pub fn draw_context_menu(
@@ -157,10 +158,10 @@ pub fn draw_context_menu(
 
         let mut item = ListItem::new(label).style(style);
         if (*action == ContextMenuAction::Paste) && app.selection.clipboard.is_none() {
-            item = item.style(Style::default().fg(Color::DarkGray));
+            item = item.style(Style::default().fg(theme::muted()));
         }
         if *action == ContextMenuAction::Separator {
-            item = item.style(Style::default().fg(Color::DarkGray));
+            item = item.style(Style::default().fg(theme::muted()));
         }
         items.push(item);
     }

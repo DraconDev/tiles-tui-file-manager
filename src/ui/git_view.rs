@@ -113,11 +113,11 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
                 Span::styled(
                     " Esc ",
                     Style::default()
-                        .fg(Color::Black)
-                        .bg(Color::Red)
+                        .fg(theme::selection_fg())
+                        .bg(theme::danger())
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled(" Back to Git ", Style::default().fg(Color::Red)),
+                Span::styled(" Back to Git ", Style::default().fg(theme::danger())),
             ])
             .alignment(Alignment::Right),
         );
@@ -168,7 +168,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(
         Paragraph::new(Line::from(vec![Span::styled(
             date,
-            Style::default().fg(Color::DarkGray),
+            Style::default().fg(theme::muted()),
         )])),
         layout[1],
     );
@@ -216,15 +216,15 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
                 format!(" +{} ", additions),
                 Style::default()
                     .fg(Color::Black)
-                    .bg(Color::Green)
+                    .bg(theme::success())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::raw(" "),
             Span::styled(
                 format!(" -{} ", deletions),
                 Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Red)
+                    .fg(theme::selection_fg())
+                    .bg(theme::danger())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::raw(" "),
@@ -237,7 +237,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
             ),
             Span::styled(
                 format!("  {}", files_preview),
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(theme::muted()),
             ),
         ])),
         layout[3],
@@ -292,7 +292,7 @@ pub fn draw_commit_view(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_widget(
         Paragraph::new("Loading commit...")
             .alignment(Alignment::Center)
-            .style(Style::default().fg(Color::DarkGray)),
+            .style(Style::default().fg(theme::muted())),
         content_inner,
     );
 }

@@ -44,14 +44,14 @@ pub fn parse_commit_refs(decorations: &str) -> Vec<String> {
 pub fn style_for_ref_label(label: &str) -> Style {
     if label.starts_with("HEAD -> ") {
         Style::default()
-            .fg(Color::Green)
+            .fg(theme::success())
             .add_modifier(Modifier::BOLD)
     } else if label.starts_with("tag: ") {
-        Style::default().fg(Color::Magenta)
+        Style::default().fg(theme::accent_secondary())
     } else if label.starts_with("origin/") {
-        Style::default().fg(Color::Cyan)
+        Style::default().fg(theme::info())
     } else {
-        Style::default().fg(Color::Yellow)
+        Style::default().fg(theme::warning())
     }
 }
 
@@ -64,7 +64,7 @@ pub fn refs_line(refs: &[String], max_refs: usize) -> Line<'static> {
     let shown = refs.len().min(max_refs);
     for (i, r) in refs.iter().take(shown).enumerate() {
         if i > 0 {
-            spans.push(Span::styled(", ", Style::default().fg(Color::DarkGray)));
+            spans.push(Span::styled(", ", Style::default().fg(theme::muted())));
         }
         spans.push(Span::styled(
             truncate_to_width(r, 18, ".."),
@@ -75,7 +75,7 @@ pub fn refs_line(refs: &[String], max_refs: usize) -> Line<'static> {
     if refs.len() > shown {
         spans.push(Span::styled(
             format!(" +{}", refs.len() - shown),
-            Style::default().fg(Color::DarkGray),
+            Style::default().fg(theme::muted()),
         ));
     }
 
@@ -117,7 +117,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             Span::styled(
                 format!(" [{}] ", branch_name),
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(theme::warning())
                     .add_modifier(Modifier::BOLD),
             ),
             Span::styled(
@@ -132,10 +132,10 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                     " Esc ",
                     Style::default()
                         .fg(Color::Black)
-                        .bg(Color::Red)
+                        .bg(theme::danger())
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled(" Back ", Style::default().fg(Color::Red)),
+                Span::styled(" Back ", Style::default().fg(theme::danger())),
             ])
             .alignment(Alignment::Right),
         );
@@ -172,10 +172,10 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                         .iter()
                         .map(|p| {
                             let status_color = match p.status.as_str() {
-                                "M" => Color::Yellow,
-                                "A" | "??" => Color::Green,
-                                "D" => Color::Red,
-                                "R" => Color::Cyan,
+                                "M" => theme::warning(),
+                                "A" | "??" => theme::success(),
+                                "D" => theme::danger(),
+                                "R" => theme::info(),
                                 _ => Color::White,
                             };
 
@@ -183,13 +183,13 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                             if p.insertions > 0 {
                                 stats_spans.push(Span::styled(
                                     format!(" +{}", p.insertions),
-                                    Style::default().fg(Color::Green),
+                                    Style::default().fg(theme::success()),
                                 ));
                             }
                             if p.deletions > 0 {
                                 stats_spans.push(Span::styled(
                                     format!(" -{}", p.deletions),
-                                    Style::default().fg(Color::Red),
+                                    Style::default().fg(theme::danger()),
                                 ));
                             }
 
@@ -225,7 +225,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
             .row_highlight_style(
                 Style::default()
                     .bg(Color::Rgb(40, 40, 50))
-                    .fg(Color::Yellow)
+                    .fg(theme::warning())
                     .add_modifier(Modifier::BOLD),
             );
 
@@ -263,15 +263,15 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
                         if act.files_changed > 0 {
                             stats_cells.push(
                                 Cell::from(act.files_changed.to_string())
-                                    .style(Style::default().fg(Color::Cyan)),
+                                    .style(Style::default().fg(theme::info())),
                             );
                             stats_cells.push(
                                 Cell::from(format!("+{}", act.insertions))
-                                    .style(Style::default().fg(Color::Green)),
+                                    .style(Style::default().fg(theme::success())),
                             );
                             stats_cells.push(
                                 Cell::from(format!("-{}", act.deletions))
-                                    .style(Style::default().fg(Color::Red)),
+                                    .style(Style::default().fg(theme::danger())),
                             );
                         } else {
                             stats_cells.push(Cell::from(""));
@@ -281,14 +281,14 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
 
                         let mut row_cells = vec![
                             Cell::from(act.date.clone())
-                                .style(Style::default().fg(Color::DarkGray)),
+                                .style(Style::default().fg(theme::muted())),
                             Cell::from(hash_display).style(
                                 Style::default()
                                     .fg(theme::accent_secondary())
                                     .add_modifier(Modifier::BOLD),
                             ),
                             Cell::from(refs_compact),
-                            Cell::from(act.author.clone()).style(Style::default().fg(Color::Cyan)),
+                            Cell::from(act.author.clone()).style(Style::default().fg(theme::info())),
                             Cell::from(act.message.clone()).style(Style::default().fg(THEME.fg)),
                         ];
                         row_cells.extend(stats_cells);

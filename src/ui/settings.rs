@@ -41,11 +41,11 @@ pub fn draw_settings_modal(f: &mut Frame, app: &App) {
                 Span::styled(
                     " Esc ",
                     Style::default()
-                        .fg(Color::Black)
-                        .bg(Color::Red)
+                        .fg(theme::selection_fg())
+                        .bg(theme::danger())
                         .add_modifier(Modifier::BOLD),
                 ),
-                Span::styled(" Back ", Style::default().fg(Color::Red)),
+                Span::styled(" Back ", Style::default().fg(theme::danger())),
             ])
             .alignment(Alignment::Right),
         )
@@ -100,7 +100,7 @@ pub fn draw_settings_modal(f: &mut Frame, app: &App) {
         List::new(items).block(
             Block::default()
                 .borders(Borders::RIGHT)
-                .border_style(Style::default().fg(Color::DarkGray)),
+                .border_style(Style::default().fg(theme::muted())),
         ),
         chunks[0],
     );
@@ -212,7 +212,7 @@ pub fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
         ]));
         for (key, desc) in items {
             rows.push(Row::new(vec![
-                Cell::from(Span::styled(key, Style::default().fg(Color::Yellow))),
+                Cell::from(Span::styled(key, Style::default().fg(theme::warning()))),
                 Cell::from(desc),
             ]));
         }
@@ -248,7 +248,7 @@ pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
             .select(sel)
             .highlight_style(
                 Style::default()
-                    .fg(Color::Yellow)
+                    .fg(theme::warning())
                     .add_modifier(Modifier::BOLD),
             ),
         chunks[0],
@@ -322,7 +322,7 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
                 "          "
             };
             let status_style = if is_active {
-                Style::default().fg(Color::Green)
+                Style::default().fg(theme::success())
             } else {
                 Style::default()
             };
@@ -531,9 +531,9 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
                 i == app.settings.settings_index && app.settings.settings_section == SettingsSection::General;
             let mut style = Style::default().fg(THEME.fg);
             let mut status_style = match opt.bool_state {
-                Some(true) => Style::default().fg(Color::Green),
-                Some(false) => Style::default().fg(Color::Red),
-                None => Style::default().fg(Color::Cyan),
+                Some(true) => Style::default().fg(theme::success()),
+                Some(false) => Style::default().fg(theme::danger()),
+                None => Style::default().fg(theme::info()),
             };
 
             let key_display = if opt.read_only || opt.key.is_empty() {
@@ -558,7 +558,7 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
                 Cell::from(format!("({})", key_display)).style(if is_selected {
                     style
                 } else {
-                    Style::default().fg(Color::DarkGray)
+                    Style::default().fg(theme::muted())
                 }),
             ])
         })
@@ -605,7 +605,7 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
             .add_modifier(Modifier::BOLD)
     } else {
         Style::default()
-            .fg(Color::Yellow)
+            .fg(theme::warning())
             .add_modifier(Modifier::BOLD)
     };
     rows.push(Row::new(vec![
@@ -615,12 +615,12 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     ]));
 
     let preset_rows = [
-        ("Warm", "amber + mint", Color::Yellow),
-        ("Cool", "violet + ice", Color::Cyan),
-        ("Forest", "moss + pine", Color::Green),
+        ("Warm", "amber + mint", theme::warning()),
+        ("Cool", "violet + ice", theme::info()),
+        ("Forest", "moss + pine", theme::success()),
         ("Sunset", "coral + plum", Color::LightRed),
         ("Mono", "steel grayscale", Color::Gray),
-        ("Legacy Red", "classic red accent", Color::Red),
+        ("Legacy Red", "classic red accent", theme::danger()),
     ];
     for (i, (name, desc, color)) in preset_rows.iter().enumerate() {
         let row_idx = i + 1;
