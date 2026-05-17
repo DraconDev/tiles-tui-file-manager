@@ -58,23 +58,56 @@ pub fn handle_git_mouse(
     let row = me.row;
     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
         if let Some(fs) = app.current_file_state() {
-            let pending = &fs.git.git_pending;
-            let pending_len = pending.len();
+            let pending_len = fs.git.git_pending.len();
+
+            // Layout mirrors draw_git_page:
+            //   Outer block: Borders::ALL → inner starts at row 1
+            //   inner.y = 1 (below top border)
+            //   top_area (pending): rows 1..1+top_h
+            //     pending table has Borders::RIGHT only, no header
+            //     first data row = inner.y (= 1)
+            //   history_area: rows 1+top_h..
+            //     history table has Borders::TOP + .header().bottom_margin(1)
+            //     border row = 1 row
+            //     header row = 1 row
+            //     bottom_margin = 1 row
+            //     first data row = history_area_y + 3
             let inner_h = app.core.terminal_size.1.saturating_sub(2);
-            let top_h = if pending_len == 0 {
+            let top_h: u16 = if pending_len == 0 {
                 0
             } else {
                 (pending_len as u16 + 2).min(inner_h / 3)
             };
 
-            let inner_y = 1; // Top border
+            let inner_y: u16 = 1; // Below outer block top border
 
-            // History section calculation
+            // --- Pending section (ACTIVE) ---
+            if top_h > 0 && row >= inner_y && row < inner_y + top_h {
+                // Pending table: Borders::RIGHT only, no header row
+                // First data row is at inner_y
+                let rel_row = (row - inner_y) as usize;
+                if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
+                    if let Some(tab) = pane.tabs.get_mut(pane.active_tab_index) {
+                        if rel_row < tab.git.git_pending.len() {
+                            tab.git.git_pending_state.select(Some(rel_row));
+                            tab.git.git_history_state.select(None);
+                            // Open diff preview
+                            if let Some(change) = tab.git.git_pending.get(rel_row) {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(
+                                    app.focused_pane_index,
+                                    std::path::PathBuf::from(format!("git-diff://{}", change.path)),
+                                ));
+                            }
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            // --- History section ---
             let history_area_y = inner_y + top_h;
-            // Table block title " HISTORY " is at history_area_y (1 row)
-            // Column headers from .header() are at history_area_y + 1 (1 row)
-            // First data row is at history_area_y + 2
-            let table_data_start_y = history_area_y + 2;
+            // Layout: Borders::TOP (1 row) + header (1 row) + bottom_margin(1) = 3 rows before data
+            let table_data_start_y = history_area_y + 3;
 
             if row >= table_data_start_y {
                 if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
@@ -100,5 +133,5 @@ pub fn handle_git_mouse(
             }
         }
     }
-    false // Don't trap - event not handled
+    false
 }
