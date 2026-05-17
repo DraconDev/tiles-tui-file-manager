@@ -1,5 +1,7 @@
 #![allow(clippy::needless_borrow)]
 
+pub use crate::events::mouse_helpers::{fs_mouse_index, get_open_with_suggestions};
+
 use crate::app::{
     App, AppEvent, AppMode, CommandAction, CommandItem, ContextMenuAction, ContextMenuTarget,
     CurrentView, FileState,
@@ -822,23 +824,6 @@ pub fn push_history(fs: &mut FileState, path: PathBuf) {
         fs.nav.history.drain(0..excess);
         fs.nav.history_index = fs.nav.history_index.saturating_sub(excess);
     }
-}
-
-const FILE_LIST_START_ROW: u16 = 3; // row 0=header icons, rows 1-2=breadcrumbs, row 3+=file list
-
-pub fn fs_mouse_index(row: u16, app: &App) -> Option<usize> {
-    let fs = app.current_file_state()?;
-    let offset = fs.view.table_state.offset();
-    let rel_row = row.saturating_sub(FILE_LIST_START_ROW) as usize;
-    let idx = offset.saturating_add(rel_row);
-    if idx >= fs.list.files.len() {
-        return None;
-    }
-    Some(idx)
-}
-
-pub fn get_open_with_suggestions(_app: &App, ext: &str) -> Vec<String> {
-    dracon_terminal_engine::utils::get_open_with_suggestions(ext)
 }
 
 pub fn navigate_up(app: &mut App) {

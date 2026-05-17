@@ -14,9 +14,10 @@ pub mod editor_modals;
 pub mod file_manager;
 pub mod git;
 pub mod input;
-pub mod modals;
 pub mod modal_mouse;
+pub mod modals;
 pub mod monitor;
+pub mod mouse_helpers;
 pub mod settings_handlers;
 
 pub fn handle_event(
@@ -43,7 +44,7 @@ pub fn handle_event(
 
     // 3. Mode-specific logic (Modals, Overlays)
     if !matches!(app.core.mode, AppMode::Normal)
-        && modals::handle_modal_events(&evt, app, &event_tx) {
+        && crate::events::modals::handle_modal_events(&evt, app, &event_tx) {
             return true;
         }
 
