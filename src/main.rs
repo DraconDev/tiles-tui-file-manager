@@ -660,8 +660,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     match save_res {
                         Ok(_) => {
                             if remote_for_save.is_none() {
-                                if let Ok(meta) = std::fs::metadata(&path) {
-                                    if let Ok(mtime) = meta.modified() {
+                                let now = std::time::Instant::now();
+                                let meta_ok = std::fs::metadata(&path).ok().and_then(|meta| {
+                                    meta.modified().ok().map(|mtime| {
                                         let size: u64 = meta.len();
                                         if last_self_save.len() > 100 {
                                             // Prune entries older than 5 seconds instead of clearing all.
@@ -669,8 +670,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                                             // allowing spurious editor reloads from subsequent file watcher events.
                                             last_self_save.retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
                                         }
-                                        last_self_save.insert(path.clone(), (mtime, size, std::time::Instant::now()));
-                                    }
+                                        last_self_save.insert(path.clone(), (mtime, size, now));
+                                        true
+                                    })
+                                });
+                                // Fallback: if metadata() fails, still register a self-save entry
+                                // so the guard catches subsequent file watcher events.
+                                // Use epoch mtime as a sentinel — the 5-second elapsed check
+                                // will still protect against spurious reloads.
+                                if meta_ok.is_none() {
+                                    last_self_save.insert(path.clone(), (std::time::SystemTime::UNIX_EPOCH, 0, now));
                                 }
                             }
                             let mut app_guard = app.lock();
