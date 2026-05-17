@@ -472,3 +472,70 @@ pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
         true
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dracon_terminal_engine::compositor::engine::TilePlacement;
+    use std::sync::{Arc, Mutex};
+
+    fn test_app() -> App {
+        let queue: Arc<Mutex<Vec<TilePlacement>>> = Arc::new(Mutex::new(Vec::new()));
+        App::new(queue)
+    }
+
+    #[test]
+    fn app_new_defaults() {
+        let app = test_app();
+        assert!(app.core.running);
+        assert_eq!(app.core.current_view, CurrentView::Files);
+        assert_eq!(app.core.mode, AppMode::Normal);
+        assert_eq!(app.core.terminal_size, (80, 24));
+        assert!(!app.core.is_split_mode);
+    }
+
+    #[test]
+    fn app_new_has_single_pane() {
+        let app = test_app();
+        assert_eq!(app.panes.len(), 1);
+        assert_eq!(app.focused_pane_index, 0);
+    }
+
+    #[test]
+    fn app_new_has_file_state() {
+        let app = test_app();
+        let fs = app.current_file_state();
+        assert!(fs.is_some());
+        let fs = fs.unwrap();
+        assert!(!fs.nav.current_path.as_os_str().is_empty());
+        assert!(fs.list.files.is_empty()); // not yet populated
+    }
+
+    #[test]
+    fn toggle_split_mode() {
+        let mut app = test_app();
+        assert!(!app.core.is_split_mode);
+        assert_eq!(app.panes.len(), 1);
+        app.toggle_split();
+        assert!(app.core.is_split_mode);
+        assert_eq!(app.panes.len(), 2);
+        app.toggle_split();
+        assert!(!app.core.is_split_mode);
+        assert_eq!(app.panes.len(), 1);
+    }
+
+    #[test]
+    fn sidebar_defaults() {
+        let app = test_app();
+        assert!(app.sidebar.show_sidebar);
+        assert!(!app.sidebar.sidebar_focus);
+        assert_eq!(app.sidebar.sidebar_width_percent, 15);
+    }
+
+    #[test]
+    fn input_shield_mechanism() {
+        let mut app = test_app();
+        assert!(app.core.input_shield_until.is_none());
+        app.set_input_shield(100);
+        assert!(app.core.input_shield_until.is_some());
+    }
+}
