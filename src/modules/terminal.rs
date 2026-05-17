@@ -51,7 +51,7 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
                     args.push(arg);
                 }
             }
-            if Command::new("kitty").args(&args).spawn().is_ok() {
+            if Command::new("kitty").args(&args).stderr(std::process::Stdio::null()).spawn().is_ok() {
                 return true;
             }
         }
@@ -65,7 +65,7 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
                     args.push(arg);
                 }
             }
-            if Command::new("wezterm").args(&args).spawn().is_ok() {
+            if Command::new("wezterm").args(&args).stderr(std::process::Stdio::null()).spawn().is_ok() {
                 return true;
             }
         }
@@ -178,7 +178,11 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
             _ => {}
         }
 
-        if did_build && Command::new(term).args(&args).spawn().is_ok() {
+        if did_build && Command::new(term)
+            .args(&args)
+            .stderr(std::process::Stdio::null())
+            .spawn().is_ok()
+        {
             return true;
         }
     }
