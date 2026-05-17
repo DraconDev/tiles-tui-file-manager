@@ -593,3 +593,71 @@ pub enum ClipboardOp {
     Copy,
     Cut,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::{FileColumn, FileState};
+
+    fn test_fs() -> FileState {
+        FileState::new(
+            std::path::PathBuf::from("/tmp"),
+            None,
+            false,
+            vec![FileColumn::Name, FileColumn::Size],
+            FileColumn::Name,
+            true,
+        )
+    }
+
+    #[test]
+    fn file_state_new_defaults() {
+        let fs = test_fs();
+        assert_eq!(fs.nav.current_path, std::path::PathBuf::from("/tmp"));
+        assert!(fs.nav.remote_session.is_none());
+        assert!(!fs.nav.show_hidden);
+        assert!(fs.nav.search_filter.is_empty());
+        assert_eq!(fs.nav.sort_column, FileColumn::Name);
+        assert!(fs.nav.sort_ascending);
+    }
+
+    #[test]
+    fn file_state_history() {
+        let mut fs = test_fs();
+        // FileState::new already pushes the initial path to history
+        assert_eq!(fs.nav.history.len(), 1);
+        crate::event_helpers::push_history(&mut fs, std::path::PathBuf::from("/home"));
+        assert_eq!(fs.nav.history.len(), 2);
+        // history_index should be at the end
+        assert_eq!(fs.nav.history_index, 1);
+    }
+
+    #[test]
+    fn pane_new_defaults() {
+        let fs = test_fs();
+        let pane = Pane::new(fs);
+        assert_eq!(pane.active_tab_index, 0);
+        assert_eq!(pane.tabs.len(), 1);
+    }
+
+    #[test]
+    fn pane_current_state() {
+        let fs = test_fs();
+        let pane = Pane::new(fs);
+        assert!(pane.current_state().is_some());
+    }
+
+    #[test]
+    fn pane_open_tab() {
+        let fs = test_fs();
+        let mut pane = Pane::new(fs);
+        let fs2 = test_fs();
+        pane.open_tab(fs2);
+        assert_eq!(pane.tabs.len(), 2);
+    }
+
+    #[test]
+    fn app_mode_is_normal_default() {
+        assert_eq!(AppMode::Normal, AppMode::Normal);
+    }
+}

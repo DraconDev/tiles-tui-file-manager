@@ -534,8 +534,8 @@ mod tests {
     #[test]
     fn input_shield_mechanism() {
         let mut app = test_app();
-        assert!(app.core.input_shield_until.is_none());
+        assert!(app.output.input_shield_until.is_none());
         app.set_input_shield(100);
-        assert!(app.core.input_shield_until.is_some());
+        assert!(app.output.input_shield_until.is_some());
     }
 }
