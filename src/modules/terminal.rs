@@ -5,27 +5,42 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
     let path_str = path.to_string_lossy().to_string();
 
     if new_tab {
-        // When running inside Konsole, just call konsole --new-tab directly.
-        // The dbus-send path was broken (dbus-send can't encode QVariantMap) and always
-        // fell through. Direct invocation is simpler and more reliable.
-        if std::env::var("KONSOLE_DBUS_SERVICE").is_ok()
-            && command_exists("konsole")
-        {
-                let mut args: Vec<String> = vec![
-                    "--new-tab".to_string(),
-                    "--workdir".to_string(),
-                    path_str.clone(),
-                ];
-                if let Some(cmd_str) = command {
-                    let split = split_command(cmd_str);
-                    if !split.is_empty() {
-                        args.push("-e".to_string());
-                        args.extend(split);
+        // Konsole: use qdbus to call Window.newSession() on the existing window.
+        // konsole --new-tab from a non-terminal process opens a NEW window,
+        // not a tab in the existing one. The D-Bus API is the only reliable way.
+        if let Ok(service) = std::env::var("KONSOLE_DBUS_SERVICE") {
+            if let Ok(window) = std::env::var("KONSOLE_DBUS_WINDOW") {
+                // Try qdbus first (KDE native, handles types properly)
+                let qdbus_result = Command::new("qdbus")
+                    .args([
+                        &service,
+                        &window,
+                        "org.kde.konsole.Window.newSession",
+                        "",  // default profile
+                        &path_str,
+                    ])
+                    .output();
+                if let Ok(output) = qdbus_result {
+                    if output.status.success() {
+                        return true;
                     }
                 }
-                if Command::new("konsole").args(&args).spawn().is_ok() {
-                    return true;
+                // Fallback: try qdbus6 (KDE 6)
+                let qdbus6_result = Command::new("qdbus6")
+                    .args([
+                        &service,
+                        &window,
+                        "org.kde.konsole.Window.newSession",
+                        "",
+                        &path_str,
+                    ])
+                    .output();
+                if let Ok(output) = qdbus6_result {
+                    if output.status.success() {
+                        return true;
+                    }
                 }
+            }
         }
 
         if std::env::var("KITTY_WINDOW_ID").is_ok() {
@@ -78,7 +93,9 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
 
         match term {
             "konsole" => {
-                args.push("--new-tab".to_string());
+                if new_tab {
+                    args.push("--new-tab".to_string());
+                }
                 args.push("--workdir".to_string());
                 args.push(path_str.clone());
                 if let Some(cmd_str) = command {
@@ -91,7 +108,9 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
                 did_build = true;
             }
             "gnome-terminal" => {
-                args.push("--tab".to_string());
+                if new_tab {
+                    args.push("--tab".to_string());
+                }
                 args.push(format!("--working-directory={}", path_str));
                 if let Some(cmd_str) = command {
                     let split = split_command(cmd_str);
@@ -103,7 +122,9 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
                 did_build = true;
             }
             "xfce4-terminal" => {
-                args.push("--tab".to_string());
+                if new_tab {
+                    args.push("--tab".to_string());
+                }
                 args.push("--working-directory".to_string());
                 args.push(path_str.clone());
                 if let Some(cmd_str) = command {
@@ -118,7 +139,9 @@ pub fn spawn_terminal(path: &Path, new_tab: bool, command: Option<&str>) -> bool
             "kitty" => {
                 args.push("@".to_string());
                 args.push("launch".to_string());
-                args.push("--type=tab".to_string());
+                if new_tab {
+                    args.push("--type=tab".to_string());
+                }
                 args.push("--cwd".to_string());
                 args.push(path_str.clone());
                 if let Some(cmd_str) = command {
