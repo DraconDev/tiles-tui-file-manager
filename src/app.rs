@@ -51,6 +51,10 @@ pub struct App {
 }
 
 impl App {
+    /// Create a new App instance with default state.
+    ///
+    /// Initializes with a single pane showing the current working directory,
+    /// default sidebar settings, and the Files view active.
     pub fn new(tile_queue: Arc<StdMutex<Vec<TilePlacement>>>) -> Self {
         let start_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
         let initial_fs = FileState::new(
@@ -208,6 +212,8 @@ impl App {
         }
     }
 
+    /// Set the input shield cooldown to ignore keyboard events for `duration_ms` milliseconds.
+    /// Used after mode transitions to prevent stray keypresses.
     pub fn set_input_shield(&mut self, duration_ms: u64) {
         let now = std::time::Instant::now();
         self.output.input_shield_until = Some(now + std::time::Duration::from_millis(duration_ms));
@@ -215,6 +221,7 @@ impl App {
             Some(now + std::time::Duration::from_millis(duration_ms + 100));
     }
 
+    /// Check if we're currently in the soft input shield cooldown period.
     pub fn in_soft_shield(&self) -> bool {
         self.output
             .input_shield_active_until
@@ -222,6 +229,7 @@ impl App {
             .unwrap_or(false)
     }
 
+    /// Add a folder to the recent folders list, trimming to MAX_HISTORY.
     pub fn push_recent_folder(&mut self, path: PathBuf) {
         self.nav.recent_folders.retain(|p| p != &path);
         self.nav.recent_folders.insert(0, path);
@@ -230,18 +238,21 @@ impl App {
         }
     }
 
+    /// Get a reference to the currently focused pane's FileState.
     pub fn current_file_state(&self) -> Option<&FileState> {
         self.panes
             .get(self.focused_pane_index)
             .and_then(|p| p.current_state())
     }
 
+    /// Get a mutable reference to the currently focused pane's FileState.
     pub fn current_file_state_mut(&mut self) -> Option<&mut FileState> {
         self.panes
             .get_mut(self.focused_pane_index)
             .and_then(|p| p.current_state_mut())
     }
 
+    /// Calculate the sidebar width in character columns based on the percentage setting.
     pub fn sidebar_width(&self) -> u16 {
         if !self.sidebar.show_sidebar {
             return 0;
@@ -249,6 +260,7 @@ impl App {
         (self.core.terminal_size.0 as f32 * (self.sidebar.sidebar_width_percent as f32 / 100.0)) as u16
     }
 
+    /// Toggle between single-pane and dual-pane (split) mode.
     pub fn toggle_split(&mut self) {
         self.core.is_split_mode = !self.core.is_split_mode;
         if self.core.is_split_mode && self.panes.len() == 1 {
