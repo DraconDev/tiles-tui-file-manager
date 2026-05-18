@@ -1140,13 +1140,22 @@ pub fn handle_file_mouse(
                     }
 
                     if button == MouseButton::Left {
-                        fs.list.selection.handle_click(
-                            idx,
-                            is_shift,
-                            is_ctrl,
-                            sel_mode && !is_shift,
-                        );
-                        fs.view.table_state.select(fs.list.selection.selected);
+                        // Only handle_click for Name column clicks —
+                        // clicks on empty space to the right start marquee instead
+                        let in_name_col = fs.view.column_bounds.iter()
+                            .find(|(_, ct)| *ct == FileColumn::Name)
+                            .is_some_and(|(name_rect, _)| {
+                                column >= name_rect.x && column < name_rect.x + name_rect.width
+                            });
+                        if in_name_col {
+                            fs.list.selection.handle_click(
+                                idx,
+                                is_shift,
+                                is_ctrl,
+                                sel_mode && !is_shift,
+                            );
+                            fs.view.table_state.select(fs.list.selection.selected);
+                        }
                     }
 
                     let p = fs.list.files[idx].clone();
@@ -1322,10 +1331,14 @@ pub fn handle_file_mouse(
                 app.drag.is_dragging = false;
             }
             let sel_mode = app.selection.selection_mode;
+            // Skip mouseUp selection cleanup if we were tracking for marquee
+            // (marquee already handled selection, or click was on empty space)
+            let was_marquee_tracking = app.drag.marquee_start.is_some();
             if row >= 3
                 && !app.selection.prevent_mouse_up_selection_cleanup
                 && !sel_mode
                 && !me.modifiers.contains(KeyModifiers::SHIFT)
+                && !was_marquee_tracking
             {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
                     return true;

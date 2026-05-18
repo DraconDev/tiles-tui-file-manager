@@ -614,7 +614,7 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     ]));
 
     let preset_rows = [
-        ("Cool (Default)", "violet + ice", theme::info()),
+        ("Warm (Default)", "amber + mint", theme::warning()),
         ("Cool", "violet + ice", theme::info()),
         ("Forest", "moss + pine", theme::success()),
         ("Sunset", "coral + plum", crate::ui::theme::ThemeStyle::preset_sunset().accent_primary.to_color()),
