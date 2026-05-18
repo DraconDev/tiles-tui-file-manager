@@ -1101,8 +1101,12 @@ pub fn handle_file_mouse(
             // 3. File Row Interaction
             if row >= 3 {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
-                    // Empty space click — start marquee tracking
+                    // Empty space click — deselect all and start marquee tracking
                     if button == MouseButton::Left && column >= sw {
+                        if let Some(fs) = app.current_file_state_mut() {
+                            fs.list.selection.clear_multi();
+                            fs.list.selection.selected = None;
+                        }
                         app.drag.marquee_start = Some((column, row));
                         app.drag.marquee_end = Some((column, row));
                     }
@@ -1210,11 +1214,23 @@ pub fn handle_file_mouse(
                         }
                         return true;
                     }
-                    app.drag.drag_source = Some(path.clone());
-                    app.drag.drag_start_pos = Some((column, row));
-                    // Also track marquee start — if drag doesn't engage (no source), this becomes a marquee
-                    app.drag.marquee_start = Some((column, row));
-                    app.drag.marquee_end = Some((column, row));
+                    // Only set drag_source if click is within the Name column —
+                    // clicking empty space to the right of the name should start marquee, not file drag
+                    let in_name_column = app.current_file_state()
+                        .and_then(|fs| fs.view.column_bounds.iter()
+                            .find(|(_, ct)| *ct == FileColumn::Name)
+                            .map(|(name_rect, _)| {
+                                column >= name_rect.x && column < name_rect.x + name_rect.width
+                            }))
+                        .unwrap_or(true); // fallback: treat as name column if bounds unknown
+                    if in_name_column {
+                        app.drag.drag_source = Some(path.clone());
+                        app.drag.drag_start_pos = Some((column, row));
+                    } else {
+                        // Clicked empty space in this row — start marquee tracking
+                        app.drag.marquee_start = Some((column, row));
+                        app.drag.marquee_end = Some((column, row));
+                    }
 
                     // Double Click
                     if button == MouseButton::Left
