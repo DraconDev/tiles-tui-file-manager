@@ -3,7 +3,6 @@
 use dracon_terminal_engine::contracts::{
     InputEvent as Event, KeyCode, KeyModifiers, MouseButton, MouseEventKind,
 };
-use std::collections::HashSet;
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
@@ -43,22 +42,6 @@ fn reselect_after_filter(fs: &mut crate::state::FileState, old_path: Option<&std
     fs.list.selection.anchor = Some(0);
     fs.view.table_state.select(Some(0));
     *fs.view.table_state.offset_mut() = 0;
-}
-
-fn is_virtual_divider(path: &std::path::Path) -> bool {
-    path.to_string_lossy() == "__DIVIDER__"
-}
-
-fn open_file_or_navigate(path: &std::path::Path) -> Option<std::path::PathBuf> {
-    if path.is_dir() {
-        Some(path.to_path_buf())
-    } else {
-        dracon_terminal_engine::utils::spawn_detached(
-            "xdg-open",
-            vec![path.to_string_lossy().to_string()],
-        );
-        None
-    }
 }
 
 fn execute_undo(
@@ -961,6 +944,7 @@ mod tests {
     }
 
     use crate::events::file_actions::is_double_click;
+    use crate::events::file_actions::is_virtual_divider;
 
     #[test]
     fn is_valid_search_char_allows_letters() {
