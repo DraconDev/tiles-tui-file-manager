@@ -364,4 +364,59 @@ mod tests {
         assert!(!suitable);
         assert_eq!(size, 0);
     }
+
+    #[test]
+    fn check_file_suitability_nonexistent_path() {
+        let (is_binary, is_too_large, size) = check_file_suitability(Path::new("/this/path/does/not/exist"), 100);
+        // Non-existent files should not be reported as too large
+        assert!(!is_too_large);
+        assert_eq!(size, 0);
+        // is_binary result depends on engine; just ensure no panic
+        let _ = is_binary;
+    }
+
+    #[test]
+    fn read_dir_with_metadata_current_dir() {
+        let (files, metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
+        // Current directory should have at least Cargo.toml
+        assert!(!files.is_empty());
+        assert!(files.iter().any(|p| p.file_name().map(|n| n == "Cargo.toml").unwrap_or(false)));
+    }
+
+    #[test]
+    fn read_dir_with_metadata_includes_dirs() {
+        let (files, metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
+        let has_dir = files.iter().any(|p| {
+            metadata.get(p).map(|m| m.is_dir).unwrap_or(false)
+        });
+        assert!(has_dir, "should find at least one directory (e.g., src/)");
+    }
+
+    #[test]
+    fn read_dir_recursive_includes_subdirs() {
+        let src_dir = std::env::current_dir().unwrap().join("src");
+        let (files, _metadata) = read_dir_recursive_meta(&[src_dir.clone()]);
+        // Should include files in subdirectories like events/, ui/, etc.
+        assert!(files.len() > 10, "recursive scan should find many files");
+        assert!(files.iter().any(|p| p.to_string_lossy().contains("events/")), "should include events/ subdir files");
+    }
+
+    #[test]
+    fn get_run_command_directory_returns_none() {
+        let result = get_run_command(Path::new("/tmp"));
+        assert!(result.is_none(), "directories are not runnable");
+    }
+
+    #[test]
+    fn copy_recursive_copies_file() {
+        let tmp = std::env::temp_dir().join(format!("tiles-copy-test-{}", std::process::id()));
+        let src = tmp.join("src.txt");
+        let dst = tmp.join("dst.txt");
+        std::fs::create_dir_all(&tmp).ok();
+        std::fs::write(&src, "hello").unwrap();
+        let result = copy_recursive(&src, &dst);
+        assert!(result.is_ok());
+        assert_eq!(std::fs::read_to_string(&dst).unwrap(), "hello");
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
 }

@@ -824,6 +824,17 @@ mod tests {
         App::new()
     }
 
+    fn test_app_with_files() -> App {
+        let mut app = App::new();
+        let fs = app.current_file_state_mut().unwrap();
+        fs.list.files = vec![
+            PathBuf::from("/tmp/test.rs"),
+            PathBuf::from("/tmp/archive.zip"),
+            PathBuf::from("/tmp/readme.md"),
+        ];
+        app
+    }
+
     #[test]
     fn update_commands_includes_quit() {
         let mut app = test_app();
@@ -845,6 +856,60 @@ mod tests {
         app.core.input.value = "quit".to_string();
         update_commands(&mut app);
         assert_eq!(app.nav.filtered_commands.len(), 1);
+    }
+
+    #[test]
+    fn update_commands_empty_input_shows_all() {
+        let mut app = test_app();
+        app.core.input.value = String::new();
+        update_commands(&mut app);
+        // Should have at least 7 base commands (quit, zoom, files, editor, git, monitor, add remote)
+        assert!(app.nav.filtered_commands.len() >= 7);
+    }
+
+    #[test]
+    fn update_commands_partial_match() {
+        let mut app = test_app();
+        app.core.input.value = "git".to_string();
+        update_commands(&mut app);
+        assert!(app.nav.filtered_commands.iter().any(|c| matches!(c.action, CommandAction::SwitchView(CurrentView::Git))));
+    }
+
+    #[test]
+    fn get_context_menu_file_has_open() {
+        let app = test_app_with_files();
+        let actions = get_context_menu_actions(&ContextMenuTarget::File(0), &app);
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::Open)));
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::Cut)));
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::CopyPath)));
+    }
+
+    #[test]
+    fn get_context_menu_zip_offers_extract() {
+        let app = test_app_with_files();
+        let actions = get_context_menu_actions(&ContextMenuTarget::File(1), &app);
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::ExtractHere)));
+    }
+
+    #[test]
+    fn get_context_menu_non_zip_offers_compress() {
+        let app = test_app_with_files();
+        let actions = get_context_menu_actions(&ContextMenuTarget::File(0), &app);
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::Compress)));
+    }
+
+    #[test]
+    fn get_context_menu_empty_space_has_new_folder() {
+        let app = test_app();
+        let actions = get_context_menu_actions(&ContextMenuTarget::EmptySpace, &app);
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::NewFolder)));
+    }
+
+    #[test]
+    fn get_context_menu_folder_has_open_navigate() {
+        let app = test_app_with_files();
+        let actions = get_context_menu_actions(&ContextMenuTarget::Folder(0), &app);
+        assert!(actions.iter().any(|a| matches!(a, ContextMenuAction::Open)));
     }
 }
 
