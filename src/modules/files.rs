@@ -376,7 +376,7 @@ mod tests {
 
     #[test]
     fn read_dir_with_metadata_current_dir() {
-        let (files, metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
+        let (files, _metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
         // Current directory should have at least Cargo.toml
         assert!(!files.is_empty());
         assert!(files.iter().any(|p| p.file_name().map(|n| n == "Cargo.toml").unwrap_or(false)));
@@ -384,7 +384,7 @@ mod tests {
 
     #[test]
     fn read_dir_with_metadata_includes_dirs() {
-        let (files, metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
+        let (files, _metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
         let has_dir = files.iter().any(|p| {
             metadata.get(p).map(|m| m.is_dir).unwrap_or(false)
         });
