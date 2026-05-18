@@ -70,16 +70,17 @@ Updated with refactor progress — 2026-05-17
 
 ### P4 Bugs (fixes applied, pending verification)
 
-- [x] **Default theme still purple on start** — Root causes found & fixed:
-  1. `ACTIVE_STYLE`/`ACTIVE_THEME` statics were initialized with `default_purple()`, not `default()`. Fixed to use `ThemeStyle::default()`.
-  2. `state.json` kept getting re-persisted with purple by the running old binary. Fixed: `config.rs` now skips persisting `theme_style` when current matches `ThemeStyle::default()`. Cleared stale `theme_style` from `state.json`.
-  3. Need user to restart with new binary to verify.
+- [x] **Default theme still purple on start** — Fixed (4 root causes):
+  1. `ACTIVE_STYLE`/`ACTIVE_THEME` statics used `default_purple()` → changed to `ThemeStyle::default()`
+  2. `config.rs` skips persisting `theme_style` when current == default
+  3. **Migration**: `setup.rs` skips loading `theme_style` if it matches `preset_cool()` (old default)
+  4. Stale `theme_style` cleared from `state.json`
 
-- [x] **Marquee broken when row already selected** — Root causes found & fixed:
-  1. `handle_click()` fired immediately on mouseDown, clearing multi-selection before drag started. Fixed: deferred click pattern — plain clicks set `pending_click_idx`, resolved on mouseUp only if no drag/marquee occurred.
-  2. File drag threshold (1px) was lower than marquee threshold (2px), so file drag always won. Fixed: file drag threshold raised to 3px (dist_sq >= 9.0), marquee activates first at 2px.
-  3. `DragState.pending_click_idx` field added for deferred clicks.
-  4. Need user to restart with new binary to verify.
+- [x] **Marquee broken when row already selected** — Fixed:
+  1. Deferred click pattern: plain clicks set `pending_click_idx`, resolved on mouseUp only if no drag/marquee
+  2. File drag threshold raised to 3px (dist_sq >= 9.0), marquee at 2px
+  3. `DragState.pending_click_idx` field added
+  4. No double-fire on Ctrl/Shift (only plain clicks deferred)
 
 ## P5 — Editor cursor bug (dracon-terminal-engine)
 
