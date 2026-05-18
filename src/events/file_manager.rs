@@ -14,7 +14,6 @@ use crate::app::{
 use crate::events::input::delete_word_backwards;
 use crate::state::{DropTarget};
 
-const DOUBLE_CLICK_MS: u64 = 500;
 const SEARCH_DEBOUNCE_MS: u64 = 300;
 
 fn is_valid_search_char(c: char) -> bool {

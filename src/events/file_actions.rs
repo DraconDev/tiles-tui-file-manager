@@ -9,6 +9,22 @@ use tokio::sync::mpsc;
 
 use crate::app::{App, AppEvent, AppMode, CurrentView, SidebarTarget};
 
+/// Double-click time threshold in milliseconds.
+pub const DOUBLE_CLICK_MS: u64 = 500;
+
+/// Check if two clicks at (last_x, last_y) and (column, row) within DOUBLE_CLICK_MS
+/// constitute a double-click (position within 1px, time within threshold).
+pub fn is_double_click(
+    last_click_pos: (u16, u16),
+    last_click_time: std::time::Instant,
+    column: u16,
+    row: u16,
+) -> bool {
+    let (last_x, last_y) = last_click_pos;
+    let close_enough = last_x.abs_diff(column) <= 1 && last_y.abs_diff(row) <= 1;
+    close_enough && last_click_time.elapsed() < std::time::Duration::from_millis(DOUBLE_CLICK_MS)
+}
+
 /// Handle Space key: toggle tree expand/collapse in sidebar, or preview in file list.
 pub fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     // If sidebar is focused and selected item is a folder, toggle expand/collapse
