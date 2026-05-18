@@ -2,9 +2,8 @@
 
 use crate::app::{
     App, AppEvent, AppMode, CommandAction, CommandItem, ContextMenuAction, ContextMenuTarget,
-    CurrentView, FileState,
+    CurrentView,
 };
-use crate::config::MAX_HISTORY;
 use crate::clipboard::copy_text_to_clipboard;
 use dracon_terminal_engine::input::mapping::{to_runtime_event, Event as InputEvent, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use std::ffi::OsStr;
