@@ -189,7 +189,7 @@ fn handle_path_input_keys(
         KeyCode::Char('c') | KeyCode::Char('C')
             if key.modifiers.contains(KeyModifiers::CONTROL) =>
         {
-            match crate::event_helpers::copy_text_to_clipboard(&app.core.input.value) {
+            match crate::clipboard::copy_text_to_clipboard(&app.core.input.value) {
                 Ok(()) => {
                     app.output.last_action_msg = Some((
                         "Copied current path to clipboard".to_string(),

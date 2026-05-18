@@ -14,6 +14,7 @@ use crate::config::FILE_WATCH_DEBOUNCE_MS;
 mod tree_walk;
 mod setup;
 mod app;
+mod clipboard;
 mod config;
 mod event;
 mod event_helpers;

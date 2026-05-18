@@ -1061,7 +1061,7 @@ pub fn handle_file_mouse(
                     // copy path to clipboard and open path input
                     let path = fs.nav.current_path.to_string_lossy().to_string();
                     crate::event_helpers::open_path_input(app);
-                    crate::event_helpers::copy_text_to_clipboard_async(path);
+                    crate::clipboard::copy_text_to_clipboard_async(path);
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                         "Copied current path to clipboard".to_string(),
                     ));

@@ -7,11 +7,10 @@ use crate::app::{
     CurrentView, FileState,
 };
 use crate::config::MAX_HISTORY;
-use base64::Engine;
+use crate::clipboard::copy_text_to_clipboard;
 use dracon_terminal_engine::input::mapping::{to_runtime_event, Event as InputEvent, KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
 use std::ffi::OsStr;
 use std::path::PathBuf;
-use std::process::{Command, Stdio};
 
 
 use tokio::sync::mpsc;
@@ -911,86 +910,6 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
 
     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
     crate::app::log_debug(&format!("submit_path_input: {:?}", t0.elapsed()));
-    Ok(())
-}
-
-/// Copy text to the system clipboard using platform-specific tools.
-///
-/// Tries: wl-copy, xclip, xsel, pbcopy (in order).
-/// Returns an error message if all attempts fail.
-pub fn copy_text_to_clipboard(text: &str) -> Result<(), String> {
-    let attempts: [(&str, &[&str]); 4] = [
-        ("wl-copy", &[]),
-        ("xclip", &["-selection", "clipboard"]),
-        ("xsel", &["--clipboard", "--input"]),
-        ("pbcopy", &[]),
-    ];
-
-    let mut last_err = None;
-    for (cmd, args) in attempts {
-        match Command::new(cmd)
-            .args(args)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::null())
-            .stderr(Stdio::null())
-            .spawn()
-        {
-            Ok(mut child) => {
-                if let Some(stdin) = child.stdin.as_mut() {
-                    use std::io::Write;
-                    if stdin.write_all(text.as_bytes()).is_err() {
-                        last_err = Some(format!("{} rejected clipboard data", cmd));
-                        let _ = child.kill();
-                        continue;
-                    }
-                }
-
-                match child.wait() {
-                    Ok(status) if status.success() => return Ok(()),
-                    Ok(_) => last_err = Some(format!("{} exited unsuccessfully", cmd)),
-                    Err(err) => last_err = Some(format!("{} failed: {}", cmd, err)),
-                }
-            }
-            Err(err) => {
-                if err.kind() != std::io::ErrorKind::NotFound {
-                    last_err = Some(format!("{} failed: {}", cmd, err));
-                }
-            }
-        }
-    }
-
-    copy_text_to_clipboard_via_osc52(text).map_err(|osc_err| {
-        let fallback = last_err.unwrap_or_else(|| {
-            "No clipboard helper found (tried wl-copy, xclip, xsel, pbcopy)".to_string()
-        });
-        format!("{}; OSC 52 fallback failed: {}", fallback, osc_err)
-    })
-}
-
-pub fn copy_text_to_clipboard_async(text: String) {
-    std::thread::spawn(move || {
-        let _ = copy_text_to_clipboard(&text);
-    });
-}
-
-fn copy_text_to_clipboard_via_osc52(text: &str) -> Result<(), String> {
-    use std::io::Write;
-
-    let term = std::env::var("TERM").unwrap_or_default();
-    if term == "dumb" {
-        return Err("terminal does not support clipboard escape sequences".to_string());
-    }
-
-    let encoded = base64::engine::general_purpose::STANDARD.encode(text.as_bytes());
-    let sequence = format!("\u{1b}]52;c;{}\u{07}", encoded);
-
-    let mut stdout = std::io::stdout();
-    stdout
-        .write_all(sequence.as_bytes())
-        .map_err(|err| format!("write failed: {}", err))?;
-    stdout
-        .flush()
-        .map_err(|err| format!("flush failed: {}", err))?;
     Ok(())
 }
 
