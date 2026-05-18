@@ -1228,9 +1228,12 @@ pub fn handle_file_mouse(
                         }
                         return true;
                     }
-                    // Name column click → file drag-and-drop.
-                    // Non-Name column click → marquee selection.
-                    // These are mutually exclusive to avoid conflict.
+                    // Always set marquee_start (for vertical-drag heuristic).
+                    // Set drag_source only for Name column clicks (file drag-and-drop).
+                    // The Drag handler uses a vertical-drag heuristic: if the user drags
+                    // primarily vertically from the Name column, marquee takes over.
+                    app.drag.marquee_start = Some((column, row));
+                    app.drag.marquee_end = Some((column, row));
                     let in_name_column = app.current_file_state()
                         .and_then(|fs| fs.view.column_bounds.iter()
                             .find(|(_, ct)| *ct == FileColumn::Name)
@@ -1241,9 +1244,6 @@ pub fn handle_file_mouse(
                     if in_name_column {
                         app.drag.drag_source = Some(path.clone());
                         app.drag.drag_start_pos = Some((column, row));
-                    } else {
-                        app.drag.marquee_start = Some((column, row));
-                        app.drag.marquee_end = Some((column, row));
                     }
 
                     // Double Click
@@ -1414,13 +1414,21 @@ pub fn handle_file_mouse(
             true
         }
         MouseEventKind::Drag(_) => {
-            // Marquee drag: only when no file drag source (clicked outside Name column)
+            // Marquee drag: activate if click was outside Name column,
+            // OR if dragging vertically from Name column (user wants selection, not file drag).
             if let Some((sx, sy)) = app.drag.marquee_start {
                 app.drag.marquee_end = Some((column, row));
-                let dist_sq =
-                    (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
-                if dist_sq >= 4.0 && !app.drag.is_marquee {
+                let dx = (column as f32 - sx as f32).abs();
+                let dy = (row as f32 - sy as f32).abs();
+                let dist_sq = dx * dx + dy * dy;
+                let is_vertical_drag = dy > dx * 2.0 && dy >= 2.0;
+                if dist_sq >= 4.0 && !app.drag.is_marquee
+                    && (app.drag.drag_source.is_none() || is_vertical_drag)
+                {
                     app.drag.is_marquee = true;
+                    // Cancel file drag if marquee takes over
+                    app.drag.drag_source = None;
+                    app.drag.drag_start_pos = None;
                 }
                 if app.drag.is_marquee {
                     return true; // consume drag event — no file drag-drop while marquee-ing
