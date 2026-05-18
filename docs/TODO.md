@@ -68,11 +68,18 @@ Updated with refactor progress — 2026-05-17
 - [x] **Undo close tab — Ctrl+Shift+T** — reopens last closed tab (max 10). ✅
 - [ ] **Hover +/- selection buttons** — skeptical, revisit only if marquee isn't sufficient
 
-### P4 Bugs (active)
+### P4 Bugs (fixes applied, pending verification)
 
-- [ ] **Default theme still purple on start** — `ThemeStyle::default()` returns `preset_warm()`, statics use `default()`, `state.json` cleared. BUT: `state.json` keeps getting re-persisted by old binary with purple. Fix: `config.rs` now skips persisting `theme_style` when it matches default. Need to verify with fresh run.
+- [x] **Default theme still purple on start** — Root causes found & fixed:
+  1. `ACTIVE_STYLE`/`ACTIVE_THEME` statics were initialized with `default_purple()`, not `default()`. Fixed to use `ThemeStyle::default()`.
+  2. `state.json` kept getting re-persisted with purple by the running old binary. Fixed: `config.rs` now skips persisting `theme_style` when current matches `ThemeStyle::default()`. Cleared stale `theme_style` from `state.json`.
+  3. Need user to restart with new binary to verify.
 
-- [ ] **Marquee broken when row already selected** — Root cause: `handle_click()` fired immediately on mouseDown, clearing multi-selection before drag started. Fix: deferred click pattern — `handle_click` now deferred to mouseUp for plain clicks. `pending_click_idx` field on `DragState`. Marquee takes priority over file drag (lower threshold). File drag threshold raised from 1px to 3px.
+- [x] **Marquee broken when row already selected** — Root causes found & fixed:
+  1. `handle_click()` fired immediately on mouseDown, clearing multi-selection before drag started. Fixed: deferred click pattern — plain clicks set `pending_click_idx`, resolved on mouseUp only if no drag/marquee occurred.
+  2. File drag threshold (1px) was lower than marquee threshold (2px), so file drag always won. Fixed: file drag threshold raised to 3px (dist_sq >= 9.0), marquee activates first at 2px.
+  3. `DragState.pending_click_idx` field added for deferred clicks.
+  4. Need user to restart with new binary to verify.
 
 ## P5 — Editor cursor bug (dracon-terminal-engine)
 
