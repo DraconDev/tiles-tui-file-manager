@@ -62,6 +62,35 @@ Updated with refactor progress — 2026-05-17
 
 ---
 
+## P4 — Mouse UX (inspired by Dolphin)
+
+> Philosophy: **Don't add clutter. Add only what genuinely speeds up workflows.**
+> Mouse users want batch selection without reaching for Ctrl.
+> Keyboard users already have Shift+↑/↓ and Ctrl+click.
+
+- [ ] **Marquee drag selection** (~3-5 hrs, HIGH priority)
+  - Press+drag on file list creates a rubber-band rect; all items inside are selected on release
+  - `mouseDown` on file list → track `drag_start`; `mouseDrag` renders dashed rect; `mouseUp` commits selection
+  - Combined with: Ctrl+drag adds individual items (toggle per item), Shift+drag for range
+  - No visual clutter unless actively dragging — just a rect overlay
+  - **BLOCKER:** None. Track `drag_start/drag_end` in `FileViewState.mouse_state`
+
+- [ ] **Undo close tab — Ctrl+Shift+T** (~2-3 hrs, HIGH priority)
+  - On tab close, push `(path, split_idx, pane_idx)` to a `closed_tabs: VecDeque` (max 10)
+  - `Ctrl+Shift+T` pops the last entry and reopens it
+  - Simple, no UI change, instant recovery
+  - **BLOCKER:** Need to handle case when no closed tabs exist (should do nothing)
+
+- [ ] **Hover +/- selection buttons** (~3-5 hrs, MEDIUM — skeptical)
+  - When mouse hovers over a file, show `+` / `−` button in top-left of row
+  - Click to select/deselect without Ctrl key
+  - **Concern:** Gimmicky visual clutter. With marquee drag, this is redundant.
+  - **Use case:** Mouse user wants to select a few non-adjacent files without Ctrl
+  - **Decision:** Do marquee drag first; revisit this only if marquee isn't sufficient
+  - **BLOCKER:** Need hover state tracking in `FileViewState`
+
+---
+
 ## P1 — Quality (prevents bugs, improves CI)
 
 - [ ] **Fix terma clippy errors (blocks CI with `-D warnings`)**
