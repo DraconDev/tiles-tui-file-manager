@@ -265,35 +265,14 @@ impl ThemeStyle {
         }
     }
 
+    /// Default theme — Legacy Red (the original Tiles identity).
+    /// Alias: `default_purple()` retained for compat.
+    pub fn default() -> Self {
+        ThemeStyle::preset_legacy_red()
+    }
+
     pub fn default_purple() -> Self {
-        // Match the original DraconTheme::cyberpunk() base colors —
-        // Warm Amber accent, not Legacy Red.
-        Self {
-            accent_primary: RgbColor::new(224, 164, 90),   // Warm Amber
-            accent_secondary: RgbColor::new(94, 199, 178),  // Mint-Teal
-            selection_bg: RgbColor::new(178, 122, 64),      // Muted Bronze
-            selection_fg: RgbColor::new(0, 0, 0),           // Black
-            border_active: RgbColor::new(224, 164, 90),     // Warm Amber
-            border_inactive: RgbColor::new(86, 88, 98),     // Neutral Slate
-            header_fg: RgbColor::new(240, 196, 138),        // Sand
-            danger: RgbColor::new(255, 80, 80),            // Bright red
-            warning: RgbColor::new(255, 190, 50),          // Amber yellow
-            success: RgbColor::new(80, 210, 120),           // Vivid green
-            muted: RgbColor::new(120, 120, 135),            // Warm gray
-            info: RgbColor::new(100, 200, 230),            // Sky cyan
-            file_code: RgbColor::new(236, 156, 116),       // Apricot
-            file_config: RgbColor::new(132, 190, 255),     // Sky blue
-            file_media: RgbColor::new(201, 156, 244),       // Lilac
-            file_archive: RgbColor::new(238, 132, 170),    // Rose
-            file_exec: RgbColor::new(118, 203, 125),        // Green
-            border_subtle: RgbColor::new(40, 45, 55),
-            selection_alt_bg: RgbColor::new(78, 58, 112),
-            stat_cpu_blue: RgbColor::new(88, 166, 255),
-            stat_cpu_cyan: RgbColor::new(80, 200, 255),
-            stat_cpu_yellow: RgbColor::new(255, 170, 0),
-            stat_cpu_light: RgbColor::new(140, 165, 210),
-            stat_progress_bg: RgbColor::new(85, 80, 20),
-        }
+        Self::default()
     }
 
     pub fn preset_nord() -> Self {
@@ -474,20 +453,20 @@ impl DraconTheme {
         Self {
             bg: Color::Rgb(0, 0, 0),                    // True Color Pure Black
             fg: Color::Rgb(255, 255, 255),              // Pure White
-            accent_primary: Color::Rgb(224, 164, 90),   // Warm Amber
-            accent_secondary: Color::Rgb(94, 199, 178), // Mint-Teal
-            selection_bg: Color::Rgb(178, 122, 64),     // Muted Bronze
-            selection_fg: Color::Rgb(0, 0, 0),          // Black (for contrast)
-            border_active: Color::Rgb(224, 164, 90),    // Primary Accent
-            border_inactive: Color::Rgb(86, 88, 98),    // Neutral Slate
-            header_fg: Color::Rgb(240, 196, 138),       // Sand
-            danger: Color::Rgb(255, 80, 80),           // Bright red
-            warning: Color::Rgb(255, 190, 50),          // Amber yellow
-            success: Color::Rgb(80, 210, 120),          // Vivid green
-            muted: Color::Rgb(120, 120, 135),           // Warm gray
-            info: Color::Rgb(100, 200, 230),            // Sky cyan
+            accent_primary: Color::Rgb(226, 78, 86),    // Legacy Red
+            accent_secondary: Color::Rgb(72, 190, 182), // Legacy Teal
+            selection_bg: Color::Rgb(226, 78, 86),       // Red highlight
+            selection_fg: Color::Rgb(255, 255, 255),     // White
+            border_active: Color::Rgb(226, 78, 86),     // Legacy Red
+            border_inactive: Color::Rgb(70, 88, 104),   // Blue-gray slate
+            header_fg: Color::Rgb(156, 214, 206),       // Pale teal
+            danger: Color::Rgb(255, 60, 60),            // Pure red
+            warning: Color::Rgb(255, 200, 50),          // Bright yellow
+            success: RgbColor::new(80, 200, 120).to_color(), // Green
+            muted: Color::Rgb(100, 110, 130),           // Blue-gray
+            info: Color::Rgb(100, 200, 220),            // Teal
             file_code: Color::Rgb(236, 156, 116),       // Apricot
-            file_config: Color::Rgb(132, 190, 255),     // Sky Blue
+            file_config: Color::Rgb(132, 190, 255),     // Sky blue
             file_media: Color::Rgb(201, 156, 244),      // Lilac
             file_archive: Color::Rgb(238, 132, 170),    // Rose
             file_exec: Color::Rgb(118, 203, 125),       // Green
