@@ -310,13 +310,8 @@ pub fn draw_marquee_rect(f: &mut Frame, app: &App) {
 
     let marquee_area = Rect::new(x, y, w, h);
 
-    // Use a block with dashed borders for the marquee rect
+    // Border frame only — transparent background, no fill
     let block = ratatui::widgets::Block::new()
-        .style(
-            Style::default()
-                .fg(theme::accent_primary())
-                .bg(theme::selection_bg()),
-        )
         .borders(ratatui::widgets::Borders::ALL)
         .border_style(
             Style::default()
@@ -325,6 +320,5 @@ pub fn draw_marquee_rect(f: &mut Frame, app: &App) {
         )
         .border_type(ratatui::widgets::BorderType::Rounded);
 
-    f.render_widget(Clear, marquee_area);
     f.render_widget(block, marquee_area);
 }

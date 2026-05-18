@@ -1098,15 +1098,14 @@ pub fn handle_file_mouse(
                 }
             }
 
-            // 2b. Start marquee tracking if clicking in file list area
-            if button == MouseButton::Left && row >= 3 && column >= sw {
-                app.drag.marquee_start = Some((column, row));
-                app.drag.marquee_end = Some((column, row));
-            }
-
             // 3. File Row Interaction
             if row >= 3 {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
+                    // Empty space click — start marquee tracking for drag selection
+                    if button == MouseButton::Left && column >= sw {
+                        app.drag.marquee_start = Some((column, row));
+                        app.drag.marquee_end = Some((column, row));
+                    }
                     if button == MouseButton::Right && column >= sw {
                         let target = ContextMenuTarget::EmptySpace;
                         let actions = crate::event_helpers::get_context_menu_actions(&target, app);
