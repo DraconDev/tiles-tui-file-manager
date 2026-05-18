@@ -638,3 +638,113 @@ pub fn monitor_dim() -> Color { Color::Rgb(100, 100, 110) }
 pub fn monitor_separator() -> Color { Color::Rgb(30, 30, 35) }
 pub fn monitor_row_even() -> Color { Color::Rgb(180, 185, 190) }
 pub fn monitor_row_odd() -> Color { Color::Rgb(140, 145, 150) }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_is_legacy_red() {
+        let def = ThemeStyle::default();
+        let legacy = ThemeStyle::preset_legacy_red();
+        assert_eq!(def.accent_primary, legacy.accent_primary);
+        assert_eq!(def.border_active, legacy.border_active);
+    }
+
+    #[test]
+    fn all_presets_have_black_selection_fg() {
+        let presets: Vec<(&str, ThemeStyle)> = vec![
+            ("legacy_red", ThemeStyle::preset_legacy_red()),
+            ("warm", ThemeStyle::preset_warm()),
+            ("cool", ThemeStyle::preset_cool()),
+            ("forest", ThemeStyle::preset_forest()),
+            ("sunset", ThemeStyle::preset_sunset()),
+            ("mono", ThemeStyle::preset_mono()),
+            ("nord", ThemeStyle::preset_nord()),
+            ("dracula", ThemeStyle::preset_dracula()),
+            ("solarized_dark", ThemeStyle::preset_solarized_dark()),
+            ("one_dark", ThemeStyle::preset_one_dark()),
+            ("tokyo_night", ThemeStyle::preset_tokyo_night()),
+            ("gruvbox_dark", ThemeStyle::preset_gruvbox_dark()),
+            ("catppuccin_mocha", ThemeStyle::preset_catppuccin_mocha()),
+            ("rose_pine", ThemeStyle::preset_rose_pine()),
+        ];
+        for (name, preset) in &presets {
+            assert_eq!(preset.selection_fg.r, 0, "{}: selection_fg.r", name);
+            assert_eq!(preset.selection_fg.g, 0, "{}: selection_fg.g", name);
+            assert_eq!(preset.selection_fg.b, 0, "{}: selection_fg.b", name);
+        }
+    }
+
+    #[test]
+    fn all_presets_have_nonzero_accent() {
+        let presets: Vec<(&str, ThemeStyle)> = vec![
+            ("legacy_red", ThemeStyle::preset_legacy_red()),
+            ("warm", ThemeStyle::preset_warm()),
+            ("cool", ThemeStyle::preset_cool()),
+            ("forest", ThemeStyle::preset_forest()),
+            ("sunset", ThemeStyle::preset_sunset()),
+            ("mono", ThemeStyle::preset_mono()),
+            ("nord", ThemeStyle::preset_nord()),
+            ("dracula", ThemeStyle::preset_dracula()),
+            ("solarized_dark", ThemeStyle::preset_solarized_dark()),
+            ("one_dark", ThemeStyle::preset_one_dark()),
+            ("tokyo_night", ThemeStyle::preset_tokyo_night()),
+            ("gruvbox_dark", ThemeStyle::preset_gruvbox_dark()),
+            ("catppuccin_mocha", ThemeStyle::preset_catppuccin_mocha()),
+            ("rose_pine", ThemeStyle::preset_rose_pine()),
+        ];
+        for (name, preset) in &presets {
+            assert!(
+                preset.accent_primary.r > 0 || preset.accent_primary.g > 0 || preset.accent_primary.b > 0,
+                "{}: accent_primary should not be black",
+                name
+            );
+        }
+    }
+
+    #[test]
+    fn presets_are_distinct() {
+        let presets: Vec<ThemeStyle> = vec![
+            ThemeStyle::preset_legacy_red(),
+            ThemeStyle::preset_warm(),
+            ThemeStyle::preset_cool(),
+            ThemeStyle::preset_forest(),
+            ThemeStyle::preset_sunset(),
+            ThemeStyle::preset_mono(),
+            ThemeStyle::preset_nord(),
+            ThemeStyle::preset_dracula(),
+            ThemeStyle::preset_solarized_dark(),
+            ThemeStyle::preset_one_dark(),
+            ThemeStyle::preset_tokyo_night(),
+            ThemeStyle::preset_gruvbox_dark(),
+            ThemeStyle::preset_catppuccin_mocha(),
+            ThemeStyle::preset_rose_pine(),
+        ];
+        for i in 0..presets.len() {
+            for j in (i + 1)..presets.len() {
+                assert_ne!(presets[i].accent_primary, presets[j].accent_primary,
+                    "Presets {} and {} have same accent_primary", i, j);
+            }
+        }
+    }
+
+    #[test]
+    fn set_and_get_roundtrip() {
+        let original = ThemeStyle::preset_cool();
+        set_style_settings(original.clone());
+        let retrieved = style_settings();
+        assert_eq!(retrieved.accent_primary, original.accent_primary);
+        assert_eq!(retrieved.border_active, original.border_active);
+        set_style_settings(ThemeStyle::default());
+    }
+
+    #[test]
+    fn accent_primary_accessor_matches_style() {
+        let style = ThemeStyle::preset_legacy_red();
+        set_style_settings(style.clone());
+        let color = accent_primary();
+        assert_eq!(color, style.accent_primary.to_color());
+        set_style_settings(ThemeStyle::default());
+    }
+}
