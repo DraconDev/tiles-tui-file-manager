@@ -812,9 +812,7 @@ fn handle_generic_editor_shortcuts(
 mod tests {
     use super::*;
     use crate::app::{App, AppMode, CurrentView};
-    use dracon_terminal_engine::compositor::engine::TilePlacement;
     use dracon_terminal_engine::contracts::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers};
-    use std::sync::{Arc, Mutex};
     use tokio::sync::mpsc;
 
     fn test_app() -> App {

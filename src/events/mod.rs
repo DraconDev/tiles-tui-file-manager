@@ -10,7 +10,6 @@ use crate::app::{
 use dracon_terminal_engine::contracts::{
     InputEvent as Event, KeyCode, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
 };
-use std::collections::HashSet;
 use tokio::sync::mpsc;
 
 pub mod editor;
@@ -38,7 +37,6 @@ pub fn handle_event(
     evt: Event,
     app: &mut App,
     event_tx: mpsc::Sender<AppEvent>,
-    _panes_needing_refresh: &mut HashSet<usize>,
 ) -> bool {
     // 1. Input Shield / Cooldown
     if let Some(until) = app.output.input_shield_until {
@@ -732,10 +730,7 @@ mod tests {
     use super::*;
     use crate::app::{CurrentView, SidebarBounds, SidebarTarget};
     use dracon_terminal_engine::contracts::{KeyCode, KeyEvent, KeyEventKind, KeyModifiers, MouseButton};
-    use std::collections::HashSet;
     use std::path::PathBuf;
-    use std::sync::{Arc, Mutex};
-    use dracon_terminal_engine::compositor::engine::TilePlacement;
     use tokio::sync::mpsc;
 
     fn test_app() -> App {
@@ -749,7 +744,6 @@ mod tests {
         app.core.current_view = CurrentView::Git;
         app.core.mode = AppMode::Normal;
 
-        let mut refresh = HashSet::new();
         let changed = handle_event(
             Event::Key(KeyEvent {
                 code: KeyCode::Esc,
@@ -758,7 +752,6 @@ mod tests {
             }),
             &mut app,
             tx,
-            &mut refresh,
         );
 
         assert!(changed);
@@ -817,7 +810,6 @@ mod tests {
         app.core.current_view = CurrentView::Commit;
         app.core.mode = AppMode::Viewer;
 
-        let mut refresh = HashSet::new();
         let changed = handle_event(
             Event::Key(KeyEvent {
                 code: KeyCode::Esc,
@@ -826,7 +818,6 @@ mod tests {
             }),
             &mut app,
             tx,
-            &mut refresh,
         );
 
         assert!(changed);

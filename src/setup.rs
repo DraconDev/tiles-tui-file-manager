@@ -131,9 +131,8 @@ pub fn handle_event(
     evt: Event,
     app: &mut App,
     event_tx: mpsc::Sender<AppEvent>,
-    panes_needing_refresh: &mut std::collections::HashSet<usize>,
 ) -> bool {
-    events::handle_event(evt, app, event_tx, panes_needing_refresh)
+    events::handle_event(evt, app, event_tx)
 }
 
 pub fn prime_visible_tabs(app: &mut App) {

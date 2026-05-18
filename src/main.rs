@@ -240,7 +240,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             raw,
                             &mut app_guard,
                             ctx.event_tx.clone(),
-                            &mut ctx.panes_needing_refresh,
                         ) {
                             needs_draw = true;
                         }
