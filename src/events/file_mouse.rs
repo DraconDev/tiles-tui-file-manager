@@ -645,3 +645,84 @@ pub fn handle_file_mouse(
     }
 }
 
+
+#[cfg(test)]
+mod tests {
+    use crate::app::App;
+    use crate::events::mouse_helpers::fs_mouse_index;
+    use crate::state::DragState;
+    use std::time::Duration;
+
+    fn test_app_with_files() -> App {
+        let mut app = App::new();
+        let fs = app.current_file_state_mut().unwrap();
+        fs.list.files = vec![
+            std::path::PathBuf::from("/tmp/a.rs"),
+            std::path::PathBuf::from("/tmp/b.rs"),
+            std::path::PathBuf::from("/tmp/c.rs"),
+        ];
+        fs.view.view_height = 20;
+        app
+    }
+
+    #[test]
+    fn fs_mouse_index_first_row_returns_first_file() {
+        let app = test_app_with_files();
+        let idx = fs_mouse_index(3, &app); // row 3 = first content row (header + breadcrumb + col header)
+        assert_eq!(idx, Some(0));
+    }
+
+    #[test]
+    fn fs_mouse_index_out_of_bounds_returns_none() {
+        let app = test_app_with_files();
+        let idx = fs_mouse_index(100, &app); // way beyond file list
+        assert_eq!(idx, None);
+    }
+
+    #[test]
+    fn drag_state_marquee_rect_when_not_active() {
+        let drag = DragState::default();
+        assert!(drag.marquee_rect().is_none());
+    }
+
+    #[test]
+    fn drag_state_marquee_rect_when_active() {
+        let mut drag = DragState::default();
+        drag.is_marquee = true;
+        drag.marquee_start = Some((5, 3));
+        drag.marquee_end = Some((10, 8));
+        let rect = drag.marquee_rect().unwrap();
+        assert_eq!(rect.min_col, 5);
+        assert_eq!(rect.max_col, 10);
+        assert_eq!(rect.min_row, 3);
+        assert_eq!(rect.max_row, 8);
+    }
+
+    #[test]
+    fn drag_state_marquee_rect_normalized_when_end_before_start() {
+        let mut drag = DragState::default();
+        drag.is_marquee = true;
+        drag.marquee_start = Some((10, 8));
+        drag.marquee_end = Some((5, 3));
+        let rect = drag.marquee_rect().unwrap();
+        assert_eq!(rect.min_col, 5);
+        assert_eq!(rect.max_col, 10);
+        assert_eq!(rect.min_row, 3);
+        assert_eq!(rect.max_row, 8);
+    }
+
+    #[test]
+    fn drag_state_clear_marquee_resets_all() {
+        let mut drag = DragState::default();
+        drag.is_marquee = true;
+        drag.marquee_start = Some((5, 3));
+        drag.marquee_end = Some((10, 8));
+        drag.pending_click_idx = Some(5);
+        drag.clear_marquee();
+        assert!(!drag.is_marquee);
+        assert!(drag.marquee_start.is_none());
+        assert!(drag.marquee_end.is_none());
+        // clear_marquee doesn't reset pending_click_idx
+        assert_eq!(drag.pending_click_idx, Some(5));
+    }
+}

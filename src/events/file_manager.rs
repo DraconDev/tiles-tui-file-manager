@@ -1079,4 +1079,65 @@ mod tests {
         }
         panic!("click at column 50 should match Name column");
     }
+
+    fn make_file_state(files: Vec<PathBuf>) -> crate::state::FileState {
+        use crate::state::FileColumn;
+        let mut fs = crate::state::FileState::new(
+            PathBuf::from("/tmp"),
+            None,
+            false,
+            vec![FileColumn::Name, FileColumn::Size],
+            FileColumn::Name,
+            true,
+        );
+        fs.list.files = files;
+        fs
+    }
+
+    #[test]
+    fn reselect_after_filter_finds_matching_path() {
+        let mut fs = make_file_state(vec![
+            PathBuf::from("/tmp/a.rs"),
+            PathBuf::from("/tmp/b.rs"),
+            PathBuf::from("/tmp/c.rs"),
+        ]);
+        let old_path = PathBuf::from("/tmp/b.rs");
+        reselect_after_filter(&mut fs, Some(&old_path));
+        assert_eq!(fs.list.selection.selected, Some(1), "should select the matching file");
+    }
+
+    #[test]
+    fn reselect_after_filter_missing_path_selects_first() {
+        let mut fs = make_file_state(vec![
+            PathBuf::from("/tmp/a.rs"),
+            PathBuf::from("/tmp/b.rs"),
+        ]);
+        let old_path = PathBuf::from("/tmp/nonexistent.rs");
+        reselect_after_filter(&mut fs, Some(&old_path));
+        assert_eq!(fs.list.selection.selected, Some(0), "should select first file when path not found");
+    }
+
+    #[test]
+    fn reselect_after_filter_none_selects_first() {
+        let mut fs = make_file_state(vec![
+            PathBuf::from("/tmp/a.rs"),
+            PathBuf::from("/tmp/b.rs"),
+        ]);
+        reselect_after_filter(&mut fs, None);
+        assert_eq!(fs.list.selection.selected, Some(0), "should select first file when no old path");
+    }
+
+    #[test]
+    fn reselect_adjusts_offset_if_selected_above_viewport() {
+        let mut fs = make_file_state(vec![
+            PathBuf::from("/tmp/a.rs"),
+            PathBuf::from("/tmp/b.rs"),
+            PathBuf::from("/tmp/c.rs"),
+        ]);
+        fs.view.view_height = 5; // capacity = 5-3 = 2
+        *fs.view.table_state.offset_mut() = 2; // viewing rows 2+
+        let old_path = PathBuf::from("/tmp/a.rs"); // idx 0, above viewport
+        reselect_after_filter(&mut fs, Some(&old_path));
+        assert_eq!(*fs.view.table_state.offset_mut(), 0, "should scroll up to show selected item");
+    }
 }
