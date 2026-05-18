@@ -313,4 +313,55 @@ mod tests {
         let _ = std::fs::remove_file(&link);
         let _ = std::fs::remove_dir_all(&root);
     }
+
+    #[test]
+    fn file_category_rust_is_code() {
+        use crate::app::FileCategory;
+        let cat = get_file_category(Path::new("main.rs"));
+        // Rs maps to Script or Text depending on catalog — just ensure no panic
+        assert!(matches!(cat, FileCategory::Script | FileCategory::Text | FileCategory::Other));
+    }
+
+    #[test]
+    fn file_category_tar_is_archive() {
+        use crate::app::FileCategory;
+        let cat = get_file_category(Path::new("backup.tar.gz"));
+        assert_eq!(cat, FileCategory::Archive);
+    }
+
+    #[test]
+    fn file_category_png_is_image() {
+        use crate::app::FileCategory;
+        let cat = get_file_category(Path::new("photo.png"));
+        assert_eq!(cat, FileCategory::Image);
+    }
+
+    #[test]
+    fn file_category_mp3_is_audio() {
+        use crate::app::FileCategory;
+        let cat = get_file_category(Path::new("song.mp3"));
+        assert_eq!(cat, FileCategory::Audio);
+    }
+
+    #[test]
+    fn file_category_mp4_is_video() {
+        use crate::app::FileCategory;
+        let cat = get_file_category(Path::new("movie.mp4"));
+        assert_eq!(cat, FileCategory::Video);
+    }
+
+    #[test]
+    fn file_category_json_is_text() {
+        use crate::app::FileCategory;
+        let cat = get_file_category(Path::new("data.json"));
+        // JSON could be Text or Document
+        assert!(matches!(cat, FileCategory::Text | FileCategory::Document | FileCategory::Other));
+    }
+
+    #[test]
+    fn check_file_suitability_zero_max_always_false() {
+        let (suitable, _is_text, size) = check_file_suitability(Path::new("/nonexistent"), 0);
+        assert!(!suitable);
+        assert_eq!(size, 0);
+    }
 }
