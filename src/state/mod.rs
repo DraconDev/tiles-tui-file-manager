@@ -42,6 +42,7 @@ pub struct NetInterface {
     pub tx_history: VecDeque<u64>,
 }
 
+#[allow(dead_code)] // protocol enum — defines full message set
 #[derive(Clone, Debug)]
 pub enum AppEvent {
     Tick,
@@ -539,6 +540,7 @@ pub struct BackgroundTask {
     pub progress: f32,
 }
 
+#[allow(dead_code)] // protocol enum — undo/redo variants
 #[derive(Clone, Debug)]
 pub enum UndoAction {
     Rename(PathBuf, PathBuf),

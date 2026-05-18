@@ -437,8 +437,7 @@ mod tests {
     use tokio::sync::mpsc;
 
     fn test_app() -> App {
-        let queue: Arc<Mutex<Vec<TilePlacement>>> = Arc::new(Mutex::new(Vec::new()));
-        App::new(queue)
+        App::new()
     }
 
     #[test]
