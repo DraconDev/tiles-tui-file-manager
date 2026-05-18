@@ -384,7 +384,7 @@ mod tests {
 
     #[test]
     fn read_dir_with_metadata_includes_dirs() {
-        let (files, _metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
+        let (files, metadata) = read_dir_with_metadata(std::env::current_dir().unwrap().as_path());
         let has_dir = files.iter().any(|p| {
             metadata.get(p).map(|m| m.is_dir).unwrap_or(false)
         });

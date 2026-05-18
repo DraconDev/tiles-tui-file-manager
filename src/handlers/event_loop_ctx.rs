@@ -30,7 +30,7 @@ const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
 /// Instead of 8+ loose local variables in `run_tty()`, handlers receive
 /// `&mut EventLoopCtx` which bundles everything they need.
 pub struct EventLoopCtx {
-    /// The application state (behind Arc<Mutex> for async access).
+    /// The application state (behind `Arc<Mutex>` for async access).
     pub app: Arc<Mutex<App>>,
     /// Channel sender for dispatching new events.
     pub event_tx: tokio::sync::mpsc::Sender<AppEvent>,
