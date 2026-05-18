@@ -122,43 +122,7 @@ criterion_group!(
     bench_push_history,
     bench_is_valid_search_char,
     bench_fuzzy_contains,
-    bench_theme_accessors,
 );
 criterion_main!(benches);
 
 
-/// Benchmark: theme accessor RwLock overhead
-fn bench_theme_accessors(c: &mut Criterion) {
-    use crate::ui::theme;
-    c.bench_function("theme_accessor_selection_bg", |b| {
-        b.iter(|| {
-            let _ = theme::selection_bg();
-            let _ = theme::selection_fg();
-            let _ = theme::fg();
-            let _ = theme::bg();
-            let _ = theme::accent_primary();
-            let _ = theme::accent_secondary();
-            let _ = theme::border_active();
-            let _ = theme::border_inactive();
-            let _ = theme::selection_alt_bg();
-            let _ = theme::danger();
-        });
-    });
-    
-    c.bench_function("theme_accessor_300_calls", |b| {
-        b.iter(|| {
-            for _ in 0..30 {
-                let _ = theme::selection_bg();
-                let _ = theme::selection_fg();
-                let _ = theme::fg();
-                let _ = theme::bg();
-                let _ = theme::accent_primary();
-                let _ = theme::accent_secondary();
-                let _ = theme::border_active();
-                let _ = theme::border_inactive();
-                let _ = theme::selection_alt_bg();
-                let _ = theme::danger();
-            }
-        });
-    });
-}
