@@ -527,9 +527,13 @@ fn handle_sidebar_mouse(
                                         app.sidebar.tree_expanded_folders.insert(path_ref.clone());
                                     }
                                 } else {
-                                    // Name click: navigate to folder (and expand if collapsed)
+                                    // Name click: navigate to folder only (Dolphin-style — no auto-expand)
                                     if let Some(fs) = app.current_file_state_mut() {
                                         fs.nav.current_path = path_ref.clone();
+                                        fs.list.files.clear();
+                                        fs.list.tree_file_depths.clear();
+                                        fs.list.metadata.clear();
+                                        fs.list.local_count = 0;
                                         fs.list.selection.selected = Some(0);
                                         fs.list.selection.anchor = Some(0);
                                         fs.list.selection.clear_multi();
@@ -537,9 +541,6 @@ fn handle_sidebar_mouse(
                                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                                             app.focused_pane_index,
                                         ));
-                                    }
-                                    if !was_expanded {
-                                        app.sidebar.tree_expanded_folders.insert(path_ref.clone());
                                     }
                                 }
                                 app.sidebar.sidebar_focus = false;

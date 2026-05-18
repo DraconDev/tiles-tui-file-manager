@@ -1645,9 +1645,7 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 }
                 SidebarTarget::Project(path) => {
                     if path.is_dir() {
-                        // Enter on folder = navigate + expand (consistent with name click)
-                        let path_ref = path.clone();
-                        let was_expanded = app.sidebar.tree_expanded_folders.contains(&path_ref);
+                        // Enter on folder = navigate only (Dolphin-style, no auto-expand)
                         if let Some(fs) = app.current_file_state_mut() {
                             fs.nav.current_path = path.clone();
                             fs.list.files.clear();
@@ -1659,9 +1657,6 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                             fs.list.selection.clear_multi();
                             crate::event_helpers::push_history(fs, path.clone());
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
-                        }
-                        if !was_expanded {
-                            app.sidebar.tree_expanded_folders.insert(path_ref);
                         }
                         app.sidebar.sidebar_focus = false;
                     } else {
