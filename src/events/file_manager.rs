@@ -1650,6 +1650,35 @@ mod tests {
     }
 
     #[test]
+    fn double_click_exact_position() {
+        let now = std::time::Instant::now();
+        assert!(is_double_click((5, 3), now, 5, 3));
+    }
+
+    #[test]
+    fn double_click_boundary_distance() {
+        let now = std::time::Instant::now();
+        // dx=1, dy=1 (within boundary)
+        assert!(is_double_click((10, 10), now, 11, 11));
+        // dx=2, dy=0 (outside boundary)
+        assert!(!is_double_click((10, 10), now, 12, 10));
+    }
+
+    #[test]
+    fn double_click_time_boundary() {
+        let now = std::time::Instant::now();
+        // Just under 500ms should be a double click
+        assert!(is_double_click((10, 10), now, 10, 10));
+    }
+
+    #[test]
+    fn double_click_wraparound_distance() {
+        let now = std::time::Instant::now();
+        // dx=u16 wraparound: 0 - 65535 = 65535 (far away)
+        assert!(!is_double_click((0, 5), now, 65535, 5));
+    }
+
+    #[test]
     fn sort_toggle_toggles_ascending_on_same_column() {
         use crate::state::FileColumn;
         let mut sort_column = FileColumn::Name;
