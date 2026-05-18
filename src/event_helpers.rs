@@ -791,4 +791,3 @@ pub fn handle_context_menu_action(
     }
 }
 
-/// Navigate back in the folder history.
