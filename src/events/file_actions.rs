@@ -25,6 +25,14 @@ pub fn is_double_click(
     close_enough && last_click_time.elapsed() < std::time::Duration::from_millis(DOUBLE_CLICK_MS)
 }
 
+/// Check if a character is valid for search input (not a control or special char).
+pub fn is_valid_search_char(c: char) -> bool {
+    let bad = (c as u32) < 32 || c == '\x7f' || c == '\x1b'
+        || matches!(c, '[' | ']' | '~' | '^' | '_' | '=' | '+' | '<' | '>' | '*' | '?' | '!' | '$'
+            | '%' | '&' | '@' | '#' | '{' | '}' | '\\' | '|' | '`');
+    !bad
+}
+
 /// Handle Space key: toggle tree expand/collapse in sidebar, or preview in file list.
 pub fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
     // If sidebar is focused and selected item is a folder, toggle expand/collapse

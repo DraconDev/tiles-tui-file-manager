@@ -1,4 +1,5 @@
 #![allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
+npub mod file_mouse;
 
 pub mod file_actions;
 
