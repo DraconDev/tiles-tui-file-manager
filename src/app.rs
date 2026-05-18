@@ -1,7 +1,6 @@
 use ratatui::widgets::TableState;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::Arc;
 use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
 use dracon_terminal_engine::widgets::TextInput;
 

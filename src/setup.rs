@@ -4,6 +4,7 @@
 //! Extracted from main.rs (Phase 4).
 
 use std::path::PathBuf;
+use std::sync::Arc;
 use std::collections::HashSet;
 
 use crate::app::{App, AppEvent};

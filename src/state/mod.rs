@@ -377,7 +377,6 @@ impl FileState {
                 local_count: 0,
                 tree_file_depths: Vec::new(),
                 metadata: HashMap::new(),
-                path_colors: HashMap::new(),
             },
             view: FileViewState {
                 preview: None,

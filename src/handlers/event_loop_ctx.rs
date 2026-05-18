@@ -75,6 +75,16 @@ impl EventLoopCtx {
             .retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
     }
 
+    /// Mark a pane for refresh at end of tick.
+    pub fn mark_refresh(&mut self, pane_idx: usize) {
+        self.panes_needing_refresh.insert(pane_idx);
+    }
+
+    /// Send an event to the event loop (non-blocking, logs on failure).
+    pub fn send_event(&self, event: AppEvent) {
+        let _ = crate::app::try_send_event(&self.event_tx, event);
+    }
+
     /// Synchronize file watches with current app state.
     /// Adds watches for new paths, removes watches for paths no longer in use.
     pub fn sync_watches(&mut self) {
