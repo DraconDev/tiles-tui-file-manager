@@ -584,7 +584,7 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
 
 pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     let style = theme::style_settings();
-    const STYLE_PRESET_ROWS: usize = 11;
+    const STYLE_PRESET_ROWS: usize = 14;
     const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_ROWS;
     let color_rows = [
         ("Accent Primary", style.accent_primary),
@@ -625,6 +625,9 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
         ("Solarized Dark", "yellow + cyan", theme::warning()),
         ("One Dark", "purple + teal", theme::accent_primary()),
         ("Tokyo Night", "blue + purple", theme::info()),
+        ("Gruvbox Dark", "warm yellow + earth", crate::ui::theme::ThemeStyle::preset_gruvbox_dark().accent_primary.to_color()),
+        ("Catppuccin Mocha", "mauve + teal", crate::ui::theme::ThemeStyle::preset_catppuccin_mocha().accent_primary.to_color()),
+        ("Rose Pine", "iris + foam", crate::ui::theme::ThemeStyle::preset_rose_pine().accent_primary.to_color()),
     ];
     for (i, (name, desc, color)) in preset_rows.iter().enumerate() {
         let row_idx = i + 1;

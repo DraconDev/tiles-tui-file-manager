@@ -103,7 +103,7 @@ impl ThemeStyle {
             danger: RgbColor::new(255, 80, 80),             // Bright red
             warning: RgbColor::new(255, 190, 50),           // Amber yellow
             success: RgbColor::new(80, 210, 120),           // Vivid green
-            muted: RgbColor::new(120, 120, 135),            // Warm gray
+            muted: RgbColor::new(150, 150, 165),            // Warm gray (bumped for contrast)
             info: RgbColor::new(100, 200, 230),             // Sky cyan
             file_code: RgbColor::new(236, 156, 116),       // Apricot
             file_config: RgbColor::new(132, 190, 255),      // Sky blue
@@ -125,14 +125,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(160, 118, 255),   // Purple
             accent_secondary: RgbColor::new(116, 184, 255),  // Ice blue
             selection_bg: RgbColor::new(104, 80, 150),      // Deep violet
-            selection_fg: RgbColor::new(255, 255, 255),     // White
+            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
             border_active: RgbColor::new(160, 118, 255),    // Purple
             border_inactive: RgbColor::new(82, 86, 104),    // Cool slate
             header_fg: RgbColor::new(198, 164, 255),        // Soft violet
             danger: RgbColor::new(255, 80, 120),            // Hot pink
             warning: RgbColor::new(255, 200, 80),           // Warm yellow
             success: RgbColor::new(80, 230, 160),           // Mint green
-            muted: RgbColor::new(110, 112, 140),            // Cool gray
+            muted: RgbColor::new(130, 132, 160),            // Cool gray (bumped for contrast)
             info: RgbColor::new(130, 200, 255),             // Light blue
             file_code: RgbColor::new(200, 160, 255),        // Lavender
             file_config: RgbColor::new(120, 200, 240),      // Cyan
@@ -154,14 +154,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(126, 196, 102),   // Moss green
             accent_secondary: RgbColor::new(86, 168, 142),  // Pine teal
             selection_bg: RgbColor::new(66, 116, 84),       // Deep fern
-            selection_fg: RgbColor::new(255, 255, 255),     // White
+            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
             border_active: RgbColor::new(126, 196, 102),    // Moss green
             border_inactive: RgbColor::new(76, 88, 82),    // Bark slate
             header_fg: RgbColor::new(182, 226, 164),        // Pale leaf
             danger: RgbColor::new(230, 80, 80),            // Autumn red
             warning: RgbColor::new(230, 180, 60),          // Golden
             success: RgbColor::new(100, 220, 120),        // Bright green
-            muted: RgbColor::new(108, 118, 108),            // Moss gray
+            muted: RgbColor::new(128, 140, 128),            // Moss gray (bumped for contrast)
             info: RgbColor::new(130, 200, 180),            // Sage
             file_code: RgbColor::new(180, 210, 120),       // Lime
             file_config: RgbColor::new(120, 180, 200),     // Forest blue
@@ -183,14 +183,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(236, 146, 98),   // Orange coral
             accent_secondary: RgbColor::new(236, 99, 141),  // Pink coral
             selection_bg: RgbColor::new(142, 74, 92),       // Plum dusk
-            selection_fg: RgbColor::new(255, 255, 255),     // White
+            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
             border_active: RgbColor::new(236, 146, 98),    // Orange coral
             border_inactive: RgbColor::new(94, 78, 92),    // Dusk slate
             header_fg: RgbColor::new(255, 198, 156),        // Peach light
             danger: RgbColor::new(255, 70, 70),            // Fire red
             warning: RgbColor::new(255, 200, 60),          // Sun yellow
             success: RgbColor::new(100, 210, 140),         // Seafoam
-            muted: RgbColor::new(130, 112, 120),           // Dusk gray
+            muted: RgbColor::new(148, 132, 140),           // Dusk gray (bumped for contrast)
             info: RgbColor::new(200, 160, 220),            // Twilight purple
             file_code: RgbColor::new(240, 160, 120),       // Salmon
             file_config: RgbColor::new(180, 160, 240),     // Lavender
@@ -212,14 +212,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(210, 214, 224),   // Soft silver
             accent_secondary: RgbColor::new(162, 172, 188),  // Steel blue-gray
             selection_bg: RgbColor::new(82, 90, 108),        // Graphite
-            selection_fg: RgbColor::new(255, 255, 255),     // White
+            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
             border_active: RgbColor::new(210, 214, 224),    // Soft silver
             border_inactive: RgbColor::new(72, 78, 92),    // Slate dark
             header_fg: RgbColor::new(228, 232, 240),        // Light silver
             danger: RgbColor::new(220, 80, 80),            // Bright red (needs contrast in mono)
             warning: RgbColor::new(220, 200, 80),          // Bright yellow
             success: RgbColor::new(80, 200, 120),          // Bright green
-            muted: RgbColor::new(100, 104, 116),           // Mid gray
+            muted: RgbColor::new(130, 134, 146),           // Mid gray (bumped for contrast)
             info: RgbColor::new(140, 180, 220),            // Muted blue
             file_code: RgbColor::new(190, 194, 206),       // Light gray
             file_config: RgbColor::new(150, 160, 180),     // Steel
@@ -241,14 +241,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(226, 78, 86),    // Legacy red
             accent_secondary: RgbColor::new(72, 190, 182),  // Legacy teal
             selection_bg: RgbColor::new(226, 78, 86),       // Legacy red highlight
-            selection_fg: RgbColor::new(255, 255, 255),    // White
+            selection_fg: RgbColor::new(0, 0, 0),           // Black (dark on bright bg)
             border_active: RgbColor::new(226, 78, 86),     // Legacy red
             border_inactive: RgbColor::new(70, 88, 104),   // Blue-gray slate
             header_fg: RgbColor::new(156, 214, 206),       // Pale teal
             danger: RgbColor::new(255, 60, 60),            // Pure red
             warning: RgbColor::new(255, 200, 50),          // Bright yellow
             success: RgbColor::new(80, 200, 120),         // Green
-            muted: RgbColor::new(100, 110, 130),           // Blue-gray
+            muted: RgbColor::new(130, 140, 160),           // Blue-gray (bumped for contrast)
             info: RgbColor::new(100, 200, 220),            // Teal
             file_code: RgbColor::new(236, 156, 116),       // Apricot
             file_config: RgbColor::new(132, 190, 255),     // Sky blue
@@ -262,6 +262,93 @@ impl ThemeStyle {
             stat_cpu_yellow: RgbColor::new(255, 170, 0),
             stat_cpu_light: RgbColor::new(140, 165, 210),
             stat_progress_bg: RgbColor::new(85, 80, 20),
+        }
+    }
+
+    pub fn preset_gruvbox_dark() -> Self {
+        Self {
+            accent_primary: RgbColor::new(251, 189, 34),   // Gruvbox yellow
+            accent_secondary: RgbColor::new(142, 192, 124),  // Gruvbox green
+            selection_bg: RgbColor::new(80, 73, 69),         // Gruvbox bg2
+            selection_fg: RgbColor::new(0, 0, 0),              // Black
+            border_active: RgbColor::new(251, 189, 34),     // Yellow
+            border_inactive: RgbColor::new(60, 56, 54),     // Gruvbox bg1
+            header_fg: RgbColor::new(235, 219, 178),         // Gruvbox fg0
+            danger: RgbColor::new(251, 73, 52),             // Gruvbox red
+            warning: RgbColor::new(250, 189, 34),           // Gruvbox yellow
+            success: RgbColor::new(142, 192, 124),          // Gruvbox green
+            muted: RgbColor::new(146, 131, 116),            // Gruvbox gray (bumped for contrast)
+            info: RgbColor::new(131, 165, 152),             // Gruvbox blue
+            file_code: RgbColor::new(204, 142, 104),        // Gruvbox orange
+            file_config: RgbColor::new(131, 165, 152),      // Gruvbox blue
+            file_media: RgbColor::new(211, 134, 155),      // Gruvbox purple
+            file_archive: RgbColor::new(251, 73, 52),     // Gruvbox red
+            file_exec: RgbColor::new(142, 192, 124),      // Gruvbox green
+            border_subtle: RgbColor::new(50, 48, 47),
+            selection_alt_bg: RgbColor::new(60, 56, 54),
+            stat_cpu_blue: RgbColor::new(69, 133, 136),
+            stat_cpu_cyan: RgbColor::new(131, 165, 152),
+            stat_cpu_yellow: RgbColor::new(250, 189, 34),
+            stat_cpu_light: RgbColor::new(235, 219, 178),
+            stat_progress_bg: RgbColor::new(60, 56, 54),
+        }
+    }
+
+    pub fn preset_catppuccin_mocha() -> Self {
+        Self {
+            accent_primary: RgbColor::new(203, 166, 247),   // Catppuccin mauve
+            accent_secondary: RgbColor::new(148, 226, 213),  // Catppuccin teal
+            selection_bg: RgbColor::new(88, 91, 112),        // Catppuccin surface0
+            selection_fg: RgbColor::new(0, 0, 0),             // Black
+            border_active: RgbColor::new(203, 166, 247),    // Mauve
+            border_inactive: RgbColor::new(69, 71, 90),      // Catppuccin mantle
+            header_fg: RgbColor::new(205, 214, 244),         // Catppuccin text
+            danger: RgbColor::new(243, 139, 168),            // Catppuccin red
+            warning: RgbColor::new(249, 226, 175),          // Catppuccin yellow
+            success: RgbColor::new(166, 227, 161),          // Catppuccin green
+            muted: RgbColor::new(147, 153, 178),            // Catppuccin overlay0 (bumped for contrast)
+            info: RgbColor::new(137, 180, 250),            // Catppuccin blue
+            file_code: RgbColor::new(245, 194, 231),        // Catppuccin pink
+            file_config: RgbColor::new(137, 180, 250),      // Catppuccin blue
+            file_media: RgbColor::new(250, 179, 135),      // Catppuccin peach
+            file_archive: RgbColor::new(243, 139, 168),    // Catppuccin red
+            file_exec: RgbColor::new(166, 227, 161),       // Catppuccin green
+            border_subtle: RgbColor::new(49, 50, 68),
+            selection_alt_bg: RgbColor::new(69, 71, 90),
+            stat_cpu_blue: RgbColor::new(137, 180, 250),
+            stat_cpu_cyan: RgbColor::new(148, 226, 213),
+            stat_cpu_yellow: RgbColor::new(249, 226, 175),
+            stat_cpu_light: RgbColor::new(186, 194, 222),
+            stat_progress_bg: RgbColor::new(69, 71, 90),
+        }
+    }
+
+    pub fn preset_rose_pine() -> Self {
+        Self {
+            accent_primary: RgbColor::new(196, 167, 231),   // Rose Pine iris
+            accent_secondary: RgbColor::new(110, 191, 171),  // Rose Pine foam
+            selection_bg: RgbColor::new(64, 60, 83),         // Rose Pine highlight low
+            selection_fg: RgbColor::new(0, 0, 0),             // Black
+            border_active: RgbColor::new(196, 167, 231),    // Iris
+            border_inactive: RgbColor::new(38, 35, 58),      // Rose Pine base
+            header_fg: RgbColor::new(224, 222, 244),         // Rose Pine text
+            danger: RgbColor::new(235, 111, 146),            // Rose Pine love
+            warning: RgbColor::new(246, 193, 114),          // Rose Pine gold
+            success: RgbColor::new(110, 191, 171),          // Rose Pine foam
+            muted: RgbColor::new(144, 140, 170),            // Rose Pine muted (bumped for contrast)
+            info: RgbColor::new(49, 116, 201),              // Rose Pine pine
+            file_code: RgbColor::new(235, 111, 146),        // Love
+            file_config: RgbColor::new(49, 116, 201),       // Pine
+            file_media: RgbColor::new(246, 193, 114),      // Gold
+            file_archive: RgbColor::new(196, 167, 231),    // Iris
+            file_exec: RgbColor::new(110, 191, 171),       // Foam
+            border_subtle: RgbColor::new(33, 32, 46),
+            selection_alt_bg: RgbColor::new(64, 60, 83),
+            stat_cpu_blue: RgbColor::new(49, 116, 201),
+            stat_cpu_cyan: RgbColor::new(110, 191, 171),
+            stat_cpu_yellow: RgbColor::new(246, 193, 114),
+            stat_cpu_light: RgbColor::new(224, 222, 244),
+            stat_progress_bg: RgbColor::new(64, 60, 83),
         }
     }
 
@@ -280,14 +367,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(136, 192, 208),   // Nord frost blue
             accent_secondary: RgbColor::new(163, 190, 140),  // Nord aurora green
             selection_bg: RgbColor::new(94, 129, 172),       // Nord blue
-            selection_fg: RgbColor::new(236, 239, 244),      // Nord snow
+            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
             border_active: RgbColor::new(136, 192, 208),     // Frost
             border_inactive: RgbColor::new(76, 86, 106),    // Nord polar night
             header_fg: RgbColor::new(216, 222, 233),         // Nord snow 1
             danger: RgbColor::new(235, 111, 146),            // Nord red aurora
             warning: RgbColor::new(235, 203, 139),          // Nord yellow aurora
             success: RgbColor::new(163, 190, 140),           // Nord green aurora
-            muted: RgbColor::new(108, 112, 134),            // Nord polar night 3
+            muted: RgbColor::new(136, 140, 162),            // Nord polar night (bumped for contrast)
             info: RgbColor::new(180, 142, 173),             // Nord purple aurora
             file_code: RgbColor::new(136, 192, 208),        // Frost blue
             file_config: RgbColor::new(180, 142, 173),      // Purple aurora
@@ -309,14 +396,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(189, 147, 249),   // Dracula purple
             accent_secondary: RgbColor::new(80, 250, 123),   // Dracula green
             selection_bg: RgbColor::new(98, 114, 164),       // Dracula comment blue
-            selection_fg: RgbColor::new(248, 248, 242),      // Dracula foreground
+            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
             border_active: RgbColor::new(189, 147, 249),    // Purple
             border_inactive: RgbColor::new(68, 71, 90),     // Dracula current line
             header_fg: RgbColor::new(248, 248, 242),         // Foreground
             danger: RgbColor::new(255, 85, 85),             // Dracula red
             warning: RgbColor::new(241, 250, 140),           // Dracula yellow
             success: RgbColor::new(80, 250, 123),           // Dracula green
-            muted: RgbColor::new(98, 114, 164),             // Comment blue
+            muted: RgbColor::new(120, 136, 186),            // Comment blue (bumped for contrast)
             info: RgbColor::new(139, 233, 253),             // Dracula cyan
             file_code: RgbColor::new(255, 121, 198),        // Dracula pink
             file_config: RgbColor::new(139, 233, 253),      // Dracula cyan
@@ -338,14 +425,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(181, 137, 0),     // Solarized yellow
             accent_secondary: RgbColor::new(42, 161, 152),   // Solarized cyan
             selection_bg: RgbColor::new(7, 54, 66),          // Solarized base02
-            selection_fg: RgbColor::new(147, 161, 161),      // Solarized base1
+            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
             border_active: RgbColor::new(181, 137, 0),      // Yellow
             border_inactive: RgbColor::new(54, 62, 68),     // Base02 variant
             header_fg: RgbColor::new(147, 161, 161),        // Base1
             danger: RgbColor::new(220, 50, 47),             // Solarized red
             warning: RgbColor::new(203, 75, 22),           // Solarized orange
             success: RgbColor::new(133, 153, 0),           // Solarized green
-            muted: RgbColor::new(88, 110, 117),            // Solarized base01
+            muted: RgbColor::new(120, 142, 149),            // Solarized base01 (bumped for contrast)
             info: RgbColor::new(38, 139, 210),              // Solarized blue
             file_code: RgbColor::new(181, 137, 0),          // Yellow
             file_config: RgbColor::new(38, 139, 210),       // Blue
@@ -367,14 +454,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(198, 120, 221),   // One Dark purple
             accent_secondary: RgbColor::new(86, 182, 194),   // One Dark cyan
             selection_bg: RgbColor::new(61, 68, 83),         // One Dark selection
-            selection_fg: RgbColor::new(255, 255, 255),      // White
+            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
             border_active: RgbColor::new(198, 120, 221),    // Purple
             border_inactive: RgbColor::new(55, 61, 74),     // One Dark gutter
             header_fg: RgbColor::new(171, 178, 191),         // One Dark silver
             danger: RgbColor::new(224, 108, 117),           // One Dark red
             warning: RgbColor::new(209, 154, 102),          // One Dark yellow
             success: RgbColor::new(152, 195, 121),          // One Dark green
-            muted: RgbColor::new(92, 99, 112),             // One Dark comment gray
+            muted: RgbColor::new(130, 137, 150),            // One Dark comment (bumped for contrast)
             info: RgbColor::new(86, 182, 194),             // One Dark cyan
             file_code: RgbColor::new(224, 108, 117),        // Red (function)
             file_config: RgbColor::new(86, 182, 194),       // Cyan (keyword)
@@ -396,14 +483,14 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(125, 207, 255),   // Tokyo Night blue
             accent_secondary: RgbColor::new(187, 154, 247),  // Tokyo Night purple
             selection_bg: RgbColor::new(53, 59, 83),         // Tokyo Night selection
-            selection_fg: RgbColor::new(255, 255, 255),      // White
+            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
             border_active: RgbColor::new(125, 207, 255),    // Blue
             border_inactive: RgbColor::new(42, 45, 62),     // Tokyo Night dark
             header_fg: RgbColor::new(192, 202, 245),         // Tokyo Night foreground dim
             danger: RgbColor::new(247, 118, 142),           // Tokyo Night red
             warning: RgbColor::new(255, 158, 100),          // Tokyo Night orange
             success: RgbColor::new(158, 206, 106),          // Tokyo Night green
-            muted: RgbColor::new(82, 87, 113),             // Tokyo Night comment
+            muted: RgbColor::new(110, 115, 141),            // Tokyo Night comment (bumped for contrast)
             info: RgbColor::new(125, 207, 255),            // Blue
             file_code: RgbColor::new(247, 118, 142),        // Red
             file_config: RgbColor::new(187, 154, 247),      // Purple
@@ -456,14 +543,14 @@ impl DraconTheme {
             accent_primary: Color::Rgb(226, 78, 86),    // Legacy Red
             accent_secondary: Color::Rgb(72, 190, 182), // Legacy Teal
             selection_bg: Color::Rgb(226, 78, 86),       // Red highlight
-            selection_fg: Color::Rgb(255, 255, 255),     // White
+            selection_fg: Color::Rgb(0, 0, 0),          // Black (dark on bright bg)
             border_active: Color::Rgb(226, 78, 86),     // Legacy Red
             border_inactive: Color::Rgb(70, 88, 104),   // Blue-gray slate
             header_fg: Color::Rgb(156, 214, 206),       // Pale teal
             danger: Color::Rgb(255, 60, 60),            // Pure red
             warning: Color::Rgb(255, 200, 50),          // Bright yellow
             success: RgbColor::new(80, 200, 120).to_color(), // Green
-            muted: Color::Rgb(100, 110, 130),           // Blue-gray
+            muted: Color::Rgb(130, 140, 160),           // Blue-gray (bumped for contrast)
             info: Color::Rgb(100, 200, 220),            // Teal
             file_code: Color::Rgb(236, 156, 116),       // Apricot
             file_config: Color::Rgb(132, 190, 255),     // Sky blue
