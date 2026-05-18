@@ -147,8 +147,10 @@ impl EventLoopCtx {
         if self.last_watch_sync.elapsed() >= Duration::from_millis(WATCH_SYNC_INTERVAL_MS) {
             self.sync_watches();
             self.last_watch_sync = Instant::now();
+            true // Only redraw when watch sync actually happened
+        } else {
+            false // No state changed — skip redundant redraw
         }
-        true // Tick always needs a draw
     }
 
     /// Handle the RefreshFiles event: push recent folder + mark pane for refresh.
