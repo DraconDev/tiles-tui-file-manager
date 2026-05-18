@@ -1,7 +1,5 @@
 #![allow(clippy::needless_borrow)]
 
-pub use crate::events::mouse_helpers::{fs_mouse_index, get_open_with_suggestions};
-
 use crate::app::{
     App, AppEvent, AppMode, CommandAction, CommandItem, ContextMenuAction, ContextMenuTarget,
     CurrentView, FileState,

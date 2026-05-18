@@ -359,7 +359,7 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         .and_then(|e| e.to_str())
         .unwrap_or("")
         .to_lowercase();
-    let mut suggestions = crate::event_helpers::get_open_with_suggestions(app, &ext);
+    let mut suggestions = crate::events::mouse_helpers::get_open_with_suggestions(app, &ext);
 
     // Filter suggestions based on input
     if !app.core.input.value.is_empty() {

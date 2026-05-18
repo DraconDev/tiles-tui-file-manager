@@ -1104,7 +1104,7 @@ pub fn handle_file_mouse(
 
             // 3. File Row Interaction
             if row >= 3 {
-                let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
+                let Some(idx) = crate::events::mouse_helpers::fs_mouse_index(row, app) else {
                     // Empty space click — deselect all and start marquee tracking
                     if button == MouseButton::Left && column >= sw {
                         if let Some(fs) = app.current_file_state_mut() {
@@ -1381,7 +1381,7 @@ pub fn handle_file_mouse(
                 && !me.modifiers.contains(KeyModifiers::SHIFT)
             {
                 // Fallback: no pending_click, no marquee, no modifiers → select clicked item
-                let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
+                let Some(idx) = crate::events::mouse_helpers::fs_mouse_index(row, app) else {
                     return true;
                 };
                 if let Some(fs) = app.current_file_state_mut() {
@@ -1470,7 +1470,7 @@ pub fn handle_file_mouse(
 
                     // File row folder targets (same pane).
                     if app.drag.hovered_drop_target.is_none() && row >= 3 {
-                        if let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) {
+                        if let Some(idx) = crate::events::mouse_helpers::fs_mouse_index(row, app) {
                             if let Some(fs) = app.current_file_state() {
                                 if let Some(path) = fs.list.files.get(idx) {
                                     if path.is_dir() {
@@ -1541,7 +1541,7 @@ pub fn handle_file_mouse(
                 && (me.modifiers.contains(KeyModifiers::SHIFT) || sel_mode)
                 && !app.drag.is_dragging
             {
-                let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
+                let Some(idx) = crate::events::mouse_helpers::fs_mouse_index(row, app) else {
                     return true;
                 };
                 if let Some(fs) = app.current_file_state_mut() {
