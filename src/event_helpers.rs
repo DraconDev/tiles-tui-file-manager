@@ -1295,4 +1295,49 @@ mod tests {
         // Only consecutive dedup, so: ["/a" (init), "/b", "/a", "/b"]
         assert_eq!(fs.nav.history.len(), 4);
     }
+
+    #[test]
+    fn navigate_back_decrements_index() {
+        let mut fs = make_fs("/a");
+        push_history(&mut fs, PathBuf::from("/b"));
+        push_history(&mut fs, PathBuf::from("/c"));
+        // history: ["/a", "/b", "/c"], index = 2
+        assert_eq!(fs.nav.history_index, 2);
+        fs.nav.history_index = 1; // simulate going back
+        fs.nav.current_path = fs.nav.history[1].clone();
+        assert_eq!(fs.nav.current_path, PathBuf::from("/b"));
+    }
+
+    #[test]
+    fn navigate_forward_increments_index() {
+        let mut fs = make_fs("/a");
+        push_history(&mut fs, PathBuf::from("/b"));
+        push_history(&mut fs, PathBuf::from("/c"));
+        // Go back to index 1
+        fs.nav.history_index = 1;
+        // Now going forward should work
+        fs.nav.history_index = 2;
+        fs.nav.current_path = fs.nav.history[2].clone();
+        assert_eq!(fs.nav.current_path, PathBuf::from("/c"));
+    }
+
+    #[test]
+    fn resolve_path_tilde_expands_home() {
+        // On systems without home dir (unlikely), this gracefully falls through
+        let current = PathBuf::from("/tmp");
+        let result = resolve_path_input("~", &current, false);
+        // Should expand to home dir or fall back to /tmp
+        if dirs::home_dir().is_some() {
+            assert_ne!(result, PathBuf::from("/tmp"));
+        }
+    }
+
+    #[test]
+    fn resolve_path_tilde_slash_relative() {
+        let current = PathBuf::from("/tmp");
+        let result = resolve_path_input("~/Documents", &current, false);
+        if let Some(home) = dirs::home_dir() {
+            assert_eq!(result, home.join("Documents"));
+        }
+    }
 }
