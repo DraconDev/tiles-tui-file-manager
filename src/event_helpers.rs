@@ -791,3 +791,29 @@ pub fn handle_context_menu_action(
     }
 }
 
+fn copy_target_text(
+    action: &ContextMenuAction,
+    target: &ContextMenuTarget,
+    app: &App,
+) -> Result<String, String> {
+    let path = match target {
+        ContextMenuTarget::File(idx) | ContextMenuTarget::Folder(idx) => app.current_file_state()
+            .and_then(|fs| fs.list.files.get(*idx))
+            .cloned()
+            .ok_or_else(|| "No file selected".to_string())?,
+        ContextMenuTarget::SidebarFavorite(path) | ContextMenuTarget::ProjectTree(path) => {
+            path.clone()
+        }
+        _ => return Err("Nothing here supports path copy".to_string()),
+    };
+
+    if matches!(action, ContextMenuAction::CopyName) {
+        Ok(path
+            .file_name()
+            .map(|name| name.to_string_lossy().to_string())
+            .unwrap_or_else(|| path.to_string_lossy().to_string()))
+    } else {
+        Ok(path.to_string_lossy().to_string())
+    }
+}
+
