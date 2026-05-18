@@ -1,17 +1,16 @@
 #![allow(clippy::needless_borrow)]
 
 use dracon_terminal_engine::contracts::{
-    InputEvent as Event, KeyCode, KeyModifiers, MouseButton, MouseEventKind,
+    InputEvent as Event, KeyCode, KeyModifiers,
 };
 use std::path::PathBuf;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
 use crate::app::{
-    App, AppEvent, AppMode, ContextMenuTarget, CurrentView, FileColumn, SidebarTarget, UndoAction,
+    App, AppEvent, AppMode, CurrentView, SidebarTarget, UndoAction,
 };
 use crate::events::input::delete_word_backwards;
-use crate::state::{DropTarget};
 
 const SEARCH_DEBOUNCE_MS: u64 = 300;
 
