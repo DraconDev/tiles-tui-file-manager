@@ -5,7 +5,6 @@ use serde::{Deserialize, Serialize};
 use std::sync::LazyLock;
 use parking_lot::RwLock;
 
-#[allow(dead_code)]
 pub struct DraconTheme {
     pub bg: Color,
     pub fg: Color,

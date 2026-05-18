@@ -14,13 +14,6 @@ use crate::events::input::delete_word_backwards;
 
 const SEARCH_DEBOUNCE_MS: u64 = 300;
 
-fn is_valid_search_char(c: char) -> bool {
-    let bad = (c as u32) < 32 || c == '\x7f' || c == '\x1b'
-        || matches!(c, '[' | ']' | '~' | '^' | '_' | '=' | '+' | '<' | '>' | '*' | '?' | '!' | '$'
-            | '%' | '&' | '@' | '#' | '{' | '}' | '\\' | '|' | '`');
-    !bad
-}
-
 fn reselect_after_filter(fs: &mut crate::state::FileState, old_path: Option<&std::path::Path>) {
     if let Some(path) = old_path {
         if let Some(new_idx) = fs.list.files.iter().position(|p| p == path) {
@@ -789,7 +782,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                         KeyModifiers::CONTROL | KeyModifiers::ALT | KeyModifiers::SUPER,
                     ) =>
                 {
-                    if !is_valid_search_char(c) {
+                    if !crate::events::file_actions::is_valid_search_char(c) {
                         return false;
                     }
 
@@ -947,24 +940,24 @@ mod tests {
 
     #[test]
     fn is_valid_search_char_allows_letters() {
-        assert!(is_valid_search_char('a'));
-        assert!(is_valid_search_char('Z'));
-        assert!(is_valid_search_char('0'));
+        assert!(crate::events::file_actions::is_valid_search_char('a'));
+        assert!(crate::events::file_actions::is_valid_search_char('Z'));
+        assert!(crate::events::file_actions::is_valid_search_char('0'));
     }
 
     #[test]
     fn is_valid_search_char_rejects_specials() {
-        assert!(!is_valid_search_char('*'));
-        assert!(!is_valid_search_char('?'));
-        assert!(!is_valid_search_char('!'));
-        assert!(!is_valid_search_char('\\'));
+        assert!(!crate::events::file_actions::is_valid_search_char('*'));
+        assert!(!crate::events::file_actions::is_valid_search_char('?'));
+        assert!(!crate::events::file_actions::is_valid_search_char('!'));
+        assert!(!crate::events::file_actions::is_valid_search_char('\\'));
     }
 
     #[test]
     fn is_valid_search_char_rejects_control() {
-        assert!(!is_valid_search_char('\x01'));
-        assert!(!is_valid_search_char('\x1b'));
-        assert!(!is_valid_search_char('\x7f'));
+        assert!(!crate::events::file_actions::is_valid_search_char('\x01'));
+        assert!(!crate::events::file_actions::is_valid_search_char('\x1b'));
+        assert!(!crate::events::file_actions::is_valid_search_char('\x7f'));
     }
 
     #[test]

@@ -7,7 +7,6 @@ use crate::app::App;
 use crate::state::FileColumn;
 use crate::ui::theme as theme;
 
-#[allow(dead_code)]
 const FILE_LIST_START_ROW: u16 = 3;
 
 pub fn fs_mouse_index(row: u16, app: &App) -> Option<usize> {
