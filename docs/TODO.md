@@ -1,177 +1,150 @@
 # Tiles Improvement TODO
 
-Generated from full code review — 2026-05-17
-Updated with refactor progress — 2026-05-17
+Full audit — 2026-05-18
 
 ---
 
-## P0 — Architecture (blocks future velocity)
+## Codebase Stats
 
-- [x] **Split `ui/mod.rs` (5,066 lines) into submodules** — DONE (commits 6e612266 → 0313dcc0)
-  - [x] `ui/modals.rs` — draw_*_modal functions
-  - [x] `ui/settings.rs` — draw_settings_modal + draw_*_settings
-  - [x] `ui/monitor.rs` — draw_monitor_page, draw_monitor_overview, draw_monitor_applications, draw_processes_view
-  - [x] `ui/git_view.rs` — draw_commit_view, parse_commit_refs, style_for_ref_label, refs_line
-  - [x] `ui/file_view.rs` — draw_file_view (494 lines, extracted from pane.rs)
-  - [x] `ui/git_page.rs` — draw_git_page + 3 helpers (346 lines, extracted from pane.rs)
-  - [x] `ui/header.rs` — draw_global_header
-  - [x] `ui/footer.rs` — draw_footer + draw_stat_bar
-  - [x] `ui/context_menu.rs` — draw_context_menu
-  - [x] `ui/debug.rs` — draw_debug_page
-  - [x] `ui/small_modals.rs` — small modal dialogs
-  - [x] `ui/misc.rs` — misc UI functions
-  - [x] `ui/pane.rs` — thin dispatcher (43 lines, was 836)
-  - [x] Keep `ui/mod.rs` as thin dispatcher: `pub fn draw()` calling into submodules (386 lines, was 5,060)
-  - [x] `events/settings_handlers.rs` — style color, reset, preview MB (209 lines, from modals.rs)
-  - [x] `events/editor_modals.rs` — replace, search, goto handlers (240 lines, from modals.rs)
-  - [x] `events/modal_mouse.rs` — mouse event handling (522 lines, from modals.rs)
+| Metric | Value |
+|--------|-------|
+| Total lines | 20,180 |
+| Source files | 48 |
+| Public functions | 217 |
+| Tests | 78 |
+| Clippy | Clean ✅ |
+| Doc warnings | 0 |
+| TODO/FIXME/HACK | 0 |
+| Production unwraps | 0 |
+| unsafe blocks | 1 (stdin poll) |
+| Clippy suppressions | 6 (justified) |
 
-- [ ] **Extract `run_tty()` event loop into handler modules** — PARTIAL
-  - [x] `src/setup.rs` (222 lines) — setup_app, handle_event, prime_visible_tabs, prime_local_file_state
-  - [x] `src/tree_walk.rs` (61 lines) — walk_tree
-  - [x] `src/events/mouse_helpers.rs` (28 lines) — fs_mouse_index, get_open_with_suggestions
-  - [ ] Create `EventLoopCtx` struct to hold shared mutable state (app, event_tx, panes_needing_refresh, last_self_save, debouncer)
-  - [ ] `src/handlers/files.rs` — RefreshFiles, CreateFile, CreateFolder, Delete, Trash, Copy, Move, Rename, BulkRename
+### Largest files
+
+| File | Lines | Status |
+|------|-------|--------|
+| `src/events/file_manager.rs` | 1,915 | ⚠️ largest, blocked from split |
+| `src/main.rs` | 1,476 | ⚠️ event loop god-file |
+| `src/event_helpers.rs` | 1,298 | ⚠️ blocked from split |
+| `src/events/modals.rs` | 993 | manageable |
+| `src/ui/panes/sidebar.rs` | 969 | OK |
+| `src/events/mod.rs` | 874 | OK |
+| `src/events/editor.rs` | 866 | OK |
+
+---
+
+## ✅ Completed
+
+### Architecture
+- [x] Split `ui/mod.rs` (5,060→386 lines, -92%)
+- [x] Decompose `App` (120 fields → 13 sub-structs)
+- [x] Decompose `FileState` (35 fields → 4 sub-structs)
+- [x] Event handler extraction (8 new modules)
+
+### Theme System
+- [x] ThemeStyle 6→22 fields, 14 presets, 34 accessors
+- [x] 261 hardcoded `Color::` replaced, 12 intentional remaining
+- [x] Default theme = Legacy Red (`preset_legacy_red()`)
+- [x] All 14 presets pass WCAG contrast (selection_fg=black)
+- [x] Theme persistence: `config.rs` skips persisting when current==default
+- [x] Migration: `setup.rs` discards stale `preset_cool()`/`preset_warm()` from `state.json`
+
+### Mouse UX (Dolphin-inspired)
+- [x] Marquee drag selection (transparent border-only rect)
+- [x] Undo close tab — Ctrl+Shift+T (max 10)
+- [x] File drag-and-drop with Name column click zone
+- [x] Cross-pane drag-and-drop (pane_rects stored during render)
+- [x] Deferred click pattern (pending_click_idx) — preserves multi-selection during marquee
+- [x] Sidebar folder click = navigate only (no auto-expand, Dolphin-style)
+- [x] Click empty space deselects all
+- [x] Bounds-checked stale indices on mouseUp (crash fix)
+
+### Quality
+- [x] Save state on quit (all 3 quit paths)
+- [x] Guard production unwrap
+- [x] TreeScanResult struct (replaced type_complexity)
+- [x] `#[must_use]` on pure functions
+- [x] cargo audit, pin deps, slim tokio
+- [x] Doc comments on all public API
+- [x] XDG debug log, CI (clippy, doc, audit)
+
+### Runtime Bug Fixes
+- [x] Konsole tab open, pipewire noise, settings off-by-one
+- [x] Editor reload race, Ctrl+H hidden, sidebar dotfiles
+- [x] Git mouse coords, full commit hash, relative time
+- [x] Self-save fallback, editor preview clear
+- [x] Stale file list on navigation (clear files/metadata immediately)
+- [x] Theme persistence cycle (4 root causes fixed)
+
+---
+
+## 🔴 P0 — Architecture (blocks future velocity)
+
+- [ ] **Extract `run_tty()` event loop** — `src/main.rs` is 1,476 lines with 70 `AppEvent::` match arms
+  - [ ] Create `EventLoopCtx` struct (app, event_tx, panes_needing_refresh, last_self_save, debouncer)
+  - [ ] `src/handlers/files.rs` — RefreshFiles, CreateFile, CreateFolder, Delete, Trash, Copy, Move, Rename
   - [ ] `src/handlers/editor.rs` — Save, SaveAs, editor sync, file-watcher reload
   - [ ] `src/handlers/remote.rs` — ConnectRemote, DisconnectRemote, remote file ops
   - [ ] `src/handlers/git.rs` — GitRefresh, GitCommit, GitCheckout
   - [ ] `src/handlers/monitor.rs` — MonitorUpdate, KillProcess, SignalSelect
   - [ ] `src/handlers/clipboard.rs` — ClipboardCopy, ClipboardPaste
   - [ ] `src/handlers/settings.rs` — SaveSettings, LoadSettings, ResetSettings
-  - [ ] `src/handlers/navigation.rs` — Navigate, TabSwitch, ToggleZoom, Sidebar clicks
-  - [ ] Main loop becomes: `match event { ... handlers::on_xxx(app, tx).await ... }`
-  - **BLOCKER:** Deep coupling to shared mutable state. 29 match arms all reference `app.lock()`, `last_self_save`, `debouncer`, `panes_needing_refresh`. Requires EventLoopCtx pattern first.
+  - [ ] `src/handlers/navigation.rs` — Navigate, TabSwitch, ToggleZoom
+  - **BLOCKER:** Deep coupling to shared mutable state. 29 match arms all reference `app.lock()`, `last_self_save`, `debouncer`, `panes_needing_refresh`. Requires EventLoopCtx first.
 
-- [x] **Decompose `App` struct (~120 fields) into sub-structs** — DONE (commit efa3a9e9)
-  - [x] `SidebarState` — show_side_panel, sidebar_width_percent, sidebar_bounds, sidebar_scroll_offset, sidebar_folders/favorites/recent/storage/remotes, tree_expanded_folders, tree_cache
-  - [x] `MonitorState` — move SystemState here, monitor_subview, process_table_state
-  - [x] `GitState` (part of FileGitState) — git_branch, git_ahead, git_behind, git_summary, git_pending, git_history, git_remotes, git_stashes
-  - [x] `DragState` — drag_start_pos, drag_source, is_dragging, hovered_drop_target
-  - [x] `EditorGlobalState` — editor_state, scroll_positions, replace_buffer
-  - [x] `UndoState` — undo_stack, redo_stack
-  - [x] `SettingsState` — settings_index, settings_section, settings_target, settings_scroll
-  - [x] +6 more sub-structs (CoreState, LayoutState, MouseState, SelectionState, NavState, EditorGlobal)
-  - [x] Implement `Default` for all sub-structs, use `..Default::default()` in `App::new()`
-
-- [x] **Decompose `FileState` (~170 pub fields) into sub-structs** — DONE (commits 952dec60 + d9c8dcd3)
-  - [x] `FileListState` — files, tree_file_depths, selection, columns, local_count, metadata, path_colors
-  - [x] `FileGitState` — git_history, git_history_state, git_pending_state, git_branch, git_ahead, git_behind, git_pending, git_summary, git_remotes, git_stashes, git_cache_until
-  - [x] `FileNavState` — current_path, remote_session, show_hidden, search_filter, search_generation, history, history_index, sort_column, sort_ascending, search_debounce_until
-  - [x] `FileViewState` — preview, view_height, table_state, column_bounds, breadcrumb_bounds, breadcrumb_header_bounds, pending_select_path, file_row_bounds
-  - [x] 645 field references migrated across 20+ files (Python script)
-
----
-
-## P4 — Mouse UX (inspired by Dolphin)
-
-- [x] **Marquee drag selection** — click+drag on empty space/non-name columns draws rect, selects all items within. Ctrl+drag toggles. ✅
-- [x] **Undo close tab — Ctrl+Shift+T** — reopens last closed tab (max 10). ✅
-- [ ] **Hover +/- selection buttons** — skeptical, revisit only if marquee isn't sufficient
-
-### P4 Bugs (fixes applied, pending verification)
-
-- [x] **Default theme still purple on start** — Fixed (4 root causes):
-  1. `ACTIVE_STYLE`/`ACTIVE_THEME` statics used `default_purple()` → changed to `ThemeStyle::default()`
-  2. `config.rs` skips persisting `theme_style` when current == default
-  3. **Migration**: `setup.rs` skips loading `theme_style` if it matches `preset_cool()` (old default)
-  4. Stale `theme_style` cleared from `state.json`
-
-- [x] **Marquee broken when row already selected** — Fixed:
-  1. Deferred click pattern: plain clicks set `pending_click_idx`, resolved on mouseUp only if no drag/marquee
-  2. File drag threshold raised to 3px (dist_sq >= 9.0), marquee at 2px
-  3. `DragState.pending_click_idx` field added
-  4. No double-fire on Ctrl/Shift (only plain clicks deferred)
-
-## P5 — Editor cursor bug (dracon-terminal-engine)
-
-- [ ] After pressing Enter, cursor column appears offset by +1 per empty row before the insertion point
-  - Likely bug in `insert_newline()` or `ensure_cursor_visible()` wrap-mode calculation
-  - Requires reproduction and fix in `/home/dracon/Dev/dracon-terminal-engine`
-
----
-
-## P1 — Quality (prevents bugs, improves CI)
-
-- [ ] **Fix terma clippy errors (blocks CI with `-D warnings`)**
-  - [ ] `terma/src/visuals/slicer.rs` — redundant field names (`x: x` → `x`)
-  - [ ] `terma/src/compositor/engine.rs` — too many arguments in `draw_rect` (introduce struct param)
-  - [ ] `terma/src/compositor/engine.rs` — collapsible `else { if .. }` → `else if`
-
-- [x] **Add tests for untested critical modules** — PARTIAL (commit 9feaff30)
-  - [x] `app.rs` — 6 new tests (defaults, pane, file state, split, sidebar, shield)
-  - [x] `state/mod.rs` — 6 new tests (FileState, Pane, history, AppMode)
-  - [x] `config.rs` — already has 11 tests ✅
-  - [x] `events/editor.rs` — 3 new tests (editor events ignored in non-editor view)
-  - [x] `modules/system.rs` — 7 new tests (process_tree_depth, parse_ppid_from_stat)
-
-- [x] **Guard the one production `unwrap()`** — DONE (commit f95873c3)
-  - [x] `events/monitor.rs:63` — replaced with `if let Some(sel)` pattern
-
-- [x] **Replace `type_complexity` suppression with named structs** — DONE (commit f95873c3)
-  - [x] `ScanResult` 4-tuple in `main.rs` → defined `struct TreeScanResult { tree_files, tree_metadata, git_files, git_metadata }`
-  - [x] Remove `#[allow(clippy::type_complexity)]` from `try_send_event`
-
----
-
-## P2 — Hygiene (security, correctness, polish)
-
-- [x] **Run `cargo audit` and fix vulnerabilities** — DONE (commit c81ef0a8)
-  - [x] Add `cargo audit` step to CI
-  - [x] Update `image` crate from 0.24 → 0.25
-  - Note: 3 transitive warnings (bincode unmaintained, paste unmaintained, lru unsound) — all via ratatui/syntect, not fixable here
-
-- [x] **Move debug log to XDG data directory** — DONE (commit 90bb96b4)
-  - [x] Change `"debug.log"` → `dirs::data_local_dir().join("tiles/debug.log")`
-  - [x] Create directory on first write
-
-- [x] **Pin dependency minor versions for reproducibility** — DONE (commit c81ef0a8)
-  - [x] `tokio = { version = "1.0", ... }` → `"1.41"`
-  - [x] `regex = "1"` → `"1.11"`
-  - [x] `base64 = "0.22.1"` — fine (pinned patch)
-  - [x] `image = "0.24"` → `"0.25"`
-  - [x] `parking_lot = "0.12"` → `"0.12.3"`
-
-- [ ] **Decompose `event_helpers.rs` (1,292 lines)** — ATTEMPTED, BLOCKED
+- [ ] **Decompose `event_helpers.rs` (1,298 lines)**
   - [ ] `src/helpers/path.rs` — resolve_relative_path, expand_tilde, path normalization
   - [ ] `src/helpers/files.rs` — file operation helpers (delete, copy, move, trash)
   - [ ] `src/helpers/navigation.rs` — folder navigation, history, selection restore
-  - **BLOCKER:** navigate_back, navigate_forward, push_history called from `events/mod.rs` dispatcher → circular dependency with `event_helpers.rs`. Would require restructuring event module hierarchy.
+  - **BLOCKER:** Circular dep with `events/mod.rs` (navigate_back/forward/push_history called from dispatcher)
 
-- [x] **Add `#[must_use]` to pure functions** — DONE (commit e2f7721c)
-  - [x] `fuzzy_contains`, `try_send_event`
+- [ ] **Decompose `events/file_manager.rs` (1,915 lines)**
+  - [ ] Extract mouse handling (~600 lines) to `events/file_mouse.rs`
+  - [ ] Extract key handling (~500 lines) to `events/file_keys.rs`
+  - [ ] Keep dispatcher + shared helpers in `file_manager.rs`
+  - **BLOCKER:** Same circular dep pattern as event_helpers
 
 ---
 
-## P3 — Polish (documentation, performance)
+## 🟡 P1 — Bugs & Quality
 
-- [x] **Add doc comments to all public API** — DONE (commits 37a5c886 + b42e6b02 + 1579840a)
-  - [x] `pub fn draw()` — explain render pipeline
-  - [x] `pub fn handle_event()` — explain event dispatch
-  - [x] `pub fn try_send_event()` — explain channel semantics
-  - [x] `pub fn log_debug()` — explain XDG log location
-  - [x] Navigation helpers — navigate_back, navigate_forward, push_history, navigate_up
-  - [x] `pub fn copy_text_to_clipboard()` — explain platform fallback chain
-  - [x] All key `pub` methods on `App`
+- [ ] **Editor cursor bug** (dracon-terminal-engine)
+  - After pressing Enter, cursor column offset by +1 per empty row before insertion point
+  - Requires reproduction and fix in `/home/dracon/Dev/dracon-terminal-engine`
 
-- [ ] **Add criterion benchmarks for hot paths**
+- [ ] **Fix terma clippy errors** (blocks CI with `-D warnings`)
+  - [ ] `terma/src/visuals/slicer.rs` — redundant field names
+  - [ ] `terma/src/compositor/engine.rs` — too many arguments in `draw_rect`
+  - [ ] `terma/src/compositor/engine.rs` — collapsible `else { if }`
+
+- [ ] **Add tests for untested critical modules** — PARTIAL
+  - [x] `app.rs` — 6 tests, `state/mod.rs` — 6 tests, `config.rs` — 11 tests
+  - [x] `events/editor.rs` — 3 tests, `modules/system.rs` — 7 tests
+  - [ ] `event_helpers.rs` — 0 tests (1298 lines, core navigation)
+  - [ ] `events/file_manager.rs` — 0 tests (1915 lines, all mouse/keyboard)
+  - [ ] `ui/theme.rs` — 0 tests (645 lines, 14 presets)
+  - [ ] `modules/files.rs` — 0 tests (file operations)
+
+- [ ] **Remove dead `default_purple()` alias** — now just calls `default()`. Replace callers with `default()` directly and remove the misleading alias.
+
+---
+
+## 🟢 P2 — Polish & Features
+
+- [ ] **Cross-pane drag: drop on empty space** — currently only drops on folder rows. Should support dropping into the other pane's current directory (drop on empty space = move to that dir).
+
+- [ ] **Marquee: drag from Name column** — currently marquee only starts from non-Name column clicks. Some users may expect Name-column vertical drag to start marquee (like Dolphin). Consider: if drag is primarily vertical (>3 rows) and horizontal distance < Name column width, prefer marquee over file drag.
+
+- [ ] **Criterion benchmarks for hot paths**
   - [ ] `draw()` — full render cycle
-  - [ ] `list_path_for_filter()` — file listing + filtering
+  - [ ] `walk_tree()` — directory traversal
   - [ ] `fuzzy_contains()` — search matching
-  - [ ] Add `[[bench]]` to Cargo.toml
 
-- [x] **Consider `tokio` feature slim-down** — DONE (commit 099bd446)
-  - [x] `features = ["full"]` → `["rt-multi-thread", "macros", "sync", "time"]`
-  - [x] Reduces compile time and binary size
-
-- [x] **Add `cargo clippy --release` to CI for release-specific warnings** — DONE (already in ci.yml)
-  - [x] Already in CI ✅
-
-- [x] **Add `cargo doc --no-deps` to CI** — DONE (commit 39fe5344)
-  - [x] Catches broken doc links early
+- [ ] **Hover +/- selection buttons** — skeptical, revisit only if marquee isn't sufficient
 
 ---
 
-## Refactor Stats (30+ commits)
+## 📊 Refactor Stats (65+ commits)
 
 | Metric | Before | After |
 |--------|--------|-------|
@@ -181,5 +154,8 @@ Updated with refactor progress — 2026-05-17
 | modals.rs | 1,929 lines | 991 lines (-49%) |
 | pane.rs | 836 lines | 43 lines (-95%) |
 | Total modules created | 0 | 21+ |
-| Tests | 54 | 72 ✅ |
+| Tests | 54 | 78 ✅ |
 | Clippy | Clean | Clean ✅ |
+| Theme presets | 6 | 14 ✅ |
+| ThemeStyle fields | 6 | 22 ✅ |
+| Hardcoded colors | 261 | 0 (12 intentional) ✅ |
