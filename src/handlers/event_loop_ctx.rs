@@ -165,10 +165,13 @@ impl EventLoopCtx {
     }
 
     /// Handle the RefreshFiles event: push recent folder + mark pane for refresh.
-    #[allow(dead_code)]
-    pub fn handle_refresh_files(&mut self, pane_idx: usize) {
+    /// Returns true if the pane was valid (needs a draw).
+    pub fn handle_refresh_files(&mut self, pane_idx: usize) -> bool {
+        let t_refresh = std::time::Instant::now();
         let current_path = {
+            let t_lock = std::time::Instant::now();
             let mut app_guard = self.app.lock();
+            crate::app::log_debug(&format!("RefreshFiles lock took {:?}", t_lock.elapsed()));
             let path = app_guard
                 .panes
                 .get(pane_idx)
@@ -179,8 +182,175 @@ impl EventLoopCtx {
             }
             path
         };
+        crate::app::log_debug(&format!("RefreshFiles handler total {:?}", t_refresh.elapsed()));
         if current_path.is_some() {
             self.mark_refresh(pane_idx);
+        }
+        current_path.is_some()
+    }
+
+    /// Handle the FilesChangedOnDisk event: self-save guard, refresh affected panes,
+    /// and trigger editor reloads for open preview files.
+    /// Returns (needs_draw, should_continue) — continue skips this event entirely.
+    pub fn handle_files_changed_on_disk(&mut self, path: PathBuf) -> (bool, bool) {
+        crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
+
+        // Self-save guard: skip events for files we just wrote.
+        if let Some((_saved_mtime, _saved_size, saved_at)) = self.last_self_save.get(&path) {
+            let exact_match = std::fs::metadata(&path).ok().and_then(|meta| {
+                meta.modified().ok().map(|mtime| {
+                    let size: u64 = meta.len();
+                    mtime == *_saved_mtime && size == *_saved_size
+                })
+            }).unwrap_or(false);
+
+            if exact_match || saved_at.elapsed() < Duration::from_secs(5) {
+                return (false, true); // continue (skip this event)
+            }
+        }
+
+        let app_guard = self.app.lock();
+        let mut needs_reload = Vec::new();
+
+        for (i, pane) in app_guard.panes.iter().enumerate() {
+            if let Some(fs) = pane.current_state() {
+                let current_path = &fs.nav.current_path;
+                let should_refresh = if let Some(parent) = path.parent() {
+                    parent == current_path.as_path() || path.starts_with(current_path)
+                } else {
+                    path == current_path.as_path() || path.starts_with(current_path)
+                };
+
+                if should_refresh {
+                    let is_self_save_dir = path.parent().map(|parent| {
+                        self.last_self_save.keys().any(|sp| sp.parent() == Some(parent))
+                    }).unwrap_or(false)
+                        && self.last_self_save.values().any(|(_, _, at)| at.elapsed() < Duration::from_secs(2));
+
+                    if !is_self_save_dir {
+                        crate::app::log_debug(&format!("Refreshing pane {} for path {:?}", i, path));
+                        self.panes_needing_refresh.insert(i);
+                    }
+                }
+            }
+            if let Some(fs) = pane.current_state() {
+                if let Some(ref preview) = fs.view.preview {
+                    if preview.path == path {
+                        if let Some(editor) = &preview.editor {
+                            if !editor.modified && !self.last_self_save.contains_key(&path) {
+                                needs_reload.push((i, path.clone()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        if let Some(preview) = &app_guard.editor_global.editor_state {
+            if preview.path == path {
+                if let Some(editor) = &preview.editor {
+                    if !editor.modified && !self.last_self_save.contains_key(&path) {
+                        needs_reload.push((app_guard.focused_pane_index, path.clone()));
+                    }
+                }
+            }
+        }
+
+        drop(app_guard);
+        for (p_idx, p_path) in needs_reload {
+            let _ = crate::app::try_send_event(&self.event_tx, AppEvent::PreviewRequested(p_idx, p_path));
+        }
+        (true, false) // needs_draw = true, don't continue
+    }
+
+    /// Handle the SaveFile event: write content to disk, update self-save guard,
+    /// and update editor preview state.
+    pub fn handle_save_file(&mut self, path: PathBuf, content: String) {
+        let remote_for_save = {
+            let app_guard = self.app.lock();
+            app_guard.panes
+                .iter()
+                .find_map(|pane| {
+                    let fs = pane.current_state()?;
+                    let preview = fs.view.preview.as_ref()?;
+                    if preview.path == path {
+                        fs.nav.remote_session.clone()
+                    } else {
+                        None
+                    }
+                })
+                .or_else(|| {
+                    let fs = app_guard.current_file_state()?;
+                    app_guard.editor_global.editor_state.as_ref()?;
+                    fs.nav.remote_session.clone()
+                })
+        };
+
+        let save_res = if let Some(remote) = &remote_for_save {
+            crate::modules::remote::write_string(remote, &path, &content)
+        } else {
+            std::fs::write(&path, &content)
+        };
+
+        match save_res {
+            Ok(_) => {
+                if remote_for_save.is_none() {
+                    let now = Instant::now();
+                    let meta_ok = std::fs::metadata(&path).ok().and_then(|meta| {
+                        meta.modified().ok().map(|mtime| {
+                            let size: u64 = meta.len();
+                            if self.last_self_save.len() > 100 {
+                                self.last_self_save.retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
+                            }
+                            self.last_self_save.insert(path.clone(), (mtime, size, now));
+                            true
+                        })
+                    });
+                    if meta_ok.is_none() {
+                        self.last_self_save.insert(path.clone(), (std::time::SystemTime::UNIX_EPOCH, 0, now));
+                    }
+                }
+                let mut app_guard = self.app.lock();
+                if let Some(ref mut preview) = app_guard.editor_global.editor_state {
+                    if preview.path == path {
+                        preview.last_saved = Some(Instant::now());
+                        if let Some(ref mut editor) = preview.editor {
+                            editor.modified = false;
+                        }
+                        preview.highlighted_lines = None;
+                    }
+                }
+                for pane in &mut app_guard.panes {
+                    if let Some(fs) = pane.current_state_mut() {
+                        if let Some(ref mut preview) = fs.view.preview {
+                            if preview.path == path {
+                                preview.last_saved = Some(Instant::now());
+                                if let Some(ref mut editor) = preview.editor {
+                                    editor.modified = false;
+                                }
+                                preview.highlighted_lines = None;
+                            }
+                        }
+                    }
+                }
+
+                // Trigger refresh for panes showing this file's parent
+                if let Some(parent) = path.parent() {
+                    for (i, pane) in app_guard.panes.iter().enumerate() {
+                        if let Some(fs) = pane.current_state() {
+                            if fs.nav.current_path == parent {
+                                self.panes_needing_refresh.insert(i);
+                            }
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                let mut app_guard = self.app.lock();
+                let msg = format!("Failed to save file: {}", e);
+                crate::app::log_debug(&msg);
+                app_guard.output.last_action_msg = Some((msg, Instant::now()));
+            }
         }
     }
 }

@@ -311,102 +311,16 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     needs_draw = true;
                 }
                 AppEvent::RefreshFiles(pane_idx) => {
-                    let t_refresh = std::time::Instant::now();
-                    let current_path = {
-                        let t_lock = std::time::Instant::now();
-                        let mut app_guard = ctx.app.lock();
-                        crate::app::log_debug(&format!("RefreshFiles lock took {:?}", t_lock.elapsed()));
-                        let path = app_guard.panes
-                            .get(pane_idx)
-                            .and_then(|pane| pane.current_state())
-                            .map(|fs| fs.nav.current_path.clone());
-                        if let Some(ref p) = path {
-                            app_guard.push_recent_folder(p.clone());
-                        }
-                        path
-                    };
-                    crate::app::log_debug(&format!("RefreshFiles handler total {:?}", t_refresh.elapsed()));
-                    if current_path.is_none() {
-                        continue;
+                    if ctx.handle_refresh_files(pane_idx) {
+                        // pane was valid
                     }
-                    ctx.panes_needing_refresh.insert(pane_idx);
                 }
                 AppEvent::FilesChangedOnDisk(path) => {
-                    crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
-                    
-                    // Self-save guard: skip events for files we just wrote.
-                    // Do NOT remove the entry — inotify may fire multiple events
-                    // per write, and removing the entry would let subsequent events
-                    // pass through and trigger a spurious editor reload.
-                    // Entries are pruned by the 5-second retain in the Tick handler.
-                    if let Some((_saved_mtime, _saved_size, saved_at)) = ctx.last_self_save.get(&path) {
-                        let exact_match = std::fs::metadata(&path).ok().and_then(|meta| {
-                            meta.modified().ok().map(|mtime| {
-                                let size: u64 = meta.len();
-                                mtime == *_saved_mtime && size == *_saved_size
-                            })
-                        }).unwrap_or(false);
-
-                        if exact_match || saved_at.elapsed() < Duration::from_secs(5) {
-                            continue;
-                        }
+                    let (needs_redraw, should_skip) = ctx.handle_files_changed_on_disk(path);
+                    if should_skip {
+                        continue;
                     }
-
-                    let app_guard = ctx.app.lock();
-                    let mut needs_reload = Vec::new();
-
-                    for (i, pane) in app_guard.panes.iter().enumerate() {
-                        if let Some(fs) = pane.current_state() {
-                            // Check if the changed path is in or under the current directory
-                            let current_path = &fs.nav.current_path;
-                            let should_refresh = if let Some(parent) = path.parent() {
-                                // File changed - check if parent is current dir or path is in current dir
-                                parent == current_path.as_path() || path.starts_with(current_path)
-                            } else {
-                                // Directory changed
-                                path == current_path.as_path() || path.starts_with(current_path)
-                            };
-                            
-                            if should_refresh {
-                                let is_self_save_dir = path.parent().map(|parent| {
-                                    ctx.last_self_save.keys().any(|sp| sp.parent() == Some(parent))
-                                }).unwrap_or(false)
-                                    && ctx.last_self_save.values().any(|(_, _, at)| at.elapsed() < Duration::from_secs(2));
-
-                                if !is_self_save_dir {
-                                    crate::app::log_debug(&format!("Refreshing pane {} for path {:?}", i, path));
-                                    ctx.panes_needing_refresh.insert(i);
-                                }
-                            }
-                        }
-                        if let Some(fs) = pane.current_state() {
-                            if let Some(ref preview) = fs.view.preview {
-                                if preview.path == path {
-                                    if let Some(editor) = &preview.editor {
-                                        if !editor.modified && !ctx.last_self_save.contains_key(&path) {
-                                            needs_reload.push((i, path.clone()));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    if let Some(preview) = &app_guard.editor_global.editor_state {
-                        if preview.path == path {
-                            if let Some(editor) = &preview.editor {
-                                if !editor.modified && !ctx.last_self_save.contains_key(&path) {
-                                    needs_reload.push((app_guard.focused_pane_index, path.clone()));
-                                }
-                            }
-                        }
-                    }
-
-                    drop(app_guard);
-                    for (p_idx, p_path) in needs_reload {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(p_idx, p_path));
-                    }
-                    needs_draw = true;
+                    needs_draw = needs_draw || needs_redraw;
                 }
                 AppEvent::PreviewRequested(pane_idx, path) => {
                     let tx = ctx.event_tx.clone();
@@ -574,99 +488,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     });
                 }
                 AppEvent::SaveFile(path, content) => {
-                    let remote_for_save = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.panes
-                            .iter()
-                            .find_map(|pane| {
-                                let fs = pane.current_state()?;
-                                let preview = fs.view.preview.as_ref()?;
-                                if preview.path == path {
-                                    fs.nav.remote_session.clone()
-                                } else {
-                                    None
-                                }
-                            })
-                            .or_else(|| {
-                                let fs = app_guard.current_file_state()?;
-                                app_guard.editor_global.editor_state.as_ref()?;
-                                fs.nav.remote_session.clone()
-                            })
-                    };
-
-                    let save_res = if let Some(remote) = &remote_for_save {
-                        crate::modules::remote::write_string(remote, &path, &content)
-                    } else {
-                        std::fs::write(&path, &content)
-                    };
-
-                    match save_res {
-                        Ok(_) => {
-                            if remote_for_save.is_none() {
-                                let now = std::time::Instant::now();
-                                let meta_ok = std::fs::metadata(&path).ok().and_then(|meta| {
-                                    meta.modified().ok().map(|mtime| {
-                                        let size: u64 = meta.len();
-                                        if ctx.last_self_save.len() > 100 {
-                                            // Prune entries older than 5 seconds instead of clearing all.
-                                            // Clearing all could lose entries for files still being auto-saved,
-                                            // allowing spurious editor reloads from subsequent file watcher events.
-                                            ctx.last_self_save.retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
-                                        }
-                                        ctx.last_self_save.insert(path.clone(), (mtime, size, now));
-                                        true
-                                    })
-                                });
-                                // Fallback: if metadata() fails, still register a self-save entry
-                                // so the guard catches subsequent file watcher events.
-                                // Use epoch mtime as a sentinel — the 5-second elapsed check
-                                // will still protect against spurious reloads.
-                                if meta_ok.is_none() {
-                                    ctx.last_self_save.insert(path.clone(), (std::time::SystemTime::UNIX_EPOCH, 0, now));
-                                }
-                            }
-                            let mut app_guard = ctx.app.lock();
-                            if let Some(ref mut preview) = app_guard.editor_global.editor_state {
-                                if preview.path == path {
-                                    preview.last_saved = Some(std::time::Instant::now());
-                                    if let Some(ref mut editor) = preview.editor {
-                                        editor.modified = false;
-                                    }
-                                    preview.highlighted_lines = None;
-                                }
-                            }
-                            for pane in &mut app_guard.panes {
-                                if let Some(fs) = pane.current_state_mut() {
-                                    if let Some(ref mut preview) = fs.view.preview {
-                                        if preview.path == path {
-                                            preview.last_saved = Some(std::time::Instant::now());
-                                            if let Some(ref mut editor) = preview.editor {
-                                                editor.modified = false;
-                                            }
-                                            preview.highlighted_lines = None;
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Trigger refresh for panes showing this file's parent
-                            if let Some(parent) = path.parent() {
-                                for (i, pane) in app_guard.panes.iter().enumerate() {
-                                    if let Some(fs) = pane.current_state() {
-                                        if fs.nav.current_path == parent {
-                                            ctx.panes_needing_refresh.insert(i);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            let mut app_guard = ctx.app.lock();
-                            let msg = format!("Failed to save file: {}", e);
-                            crate::app::log_debug(&msg);
-                            app_guard.output.last_action_msg = Some((msg, std::time::Instant::now()));
-                        }
-                    }
+                    ctx.handle_save_file(path, content);
                     needs_draw = true;
                 }
                 AppEvent::CreateFile(path) => {
