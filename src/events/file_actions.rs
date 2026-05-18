@@ -310,3 +310,47 @@ fn open_file_or_navigate(path: &Path) -> Option<PathBuf> {
 fn path_join(base: &Path, name: &std::ffi::OsStr) -> PathBuf {
     base.join(name)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::Path;
+
+    #[test]
+    fn is_virtual_divider_exact_match() {
+        assert!(is_virtual_divider(Path::new("__DIVIDER__")));
+    }
+
+    #[test]
+    fn is_virtual_divider_prefix_not_match() {
+        assert!(!is_virtual_divider(Path::new("__DIVIDER")));
+        assert!(!is_virtual_divider(Path::new("__DIVIDER__suffix")));
+    }
+
+    #[test]
+    fn is_virtual_divider_normal_path_false() {
+        assert!(!is_virtual_divider(Path::new("real_file.txt")));
+        assert!(!is_virtual_divider(Path::new("/home/user")));
+    }
+
+    #[test]
+    fn path_join_absolute_base() {
+        let base = Path::new("/home/user");
+        let name = std::ffi::OsStr::new("doc.txt");
+        assert_eq!(path_join(base, name), PathBuf::from("/home/user/doc.txt"));
+    }
+
+    #[test]
+    fn path_join_nested() {
+        let base = Path::new("/tmp");
+        let name = std::ffi::OsStr::new("subdir/file.rs");
+        assert_eq!(path_join(base, name), PathBuf::from("/tmp/subdir/file.rs"));
+    }
+
+    #[test]
+    fn path_join_root_base() {
+        let base = Path::new("/");
+        let name = std::ffi::OsStr::new("etc");
+        assert_eq!(path_join(base, name), PathBuf::from("/etc"));
+    }
+}

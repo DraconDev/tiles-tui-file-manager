@@ -86,3 +86,31 @@ fn copy_text_to_clipboard_via_osc52(text: &str) -> Result<(), String> {
         .map_err(|err| format!("flush failed: {}", err))?;
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clipboard_no_tools_returns_error() {
+        // When no clipboard tool is available and OSC 52 fails (no terminal),
+        // the function should return an error.
+        std::env::set_var("TERM", "dumb");
+        let result = copy_text_to_clipboard("test");
+        assert!(result.is_err());
+        // Should mention "clipboard helper" or "OSC 52"
+        let err_msg = result.unwrap_err();
+        assert!(err_msg.contains("clipboard") || err_msg.contains("OSC"));
+    }
+
+    #[test]
+    fn clipboard_empty_text_is_fine() {
+        // Empty string should be processable
+        std::env::set_var("TERM", "xterm");
+        // Can't actually test the full flow without terminal,
+        // but we can verify the functions accept empty input
+        let result = copy_text_to_clipboard_via_osc52("");
+        // In CI without a real terminal this may fail, but it shouldn't panic
+        let _ = result;
+    }
+}
