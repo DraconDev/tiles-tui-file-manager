@@ -643,4 +643,138 @@ impl EventLoopCtx {
             self.send_event(AppEvent::StatusMsg(format!("Added to favorites: {}", display_name)));
         }
     }
+
+    /// Handle RemoteConnected: set remote session and navigate to root.
+    pub fn handle_remote_connected(&mut self, pane_idx: usize, session: crate::state::RemoteSession) {
+        let mut app_guard = self.app.lock();
+        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+            if let Some(fs) = pane.current_state_mut() {
+                fs.nav.remote_session = Some(session);
+                fs.nav.current_path = PathBuf::from("/");
+                self.send_event(AppEvent::RefreshFiles(pane_idx));
+            }
+        }
+    }
+
+    /// Handle SpawnTerminal: spawn a new terminal (tab or window).
+    pub fn handle_spawn_terminal(
+        &self,
+        path: PathBuf,
+        new_tab: bool,
+        remote: Option<crate::state::RemoteSession>,
+        command: Option<String>,
+    ) {
+        let remote_cmd = remote.as_ref().map(|r| {
+            crate::modules::remote::build_remote_terminal_command(
+                r,
+                &path,
+                command.as_deref(),
+            )
+        });
+        let cmd_str = remote_cmd.as_deref().or(command.as_deref());
+        crate::modules::terminal::spawn_terminal(&path, new_tab, cmd_str);
+    }
+
+    /// Handle SpawnDetached: run a command detached from the terminal.
+    pub fn handle_spawn_detached(&self, cmd: String, args: Vec<String>) {
+        dracon_terminal_engine::utils::spawn_detached(&cmd, args);
+    }
+
+    /// Handle SystemUpdated: update app state with system data.
+    pub fn handle_system_updated(&mut self, data: dracon_system_lib::SystemSnapshot) {
+        let mut app_guard = self.app.lock();
+        crate::modules::system::SystemModule::update_app_state(&mut app_guard, data);
+    }
+
+    /// Handle ConnectToRemote: initiate a remote connection.
+    /// The async spawn uses event_tx to communicate results back.
+    pub fn handle_connect_to_remote(&self, pane_idx: usize, bookmark_idx: usize) {
+        let remote_opt = {
+            let app_guard = self.app.lock();
+            app_guard.remote.remote_bookmarks.get(bookmark_idx).cloned()
+        };
+        if let Some(remote) = remote_opt {
+            let tx = self.event_tx.clone();
+            let p_idx = pane_idx;
+            self.send_event(AppEvent::StatusMsg(format!(
+                "Connecting to {} ({})...",
+                remote.name, remote.host
+            )));
+
+            tokio::spawn(async move {
+                let connect_result = tokio::task::spawn_blocking(move || {
+                    crate::modules::remote::connect_remote(&remote)
+                })
+                .await;
+
+                match connect_result {
+                    Ok(Ok(session)) => {
+                        let _ = tx.send(AppEvent::RemoteConnected(p_idx, session)).await;
+                    }
+                    Ok(Err(e)) => {
+                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                            "Connection failed: {e}"
+                        )));
+                    }
+                    Err(e) => {
+                        let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
+                            "Connection task failed: {e}"
+                        )));
+                    }
+                }
+            });
+        }
+    }
+
+    /// Handle Copy: copy file/folder asynchronously.
+    /// Takes an Arc clone of the app for use inside the spawned task.
+    pub fn handle_copy(&self, src: PathBuf, dest: PathBuf, app_clone: Arc<Mutex<App>>) {
+        let tx = self.event_tx.clone();
+        let src_name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "file".to_string());
+        let task_id = uuid::Uuid::new_v4();
+
+        self.send_event(AppEvent::TaskProgress(task_id, 0.0, format!("Copying {}...", src_name)));
+
+        tokio::spawn(async move {
+            let remote = {
+                let app_guard = app_clone.lock();
+                app_guard.current_file_state()
+                    .and_then(|fs| fs.nav.remote_session.clone())
+            };
+
+            let copied = if let Some(remote) = &remote {
+                crate::modules::remote::copy_recursive(remote, &src, &dest).is_ok()
+            } else {
+                dracon_terminal_engine::utils::copy_recursive(&src, &dest).is_ok()
+            };
+
+            if copied {
+                let mut app_guard = app_clone.lock();
+                app_guard.undo_state.undo_stack
+                    .push(crate::app::UndoAction::Copy(src.clone(), dest.clone()));
+                app_guard.undo_state.redo_stack.clear();
+            }
+
+            let _ = tx.send(AppEvent::TaskFinished(task_id)).await;
+
+            let mut panes_to_refresh = std::collections::HashSet::new();
+            if let Some(parent) = dest.parent() {
+                let app_guard = app_clone.lock();
+                for (i, pane) in app_guard.panes.iter().enumerate() {
+                    if let Some(fs) = pane.current_state() {
+                        if fs.nav.current_path == parent {
+                            panes_to_refresh.insert(i);
+                        }
+                    }
+                }
+            }
+            if panes_to_refresh.is_empty() {
+                let _ = tx.send(AppEvent::RefreshFiles(0)).await;
+            } else {
+                for pane_idx in panes_to_refresh {
+                    let _ = tx.send(AppEvent::RefreshFiles(pane_idx)).await;
+                }
+            }
+        });
+    }
 }

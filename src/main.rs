@@ -257,57 +257,14 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                 }
                 AppEvent::Ui(_ui_event) => {}
                 AppEvent::SystemUpdated(data) => {
-                    let mut app_guard = ctx.app.lock();
-                    crate::modules::system::SystemModule::update_app_state(&mut app_guard, data);
+                    ctx.handle_system_updated(data);
                     needs_draw = true;
                 }
                 AppEvent::ConnectToRemote(pane_idx, bookmark_idx) => {
-                    let remote_opt = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.remote.remote_bookmarks.get(bookmark_idx).cloned()
-                    };
-                    if let Some(remote) = remote_opt {
-                        let tx = ctx.event_tx.clone();
-                        let p_idx = pane_idx;
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                            "Connecting to {} ({})...",
-                            remote.name, remote.host
-                        )));
-
-                        tokio::spawn(async move {
-                            let connect_result = tokio::task::spawn_blocking(move || {
-                                crate::modules::remote::connect_remote(&remote)
-                            })
-                            .await;
-
-                            match connect_result {
-                                Ok(Ok(session)) => {
-                                    let _ =
-                                        tx.send(AppEvent::RemoteConnected(p_idx, session)).await;
-                                }
-                                Ok(Err(e)) => {
-                                    let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
-                                        "Connection failed: {e}"
-                                    )));
-                                }
-                                Err(e) => {
-                                    let _ = crate::app::try_send_event(&tx, AppEvent::StatusMsg(format!(
-                                        "Connection task failed: {e}"
-                                    )));
-                                }
-                            }
-                        });
-                    }
+                    ctx.handle_connect_to_remote(pane_idx, bookmark_idx);
                 }
                 AppEvent::RemoteConnected(pane_idx, session) => {
-                    let mut app_guard = ctx.app.lock();
-                    if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
-                        if let Some(fs) = pane.current_state_mut() {
-                            fs.nav.remote_session = Some(session);
-                            fs.nav.current_path = PathBuf::from("/");
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
-                        }
-                    }
+                    ctx.handle_remote_connected(pane_idx, session);
                     needs_draw = true;
                 }
                 AppEvent::RefreshFiles(pane_idx) => {
@@ -507,56 +464,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     ctx.handle_trash_file(path);
                 }
                 AppEvent::Copy(src, dest) => {
-                    let tx = ctx.event_tx.clone();
-                    let app_clone = app.clone();
-                    let src_name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "file".to_string());
-                    let task_id = uuid::Uuid::new_v4();
-
-                    // Announce start
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::TaskProgress(task_id, 0.0, format!("Copying {}...", src_name)));
-
-                    tokio::spawn(async move {
-                        let remote = {
-                            let app_guard = app_clone.lock();
-                            app_guard.current_file_state()
-                                .and_then(|fs| fs.nav.remote_session.clone())
-                        };
-
-                        let copied = if let Some(remote) = &remote {
-                            crate::modules::remote::copy_recursive(remote, &src, &dest).is_ok()
-                        } else {
-                            dracon_terminal_engine::utils::copy_recursive(&src, &dest).is_ok()
-                        };
-
-                        if copied {
-                            let mut app_guard = app_clone.lock();
-                            app_guard.undo_state.undo_stack
-                                .push(crate::app::UndoAction::Copy(src.clone(), dest.clone()));
-                            app_guard.undo_state.redo_stack.clear();
-                        }
-
-                        // Finish task
-                        let _ = tx.send(AppEvent::TaskFinished(task_id)).await;
-
-                        let mut panes_to_refresh = std::collections::HashSet::new();
-                        if let Some(parent) = dest.parent() {
-                            let app_guard = app_clone.lock();
-                            for (i, pane) in app_guard.panes.iter().enumerate() {
-                                if let Some(fs) = pane.current_state() {
-                                    if fs.nav.current_path == parent {
-                                        panes_to_refresh.insert(i);
-                                    }
-                                }
-                            }
-                        }
-                        if panes_to_refresh.is_empty() {
-                            let _ = tx.send(AppEvent::RefreshFiles(0)).await;
-                        } else {
-                            for pane_idx in panes_to_refresh {
-                                let _ = tx.send(AppEvent::RefreshFiles(pane_idx)).await;
-                            }
-                        }
-                    });
+                    ctx.handle_copy(src, dest, app.clone());
                 }
                 AppEvent::Symlink(src, dest) => {
                     if ctx.handle_symlink(src, dest) {
@@ -569,18 +477,10 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     remote,
                     command,
                 } => {
-                    let remote_cmd = remote.as_ref().map(|r| {
-                        crate::modules::remote::build_remote_terminal_command(
-                            r,
-                            &path,
-                            command.as_deref(),
-                        )
-                    });
-                    let cmd_str = remote_cmd.as_deref().or(command.as_deref());
-                    crate::modules::terminal::spawn_terminal(&path, new_tab, cmd_str);
+                    ctx.handle_spawn_terminal(path, new_tab, remote, command);
                 }
                 AppEvent::SpawnDetached { cmd, args } => {
-                    dracon_terminal_engine::utils::spawn_detached(&cmd, args);
+                    ctx.handle_spawn_detached(cmd, args);
                 }
                 AppEvent::KillProcess(pid) => {
                     let _ = crate::modules::system::SystemModule::kill_process(pid);
