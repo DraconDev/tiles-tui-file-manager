@@ -2,13 +2,11 @@
 Add tests for untested critical modules (P1 from TODO.md).
 
 ## Checklist
-- [ ] Add tests for `event_helpers.rs` (850 lines, core navigation/command execution)
-- [ ] Add tests for `events/file_manager.rs` (1082 lines, keyboard handler)
-- [ ] Add tests for `events/file_mouse.rs` (647 lines, mouse handler)
-- [ ] Add tests for `modules/files.rs` (file operations, read_dir_with_metadata)
+- [x] Add tests for `event_helpers.rs` — +7 tests (update_commands filtering, get_context_menu_actions for file/folder/empty-space/zip)
+- [x] Add tests for `modules/files.rs` — +6 tests (check_file_suitability, read_dir, read_dir_recursive, get_run_command, copy_recursive)
+- [x] Add tests for `events/file_manager.rs` — +4 tests (reselect_after_filter: match, miss, none, offset adjustment)
+- [x] Add tests for `events/file_mouse.rs` — +6 tests (fs_mouse_index, marquee_rect active/inactive/normalized, clear_marquee)
 
-## Constraints
-- Run `cargo build && cargo test && cargo clippy -- -D warnings` after each batch
-- `#[cfg(test)]` required on test modules
-- Use `--test-threads=1` for test runs (flaky thread race in parallel)
-- Keep tests focused on logic, not TUI rendering
+## Results
+- 106 → **129 tests** (+23, +22%)
+- All pass, clippy clean
