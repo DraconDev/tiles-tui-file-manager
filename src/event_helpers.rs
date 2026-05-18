@@ -816,3 +816,38 @@ fn copy_target_text(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Arc, Mutex};
+
+    fn test_app() -> App {
+        let queue: Arc<Mutex<Vec<dracon_terminal_engine::compositor::engine::TilePlacement>>> =
+            Arc::new(Mutex::new(Vec::new()));
+        App::new(queue)
+    }
+
+    #[test]
+    fn update_commands_includes_quit() {
+        let mut app = test_app();
+        update_commands(&mut app);
+        assert!(!app.nav.filtered_commands.is_empty());
+        assert!(app.nav.filtered_commands.iter().any(|c| c.action == CommandAction::Quit));
+    }
+
+    #[test]
+    fn update_commands_includes_view_switches() {
+        let mut app = test_app();
+        update_commands(&mut app);
+        assert!(app.nav.filtered_commands.iter().any(|c| matches!(c.action, CommandAction::SwitchView(_))));
+    }
+
+    #[test]
+    fn update_commands_filters_by_input() {
+        let mut app = test_app();
+        app.core.input.value = "quit".to_string();
+        update_commands(&mut app);
+        assert_eq!(app.nav.filtered_commands.len(), 1);
+    }
+}
+
