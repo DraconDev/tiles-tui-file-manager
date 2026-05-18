@@ -800,6 +800,10 @@ pub fn navigate_back(app: &mut App) {
         if fs.nav.history_index > 0 {
             fs.nav.history_index -= 1;
             fs.nav.current_path = fs.nav.history[fs.nav.history_index].clone();
+            fs.list.files.clear();
+            fs.list.tree_file_depths.clear();
+            fs.list.metadata.clear();
+            fs.list.local_count = 0;
         }
     }
 }
@@ -810,6 +814,10 @@ pub fn navigate_forward(app: &mut App) {
         if fs.nav.history_index + 1 < fs.nav.history.len() {
             fs.nav.history_index += 1;
             fs.nav.current_path = fs.nav.history[fs.nav.history_index].clone();
+            fs.list.files.clear();
+            fs.list.tree_file_depths.clear();
+            fs.list.metadata.clear();
+            fs.list.local_count = 0;
         }
     }
 }
@@ -850,6 +858,10 @@ pub fn navigate_up(app: &mut App) {
     app.selection.folder_selections.insert(old_folder.clone(), (old_idx, old_scroll));
     if let Some(fs) = app.current_file_state_mut() {
         fs.nav.current_path = new_path.clone();
+        fs.list.files.clear();
+        fs.list.tree_file_depths.clear();
+        fs.list.metadata.clear();
+        fs.list.local_count = 0;
         fs.view.pending_select_path = Some((old_folder, old_scroll));
         fs.git.git_cache_until = None;
         push_history(fs, new_path);

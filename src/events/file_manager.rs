@@ -1044,6 +1044,10 @@ pub fn handle_file_mouse(
                         }
 
                         fs.nav.current_path = target_path.clone();
+                        fs.list.files.clear();
+                        fs.list.tree_file_depths.clear();
+                        fs.list.metadata.clear();
+                        fs.list.local_count = 0;
                         fs.list.selection.clear();
                         fs.nav.search_filter.clear();
                         *fs.view.table_state.offset_mut() = 0;
@@ -1248,7 +1252,13 @@ pub fn handle_file_mouse(
                         if path.is_dir() {
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.nav.current_path = path.clone();
+                                // Clear file list immediately to avoid showing stale
+                                // parent directory data while RefreshFiles is async
+                                fs.list.files.clear();
+                                fs.list.tree_file_depths.clear();
+                                fs.list.metadata.clear();
                                 fs.list.selection.clear();
+                                fs.list.local_count = 0;
                                 fs.git.git_cache_until = None;
                                 crate::event_helpers::push_history(fs, path);
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
@@ -1593,6 +1603,10 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                 SidebarTarget::Favorite(path) | SidebarTarget::Recent(path) => {
                     if let Some(fs) = app.current_file_state_mut() {
                         fs.nav.current_path = path.clone();
+                        fs.list.files.clear();
+                        fs.list.tree_file_depths.clear();
+                        fs.list.metadata.clear();
+                        fs.list.local_count = 0;
                         fs.list.selection.selected = Some(0);
                         fs.list.selection.anchor = Some(0);
                         fs.list.selection.clear_multi();
@@ -1612,6 +1626,10 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         let was_expanded = app.sidebar.tree_expanded_folders.contains(&path_ref);
                         if let Some(fs) = app.current_file_state_mut() {
                             fs.nav.current_path = path.clone();
+                            fs.list.files.clear();
+                            fs.list.tree_file_depths.clear();
+                            fs.list.metadata.clear();
+                            fs.list.local_count = 0;
                             fs.list.selection.selected = Some(0);
                             fs.list.selection.anchor = Some(0);
                             fs.list.selection.clear_multi();
@@ -1658,6 +1676,11 @@ fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
 
         if let Some(fs) = app.current_file_state_mut() {
             fs.nav.current_path = p.clone();
+            // Clear file list immediately to avoid stale data while async RefreshFiles runs
+            fs.list.files.clear();
+            fs.list.tree_file_depths.clear();
+            fs.list.metadata.clear();
+            fs.list.local_count = 0;
             if let Some((restore_sel, restore_scroll)) = restore {
                 fs.list.selection.selected = Some(restore_sel);
                 fs.list.selection.anchor = Some(restore_sel);
