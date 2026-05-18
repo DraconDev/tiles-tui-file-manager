@@ -1,5 +1,6 @@
 #![allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
-npub mod file_mouse;
+
+pub mod file_mouse;
 
 pub mod file_actions;
 
@@ -475,7 +476,7 @@ fn handle_general_mouse(
         if app.core.current_view == CurrentView::Editor || is_editor_mode {
             editor::handle_editor_mouse(me, app, event_tx)
         } else {
-            file_manager::handle_file_mouse(me, app, event_tx, panes_needing_refresh)
+            file_mouse::handle_file_mouse(me, app, event_tx)
         }
     }
 }
