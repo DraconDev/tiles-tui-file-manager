@@ -355,7 +355,7 @@ impl ThemeStyle {
     /// Default theme — original Tiles cyberpunk (amber + teal).
     /// Alias: `default_purple()` retained for compat.
     pub fn default() -> Self {
-        ThemeStyle::preset_warm()
+        ThemeStyle::preset_legacy_red()
     }
 
     pub fn default_purple() -> Self {
@@ -540,17 +540,17 @@ impl DraconTheme {
         Self {
             bg: Color::Rgb(0, 0, 0),                    // True Color Pure Black
             fg: Color::Rgb(255, 255, 255),              // Pure White
-            accent_primary: Color::Rgb(224, 164, 90),    // Warm amber
-            accent_secondary: Color::Rgb(94, 199, 178),  // Mint-teal
-            selection_bg: Color::Rgb(178, 122, 64),       // Muted bronze
+            accent_primary: Color::Rgb(226, 78, 86),     // Legacy red
+            accent_secondary: Color::Rgb(72, 190, 182),   // Legacy teal
+            selection_bg: Color::Rgb(226, 78, 86),        // Legacy red highlight
             selection_fg: Color::Rgb(0, 0, 0),            // Black
-            border_active: Color::Rgb(224, 164, 90),     // Warm amber
-            border_inactive: Color::Rgb(86, 88, 98),     // Neutral slate
-            header_fg: Color::Rgb(240, 196, 138),         // Sand
-            danger: Color::Rgb(255, 80, 80),              // Bright red
-            warning: Color::Rgb(255, 190, 50),           // Amber yellow
-            success: Color::Rgb(80, 210, 120),           // Vivid green
-            muted: Color::Rgb(150, 150, 165),            // Warm gray
+            border_active: Color::Rgb(226, 78, 86),      // Legacy red
+            border_inactive: Color::Rgb(70, 88, 104),    // Blue-gray slate
+            header_fg: Color::Rgb(156, 214, 206),        // Pale teal
+            danger: Color::Rgb(255, 60, 60),             // Pure red
+            warning: Color::Rgb(255, 200, 50),           // Bright yellow
+            success: Color::Rgb(80, 200, 120),           // Green
+            muted: Color::Rgb(130, 140, 160),            // Blue-gray
             info: Color::Rgb(100, 200, 220),            // Teal
             file_code: Color::Rgb(236, 156, 116),       // Apricot
             file_config: Color::Rgb(132, 190, 255),     // Sky blue

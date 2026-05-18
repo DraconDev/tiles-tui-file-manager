@@ -614,12 +614,12 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
     ]));
 
     let preset_rows = [
-        ("Warm (Default)", "amber + mint", theme::warning()),
+        ("Legacy Red (Default)", "red + teal", theme::danger()),
+        ("Warm", "amber + mint", theme::warning()),
         ("Cool", "violet + ice", theme::info()),
         ("Forest", "moss + pine", theme::success()),
         ("Sunset", "coral + plum", crate::ui::theme::ThemeStyle::preset_sunset().accent_primary.to_color()),
         ("Mono", "steel grayscale", crate::ui::theme::ThemeStyle::preset_mono().accent_primary.to_color()),
-        ("Legacy Red", "classic red accent", crate::ui::theme::ThemeStyle::preset_legacy_red().accent_primary.to_color()),
         ("Nord", "frost blue + aurora", theme::accent_primary()),
         ("Dracula", "purple + neon green", theme::accent_primary()),
         ("Solarized Dark", "yellow + cyan", theme::warning()),

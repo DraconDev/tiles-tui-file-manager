@@ -484,8 +484,8 @@ mod tests {
         app.core.mode = AppMode::Settings;
         app.settings.settings_section = SettingsSection::Style;
 
-        // Apply Cool preset row.
-        app.settings.settings_index = 2;
+        // Apply Cool preset row (index 3 in new order: 1=Legacy Red, 2=Warm, 3=Cool).
+        app.settings.settings_index = 3;
         let _ = handle_settings_keys(
             &KeyEvent {
                 code: KeyCode::Enter,

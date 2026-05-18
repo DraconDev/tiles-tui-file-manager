@@ -110,11 +110,13 @@ pub fn setup_app(
         app.layout.expanded_folders = state.expanded_folders.into_iter().collect();
         app.sidebar.sidebar_width_percent = state.sidebar_width_percent;
         app.nav.recent_folders = state.recent_folders;
-        // Migration: skip stale purple theme from pre-warm-default era.
-        // If the saved theme exactly matches preset_cool (the old default),
-        // discard it so ThemeStyle::default() (preset_warm/amber) takes effect.
+        // Migration: skip stale default themes from previous eras.
+        // If the saved theme matches an old default (cool/purple or warm/amber),
+        // discard it so the current default (Legacy Red) takes effect.
         if let Some(theme_style) = state.theme_style {
-            if theme_style != crate::ui::theme::ThemeStyle::preset_cool() {
+            if theme_style != crate::ui::theme::ThemeStyle::preset_cool()
+                && theme_style != crate::ui::theme::ThemeStyle::preset_warm()
+            {
                 crate::ui::theme::set_style_settings(theme_style);
             }
         }

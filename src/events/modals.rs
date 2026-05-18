@@ -874,7 +874,7 @@ pub fn handle_settings_keys(
         KeyCode::Char('r') | KeyCode::Char('R')
             if app.settings.settings_section == SettingsSection::Style =>
         {
-            crate::ui::theme::set_style_settings(crate::ui::theme::ThemeStyle::default_purple());
+            crate::ui::theme::set_style_settings(crate::ui::theme::ThemeStyle::default());
             crate::config::save_state_quiet(app);
             true
         }
@@ -883,7 +883,7 @@ pub fn handle_settings_keys(
         {
             if app.settings.settings_index == 0 {
                 crate::ui::theme::set_style_settings(
-                    crate::ui::theme::ThemeStyle::default_purple(),
+                    crate::ui::theme::ThemeStyle::default(),
                 );
                 crate::config::save_state_quiet(app);
             } else if let Some(preset) = style_preset_for_index(app.settings.settings_index) {
@@ -974,7 +974,7 @@ pub fn handle_settings_keys(
                 SettingsSection::Style => {
                     if app.settings.settings_index == 0 {
                         crate::ui::theme::set_style_settings(
-                            crate::ui::theme::ThemeStyle::default_purple(),
+                            crate::ui::theme::ThemeStyle::default(),
                         );
                         crate::config::save_state_quiet(app);
                     } else if let Some(preset) = style_preset_for_index(app.settings.settings_index) {
