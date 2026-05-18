@@ -1,7 +1,5 @@
 #![allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
 
-pub mod file_actions;
-
 use crate::app::{
     App, AppEvent, AppMode, ContextMenuTarget, CurrentView, DropTarget, SidebarTarget,
 };
