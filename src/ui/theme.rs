@@ -352,14 +352,9 @@ impl ThemeStyle {
         }
     }
 
-    /// Default theme — original Tiles cyberpunk (amber + teal).
-    /// Alias: `default_purple()` retained for compat.
+    /// Default theme — Legacy Red (the original Tiles identity).
     pub fn default() -> Self {
         ThemeStyle::preset_legacy_red()
-    }
-
-    pub fn default_purple() -> Self {
-        Self::default()
     }
 
     pub fn preset_nord() -> Self {

@@ -112,10 +112,7 @@ Full audit — 2026-05-18
   - After pressing Enter, cursor column offset by +1 per empty row before insertion point
   - Requires reproduction and fix in `/home/dracon/Dev/dracon-terminal-engine`
 
-- [ ] **Fix terma clippy errors** (blocks CI with `-D warnings`)
-  - [ ] `terma/src/visuals/slicer.rs` — redundant field names
-  - [ ] `terma/src/compositor/engine.rs` — too many arguments in `draw_rect`
-  - [ ] `terma/src/compositor/engine.rs` — collapsible `else { if }`
+- [x] ~~Fix terma clippy errors~~ — already clean, no action needed
 
 - [ ] **Add tests for untested critical modules** — PARTIAL
   - [x] `app.rs` — 6 tests, `state/mod.rs` — 6 tests, `config.rs` — 11 tests
@@ -125,7 +122,7 @@ Full audit — 2026-05-18
   - [ ] `ui/theme.rs` — 0 tests (645 lines, 14 presets)
   - [ ] `modules/files.rs` — 0 tests (file operations)
 
-- [ ] **Remove dead `default_purple()` alias** — now just calls `default()`. Replace callers with `default()` directly and remove the misleading alias.
+- [x] **Remove dead `default_purple()` alias** — removed, all callers already use `default()`
 
 ---
 
