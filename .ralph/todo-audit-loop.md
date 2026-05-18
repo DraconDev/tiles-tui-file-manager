@@ -3,21 +3,21 @@ Work through the prioritized TODO items for the Tiles TUI file manager.
 
 ## Progress
 
-### P2 — Polish (done this iteration)
-- [x] **Cross-pane drop on empty space** — `DropTarget::CurrentDir(pane_idx)` variant. When dragging over another pane but not on a folder, drops into that pane's current directory. Footer shows target dir name.
-- [x] **Remove dead `default_purple()` alias** — removed, callers use `default()`
-- [x] **Terma clippy** — already clean, no action needed
+### P2 — Polish (done)
+- [x] **Cross-pane drop on empty space** — `DropTarget::CurrentDir(pane_idx)`, footer label
+- [x] **Remove dead `default_purple()` alias**
+- [x] **Terma clippy** — already clean
 
-### P1 — Quality (done this iteration)
-- [x] **Add theme tests** — 6 new tests (84 total, was 78):
-  - default_is_legacy_red, all_presets_have_black_selection_fg, all_presets_have_nonzero_accent
-  - presets_are_distinct, set_and_get_roundtrip, accent_primary_accessor_matches_style
+### P1 — Quality (done)
+- [x] **Theme tests** — 6 new (84 total) 
+- [x] **File module tests** — 7 new (91 total)
+- [x] **Editor cursor bug** — wrote 6 reproduction tests in dracon-terminal-engine. All pass. `insert_newline()` is correct. Bug likely in `ensure_cursor_visible` wrap mode or tiles' editor integration. Needs live reproduction with specific file content.
 
-### Remaining items
-- [ ] **P0: EventLoopCtx** — extract main.rs event loop (1,476 lines, 70 match arms). BLOCKER for all handler extraction.
-- [ ] **P0: Decompose event_helpers.rs** (1,298 lines) — circular dep blocker
+### Remaining
+- [ ] **P0: EventLoopCtx** — main.rs (1,476 lines, 70 match arms). BLOCKER.
+- [ ] **P0: Decompose event_helpers.rs** (1,298 lines) — circular dep
 - [ ] **P0: Decompose file_manager.rs** (1,915 lines) — same blocker
-- [ ] **P1: Editor cursor bug** — dracon-terminal-engine, needs reproduction. insert_newline() looks correct in code review.
-- [ ] **P1: Add tests** — event_helpers.rs (0), file_manager.rs (0), modules/files.rs (0) still need coverage
+- [ ] **P1: Editor cursor bug** — needs live reproduction
+- [ ] **P1: Add tests** — file_manager.rs (0 tests), more event_helpers coverage
 - [ ] **P2: Marquee from Name column** — vertical drag heuristic
 - [ ] **P2: Criterion benchmarks**
