@@ -145,6 +145,7 @@ impl App {
                 tab_bounds: Vec::new(),
                 hovered_header_icon: None,
                 expanded_folders: HashSet::new(),
+                pane_rects: Vec::new(),
             },
             output: OutputState::default(),
             drag: DragState::default(),

@@ -33,6 +33,8 @@ pub fn draw_main_stage(f: &mut Frame, area: Rect, app: &mut App) {
                 let borders = Borders::ALL;
                 draw_file_view(f, chunks[i], app, i, is_focused, borders);
             }
+            // Store pane rects for cross-pane drag-drop in event handler
+            app.layout.pane_rects = chunks.to_vec();
         }
         CurrentView::Editor => {
             crate::ui::panes::editor::draw_ide_editor(f, area, app);

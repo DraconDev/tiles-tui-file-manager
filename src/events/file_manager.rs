@@ -1228,11 +1228,9 @@ pub fn handle_file_mouse(
                         }
                         return true;
                     }
-                    // Set marquee_start for ALL left-clicks on file rows —
-                    // marquee can coexist with drag_source; the Drag handler decides which wins.
-                    app.drag.marquee_start = Some((column, row));
-                    app.drag.marquee_end = Some((column, row));
-                    // Only set drag_source for Name column clicks (file drag-and-drop)
+                    // Name column click → file drag-and-drop.
+                    // Non-Name column click → marquee selection.
+                    // These are mutually exclusive to avoid conflict.
                     let in_name_column = app.current_file_state()
                         .and_then(|fs| fs.view.column_bounds.iter()
                             .find(|(_, ct)| *ct == FileColumn::Name)
@@ -1243,6 +1241,9 @@ pub fn handle_file_mouse(
                     if in_name_column {
                         app.drag.drag_source = Some(path.clone());
                         app.drag.drag_start_pos = Some((column, row));
+                    } else {
+                        app.drag.marquee_start = Some((column, row));
+                        app.drag.marquee_end = Some((column, row));
                     }
 
                     // Double Click
@@ -1394,19 +1395,13 @@ pub fn handle_file_mouse(
             true
         }
         MouseEventKind::Drag(_) => {
-            // Marquee drag: prefer marquee over file drag when drag hasn't started yet.
-            // If drag_source is set but is_dragging is false, let marquee take over
-            // once distance threshold is met (user is selecting, not dragging files).
+            // Marquee drag: only when no file drag source (clicked outside Name column)
             if let Some((sx, sy)) = app.drag.marquee_start {
                 app.drag.marquee_end = Some((column, row));
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
-                // Activate marquee if: distance threshold met AND file drag hasn't started
-                if dist_sq >= 4.0 && !app.drag.is_marquee && !app.drag.is_dragging {
+                if dist_sq >= 4.0 && !app.drag.is_marquee {
                     app.drag.is_marquee = true;
-                    // Cancel file drag — marquee takes priority
-                    app.drag.drag_source = None;
-                    app.drag.drag_start_pos = None;
                 }
                 if app.drag.is_marquee {
                     return true; // consume drag event — no file drag-drop while marquee-ing
@@ -1417,9 +1412,7 @@ pub fn handle_file_mouse(
             if let Some((sx, sy)) = app.drag.drag_start_pos {
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
-                // File drag threshold: 3px (dist_sq >= 9.0) — higher than marquee (2px)
-                // so marquee can activate first for selection drags
-                if dist_sq >= 9.0
+                if dist_sq >= 1.0
                     && !me.modifiers.contains(KeyModifiers::SHIFT)
                     && !app.selection.selection_mode
                     && !app.drag.is_dragging
@@ -1448,7 +1441,7 @@ pub fn handle_file_mouse(
                         }
                     }
 
-                    // File row folder targets.
+                    // File row folder targets (same pane).
                     if app.drag.hovered_drop_target.is_none() && row >= 3 {
                         if let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) {
                             if let Some(fs) = app.current_file_state() {
@@ -1458,6 +1451,37 @@ pub fn handle_file_mouse(
                                             if src != path {
                                                 app.drag.hovered_drop_target =
                                                     Some(DropTarget::Folder(path.clone()));
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // Cross-pane drop: check other pane's file rows for folders
+                    if app.drag.hovered_drop_target.is_none() && app.panes.len() > 1 {
+                        for (pi, rect) in app.layout.pane_rects.iter().enumerate() {
+                            if pi == app.focused_pane_index { continue; }
+                            if column >= rect.x && column < rect.x + rect.width
+                                && row >= rect.y && row < rect.y + rect.height
+                                && row >= 3
+                            {
+                                // Mouse is over another pane — check if it's a folder
+                                if let Some(pane) = app.panes.get(pi) {
+                                    if let Some(fs) = pane.current_state() {
+                                        let rel_row = row;
+                                        // Estimate file index from row offset
+                                        let offset = fs.view.table_state.offset();
+                                        let file_idx = (rel_row as usize).saturating_sub(3).saturating_add(offset);
+                                        if let Some(path) = fs.list.files.get(file_idx) {
+                                            if path.is_dir() {
+                                                if let Some(src) = &app.drag.drag_source {
+                                                    if src != path {
+                                                        app.drag.hovered_drop_target =
+                                                            Some(DropTarget::Folder(path.clone()));
+                                                    }
+                                                }
                                             }
                                         }
                                     }

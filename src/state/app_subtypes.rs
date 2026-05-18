@@ -179,6 +179,8 @@ pub struct LayoutState {
     pub tab_bounds: Vec<(ratatui::layout::Rect, usize, usize)>,
     pub hovered_header_icon: Option<String>,
     pub expanded_folders: HashSet<PathBuf>,
+    /// Pane rects from last render: (pane_index, Rect)
+    pub pane_rects: Vec<ratatui::layout::Rect>,
 }
 
 impl Default for LayoutState {
@@ -195,6 +197,7 @@ impl Default for LayoutState {
             tab_bounds: Vec::new(),
             hovered_header_icon: None,
             expanded_folders: HashSet::new(),
+            pane_rects: Vec::new(),
         }
     }
 }
