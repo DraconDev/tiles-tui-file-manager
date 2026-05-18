@@ -3,13 +3,11 @@
 //! Handles keyboard shortcuts for file operations: space (toggle expand/preview),
 //! enter (navigate/open), rename, trash, permanent delete, quick copy.
 
-use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
 use tokio::sync::mpsc;
 
 use crate::app::{App, AppEvent, AppMode, CurrentView, SidebarTarget};
-use crate::event_helpers;
 
 /// Handle Space key: toggle tree expand/collapse in sidebar, or preview in file list.
 pub fn handle_space_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {

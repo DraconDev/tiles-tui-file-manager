@@ -1591,10 +1591,13 @@ pub fn handle_file_mouse(
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn path_join(base: &std::path::Path, name: &std::ffi::OsStr) -> std::path::PathBuf {
+        base.join(name)
+    }
 
     #[test]
     fn is_valid_search_char_allows_letters() {
