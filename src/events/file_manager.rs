@@ -1236,7 +1236,7 @@ pub fn handle_file_mouse(
 
                     // Double Click
                     if button == MouseButton::Left
-                        && is_double_click(app.mouse.mouse_click_pos, app.mouse.mouse_last_click, column, row)
+                        && super::file_actions::is_double_click(app.mouse.mouse_click_pos, app.mouse.mouse_last_click, column, row)
                     {
                         if path.is_dir() {
                             if let Some(fs) = app.current_file_state_mut() {
@@ -1586,6 +1586,8 @@ mod tests {
     fn path_join(base: &std::path::Path, name: &std::ffi::OsStr) -> std::path::PathBuf {
         base.join(name)
     }
+
+    use crate::events::file_actions::is_double_click;
 
     #[test]
     fn is_valid_search_char_allows_letters() {
