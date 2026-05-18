@@ -70,9 +70,9 @@ Updated with refactor progress — 2026-05-17
 
 ### P4 Bugs (active)
 
-- [ ] **Default theme still purple on start** — `ThemeStyle::default()` set to `preset_warm()` (amber), `state.json` cleared, but app still renders purple. Something overrides after init. Trace: `App::new()` → `setup.rs` → state.json load → `set_style_settings()`. Suspects: `style_settings()` returns wrong struct, settings index mismatch, or cyberpunk() base still purple.
+- [ ] **Default theme still purple on start** — `ThemeStyle::default()` returns `preset_warm()`, statics use `default()`, `state.json` cleared. BUT: `state.json` keeps getting re-persisted by old binary with purple. Fix: `config.rs` now skips persisting `theme_style` when it matches default. Need to verify with fresh run.
 
-- [ ] **Marquee broken when row already selected** — Click on empty space next to selected row does nothing. Trace mouseDown/mouseDrag/mouseUp flow. Likely: `fs_mouse_index` returns Some(idx) for row so empty-space branch is skipped, or `sel_mode` / `prevent_mouse_up_selection_cleanup` blocks marquee activation.
+- [ ] **Marquee broken when row already selected** — Root cause: `handle_click()` fired immediately on mouseDown, clearing multi-selection before drag started. Fix: deferred click pattern — `handle_click` now deferred to mouseUp for plain clicks. `pending_click_idx` field on `DragState`. Marquee takes priority over file drag (lower threshold). File drag threshold raised from 1px to 3px.
 
 ## P5 — Editor cursor bug (dracon-terminal-engine)
 

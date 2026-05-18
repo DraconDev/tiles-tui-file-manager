@@ -147,7 +147,13 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         default_show_hidden: app.settings.default_show_hidden,
         auto_save: app.settings.auto_save,
         preview_max_mb: app.preview_max_mb,
-        theme_style: Some(crate::ui::theme::style_settings()),
+        // Only persist theme_style if it differs from the default —
+        // prevents stale purple from surviving across restarts
+        theme_style: {
+            let current = crate::ui::theme::style_settings();
+            let default = crate::ui::theme::ThemeStyle::default();
+            if current == default { None } else { Some(current) }
+        },
         expanded_folders: app.layout.expanded_folders.iter().cloned().collect(),
         sidebar_width_percent: app.sidebar.sidebar_width_percent,
         recent_folders: app.nav.recent_folders.clone(),

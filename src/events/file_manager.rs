@@ -1126,6 +1126,7 @@ pub fn handle_file_mouse(
                 };
                 let mut sp = None;
                 let mut is_dir = false;
+                let mut pending_click: Option<usize> = None;
                 let is_shift = me.modifiers.contains(KeyModifiers::SHIFT)
                     || me.modifiers.contains(KeyModifiers::ALT);
                 let is_ctrl = me.modifiers.contains(KeyModifiers::CONTROL);
@@ -1140,14 +1141,10 @@ pub fn handle_file_mouse(
                     }
 
                     if button == MouseButton::Left {
-                        // Only handle_click for Name column clicks —
-                        // clicks on empty space to the right start marquee instead
-                        let in_name_col = fs.view.column_bounds.iter()
-                            .find(|(_, ct)| *ct == FileColumn::Name)
-                            .is_some_and(|(name_rect, _)| {
-                                column >= name_rect.x && column < name_rect.x + name_rect.width
-                            });
-                        if in_name_col {
+                        // Defer handle_click for plain clicks — resolve on mouseUp.
+                        // If the user drags, it becomes marquee instead.
+                        // Ctrl/Shift clicks always fire immediately (they're selection ops).
+                        if is_ctrl || is_shift {
                             fs.list.selection.handle_click(
                                 idx,
                                 is_shift,
@@ -1156,6 +1153,9 @@ pub fn handle_file_mouse(
                             );
                             fs.view.table_state.select(fs.list.selection.selected);
                         }
+                        // For plain clicks, record the target but don't change selection yet.
+                        // mouseUp will call handle_click if no drag/marquee occurred.
+                        pending_click = Some(idx);
                     }
 
                     let p = fs.list.files[idx].clone();
@@ -1259,6 +1259,8 @@ pub fn handle_file_mouse(
                     app.mouse.mouse_last_click = std::time::Instant::now();
                     app.mouse.mouse_click_pos = (column, row);
                 }
+                // Apply deferred pending_click after all borrows are released
+                app.drag.pending_click_idx = pending_click;
             }
 
             if button == MouseButton::Middle {
@@ -1330,15 +1332,20 @@ pub fn handle_file_mouse(
                 app.drag.is_dragging = false;
             }
             let sel_mode = app.selection.selection_mode;
-            // Skip mouseUp selection cleanup if we were tracking for marquee
-            // (marquee already handled selection, or click was on empty space)
-            let was_marquee_tracking = app.drag.marquee_start.is_some();
-            if row >= 3
+            // Resolve deferred pending_click — this is a plain click (no drag/marquee)
+            if let Some(idx) = app.drag.pending_click_idx.take() {
+                if let Some(fs) = app.current_file_state_mut() {
+                    if !is_virtual_divider(&fs.list.files[idx]) {
+                        fs.list.selection.handle_click(idx, false, false, false);
+                        fs.view.table_state.select(fs.list.selection.selected);
+                    }
+                }
+            } else if row >= 3
                 && !app.selection.prevent_mouse_up_selection_cleanup
                 && !sel_mode
                 && !me.modifiers.contains(KeyModifiers::SHIFT)
-                && !was_marquee_tracking
             {
+                // Fallback: no pending_click, no marquee, no modifiers → select clicked item
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
                     return true;
                 };
@@ -1354,6 +1361,7 @@ pub fn handle_file_mouse(
             app.drag.drag_start_pos = None;
             app.drag.drag_source = None;
             app.drag.hovered_drop_target = None;
+            app.drag.pending_click_idx = None;
             app.drag.clear_marquee();
             true
         }
@@ -1394,7 +1402,9 @@ pub fn handle_file_mouse(
             if let Some((sx, sy)) = app.drag.drag_start_pos {
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
-                if dist_sq >= 1.0
+                // File drag threshold: 3px (dist_sq >= 9.0) — higher than marquee (2px)
+                // so marquee can activate first for selection drags
+                if dist_sq >= 9.0
                     && !me.modifiers.contains(KeyModifiers::SHIFT)
                     && !app.selection.selection_mode
                     && !app.drag.is_dragging

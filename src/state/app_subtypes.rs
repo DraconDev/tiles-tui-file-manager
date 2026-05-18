@@ -229,6 +229,9 @@ pub struct DragState {
     pub marquee_start: Option<(u16, u16)>,
     #[allow(dead_code)]
     pub marquee_end: Option<(u16, u16)>,
+    /// Pending click index — deferred handle_click on mouseUp if no drag/marquee occurred.
+    #[allow(dead_code)]
+    pub pending_click_idx: Option<usize>,
 }
 
 /// Normalized marquee rect: (min_col, min_row, max_col, max_row)
