@@ -9,7 +9,7 @@ use std::path::PathBuf;
 use tokio::sync::mpsc;
 
 use crate::app::{App, AppEvent, DropTarget};
-use crate::events::file_actions::{is_virtual_divider, open_file_or_navigate};
+use crate::events::file_actions::{is_valid_search_char, is_virtual_divider, open_file_or_navigate};
 
 /// Search debounce interval in milliseconds.
 const SEARCH_DEBOUNCE_MS: u64 = 300;
