@@ -352,10 +352,10 @@ impl ThemeStyle {
         }
     }
 
-    /// Default theme — purple/amber cyberpunk (the original Tiles identity).
+    /// Default theme — purple cyberpunk (the original Tiles identity).
     /// Alias: `default_purple()` retained for compat.
     pub fn default() -> Self {
-        ThemeStyle::preset_warm()
+        ThemeStyle::preset_cool()
     }
 
     pub fn default_purple() -> Self {
@@ -540,23 +540,23 @@ impl DraconTheme {
         Self {
             bg: Color::Rgb(0, 0, 0),                    // True Color Pure Black
             fg: Color::Rgb(255, 255, 255),              // Pure White
-            accent_primary: Color::Rgb(224, 164, 90),    // Warm amber
-            accent_secondary: Color::Rgb(94, 199, 178),  // Mint-teal
-            selection_bg: Color::Rgb(178, 122, 64),       // Muted bronze
-            selection_fg: Color::Rgb(0, 0, 0),            // Black (dark on bright bg)
-            border_active: Color::Rgb(224, 164, 90),     // Warm amber
-            border_inactive: Color::Rgb(86, 88, 98),     // Neutral slate
-            header_fg: Color::Rgb(240, 196, 138),         // Sand
-            danger: Color::Rgb(255, 80, 80),              // Bright red
-            warning: Color::Rgb(255, 190, 50),           // Amber yellow
-            success: Color::Rgb(80, 210, 120),           // Vivid green
-            muted: Color::Rgb(150, 150, 165),            // Warm gray (bumped)
-            info: Color::Rgb(100, 200, 220),            // Teal
-            file_code: Color::Rgb(236, 156, 116),       // Apricot
-            file_config: Color::Rgb(132, 190, 255),     // Sky blue
-            file_media: Color::Rgb(201, 156, 244),      // Lilac
-            file_archive: Color::Rgb(238, 132, 170),    // Rose
-            file_exec: Color::Rgb(118, 203, 125),       // Green
+            accent_primary: Color::Rgb(160, 118, 255),    // Purple
+            accent_secondary: Color::Rgb(116, 184, 255),  // Ice blue
+            selection_bg: Color::Rgb(104, 80, 150),      // Deep violet
+            selection_fg: Color::Rgb(0, 0, 0),            // Black
+            border_active: Color::Rgb(160, 118, 255),    // Purple
+            border_inactive: Color::Rgb(82, 86, 104),    // Cool slate
+            header_fg: Color::Rgb(198, 164, 255),        // Soft violet
+            danger: Color::Rgb(255, 80, 120),            // Hot pink
+            warning: Color::Rgb(255, 200, 80),           // Warm yellow
+            success: Color::Rgb(80, 230, 160),           // Mint green
+            muted: Color::Rgb(130, 132, 160),            // Cool gray
+            info: Color::Rgb(130, 200, 255),             // Light blue
+            file_code: Color::Rgb(200, 160, 255),        // Lavender
+            file_config: Color::Rgb(120, 200, 240),      // Cyan
+            file_media: Color::Rgb(255, 140, 200),       // Pink
+            file_archive: Color::Rgb(255, 170, 120),     // Peach
+            file_exec: Color::Rgb(100, 240, 180),       // Aqua
             border_subtle: Color::Rgb(40, 45, 55),       // Very dark border
             selection_alt_bg: Color::Rgb(78, 58, 112),   // Purple-tint multi-select
             stat_cpu_blue: Color::Rgb(88, 166, 255),     // CPU bar blue
