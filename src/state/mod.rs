@@ -42,7 +42,6 @@ pub struct NetInterface {
     pub tx_history: VecDeque<u64>,
 }
 
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum AppEvent {
     Tick,
@@ -409,7 +408,6 @@ impl FileState {
 
 #[derive(Clone, Debug)]
 pub struct SystemState {
-    #[allow(dead_code)]
     pub last_update: std::time::Instant,
     pub disks: Vec<DiskInfo>,
     pub disk_io: HashMap<String, DiskIo>,
@@ -534,7 +532,6 @@ impl Pane {
     }
 }
 
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct BackgroundTask {
     pub id: uuid::Uuid,
@@ -543,7 +540,6 @@ pub struct BackgroundTask {
     pub progress: f32,
 }
 
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub enum UndoAction {
     Rename(PathBuf, PathBuf),

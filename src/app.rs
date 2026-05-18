@@ -1,9 +1,8 @@
 use ratatui::widgets::TableState;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex as StdMutex};
+use std::sync::Arc;
 use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
-use dracon_terminal_engine::compositor::engine::TilePlacement;
 use dracon_terminal_engine::widgets::TextInput;
 
 pub use crate::state::{
@@ -495,8 +494,6 @@ pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dracon_terminal_engine::compositor::engine::TilePlacement;
-    use std::sync::{Arc, Mutex};
 
     fn test_app() -> App {
         App::new()

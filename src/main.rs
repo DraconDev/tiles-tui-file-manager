@@ -387,11 +387,9 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
 #[cfg(test)]
 mod tests {
-    use std::sync::{Arc, Mutex as StdMutex};
-    use dracon_terminal_engine::compositor::engine::TilePlacement;
     use crate::app::App;
     use crate::setup;
-    
+
     #[test]
     fn startup_prime_populates_first_pane_listing() {
         let tmp = std::env::temp_dir().join(format!("tiles-startup-prime-{}", std::process::id()));
@@ -399,8 +397,7 @@ mod tests {
         std::fs::create_dir_all(&tmp).unwrap();
         std::fs::write(tmp.join("example.txt"), "ok").unwrap();
 
-        let queue: Arc<StdMutex<Vec<TilePlacement>>> = Arc::new(StdMutex::new(Vec::new()));
-        let mut app = App::new(queue);
+        let mut app = App::new();
         if let Some(fs) = app.current_file_state_mut() {
             fs.nav.current_path = tmp.clone();
             fs.list.files.clear();

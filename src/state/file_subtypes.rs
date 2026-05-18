@@ -61,9 +61,6 @@ pub struct FileListState {
     pub tree_file_depths: Vec<u16>,
     #[serde(skip)]
     pub metadata: HashMap<PathBuf, FileMetadata>,
-    #[serde(skip)]
-    #[allow(dead_code)]
-    pub path_colors: HashMap<PathBuf, u8>,
 }
 
 impl Default for FileListState {
@@ -80,7 +77,6 @@ impl Default for FileListState {
             local_count: 0,
             tree_file_depths: Vec::new(),
             metadata: HashMap::new(),
-            path_colors: HashMap::new(),
         }
     }
 }

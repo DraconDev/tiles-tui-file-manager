@@ -226,19 +226,14 @@ pub struct DragState {
     pub is_dragging: bool,
     pub hovered_drop_target: Option<crate::state::DropTarget>,
 /// Marquee selection: separate from file drag-drop
-    #[allow(dead_code)]
     pub is_marquee: bool,
-    #[allow(dead_code)]
     pub marquee_start: Option<(u16, u16)>,
-    #[allow(dead_code)]
     pub marquee_end: Option<(u16, u16)>,
     /// Pending click index — deferred handle_click on mouseUp if no drag/marquee occurred.
-    #[allow(dead_code)]
     pub pending_click_idx: Option<usize>,
 }
 
 /// Normalized marquee rect: (min_col, min_row, max_col, max_row)
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct MarqueeRect {
     pub min_col: u16,
@@ -250,7 +245,6 @@ pub struct MarqueeRect {
 impl DragState {
     /// Returns the normalized marquee rect, or None if not active.
     #[must_use]
-    #[allow(dead_code)]
     pub fn marquee_rect(&self) -> Option<MarqueeRect> {
         if !self.is_marquee {
             return None;
@@ -266,7 +260,6 @@ impl DragState {
     }
 
     /// Resets all marquee state.
-    #[allow(dead_code)]
     pub fn clear_marquee(&mut self) {
         self.is_marquee = false;
         self.marquee_start = None;
@@ -276,7 +269,6 @@ impl DragState {
 
 
 /// Represents a closed tab that can be restored.
-#[allow(dead_code)]
 #[derive(Clone, Debug, Default)]
 pub struct ClosedTab {
     pub path: PathBuf,
@@ -294,7 +286,6 @@ pub struct NavState {
     pub command_index: usize,
     pub filtered_commands: Vec<crate::state::CommandItem>,
     pub view_prefs: ViewStatePersistence,
-#[allow(dead_code)]
 /// Recently closed tabs — max 10 entries. Ctrl+Shift+T reopens the last one.
     pub closed_tabs: VecDeque<ClosedTab>,
 }
