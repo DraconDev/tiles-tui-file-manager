@@ -1,6 +1,6 @@
 [package]
 name = "tiles-tui-file-manager"
-version = "14.75.0"
+version = "14.75.1"
 description = "A dual-pane TUI file manager built in Rust. Features include vim-style navigation, integrated text editor, git awareness, remote SSH browsing, and system monitoring."
 repository = "https://github.com/DraconDev/tiles"
 license = "AGPL-3.0-only"
