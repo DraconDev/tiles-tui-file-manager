@@ -1288,6 +1288,9 @@ pub fn handle_file_mouse(
                         }
                         // Select all file indices whose rows fall within the marquee rect
                         for bound in &fs.view.file_row_bounds {
+                            if bound.file_idx >= fs.list.files.len() {
+                                continue;
+                            }
                             // Skip virtual dividers
                             if is_virtual_divider(&fs.list.files[bound.file_idx]) {
                                 continue;
@@ -1337,7 +1340,7 @@ pub fn handle_file_mouse(
             // Resolve deferred pending_click — this is a plain click (no drag/marquee)
             if let Some(idx) = app.drag.pending_click_idx.take() {
                 if let Some(fs) = app.current_file_state_mut() {
-                    if !is_virtual_divider(&fs.list.files[idx]) {
+                    if idx < fs.list.files.len() && !is_virtual_divider(&fs.list.files[idx]) {
                         fs.list.selection.handle_click(idx, false, false, false);
                         fs.view.table_state.select(fs.list.selection.selected);
                     }
