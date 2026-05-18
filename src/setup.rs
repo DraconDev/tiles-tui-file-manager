@@ -17,15 +17,13 @@ use tokio::sync::mpsc;
 
 pub type PLMutex<T> = parking_lot::Mutex<T>;
 
-pub fn setup_app(
-    tile_queue: Arc<StdMutex<Vec<dracon_terminal_engine::compositor::engine::TilePlacement>>>,
-) -> (
+pub fn setup_app() -> (
     Arc<PLMutex<App>>,
     mpsc::Sender<AppEvent>,
     mpsc::Receiver<AppEvent>,
 ) {
     let (tx, rx) = mpsc::channel(MPSC_CHANNEL_CAPACITY);
-    let mut app = App::new(tile_queue);
+    let mut app = App::new();
 
     if let Some(state) = crate::config::load_state() {
         if !state.panes.is_empty() {

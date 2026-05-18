@@ -44,8 +44,6 @@ pub struct App {
     pub focused_pane_index: usize,
     pub system_state: SystemState,
     pub preview_max_mb: u16,
-    #[allow(dead_code)]
-    pub tile_queue: Arc<StdMutex<Vec<TilePlacement>>>,
     pub saved_pane: Option<Pane>,
     pub show_main_stage: bool,
 }
@@ -55,7 +53,7 @@ impl App {
     ///
     /// Initializes with a single pane showing the current working directory,
     /// default sidebar settings, and the Files view active.
-    pub fn new(tile_queue: Arc<StdMutex<Vec<TilePlacement>>>) -> Self {
+    pub fn new() -> Self {
         let start_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
         let initial_fs = FileState::new(
             start_path,
@@ -208,7 +206,6 @@ impl App {
             focused_pane_index: 0,
             system_state: SystemState::default(),
             preview_max_mb: PREVIEW_MAX_MB,
-            tile_queue,
             saved_pane: None,
             show_main_stage: true,
         }

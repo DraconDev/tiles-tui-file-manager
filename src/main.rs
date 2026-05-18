@@ -77,10 +77,9 @@ async fn main() -> color_eyre::Result<()> {
 async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     crate::app::log_debug("run_tty start");
     let backend = EngineBackend::new(std::io::stdout())?;
-    let tile_queue = backend.tile_queue();
     let mut terminal = Terminal::new(backend)?;
 
-    let (app, event_tx, mut event_rx) = setup::setup_app(tile_queue);
+    let (app, event_tx, mut event_rx) = setup::setup_app();
 
     // Watcher Setup
     let tx_clone = event_tx.clone();

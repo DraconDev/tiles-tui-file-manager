@@ -69,34 +69,10 @@ impl EventLoopCtx {
         }
     }
 
-    /// Lock the app for synchronous access.
-    #[allow(dead_code)]
-    pub fn app_lock(&self) -> parking_lot::MutexGuard<'_, App> {
-        self.app.lock()
-    }
-
-    /// Send an event to the event loop (non-blocking, logs on failure).
-    #[allow(dead_code)]
-    pub fn send_event(&self, event: AppEvent) {
-        let _ = crate::app::try_send_event(&self.event_tx, event);
-    }
-
     /// Prune expired self-save entries (called each tick).
     pub fn prune_self_save(&mut self) {
         self.last_self_save
             .retain(|_, (_, _, at)| at.elapsed() < Duration::from_secs(5));
-    }
-
-    /// Mark a pane for refresh at end of tick.
-    #[allow(dead_code)]
-    pub fn mark_refresh(&mut self, pane_idx: usize) {
-        self.panes_needing_refresh.insert(pane_idx);
-    }
-
-    /// Drain all panes needing refresh, returning them.
-    #[allow(dead_code)]
-    pub fn drain_refreshes(&mut self) -> HashSet<usize> {
-        std::mem::take(&mut self.panes_needing_refresh)
     }
 
     /// Synchronize file watches with current app state.
