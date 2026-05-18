@@ -64,30 +64,15 @@ Updated with refactor progress — 2026-05-17
 
 ## P4 — Mouse UX (inspired by Dolphin)
 
-> Philosophy: **Don't add clutter. Add only what genuinely speeds up workflows.**
-> Mouse users want batch selection without reaching for Ctrl.
-> Keyboard users already have Shift+↑/↓ and Ctrl+click.
+- [x] **Marquee drag selection** — click+drag on empty space/non-name columns draws rect, selects all items within. Ctrl+drag toggles. ✅
+- [x] **Undo close tab — Ctrl+Shift+T** — reopens last closed tab (max 10). ✅
+- [ ] **Hover +/- selection buttons** — skeptical, revisit only if marquee isn't sufficient
 
-- [ ] **Marquee drag selection** (~3-5 hrs, HIGH priority)
-  - Press+drag on file list creates a rubber-band rect; all items inside are selected on release
-  - `mouseDown` on file list → track `drag_start`; `mouseDrag` renders dashed rect; `mouseUp` commits selection
-  - Combined with: Ctrl+drag adds individual items (toggle per item), Shift+drag for range
-  - No visual clutter unless actively dragging — just a rect overlay
-  - **BLOCKER:** None. Track `drag_start/drag_end` in `FileViewState.mouse_state`
+## P5 — Editor cursor bug (dracon-terminal-engine)
 
-- [ ] **Undo close tab — Ctrl+Shift+T** (~2-3 hrs, HIGH priority)
-  - On tab close, push `(path, split_idx, pane_idx)` to a `closed_tabs: VecDeque` (max 10)
-  - `Ctrl+Shift+T` pops the last entry and reopens it
-  - Simple, no UI change, instant recovery
-  - **BLOCKER:** Need to handle case when no closed tabs exist (should do nothing)
-
-- [ ] **Hover +/- selection buttons** (~3-5 hrs, MEDIUM — skeptical)
-  - When mouse hovers over a file, show `+` / `−` button in top-left of row
-  - Click to select/deselect without Ctrl key
-  - **Concern:** Gimmicky visual clutter. With marquee drag, this is redundant.
-  - **Use case:** Mouse user wants to select a few non-adjacent files without Ctrl
-  - **Decision:** Do marquee drag first; revisit this only if marquee isn't sufficient
-  - **BLOCKER:** Need hover state tracking in `FileViewState`
+- [ ] After pressing Enter, cursor column appears offset by +1 per empty row before the insertion point
+  - Likely bug in `insert_newline()` or `ensure_cursor_visible()` wrap-mode calculation
+  - Requires reproduction and fix in `/home/dracon/Dev/dracon-terminal-engine`
 
 ---
 
