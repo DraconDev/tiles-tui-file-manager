@@ -1152,10 +1152,11 @@ pub fn handle_file_mouse(
                                 sel_mode && !is_shift,
                             );
                             fs.view.table_state.select(fs.list.selection.selected);
+                        } else {
+                            // For plain clicks, record the target but don't change selection yet.
+                            // mouseUp will call handle_click if no drag/marquee occurred.
+                            pending_click = Some(idx);
                         }
-                        // For plain clicks, record the target but don't change selection yet.
-                        // mouseUp will call handle_click if no drag/marquee occurred.
-                        pending_click = Some(idx);
                     }
 
                     let p = fs.list.files[idx].clone();
@@ -1314,6 +1315,7 @@ pub fn handle_file_mouse(
                 app.drag.drag_start_pos = None;
                 app.drag.drag_source = None;
                 app.drag.hovered_drop_target = None;
+                app.drag.pending_click_idx = None;
                 return true;
             }
 
