@@ -315,7 +315,8 @@ pub fn handle_quick_copy(app: &mut App, event_tx: &mpsc::Sender<AppEvent>, _to_l
 
 // ── Helper functions (also extracted from file_manager.rs) ──
 
-fn is_virtual_divider(path: &Path) -> bool {
+/// Check if a path is a virtual divider (separator row).
+pub fn is_virtual_divider(path: &Path) -> bool {
     path.to_string_lossy() == "__DIVIDER__"
 }
 
