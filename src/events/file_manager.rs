@@ -1223,22 +1223,21 @@ pub fn handle_file_mouse(
                         }
                         return true;
                     }
-                    // Only set drag_source if click is within the Name column —
-                    // clicking empty space to the right of the name should start marquee, not file drag
+                    // Set marquee_start for ALL left-clicks on file rows —
+                    // marquee can coexist with drag_source; the Drag handler decides which wins.
+                    app.drag.marquee_start = Some((column, row));
+                    app.drag.marquee_end = Some((column, row));
+                    // Only set drag_source for Name column clicks (file drag-and-drop)
                     let in_name_column = app.current_file_state()
                         .and_then(|fs| fs.view.column_bounds.iter()
                             .find(|(_, ct)| *ct == FileColumn::Name)
                             .map(|(name_rect, _)| {
                                 column >= name_rect.x && column < name_rect.x + name_rect.width
                             }))
-                        .unwrap_or(true); // fallback: treat as name column if bounds unknown
+                        .unwrap_or(true);
                     if in_name_column {
                         app.drag.drag_source = Some(path.clone());
                         app.drag.drag_start_pos = Some((column, row));
-                    } else {
-                        // Clicked empty space in this row — start marquee tracking
-                        app.drag.marquee_start = Some((column, row));
-                        app.drag.marquee_end = Some((column, row));
                     }
 
                     // Double Click
@@ -1372,14 +1371,19 @@ pub fn handle_file_mouse(
             true
         }
         MouseEventKind::Drag(_) => {
-            // Marquee drag: only if no file drag source (clicked empty space or released file drag)
+            // Marquee drag: prefer marquee over file drag when drag hasn't started yet.
+            // If drag_source is set but is_dragging is false, let marquee take over
+            // once distance threshold is met (user is selecting, not dragging files).
             if let Some((sx, sy)) = app.drag.marquee_start {
                 app.drag.marquee_end = Some((column, row));
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
-                // Activate marquee only if: distance threshold met AND no file drag source
-                if dist_sq >= 4.0 && !app.drag.is_marquee && app.drag.drag_source.is_none() {
+                // Activate marquee if: distance threshold met AND file drag hasn't started
+                if dist_sq >= 4.0 && !app.drag.is_marquee && !app.drag.is_dragging {
                     app.drag.is_marquee = true;
+                    // Cancel file drag — marquee takes priority
+                    app.drag.drag_source = None;
+                    app.drag.drag_start_pos = None;
                 }
                 if app.drag.is_marquee {
                     return true; // consume drag event — no file drag-drop while marquee-ing

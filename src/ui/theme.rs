@@ -573,10 +573,10 @@ pub static THEME: std::sync::LazyLock<DraconTheme> =
     std::sync::LazyLock::new(DraconTheme::cyberpunk);
 
 static ACTIVE_STYLE: LazyLock<RwLock<ThemeStyle>> =
-    LazyLock::new(|| RwLock::new(ThemeStyle::default_purple()));
+    LazyLock::new(|| RwLock::new(ThemeStyle::default()));
 static ACTIVE_THEME: LazyLock<RwLock<DraconTheme>> = LazyLock::new(|| {
     let mut theme = DraconTheme::cyberpunk();
-    ThemeStyle::default_purple().apply_to_theme(&mut theme);
+    ThemeStyle::default().apply_to_theme(&mut theme);
     RwLock::new(theme)
 });
 
