@@ -3,7 +3,6 @@
 //! Handles all mouse interactions on the file list: click, double-click,
 //! drag-and-drop, marquee selection, scroll, and context menu.
 
-use std::collections::HashSet;
 use std::path::PathBuf;
 
 use tokio::sync::mpsc;
@@ -20,12 +19,6 @@ pub fn handle_file_mouse(
     me: &dracon_terminal_engine::contracts::MouseEvent,
     app: &mut App,
     event_tx: &mpsc::Sender<AppEvent>,
-) -> bool {
-pub fn handle_file_mouse(
-    me: &dracon_terminal_engine::contracts::MouseEvent,
-    app: &mut App,
-    event_tx: &mpsc::Sender<AppEvent>,
-    _panes_needing_refresh: &mut HashSet<usize>,
 ) -> bool {
     let column = me.column;
     let row = me.row;
