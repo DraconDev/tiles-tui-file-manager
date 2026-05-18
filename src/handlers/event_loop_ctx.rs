@@ -515,4 +515,132 @@ impl EventLoopCtx {
         }
         false
     }
+
+    /// Handle GitHistoryUpdated: store git data in the specified pane/tab.
+    #[allow(clippy::too_many_arguments)]
+    pub fn handle_git_history_updated(
+        &mut self,
+        p_idx: usize,
+        t_idx: usize,
+        history: Vec<crate::state::CommitInfo>,
+        pending: Vec<crate::state::GitPendingChange>,
+        branch: Option<String>,
+        ahead: usize,
+        behind: usize,
+        summary: Option<String>,
+        remotes: Vec<String>,
+        stashes: Vec<String>,
+    ) {
+        let mut app_guard = self.app.lock();
+        if p_idx >= app_guard.panes.len() {
+            crate::app::log_debug(&format!(
+                "GitHistoryUpdated: pane_idx {} out of bounds (panes: {})",
+                p_idx,
+                app_guard.panes.len()
+            ));
+        } else if let Some(pane) = app_guard.panes.get_mut(p_idx) {
+            let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
+            if let Some(fs) = pane.tabs.get_mut(tab_idx) {
+                fs.git.git_history = history;
+                fs.git.git_pending = pending;
+                fs.git.git_branch = branch;
+                fs.git.git_ahead = ahead;
+                fs.git.git_behind = behind;
+                fs.git.git_summary = summary;
+                fs.git.git_remotes = remotes;
+                fs.git.git_stashes = stashes;
+                fs.git.git_cache_until = Some(Instant::now() + Duration::from_secs(crate::config::GIT_CACHE_TTL_SECONDS));
+            }
+        }
+    }
+
+    /// Handle TaskProgress: update or create a background task entry.
+    pub fn handle_task_progress(&mut self, id: uuid::Uuid, progress: f32, status: String) {
+        let mut app_guard = self.app.lock();
+        if let Some(task) = app_guard.output.background_tasks.iter_mut().find(|t| t.id == id) {
+            task.progress = progress;
+            task.status = status;
+        } else {
+            app_guard.output.background_tasks.push(crate::app::BackgroundTask {
+                id,
+                name: "Task".to_string(),
+                status,
+                progress,
+            });
+        }
+    }
+
+    /// Handle TaskFinished: remove a background task entry.
+    pub fn handle_task_finished(&mut self, id: uuid::Uuid) {
+        let mut app_guard = self.app.lock();
+        app_guard.output.background_tasks.retain(|t| t.id != id);
+    }
+
+    /// Handle GlobalSearchUpdated: replace file list with search results.
+    pub fn handle_global_search_updated(&mut self, pane_idx: usize, files: Vec<PathBuf>) {
+        let mut app_guard = self.app.lock();
+        if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+            if let Some(fs) = pane.current_state_mut() {
+                fs.list.files = files;
+            }
+        }
+    }
+
+    /// Handle SystemMonitor: switch to process monitor view.
+    pub fn handle_system_monitor(&mut self) {
+        let mut app_guard = self.app.lock();
+        app_guard.save_current_view_prefs();
+        app_guard.core.current_view = crate::app::CurrentView::Processes;
+    }
+
+    /// Handle GitHistory: switch to git view and trigger refresh.
+    pub fn handle_git_history(&mut self) {
+        let pane_idx = {
+            let mut app_guard = self.app.lock();
+            app_guard.save_current_view_prefs();
+            app_guard.core.current_view = crate::app::CurrentView::Git;
+            app_guard.focused_pane_index
+        };
+        self.send_event(AppEvent::RefreshFiles(pane_idx));
+    }
+
+    /// Handle Editor: switch to editor view, load prefs, trigger preview.
+    pub fn handle_editor(&mut self) {
+        let (pane_idx, dir_path) = {
+            let mut app_guard = self.app.lock();
+            app_guard.save_current_view_prefs();
+            app_guard.core.current_view = crate::app::CurrentView::Editor;
+            app_guard.load_view_prefs(crate::app::CurrentView::Editor);
+            app_guard.apply_split_mode(false);
+            let idx = app_guard.focused_pane_index;
+            let path = app_guard.panes
+                .get(idx)
+                .and_then(|p| p.current_state())
+                .map(|fs| fs.nav.current_path.clone());
+            (idx, path)
+        };
+        if let Some(path) = dir_path {
+            self.send_event(AppEvent::PreviewRequested(pane_idx, path));
+        }
+    }
+
+    /// Handle StatusMsg: update the status bar message.
+    pub fn handle_status_msg(&mut self, msg: String) {
+        let mut app_guard = self.app.lock();
+        app_guard.output.last_action_msg = Some((msg, Instant::now()));
+    }
+
+    /// Handle AddToFavorites: add a path to starred favorites.
+    pub fn handle_add_to_favorites(&mut self, path: PathBuf) {
+        let mut app_guard = self.app.lock();
+        if path.exists() && !app_guard.nav.starred.contains(&path) {
+            app_guard.nav.starred.push(path.clone());
+            crate::config::save_state_quiet(&app_guard);
+            let display_name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| path.display().to_string());
+            self.send_event(AppEvent::StatusMsg(format!("Added to favorites: {}", display_name)));
+        }
+    }
 }

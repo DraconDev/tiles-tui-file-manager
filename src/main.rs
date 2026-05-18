@@ -597,112 +597,39 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     remotes,
                     stashes,
                 ) => {
-                    let mut app_guard = ctx.app.lock();
-                    if p_idx >= app_guard.panes.len() {
-                        crate::app::log_debug(&format!(
-                            "GitHistoryUpdated: pane_idx {} out of bounds (panes: {})",
-                            p_idx,
-                            app_guard.panes.len()
-                        ));
-                    } else if let Some(pane) = app_guard.panes.get_mut(p_idx) {
-                        // Store git data in the specified tab, or active tab as fallback
-                        let tab_idx = if t_idx < pane.tabs.len() { t_idx } else { pane.active_tab_index };
-                        if let Some(fs) = pane.tabs.get_mut(tab_idx) {
-                            fs.git.git_history = history;
-                            fs.git.git_pending = pending;
-                            fs.git.git_branch = branch;
-                            fs.git.git_ahead = ahead;
-                            fs.git.git_behind = behind;
-                            fs.git.git_summary = summary;
-                            fs.git.git_remotes = remotes;
-                            fs.git.git_stashes = stashes;
-                            fs.git.git_cache_until = Some(Instant::now() + Duration::from_secs(GIT_CACHE_TTL_SECONDS));
-                        }
-                    }
+                    ctx.handle_git_history_updated(p_idx, t_idx, history, pending, branch, ahead, behind, summary, remotes, stashes);
                     needs_draw = true;
                 }
                 AppEvent::TaskProgress(id, progress, status) => {
-                    let mut app_guard = ctx.app.lock();
-                    if let Some(task) = app_guard.output.background_tasks.iter_mut().find(|t| t.id == id) {
-                        task.progress = progress;
-                        task.status = status;
-                    } else {
-                        app_guard.output.background_tasks.push(crate::app::BackgroundTask {
-                            id,
-                            name: "Task".to_string(),
-                            status,
-                            progress,
-                        });
-                    }
+                    ctx.handle_task_progress(id, progress, status);
                     needs_draw = true;
                 }
                 AppEvent::TaskFinished(id) => {
-                    let mut app_guard = ctx.app.lock();
-                    app_guard.output.background_tasks.retain(|t| t.id != id);
+                    ctx.handle_task_finished(id);
                     needs_draw = true;
                 }
                 AppEvent::GlobalSearchUpdated(pane_idx, files, _meta) => {
-                    let mut app_guard = ctx.app.lock();
-                    if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
-                        if let Some(fs) = pane.current_state_mut() {
-                            fs.list.files = files;
-                        }
-                    }
+                    ctx.handle_global_search_updated(pane_idx, files);
                     needs_draw = true;
                 }
                 AppEvent::SystemMonitor => {
-                    let mut app_guard = ctx.app.lock();
-                    app_guard.save_current_view_prefs();
-                    app_guard.core.current_view = CurrentView::Processes;
+                    ctx.handle_system_monitor();
                     needs_draw = true;
                 }
                 AppEvent::GitHistory => {
-                    let mut app_guard = ctx.app.lock();
-                    app_guard.save_current_view_prefs();
-                    app_guard.core.current_view = CurrentView::Git;
-                    let pane_idx = app_guard.focused_pane_index;
+                    ctx.handle_git_history();
                     needs_draw = true;
-                    drop(app_guard);
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(pane_idx));
                 }
                 AppEvent::Editor => {
-                    let mut app_guard = ctx.app.lock();
-                    app_guard.save_current_view_prefs();
-                    app_guard.core.current_view = CurrentView::Editor;
-                    app_guard.load_view_prefs(CurrentView::Editor);
-                    app_guard.apply_split_mode(false);
-                    let pane_idx = app_guard.focused_pane_index;
-                    let dir_path = app_guard.panes
-                        .get(pane_idx)
-                        .and_then(|p| p.current_state())
-                        .map(|fs| fs.nav.current_path.clone());
+                    ctx.handle_editor();
                     needs_draw = true;
-                    drop(app_guard);
-                    if let Some(path) = dir_path {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(pane_idx, path));
-                    }
                 }
                 AppEvent::StatusMsg(msg) => {
-                    let mut app_guard = ctx.app.lock();
-                    app_guard.output.last_action_msg = Some((msg, std::time::Instant::now()));
+                    ctx.handle_status_msg(msg);
                     needs_draw = true;
                 }
                 AppEvent::AddToFavorites(path) => {
-                    let mut app_guard = ctx.app.lock();
-                    // Only add if path exists and not already in favorites
-                    if path.exists() && !app_guard.nav.starred.contains(&path) {
-                        app_guard.nav.starred.push(path.clone());
-                        // Wrap save_state to prevent crash if serialization fails
-                        crate::config::save_state_quiet(&app_guard);
-                        let display_name = path
-                            .file_name()
-                            .map(|n| n.to_string_lossy().to_string())
-                            .unwrap_or_else(|| path.display().to_string());
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                            "Added to favorites: {}",
-                            display_name
-                        )));
-                    }
+                    ctx.handle_add_to_favorites(path);
                     needs_draw = true;
                 }
             }
