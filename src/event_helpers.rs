@@ -819,7 +819,6 @@ fn copy_target_text(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::sync::{Arc, Mutex};
 
     fn test_app() -> App {
         App::new()
