@@ -806,7 +806,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                             fs.list.selection.anchor = Some(0);
                             fs.list.selection.clear_multi();
                             *fs.view.table_state.offset_mut() = 0;
-                            crate::event_helpers::push_history(fs, home);
+                            crate::nav_helpers::push_history(fs, home);
                             let _ =
                                 crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             return true;
@@ -888,7 +888,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                     if handled_search {
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     } else {
-                        crate::event_helpers::navigate_up(app);
+                        crate::nav_helpers::navigate_up(app);
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     return true;
@@ -1051,7 +1051,7 @@ pub fn handle_file_mouse(
                         fs.list.selection.clear();
                         fs.nav.search_filter.clear();
                         *fs.view.table_state.offset_mut() = 0;
-                        crate::event_helpers::push_history(fs, target_path);
+                        crate::nav_helpers::push_history(fs, target_path);
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         app.sidebar.sidebar_focus = false;
                         return true;
@@ -1060,7 +1060,7 @@ pub fn handle_file_mouse(
                     // Clicked breadcrumb row but not on a segment:
                     // copy path to clipboard and open path input
                     let path = fs.nav.current_path.to_string_lossy().to_string();
-                    crate::event_helpers::open_path_input(app);
+                    crate::nav_helpers::open_path_input(app);
                     crate::clipboard::copy_text_to_clipboard_async(path);
                     let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
                         "Copied current path to clipboard".to_string(),
@@ -1215,7 +1215,7 @@ pub fn handle_file_mouse(
                                     let mut nfs = fs.clone();
                                     nfs.nav.current_path = path.clone();
                                     nfs.list.selection.clear();
-                                    crate::event_helpers::push_history(&mut nfs, path);
+                                    crate::nav_helpers::push_history(&mut nfs, path);
                                     p.open_tab(nfs);
                                     let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                                 }
@@ -1261,7 +1261,7 @@ pub fn handle_file_mouse(
                                 fs.list.selection.clear();
                                 fs.list.local_count = 0;
                                 fs.git.git_cache_until = None;
-                                crate::event_helpers::push_history(fs, path);
+                                crate::nav_helpers::push_history(fs, path);
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         } else {

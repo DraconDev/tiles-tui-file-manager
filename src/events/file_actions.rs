@@ -93,7 +93,7 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         fs.list.selection.selected = Some(0);
                         fs.list.selection.anchor = Some(0);
                         fs.list.selection.clear_multi();
-                        crate::event_helpers::push_history(fs, path.clone());
+                        crate::nav_helpers::push_history(fs, path.clone());
                         let _ = crate::app::try_send_event(event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         app.sidebar.sidebar_focus = false;
                     }
@@ -114,7 +114,7 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                             fs.list.selection.selected = Some(0);
                             fs.list.selection.anchor = Some(0);
                             fs.list.selection.clear_multi();
-                            crate::event_helpers::push_history(fs, path.clone());
+                            crate::nav_helpers::push_history(fs, path.clone());
                             let _ = crate::app::try_send_event(event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                         }
                         app.sidebar.sidebar_focus = false;
@@ -170,7 +170,7 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             fs.list.selection.clear_multi();
             fs.nav.search_filter.clear();
             fs.nav.search_generation += 1;
-            crate::event_helpers::push_history(fs, p);
+            crate::nav_helpers::push_history(fs, p);
             app.layout.expanded_folders.clear();
             let _ = crate::app::try_send_event(event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
         }

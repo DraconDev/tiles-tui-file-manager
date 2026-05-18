@@ -22,6 +22,7 @@ mod events;
 mod handlers;
 mod icons;
 mod modules;
+mod nav_helpers;
 mod state;
 mod ui;
 

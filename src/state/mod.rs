@@ -629,7 +629,7 @@ mod tests {
         let mut fs = test_fs();
         // FileState::new already pushes the initial path to history
         assert_eq!(fs.nav.history.len(), 1);
-        crate::event_helpers::push_history(&mut fs, std::path::PathBuf::from("/home"));
+        crate::nav_helpers::push_history(&mut fs, std::path::PathBuf::from("/home"));
         assert_eq!(fs.nav.history.len(), 2);
         // history_index should be at the end
         assert_eq!(fs.nav.history_index, 1);

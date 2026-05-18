@@ -73,7 +73,7 @@ pub fn setup_app(
                     fs.nav.remote_session = None;
                     if fs.nav.current_path != cwd {
                         fs.nav.current_path = cwd.clone();
-                        crate::event_helpers::push_history(fs, cwd);
+                        crate::nav_helpers::push_history(fs, cwd);
                     }
                 }
             }

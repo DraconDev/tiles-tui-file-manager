@@ -352,11 +352,11 @@ fn handle_general_mouse(
             {
                 match action_id.as_str() {
                     "back" => {
-                        crate::event_helpers::navigate_back(app);
+                        crate::nav_helpers::navigate_back(app);
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     "forward" => {
-                        crate::event_helpers::navigate_forward(app);
+                        crate::nav_helpers::navigate_forward(app);
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                     }
                     "split" => {
@@ -508,7 +508,7 @@ fn handle_sidebar_mouse(
                             if let Some(fs) = app.current_file_state_mut() {
                                 fs.nav.current_path = path.clone();
                                 fs.list.selection.clear();
-                                crate::event_helpers::push_history(fs, path.clone());
+                                crate::nav_helpers::push_history(fs, path.clone());
                                 let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app.focused_pane_index));
                             }
                         }
@@ -539,7 +539,7 @@ fn handle_sidebar_mouse(
                                         fs.list.selection.selected = Some(0);
                                         fs.list.selection.anchor = Some(0);
                                         fs.list.selection.clear_multi();
-                                        crate::event_helpers::push_history(fs, path_ref.clone());
+                                        crate::nav_helpers::push_history(fs, path_ref.clone());
                                         let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
                                             app.focused_pane_index,
                                         ));

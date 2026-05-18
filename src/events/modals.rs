@@ -170,7 +170,7 @@ fn handle_path_input_keys(
             true
         }
         KeyCode::Enter => {
-            match crate::event_helpers::submit_path_input(app, event_tx) {
+            match crate::nav_helpers::submit_path_input(app, event_tx) {
                 Ok(()) => {
                     app.core.mode = AppMode::Normal;
                     app.core.input.clear();
