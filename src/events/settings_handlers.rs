@@ -43,7 +43,7 @@ pub fn style_preset_for_index(index: usize) -> Option<crate::ui::theme::ThemeSty
         3 => Some(crate::ui::theme::ThemeStyle::preset_forest()),
         4 => Some(crate::ui::theme::ThemeStyle::preset_sunset()),
         5 => Some(crate::ui::theme::ThemeStyle::preset_mono()),
-        6 => Some(crate::ui::theme::ThemeStyle::default_purple()),
+        6 => Some(crate::ui::theme::ThemeStyle::preset_legacy_red()),
         7 => Some(crate::ui::theme::ThemeStyle::preset_nord()),
         8 => Some(crate::ui::theme::ThemeStyle::preset_dracula()),
         9 => Some(crate::ui::theme::ThemeStyle::preset_solarized_dark()),

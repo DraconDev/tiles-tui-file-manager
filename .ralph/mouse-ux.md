@@ -1,34 +1,26 @@
-## Goal
-Implement two P4 mouse UX features:
-1. **FN-043**: Marquee drag selection — rubber-band rect on file list
-2. **FN-044**: Undo close tab — Ctrl+Shift+T reopens last closed tab
+# Mouse UX — Marquee Drag + Undo Close Tab
 
-## Workflow
-After each step: `cargo build && cargo test && cargo clippy -- -D warnings`
+## Status: ✅ COMPLETE
 
-## Step 1: Marquee drag selection (FN-043)
+### FN-043 — Marquee drag selection ✅
+- Commit: `19dfcb69`
+- Click+drag in file list (row >= 3) draws rounded rect overlay
+- `DragState` extended: `is_marquee`, `marquee_start`, `marquee_end`
+- `MarqueeRect` helper + `marquee_rect()` / `clear_marquee()` methods
+- On mouseUp: all files within rect selected (Ctrl+drag = toggle)
+- Escape cancels active marquee
+- `draw_marquee_rect()` in `ui/misc.rs` with accent_primary border
+- 4 unit tests (normalize, none-when-inactive, clear, same-point)
 
-1. Find `FileViewState` — understand current mouse_state fields
-2. Add `drag_start: Option<(u16, u16)>` and `drag_current: Option<(u16, u16)>` to mouse state
-3. Find `handle_mouse_event` or similar in events — where mouseDown/mouseDrag/mouseUp are handled
-4. On mouseDown in file list area → set drag_start = (col, row)
-5. On mouseDrag → update drag_current; call a new render function that draws a dashed rect
-6. On mouseUp → compute rows whose rect intersects the drag rect → add to selection
-   - Normal drag = add to selection (replace current)
-   - Ctrl+drag = toggle individual items
-   - Shift+drag = range select from anchor to each item in rect
-7. Clear drag state after mouseUp
-8. Add unit test: row-rect intersection logic
+### FN-044 — Undo close tab (Ctrl+Shift+T) ✅
+- Commit: `19dfcb69`
+- Ctrl+W saves tab info (path, pane_index) to `app.nav.closed_tabs`
+- VecDeque, max 10 entries (oldest evicted)
+- Ctrl+Shift+T reopens last closed tab in original pane
+- Status message on restore
+- 2 unit tests (push/pop, max cap)
 
-## Step 2: Undo close tab (FN-044)
-
-1. Find App or TabState struct — where tabs are managed
-2. Add `closed_tabs: VecDeque<TabInfo>` field (cap 10)
-3. Find tab close handler — push tab info to closed_tabs before removing
-4. Add Ctrl+Shift+T event handler
-5. Handler: if closed_tabs not empty, pop and reopen tab
-6. If empty, do nothing
-7. Add unit test: closed_tabs push/pop behavior
-
-## Completion
-Mark both tasks done in Fusion
+### Verification
+- 78 tests pass
+- `cargo clippy -- -D warnings` clean
+- `cargo build` clean
