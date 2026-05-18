@@ -172,7 +172,7 @@ pub fn handle_event(
             }
         }
         Event::Mouse(me) => {
-            return handle_general_mouse(me, app, &event_tx, panes_needing_refresh);
+            return handle_general_mouse(me, app, &event_tx);
         }
         Event::Paste(text) => {
             if let AppMode::Editor = app.core.mode {
@@ -308,7 +308,6 @@ fn handle_general_mouse(
     me: &dracon_terminal_engine::contracts::MouseEvent,
     app: &mut App,
     event_tx: &mpsc::Sender<AppEvent>,
-    panes_needing_refresh: &mut HashSet<usize>,
 ) -> bool {
     let column = me.column;
     let row = me.row;
