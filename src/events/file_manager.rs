@@ -45,17 +45,6 @@ fn reselect_after_filter(fs: &mut crate::state::FileState, old_path: Option<&std
     *fs.view.table_state.offset_mut() = 0;
 }
 
-fn is_double_click(
-    last_click_pos: (u16, u16),
-    last_click_time: std::time::Instant,
-    column: u16,
-    row: u16,
-) -> bool {
-    let (last_x, last_y) = last_click_pos;
-    let close_enough = last_x.abs_diff(column) <= 1 && last_y.abs_diff(row) <= 1;
-    close_enough && last_click_time.elapsed() < Duration::from_millis(DOUBLE_CLICK_MS)
-}
-
 fn is_virtual_divider(path: &std::path::Path) -> bool {
     path.to_string_lossy() == "__DIVIDER__"
 }
