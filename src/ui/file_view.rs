@@ -261,6 +261,8 @@ pub fn draw_file_view(
         // 2. Render Rows
         let offset_val = file_state.view.table_state.offset();
         let total_files = file_state.list.files.len();
+        let has_path_colors = !app.selection.path_colors.is_empty();
+        let use_semantic_coloring = app.settings.semantic_coloring;
         for i in 0..visible_height {
             let file_idx = offset_val + i;
             if file_idx >= total_files {
@@ -281,7 +283,8 @@ pub fn draw_file_view(
                 row_bg_style = row_bg_style.bg(theme::selection_alt_bg());
             } else if is_hovered_drop {
                 row_bg_style = row_bg_style.bg(theme::accent_secondary());
-            } else if let Some(&c) = app.selection.path_colors.get(path) {
+            } else if has_path_colors {
+                if let Some(&c) = app.selection.path_colors.get(path) {
                 let color = match c {
                     1 => theme::danger(),
                     2 => theme::success(),
