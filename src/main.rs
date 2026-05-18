@@ -492,121 +492,19 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     needs_draw = true;
                 }
                 AppEvent::CreateFile(path) => {
-                    let remote = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.current_file_state()
-                            .and_then(|fs| fs.nav.remote_session.clone())
-                    };
-                    let result: Result<(), std::io::Error> = if let Some(remote) = remote {
-                        crate::modules::remote::create_file(&remote, &path)
-                    } else {
-                        std::fs::File::create(&path).map(|_| ())
-                    };
-                    if let Err(e) = result {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Failed to create file: {}", e)));
-                    } else {
-                        let focused_pane = ctx.app.lock().focused_pane_index;
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused_pane));
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::PreviewRequested(focused_pane, path));
-                    }
+                    ctx.handle_create_file(path);
                 }
                 AppEvent::CreateFolder(path) => {
-                    let remote = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.current_file_state()
-                            .and_then(|fs| fs.nav.remote_session.clone())
-                    };
-                    let result: Result<(), std::io::Error> = if let Some(remote) = remote {
-                        crate::modules::remote::create_dir_all(&remote, &path)
-                    } else {
-                        std::fs::create_dir_all(&path)
-                    };
-                    if let Err(e) = result {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Failed to create folder: {}", e)));
-                    } else {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(
-                            ctx.app.lock().focused_pane_index,
-                        ));
-                    }
+                    ctx.handle_create_folder(path);
                 }
                 AppEvent::Rename(old, new) => {
-                    let remote = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.current_file_state()
-                            .and_then(|fs| fs.nav.remote_session.clone())
-                    };
-                    let rename_res = if let Some(remote) = &remote {
-                        crate::modules::remote::rename(remote, &old, &new)
-                    } else {
-                        std::fs::rename(&old, &new)
-                    };
-                    match rename_res {
-                        Ok(_) => {
-                            let mut app_guard = ctx.app.lock();
-                            // Undo should move the path back to its original location.
-                            app_guard.undo_state.undo_stack
-                                .push(crate::app::UndoAction::Move(new.clone(), old.clone()));
-                            app_guard.undo_state.redo_stack.clear();
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(app_guard.focused_pane_index));
-                        }
-                        Err(e) => {
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Rename failed: {}", e)));
-                        }
-                    }
+                    ctx.handle_rename(old, new);
                 }
                 AppEvent::Delete(path) => {
-                    let remote = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.current_file_state()
-                            .and_then(|fs| fs.nav.remote_session.clone())
-                    };
-                    let result: Result<(), std::io::Error> = if let Some(remote) = remote {
-                        crate::modules::remote::remove_path(&remote, &path)
-                    } else if path.is_dir() {
-                        std::fs::remove_dir_all(&path)
-                    } else {
-                        std::fs::remove_file(&path)
-                    };
-                    let focused = ctx.app.lock().focused_pane_index;
-                    if let Err(e) = result {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                            "Delete failed: {} - {}",
-                            path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
-                            e
-                        )));
-                    }
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
+                    ctx.handle_delete(path);
                 }
                 AppEvent::TrashFile(path) => {
-                    let remote = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.current_file_state()
-                            .and_then(|fs| fs.nav.remote_session.clone())
-                    };
-                    let focused = ctx.app.lock().focused_pane_index;
-                    if remote.is_some() {
-                        // Remote files: fall back to permanent delete since trash doesn't work remotely
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
-                            "Remote files cannot be trashed. Use Delete for permanent removal.".to_string()
-                        ));
-                    } else {
-                        match trash::delete(&path) {
-                            Ok(_) => {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                    "Trashed: {}",
-                                    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
-                                )));
-                            }
-                            Err(e) => {
-                                let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                    "Trash failed: {} - {}",
-                                    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
-                                    e
-                                )));
-                            }
-                        }
-                    }
-                    let _ = crate::app::try_send_event(&event_tx, AppEvent::RefreshFiles(focused));
+                    ctx.handle_trash_file(path);
                 }
                 AppEvent::Copy(src, dest) => {
                     let tx = ctx.event_tx.clone();
@@ -661,53 +559,8 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     });
                 }
                 AppEvent::Symlink(src, dest) => {
-                    let remote = {
-                        let app_guard = ctx.app.lock();
-                        app_guard.current_file_state()
-                            .and_then(|fs| fs.nav.remote_session.clone())
-                    };
-                    if remote.is_some() {
-                        let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
-                            "Symlink is not supported for remote panes".to_string(),
-                        ));
+                    if ctx.handle_symlink(src, dest) {
                         continue;
-                    }
-                    let result = {
-                        #[cfg(unix)]
-                        {
-                            std::os::unix::fs::symlink(&src, &dest)
-                        }
-                        #[cfg(windows)]
-                        {
-                            if src.is_dir() {
-                                std::os::windows::fs::symlink_dir(&src, &dest)
-                            } else {
-                                std::os::windows::fs::symlink_file(&src, &dest)
-                            }
-                        }
-                    };
-
-                    match result {
-                        Ok(_) => {
-                            if let Some(parent) = dest.parent() {
-                                let app_guard = ctx.app.lock();
-                                for (i, pane) in app_guard.panes.iter().enumerate() {
-                                    if let Some(fs) = pane.current_state() {
-                                        if fs.nav.current_path == parent {
-                                            ctx.panes_needing_refresh.insert(i);
-                                        }
-                                    }
-                                }
-                            }
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
-                                "Linked {} -> {}",
-                                dest.display(),
-                                src.display()
-                            )));
-                        }
-                        Err(e) => {
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!("Symlink failed: {}", e)));
-                        }
                     }
                 }
                 AppEvent::SpawnTerminal {

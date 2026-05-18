@@ -353,4 +353,166 @@ impl EventLoopCtx {
             }
         }
     }
+
+    /// Helper: get the remote session for the current file state.
+    fn current_remote_session(&self) -> Option<crate::state::RemoteSession> {
+        let app_guard = self.app.lock();
+        app_guard.current_file_state().and_then(|fs| fs.nav.remote_session.clone())
+    }
+
+    /// Handle CreateFile: create a new empty file (local or remote).
+    pub fn handle_create_file(&self, path: PathBuf) {
+        let remote = self.current_remote_session();
+        let result: Result<(), std::io::Error> = if let Some(remote) = remote {
+            crate::modules::remote::create_file(&remote, &path)
+        } else {
+            std::fs::File::create(&path).map(|_| ())
+        };
+        if let Err(e) = result {
+            self.send_event(AppEvent::StatusMsg(format!("Failed to create file: {}", e)));
+        } else {
+            let focused_pane = self.app.lock().focused_pane_index;
+            self.send_event(AppEvent::RefreshFiles(focused_pane));
+            self.send_event(AppEvent::PreviewRequested(focused_pane, path));
+        }
+    }
+
+    /// Handle CreateFolder: create a new directory (local or remote).
+    pub fn handle_create_folder(&self, path: PathBuf) {
+        let remote = self.current_remote_session();
+        let result: Result<(), std::io::Error> = if let Some(remote) = remote {
+            crate::modules::remote::create_dir_all(&remote, &path)
+        } else {
+            std::fs::create_dir_all(&path)
+        };
+        if let Err(e) = result {
+            self.send_event(AppEvent::StatusMsg(format!("Failed to create folder: {}", e)));
+        } else {
+            self.send_event(AppEvent::RefreshFiles(self.app.lock().focused_pane_index));
+        }
+    }
+
+    /// Handle Rename: rename a file/folder (local or remote).
+    pub fn handle_rename(&self, old: PathBuf, new: PathBuf) {
+        let remote = self.current_remote_session();
+        let rename_res = if let Some(remote) = &remote {
+            crate::modules::remote::rename(remote, &old, &new)
+        } else {
+            std::fs::rename(&old, &new)
+        };
+        match rename_res {
+            Ok(_) => {
+                let mut app_guard = self.app.lock();
+                app_guard.undo_state.undo_stack
+                    .push(crate::app::UndoAction::Move(new.clone(), old.clone()));
+                app_guard.undo_state.redo_stack.clear();
+                self.send_event(AppEvent::RefreshFiles(app_guard.focused_pane_index));
+            }
+            Err(e) => {
+                self.send_event(AppEvent::StatusMsg(format!("Rename failed: {}", e)));
+            }
+        }
+    }
+
+    /// Handle Delete: permanently delete a file/folder.
+    pub fn handle_delete(&self, path: PathBuf) {
+        let remote = self.current_remote_session();
+        let result: Result<(), std::io::Error> = if let Some(remote) = remote {
+            crate::modules::remote::remove_path(&remote, &path)
+        } else if path.is_dir() {
+            std::fs::remove_dir_all(&path)
+        } else {
+            std::fs::remove_file(&path)
+        };
+        let focused = self.app.lock().focused_pane_index;
+        if let Err(e) = &result {
+            self.send_event(AppEvent::StatusMsg(format!(
+                "Delete failed: {} - {}",
+                path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                e
+            )));
+        }
+        self.send_event(AppEvent::RefreshFiles(focused));
+    }
+
+    /// Handle TrashFile: move a file to trash (local only).
+    /// Returns true if the event should continue (skip).
+    pub fn handle_trash_file(&self, path: PathBuf) -> bool {
+        let remote = self.current_remote_session();
+        let focused = self.app.lock().focused_pane_index;
+        if remote.is_some() {
+            self.send_event(AppEvent::StatusMsg(
+                "Remote files cannot be trashed. Use Delete for permanent removal.".to_string()
+            ));
+            self.send_event(AppEvent::RefreshFiles(focused));
+            return false; // don't continue
+        }
+        match trash::delete(&path) {
+            Ok(_) => {
+                self.send_event(AppEvent::StatusMsg(format!(
+                    "Trashed: {}",
+                    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default()
+                )));
+            }
+            Err(e) => {
+                self.send_event(AppEvent::StatusMsg(format!(
+                    "Trash failed: {} - {}",
+                    path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                    e
+                )));
+            }
+        }
+        self.send_event(AppEvent::RefreshFiles(focused));
+        false
+    }
+
+    /// Handle Symlink: create a symbolic link (local only).
+    /// Returns true if remote (should continue/skip).
+    pub fn handle_symlink(&mut self, src: PathBuf, dest: PathBuf) -> bool {
+        let remote = self.current_remote_session();
+        if remote.is_some() {
+            self.send_event(AppEvent::StatusMsg(
+                "Symlink is not supported for remote panes".to_string(),
+            ));
+            return true; // continue
+        }
+        let result = {
+            #[cfg(unix)]
+            {
+                std::os::unix::fs::symlink(&src, &dest)
+            }
+            #[cfg(windows)]
+            {
+                if src.is_dir() {
+                    std::os::windows::fs::symlink_dir(&src, &dest)
+                } else {
+                    std::os::windows::fs::symlink_file(&src, &dest)
+                }
+            }
+        };
+
+        match result {
+            Ok(_) => {
+                if let Some(parent) = dest.parent() {
+                    let app_guard = self.app.lock();
+                    for (i, pane) in app_guard.panes.iter().enumerate() {
+                        if let Some(fs) = pane.current_state() {
+                            if fs.nav.current_path == parent {
+                                self.panes_needing_refresh.insert(i);
+                            }
+                        }
+                    }
+                }
+                self.send_event(AppEvent::StatusMsg(format!(
+                    "Linked {} -> {}",
+                    dest.display(),
+                    src.display()
+                )));
+            }
+            Err(e) => {
+                self.send_event(AppEvent::StatusMsg(format!("Symlink failed: {}", e)));
+            }
+        }
+        false
+    }
 }
