@@ -110,12 +110,19 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
 
             if let Some(target) = &app.drag.hovered_drop_target {
                 left_spans.push(Span::raw(" to "));
-                let target_desc = match target {
+                let target_desc: String = match target {
                     DropTarget::Folder(p) => {
-                        p.file_name().and_then(|n| n.to_str()).unwrap_or("Folder")
+                        p.file_name().and_then(|n| n.to_str()).unwrap_or("Folder").to_string()
                     }
-                    DropTarget::Favorites => "Favorites",
-                    DropTarget::ReorderFavorite(_) => "Favorites (Reorder)",
+                    DropTarget::CurrentDir(idx) => {
+                        app.panes.get(*idx)
+                            .and_then(|p| p.current_state())
+                            .map(|fs| fs.nav.current_path.file_name()
+                                .and_then(|n| n.to_str()).unwrap_or("Dir").to_string())
+                            .unwrap_or_else(|| "Other pane".to_string())
+                    }
+                    DropTarget::Favorites => "Favorites".to_string(),
+                    DropTarget::ReorderFavorite(_) => "Favorites (Reorder)".to_string(),
                 };
                 left_spans.push(Span::styled(
                     format!(" {} ", target_desc),

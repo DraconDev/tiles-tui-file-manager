@@ -1335,15 +1335,34 @@ pub fn handle_file_mouse(
 
             if app.drag.is_dragging {
                 // Drop Logic
-                if let Some(DropTarget::Folder(target_path)) = app.drag.hovered_drop_target.take() {
-                    if let Some(source_path) = app.drag.drag_source.take() {
-                        if source_path != target_path {
-                            app.core.mode = AppMode::DragDropMenu {
-                                sources: vec![source_path],
-                                target: target_path,
-                            };
+                match app.drag.hovered_drop_target.take() {
+                    Some(DropTarget::Folder(target_path)) => {
+                        if let Some(source_path) = app.drag.drag_source.take() {
+                            if source_path != target_path {
+                                app.core.mode = AppMode::DragDropMenu {
+                                    sources: vec![source_path],
+                                    target: target_path,
+                                };
+                            }
                         }
                     }
+                    Some(DropTarget::CurrentDir(pane_idx)) => {
+                        // Drop into the other pane's current directory
+                        if let Some(source_path) = app.drag.drag_source.take() {
+                            if let Some(pane) = app.panes.get(pane_idx) {
+                                if let Some(fs) = pane.current_state() {
+                                    let target_path = fs.nav.current_path.clone();
+                                    if source_path != target_path {
+                                        app.core.mode = AppMode::DragDropMenu {
+                                            sources: vec![source_path],
+                                            target: target_path,
+                                        };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    _ => {}
                 }
                 app.drag.is_dragging = false;
             }
@@ -1459,28 +1478,40 @@ pub fn handle_file_mouse(
                         }
                     }
 
-                    // Cross-pane drop: check other pane's file rows for folders
+                    // Cross-pane drop: check other pane for folder targets or current dir
                     if app.drag.hovered_drop_target.is_none() && app.panes.len() > 1 {
                         for (pi, rect) in app.layout.pane_rects.iter().enumerate() {
                             if pi == app.focused_pane_index { continue; }
                             if column >= rect.x && column < rect.x + rect.width
                                 && row >= rect.y && row < rect.y + rect.height
-                                && row >= 3
                             {
-                                // Mouse is over another pane — check if it's a folder
-                                if let Some(pane) = app.panes.get(pi) {
-                                    if let Some(fs) = pane.current_state() {
-                                        let rel_row = row;
-                                        // Estimate file index from row offset
-                                        let offset = fs.view.table_state.offset();
-                                        let file_idx = (rel_row as usize).saturating_sub(3).saturating_add(offset);
-                                        if let Some(path) = fs.list.files.get(file_idx) {
-                                            if path.is_dir() {
-                                                if let Some(src) = &app.drag.drag_source {
-                                                    if src != path {
-                                                        app.drag.hovered_drop_target =
-                                                            Some(DropTarget::Folder(path.clone()));
+                                if row >= 3 {
+                                    // Check if hovering over a folder row in the other pane
+                                    if let Some(pane) = app.panes.get(pi) {
+                                        if let Some(fs) = pane.current_state() {
+                                            let offset = fs.view.table_state.offset();
+                                            let file_idx = (row as usize).saturating_sub(3).saturating_add(offset);
+                                            if let Some(path) = fs.list.files.get(file_idx) {
+                                                if path.is_dir() {
+                                                    if let Some(src) = &app.drag.drag_source {
+                                                        if src != path {
+                                                            app.drag.hovered_drop_target =
+                                                                Some(DropTarget::Folder(path.clone()));
+                                                        }
                                                     }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                // If no folder found, drop into the other pane's current directory
+                                if app.drag.hovered_drop_target.is_none() {
+                                    if let Some(pane) = app.panes.get(pi) {
+                                        if let Some(fs) = pane.current_state() {
+                                            if let Some(src) = &app.drag.drag_source {
+                                                if src != &fs.nav.current_path {
+                                                    app.drag.hovered_drop_target =
+                                                        Some(DropTarget::CurrentDir(pi));
                                                 }
                                             }
                                         }

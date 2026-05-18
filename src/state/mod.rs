@@ -247,6 +247,8 @@ pub enum DropTarget {
     Favorites,
     Folder(PathBuf),
     ReorderFavorite(usize),
+    /// Drop into a pane's current directory (pane index)
+    CurrentDir(usize),
 }
 
 #[derive(Clone, Debug, Default)]
