@@ -285,17 +285,18 @@ pub fn draw_file_view(
                 row_bg_style = row_bg_style.bg(theme::accent_secondary());
             } else if has_path_colors {
                 if let Some(&c) = app.selection.path_colors.get(path) {
-                let color = match c {
-                    1 => theme::danger(),
-                    2 => theme::success(),
-                    3 => theme::warning(),
-                    4 => theme::stat_cpu_blue(),
-                    5 => theme::accent_secondary(),
-                    6 => theme::info(),
-                    _ => Color::Reset,
-                };
-                if color != Color::Reset {
-                    row_bg_style = row_bg_style.bg(color);
+                    let color = match c {
+                        1 => theme::danger(),
+                        2 => theme::success(),
+                        3 => theme::warning(),
+                        4 => theme::stat_cpu_blue(),
+                        5 => theme::accent_secondary(),
+                        6 => theme::info(),
+                        _ => Color::Reset,
+                    };
+                    if color != Color::Reset {
+                        row_bg_style = row_bg_style.bg(color);
+                    }
                 }
             }
             if row_bg_style.bg.is_some() {
@@ -317,7 +318,7 @@ pub fn draw_file_view(
                         Style::default()
                             .fg(theme::fg())
                             .add_modifier(Modifier::BOLD)
-                    } else if is_hovered_drop || app.selection.path_colors.contains_key(path) {
+                    } else if is_hovered_drop || (has_path_colors && app.selection.path_colors.contains_key(path)) {
                         Style::default()
                             .fg(theme::selection_fg())
                             .add_modifier(Modifier::BOLD)
@@ -327,7 +328,7 @@ pub fn draw_file_view(
 
                     let content = match col_type {
                         FileColumn::Name => {
-                            if path.to_string_lossy() == "__DIVIDER__" {
+                            if path.as_os_str() == "__DIVIDER__" {
                                 cell_style = Style::default()
                                     .fg(theme::warning())
                                     .add_modifier(Modifier::BOLD);
@@ -364,11 +365,12 @@ pub fn draw_file_view(
                                     if app.nav.starred.contains(path) {
                                         suffix.push_str(" [*]");
                                     }
+                                    #[allow(clippy::nonminimal_bool)]
                                     if !is_selected
                                         && !is_multi_selected
-                                        && !app.selection.path_colors.contains_key(path)
+                                        && !(has_path_colors && app.selection.path_colors.contains_key(path))
                                         && !is_hovered_drop
-                                        && app.settings.semantic_coloring
+                                        && use_semantic_coloring
                                     {
                                         if is_dir {
                                             cell_style =
