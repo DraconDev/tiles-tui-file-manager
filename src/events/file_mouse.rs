@@ -651,7 +651,6 @@ mod tests {
     use crate::app::App;
     use crate::events::mouse_helpers::fs_mouse_index;
     use crate::state::DragState;
-    use std::time::Duration;
 
     fn test_app_with_files() -> App {
         let mut app = App::new();
