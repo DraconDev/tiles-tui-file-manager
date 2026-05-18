@@ -38,7 +38,7 @@ pub fn handle_event(
     evt: Event,
     app: &mut App,
     event_tx: mpsc::Sender<AppEvent>,
-    panes_needing_refresh: &mut HashSet<usize>,
+    _panes_needing_refresh: &mut HashSet<usize>,
 ) -> bool {
     // 1. Input Shield / Cooldown
     if let Some(until) = app.output.input_shield_until {
