@@ -376,13 +376,15 @@ pub fn draw_file_view(
                                     }
                                     let icon_w = icon_str.chars().map(get_visual_width).sum::<usize>();
                                     let marker_w = if expand_marker { 2 } else { 0 };
-                                    if is_dir {
-                                        let arrow_end_x = col_rect.x + 1 + (depth * 2) as u16 + marker_w as u16 + icon_w as u16;
-                                        file_state.view.file_row_bounds.push(crate::state::FileRowBounds {
-                                            file_idx,
-                                            arrow_end_x,
-                                        });
-                                    }
+                                    let arrow_end_x = if is_dir {
+                                        col_rect.x + 1 + (depth * 2) as u16 + marker_w as u16 + icon_w as u16
+                                    } else {
+                                        0 // Non-dirs have no arrow
+                                    };
+                                    file_state.view.file_row_bounds.push(crate::state::FileRowBounds {
+                                        file_idx,
+                                        arrow_end_x,
+                                    });
                                     // 12 = leading space (1) + minimal trailing pad + room for "[*]" suffix (4)
                                     const CELL_TEXT_RESERVE: usize = 12;
                                     let available_width =

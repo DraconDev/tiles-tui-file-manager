@@ -1101,7 +1101,7 @@ pub fn handle_file_mouse(
             // 3. File Row Interaction
             if row >= 3 {
                 let Some(idx) = crate::event_helpers::fs_mouse_index(row, app) else {
-                    // Empty space click — start marquee tracking for drag selection
+                    // Empty space click — start marquee tracking
                     if button == MouseButton::Left && column >= sw {
                         app.drag.marquee_start = Some((column, row));
                         app.drag.marquee_end = Some((column, row));
@@ -1212,6 +1212,9 @@ pub fn handle_file_mouse(
                     }
                     app.drag.drag_source = Some(path.clone());
                     app.drag.drag_start_pos = Some((column, row));
+                    // Also track marquee start — if drag doesn't engage (no source), this becomes a marquee
+                    app.drag.marquee_start = Some((column, row));
+                    app.drag.marquee_end = Some((column, row));
 
                     // Double Click
                     if button == MouseButton::Left
@@ -1258,6 +1261,10 @@ pub fn handle_file_mouse(
                         }
                         // Select all file indices whose rows fall within the marquee rect
                         for bound in &fs.view.file_row_bounds {
+                            // Skip virtual dividers
+                            if is_virtual_divider(&fs.list.files[bound.file_idx]) {
+                                continue;
+                            }
                             let offset = fs.view.table_state.offset();
                             let file_screen_row = 3 + bound.file_idx.saturating_sub(offset);
                             if file_screen_row >= rect.min_row as usize
@@ -1319,6 +1326,7 @@ pub fn handle_file_mouse(
             app.drag.drag_start_pos = None;
             app.drag.drag_source = None;
             app.drag.hovered_drop_target = None;
+            app.drag.clear_marquee();
             true
         }
         MouseEventKind::Moved => {
@@ -1335,12 +1343,13 @@ pub fn handle_file_mouse(
             true
         }
         MouseEventKind::Drag(_) => {
-            // Marquee drag: update rect and activate if distance threshold met
+            // Marquee drag: only if no file drag source (clicked empty space or released file drag)
             if let Some((sx, sy)) = app.drag.marquee_start {
                 app.drag.marquee_end = Some((column, row));
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
-                if dist_sq >= 4.0 && !app.drag.is_marquee {
+                // Activate marquee only if: distance threshold met AND no file drag source
+                if dist_sq >= 4.0 && !app.drag.is_marquee && app.drag.drag_source.is_none() {
                     app.drag.is_marquee = true;
                 }
                 if app.drag.is_marquee {
