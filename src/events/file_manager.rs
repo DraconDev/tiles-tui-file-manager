@@ -1876,6 +1876,42 @@ mod tests {
     use super::*;
 
     #[test]
+    fn is_valid_search_char_allows_letters() {
+        assert!(is_valid_search_char('a'));
+        assert!(is_valid_search_char('Z'));
+        assert!(is_valid_search_char('0'));
+    }
+
+    #[test]
+    fn is_valid_search_char_rejects_specials() {
+        assert!(!is_valid_search_char('*'));
+        assert!(!is_valid_search_char('?'));
+        assert!(!is_valid_search_char('!'));
+        assert!(!is_valid_search_char('\\'));
+    }
+
+    #[test]
+    fn is_valid_search_char_rejects_control() {
+        assert!(!is_valid_search_char('\x01'));
+        assert!(!is_valid_search_char('\x1b'));
+        assert!(!is_valid_search_char('\x7f'));
+    }
+
+    #[test]
+    fn is_virtual_divider_check() {
+        assert!(is_virtual_divider(std::path::Path::new("__DIVIDER__")));
+        assert!(!is_virtual_divider(std::path::Path::new("real_folder")));
+        assert!(!is_virtual_divider(std::path::Path::new("__DIVIDER")));
+    }
+
+    #[test]
+    fn path_join_basic() {
+        let base = std::path::Path::new("/home/user");
+        let name = std::ffi::OsStr::new("file.txt");
+        assert_eq!(path_join(base, name), PathBuf::from("/home/user/file.txt"));
+    }
+
+    #[test]
     fn double_click_allows_small_pointer_drift() {
         let now = std::time::Instant::now();
         assert!(is_double_click((10, 10), now, 11, 10));
