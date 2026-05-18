@@ -200,6 +200,11 @@ fn handle_global_escape(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> boo
         app.drag.hovered_drop_target = None;
         return true;
     }
+    // Cancel marquee selection on Escape
+    if app.drag.is_marquee {
+        app.drag.clear_marquee();
+        return true;
+    }
     if app.core.current_view == CurrentView::Commit {
         app.core.current_view = CurrentView::Git;
         app.core.mode = AppMode::Normal;

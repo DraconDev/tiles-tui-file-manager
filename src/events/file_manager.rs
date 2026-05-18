@@ -242,10 +242,63 @@ fn handle_global_shortcuts(
             }
             Some(true)
         }
+        // Ctrl+Shift+T — reopen last closed tab
+        KeyCode::Char('t') | KeyCode::Char('T')
+            if has_control
+                && key.modifiers.contains(KeyModifiers::SHIFT)
+                && app.core.current_view == CurrentView::Files =>
+        {
+            if let Some(closed) = app.nav.closed_tabs.pop_back() {
+                if let Some(pane) = app.panes.get_mut(closed.pane_index) {
+                    if pane.tabs.len() < crate::config::MAX_TABS {
+                        let new_fs = crate::state::FileState::new(
+                            closed.path.clone(),
+                            None,
+                            false,
+                            pane.current_state()
+                                .map(|fs| fs.list.columns.clone())
+                                .unwrap_or_else(|| vec![crate::state::FileColumn::Name]),
+                            pane.current_state()
+                                .map(|fs| fs.nav.sort_column)
+                                .unwrap_or(crate::state::FileColumn::Name),
+                            pane.current_state()
+                                .map(|fs| fs.nav.sort_ascending)
+                                .unwrap_or(true),
+                        );
+                        pane.open_tab(new_fs);
+                        app.focused_pane_index = closed.pane_index;
+                        let _ = crate::app::try_send_event(
+                            &event_tx,
+                            AppEvent::RefreshFiles(closed.pane_index),
+                        );
+                        let _ = crate::app::try_send_event(
+                            &event_tx,
+                            AppEvent::StatusMsg(format!(
+                                "Restored: {}",
+                                closed.path.file_name()
+                                    .map(|n| n.to_string_lossy().to_string())
+                                    .unwrap_or_default()
+                            )),
+                        );
+                    }
+                }
+            }
+            Some(true)
+        }
         KeyCode::Char('w') if has_control && app.core.current_view == CurrentView::Files => {
             let pane_idx = app.focused_pane_index;
             if let Some(pane) = app.panes.get_mut(pane_idx) {
                 if pane.tabs.len() > 1 {
+                    // Save tab info for undo before removing
+                    if let Some(removed) = pane.tabs.get(pane.active_tab_index) {
+                        if app.nav.closed_tabs.len() >= 10 {
+                            app.nav.closed_tabs.pop_front();
+                        }
+                        app.nav.closed_tabs.push_back(crate::state::ClosedTab {
+                            path: removed.nav.current_path.clone(),
+                            pane_index: pane_idx,
+                        });
+                    }
                     let removed = pane.tabs.remove(pane.active_tab_index);
                     if pane.active_tab_index >= pane.tabs.len() {
                         pane.active_tab_index = pane.tabs.len() - 1;
@@ -943,6 +996,9 @@ pub fn handle_file_mouse(
 
     match me.kind {
         MouseEventKind::Down(button) => {
+            // Reset marquee on new down-click
+            app.drag.clear_marquee();
+
             if matches!(app.core.mode, AppMode::PathInput) {
                 let keep_open = app.current_file_state()
                     .and_then(|fs| fs.view.breadcrumb_header_bounds)
@@ -1040,6 +1096,12 @@ pub fn handle_file_mouse(
                         }
                     }
                 }
+            }
+
+            // 2b. Start marquee tracking if clicking in file list area
+            if button == MouseButton::Left && row >= 3 && column >= sw {
+                app.drag.marquee_start = Some((column, row));
+                app.drag.marquee_end = Some((column, row));
             }
 
             // 3. File Row Interaction
@@ -1187,6 +1249,42 @@ pub fn handle_file_mouse(
             true
         }
         MouseEventKind::Up(_) => {
+            // Commit marquee selection if active
+            if app.drag.is_marquee {
+                if let Some(rect) = app.drag.marquee_rect() {
+                    let is_ctrl = me.modifiers.contains(KeyModifiers::CONTROL);
+                    if let Some(fs) = app.current_file_state_mut() {
+                        if !is_ctrl {
+                            fs.list.selection.clear_multi();
+                        }
+                        // Select all file indices whose rows fall within the marquee rect
+                        for bound in &fs.view.file_row_bounds {
+                            let offset = fs.view.table_state.offset();
+                            let file_screen_row = 3 + bound.file_idx.saturating_sub(offset);
+                            if file_screen_row >= rect.min_row as usize
+                                && file_screen_row <= rect.max_row as usize
+                            {
+                                if is_ctrl {
+                                    fs.list.selection.toggle(bound.file_idx);
+                                } else {
+                                    fs.list.selection.add(bound.file_idx);
+                                }
+                            }
+                        }
+                        // Set primary selected to the first selected item
+                        fs.list.selection.selected = fs.list.selection.multi_selected_indices().iter().min().copied();
+                        if let Some(s) = fs.list.selection.selected {
+                            fs.view.table_state.select(Some(s));
+                        }
+                    }
+                }
+                app.drag.clear_marquee();
+                app.drag.drag_start_pos = None;
+                app.drag.drag_source = None;
+                app.drag.hovered_drop_target = None;
+                return true;
+            }
+
             if app.drag.is_dragging {
                 // Drop Logic
                 if let Some(DropTarget::Folder(target_path)) = app.drag.hovered_drop_target.take() {
@@ -1231,10 +1329,26 @@ pub fn handle_file_mouse(
                 app.drag.drag_start_pos = None;
                 app.drag.hovered_drop_target = None;
             }
+            if app.drag.is_marquee {
+                app.drag.clear_marquee();
+            }
             app.drag.drag_start_pos = None;
             true
         }
         MouseEventKind::Drag(_) => {
+            // Marquee drag: update rect and activate if distance threshold met
+            if let Some((sx, sy)) = app.drag.marquee_start {
+                app.drag.marquee_end = Some((column, row));
+                let dist_sq =
+                    (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
+                if dist_sq >= 4.0 && !app.drag.is_marquee {
+                    app.drag.is_marquee = true;
+                }
+                if app.drag.is_marquee {
+                    return true; // consume drag event — no file drag-drop while marquee-ing
+                }
+            }
+
             let mut changed = false;
             if let Some((sx, sy)) = app.drag.drag_start_pos {
                 let dist_sq =

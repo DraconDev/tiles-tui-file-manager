@@ -175,6 +175,7 @@ impl App {
                         is_split_mode: false,
                     },
                 },
+                closed_tabs: std::collections::VecDeque::new(),
             },
             remote: RemoteState {
                 remote_bookmarks: Vec::new(),

@@ -16,6 +16,7 @@ pub use dracon_terminal_engine::utils::{FileCategory, FileColumn, IconMode, Sele
 pub use app_subtypes::{
     AppCore, SidebarState, MonitorState, EditorGlobalState, UndoState, SettingsState,
     LayoutState, OutputState, DragState, NavState, RemoteState, MouseState, SelectionState2,
+    ClosedTab, MarqueeRect,
 };
 #[allow(unused_imports)]
 pub use file_subtypes::{
@@ -659,5 +660,30 @@ mod tests {
     #[test]
     fn app_mode_is_normal_default() {
         assert_eq!(AppMode::Normal, AppMode::Normal);
+    }
+
+    #[test]
+    fn closed_tabs_push_pop() {
+        let mut nav = NavState::default();
+        assert!(nav.closed_tabs.is_empty());
+        nav.closed_tabs.push_back(ClosedTab { path: PathBuf::from("/tmp"), pane_index: 0 });
+        nav.closed_tabs.push_back(ClosedTab { path: PathBuf::from("/home"), pane_index: 1 });
+        assert_eq!(nav.closed_tabs.len(), 2);
+        let restored = nav.closed_tabs.pop_back();
+        assert_eq!(restored.unwrap().path, PathBuf::from("/home"));
+        assert_eq!(nav.closed_tabs.len(), 1);
+    }
+
+    #[test]
+    fn closed_tabs_max_cap() {
+        let mut nav = NavState::default();
+        for i in 0..15 {
+            if nav.closed_tabs.len() >= 10 {
+                nav.closed_tabs.pop_front();
+            }
+            nav.closed_tabs.push_back(ClosedTab { path: PathBuf::from(format!("/dir{i}")), pane_index: i });
+        }
+        assert_eq!(nav.closed_tabs.len(), 10);
+        assert_eq!(nav.closed_tabs.front().unwrap().path, PathBuf::from("/dir5"));
     }
 }

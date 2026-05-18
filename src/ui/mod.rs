@@ -53,7 +53,7 @@ pub use small_modals::{
 pub use settings::draw_settings_modal;
 pub use misc::{
     draw_style_color_modal, draw_reset_settings_modal,
-    draw_highlight_modal, draw_drag_ghost,
+    draw_highlight_modal, draw_drag_ghost, draw_marquee_rect,
 };
 
 /// Render the entire TUI frame.
@@ -390,5 +390,8 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if app.drag.is_dragging {
         draw_drag_ghost(f, app);
     }
+
+    // Marquee selection rect
+    draw_marquee_rect(f, app);
 }
 

@@ -3,7 +3,7 @@
 //! Each sub-struct owns a logical slice of App state.
 
 use ratatui::widgets::TableState;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::path::PathBuf;
 
 use crate::state::{
@@ -222,8 +222,60 @@ pub struct DragState {
     pub drag_source: Option<PathBuf>,
     pub is_dragging: bool,
     pub hovered_drop_target: Option<crate::state::DropTarget>,
+/// Marquee selection: separate from file drag-drop
+    #[allow(dead_code)]
+    pub is_marquee: bool,
+    #[allow(dead_code)]
+    pub marquee_start: Option<(u16, u16)>,
+    #[allow(dead_code)]
+    pub marquee_end: Option<(u16, u16)>,
 }
 
+/// Normalized marquee rect: (min_col, min_row, max_col, max_row)
+#[allow(dead_code)]
+#[derive(Clone, Copy, Debug)]
+pub struct MarqueeRect {
+    pub min_col: u16,
+    pub min_row: u16,
+    pub max_col: u16,
+    pub max_row: u16,
+}
+
+impl DragState {
+    /// Returns the normalized marquee rect, or None if not active.
+    #[must_use]
+    #[allow(dead_code)]
+    pub fn marquee_rect(&self) -> Option<MarqueeRect> {
+        if !self.is_marquee {
+            return None;
+        }
+        let (sx, sy) = self.marquee_start?;
+        let (ex, ey) = self.marquee_end.unwrap_or((sx, sy));
+        Some(MarqueeRect {
+            min_col: sx.min(ex),
+            min_row: sy.min(ey),
+            max_col: sx.max(ex),
+            max_row: sy.max(ey),
+        })
+    }
+
+    /// Resets all marquee state.
+    #[allow(dead_code)]
+    pub fn clear_marquee(&mut self) {
+        self.is_marquee = false;
+        self.marquee_start = None;
+        self.marquee_end = None;
+    }
+}
+
+
+/// Represents a closed tab that can be restored.
+#[allow(dead_code)]
+#[derive(Clone, Debug, Default)]
+pub struct ClosedTab {
+    pub path: PathBuf,
+    pub pane_index: usize,
+}
 
 // ---------------------------------------------------------------------------
 // NavState — starred, recent folders, command palette
@@ -236,6 +288,9 @@ pub struct NavState {
     pub command_index: usize,
     pub filtered_commands: Vec<crate::state::CommandItem>,
     pub view_prefs: ViewStatePersistence,
+#[allow(dead_code)]
+/// Recently closed tabs — max 10 entries. Ctrl+Shift+T reopens the last one.
+    pub closed_tabs: VecDeque<ClosedTab>,
 }
 
 
@@ -285,5 +340,52 @@ pub struct SelectionState2 {
     pub clipboard: Option<(PathBuf, ClipboardOp)>,
     pub path_colors: HashMap<PathBuf, u8>,
     pub folder_selections: HashMap<PathBuf, (usize, usize)>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn drag_state_marquee_rect_normalizes() {
+        let mut drag = DragState::default();
+        drag.is_marquee = true;
+        drag.marquee_start = Some((10, 5));
+        drag.marquee_end = Some((3, 8));
+        let rect = drag.marquee_rect().unwrap();
+        assert_eq!(rect.min_col, 3);
+        assert_eq!(rect.min_row, 5);
+        assert_eq!(rect.max_col, 10);
+        assert_eq!(rect.max_row, 8);
+    }
+
+    #[test]
+    fn drag_state_marquee_rect_none_when_inactive() {
+        let drag = DragState::default();
+        assert!(drag.marquee_rect().is_none());
+    }
+
+    #[test]
+    fn drag_state_clear_marquee() {
+        let mut drag = DragState::default();
+        drag.is_marquee = true;
+        drag.marquee_start = Some((5, 5));
+        drag.marquee_end = Some((10, 10));
+        drag.clear_marquee();
+        assert!(!drag.is_marquee);
+        assert!(drag.marquee_start.is_none());
+        assert!(drag.marquee_end.is_none());
+    }
+
+    #[test]
+    fn drag_state_marquee_same_point() {
+        let mut drag = DragState::default();
+        drag.is_marquee = true;
+        drag.marquee_start = Some((5, 5));
+        drag.marquee_end = Some((5, 5));
+        let rect = drag.marquee_rect().unwrap();
+        assert_eq!(rect.min_col, 5);
+        assert_eq!(rect.max_col, 5);
+    }
 }
 

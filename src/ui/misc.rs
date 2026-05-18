@@ -284,3 +284,47 @@ pub fn draw_drag_ghost(f: &mut Frame, app: &App) {
         );
     }
 }
+
+/// Draw marquee selection rectangle overlay.
+pub fn draw_marquee_rect(f: &mut Frame, app: &App) {
+    if !app.drag.is_marquee {
+        return;
+    }
+    let Some(rect) = app.drag.marquee_rect() else {
+        return;
+    };
+
+    let area = f.area();
+    let x = rect.min_col.min(area.width.saturating_sub(1));
+    let y = rect.min_row.min(area.height.saturating_sub(1));
+    let w = rect.max_col.saturating_sub(rect.min_col).saturating_add(1);
+    let h = rect.max_row.saturating_sub(rect.min_row).saturating_add(1);
+
+    // Clamp to screen bounds
+    let w = w.min(area.width.saturating_sub(x));
+    let h = h.min(area.height.saturating_sub(y));
+
+    if w == 0 || h == 0 {
+        return;
+    }
+
+    let marquee_area = Rect::new(x, y, w, h);
+
+    // Use a block with dashed borders for the marquee rect
+    let block = ratatui::widgets::Block::new()
+        .style(
+            Style::default()
+                .fg(theme::accent_primary())
+                .bg(theme::selection_bg()),
+        )
+        .borders(ratatui::widgets::Borders::ALL)
+        .border_style(
+            Style::default()
+                .fg(theme::accent_primary())
+                .add_modifier(Modifier::BOLD),
+        )
+        .border_type(ratatui::widgets::BorderType::Rounded);
+
+    f.render_widget(Clear, marquee_area);
+    f.render_widget(block, marquee_area);
+}
