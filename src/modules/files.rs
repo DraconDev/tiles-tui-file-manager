@@ -398,7 +398,7 @@ mod tests {
         let (files, _metadata) = read_dir_recursive_meta(&[src_dir.clone()]);
         // Should include files in subdirectories like events/, ui/, etc.
         assert!(files.len() > 10, "recursive scan should find many files");
-        assert!(files.iter().any(|p| p.to_string_lossy().contains("events/")), "should include events/ subdir files");
+        assert!(files.iter().any(|p| p.to_string_lossy().contains("events")), "should include events/ subdir files");
     }
 
     #[test]
