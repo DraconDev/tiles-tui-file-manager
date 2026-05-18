@@ -68,6 +68,12 @@ Updated with refactor progress — 2026-05-17
 - [x] **Undo close tab — Ctrl+Shift+T** — reopens last closed tab (max 10). ✅
 - [ ] **Hover +/- selection buttons** — skeptical, revisit only if marquee isn't sufficient
 
+### P4 Bugs (active)
+
+- [ ] **Default theme still purple on start** — `ThemeStyle::default()` set to `preset_warm()` (amber), `state.json` cleared, but app still renders purple. Something overrides after init. Trace: `App::new()` → `setup.rs` → state.json load → `set_style_settings()`. Suspects: `style_settings()` returns wrong struct, settings index mismatch, or cyberpunk() base still purple.
+
+- [ ] **Marquee broken when row already selected** — Click on empty space next to selected row does nothing. Trace mouseDown/mouseDrag/mouseUp flow. Likely: `fs_mouse_index` returns Some(idx) for row so empty-space branch is skipped, or `sel_mode` / `prevent_mouse_up_selection_cleanup` blocks marquee activation.
+
 ## P5 — Editor cursor bug (dracon-terminal-engine)
 
 - [ ] After pressing Enter, cursor column appears offset by +1 per empty row before the insertion point
