@@ -69,6 +69,7 @@ pub fn handle_event(
 
             // Global Quit
             if (key.code == KeyCode::Char('q') || key.code == KeyCode::Char('Q')) && has_control {
+                crate::config::save_state_quiet(app);
                 app.core.running = false;
                 return true;
             }

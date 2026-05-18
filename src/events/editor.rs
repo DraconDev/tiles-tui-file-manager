@@ -365,6 +365,7 @@ pub fn handle_editor_mouse(
                 if row == 0 {
                     if let MouseEventKind::Down(MouseButton::Left) = me.kind {
                         if column >= w.saturating_sub(10) {
+                            crate::config::save_state_quiet(app);
                             app.core.running = false;
                             return true;
                         } else if column >= w.saturating_sub(20) {

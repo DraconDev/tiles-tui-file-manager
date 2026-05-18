@@ -78,6 +78,7 @@ pub fn update_commands(app: &mut App) {
 pub fn execute_command(action: CommandAction, app: &mut App, event_tx: mpsc::Sender<AppEvent>) {
     match action {
         CommandAction::Quit => {
+            crate::config::save_state_quiet(app);
             app.core.running = false;
         }
         CommandAction::ToggleZoom => app.toggle_split(),
