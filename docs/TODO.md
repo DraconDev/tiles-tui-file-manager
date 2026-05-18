@@ -128,9 +128,9 @@ Full audit — 2026-05-18
 
 ## 🟢 P2 — Polish & Features
 
-- [ ] **Cross-pane drag: drop on empty space** — currently only drops on folder rows. Should support dropping into the other pane's current directory (drop on empty space = move to that dir).
+- [x] **Cross-pane drag: drop on empty space** — `DropTarget::CurrentDir(pane_idx)`, footer shows target dir
 
-- [ ] **Marquee: drag from Name column** — currently marquee only starts from non-Name column clicks. Some users may expect Name-column vertical drag to start marquee (like Dolphin). Consider: if drag is primarily vertical (>3 rows) and horizontal distance < Name column width, prefer marquee over file drag.
+- [x] **Marquee: drag from Name column** — vertical-drag heuristic: dy > dx*2 && dy >= 2, marquee takes over from file drag
 
 - [ ] **Criterion benchmarks for hot paths**
   - [ ] `draw()` — full render cycle
