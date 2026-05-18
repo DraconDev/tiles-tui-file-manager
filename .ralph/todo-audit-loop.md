@@ -8,7 +8,7 @@ Work through the prioritized TODO items for the Tiles TUI file manager.
 |------|--------|-------|-----------|
 | main.rs | 1,476 | 424 | **71%** |
 | event_helpers.rs | 1,343 | ~800 | **40%** |
-| file_manager.rs | 1,990 | 1,535 | **23%** |
+| file_manager.rs | 1,990 | 1,528 | **23%** |
 | **Total** | **~4,800** | **~2,760** | **~43%** |
 
 ### What was extracted
