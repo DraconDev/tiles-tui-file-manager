@@ -320,7 +320,7 @@ pub fn is_virtual_divider(path: &Path) -> bool {
     path.to_string_lossy() == "__DIVIDER__"
 }
 
-fn open_file_or_navigate(path: &Path) -> Option<PathBuf> {
+pub fn open_file_or_navigate(path: &Path) -> Option<PathBuf> {
     if path.is_dir() {
         Some(path.to_path_buf())
     } else {
