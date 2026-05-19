@@ -4,9 +4,9 @@
 
 | Metric | Value |
 |--------|-------|
-| Total source lines | 20,742 |
+| Total source lines | 21,004 |
 | Source files | 56 |
-| Tests | 106 ✅ |
+| Tests | 129 ✅ |
 | Clippy | Clean ✅ |
 | TODO/FIXME/HACK | 0 |
 | Production unwraps | 0 |
@@ -51,7 +51,7 @@
 - [x] Cache semantic_coloring setting before row loop
 
 ### Quality
-- [x] 78 → 106 tests (+36%)
+- [x] 78 → 129 tests (+65%)
 - [x] Circular dep broken (event_helpers no longer imports from events/)
 - [x] Criterion benchmarks (4 groups, 8 measurements)
 - [x] Save state on quit, guard production unwrap

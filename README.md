@@ -48,6 +48,7 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 | `Backspace` | Go to parent directory |
 | `Tab` | Switch panes / focus sidebar |
 | `Ctrl+H` | Toggle hidden files |
+| `Ctrl+Shift+T` | Undo close tab |
 | `:` | Command palette |
 
 ### Sidebar
@@ -100,7 +101,7 @@ tiles
 
 ```bash
 git clone https://github.com/DraconDev/tiles-tui-file-manager
-cd tiles
+cd tiles-tui-file-manager
 cargo build --release
 ./target/release/tiles
 ```

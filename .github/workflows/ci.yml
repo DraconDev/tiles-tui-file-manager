@@ -18,6 +18,15 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Cache cargo-audit
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-audit
+          key: cargo-audit-stable
+
+      - name: Install cargo-audit
+        run: command -v cargo-audit || cargo install cargo-audit
+
       - name: Build
         run: cargo build
 
@@ -32,9 +41,6 @@ jobs:
 
       - name: Doc check
         run: cargo doc --no-deps
-
-      - name: Install cargo-audit
-        run: cargo install cargo-audit
 
       - name: Security audit
         run: cargo audit

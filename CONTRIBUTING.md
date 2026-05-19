@@ -26,7 +26,7 @@ All contributions are subject to the terms of the [AGPLv3 license](./LICENSE) an
 ## Setup
 
 ```bash
-git clone https://github.com/DraconDev/tiles
+git clone https://github.com/DraconDev/tiles-tui-file-manager
 cd tiles
 cargo build
 ```

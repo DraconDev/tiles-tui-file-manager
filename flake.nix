@@ -61,7 +61,7 @@
 
           meta = with nixpkgs.lib; {
             description = "Dual-pane TUI file manager built in Rust";
-            homepage = "https://github.com/DraconDev/tiles";
+            homepage = "https://github.com/DraconDev/tiles-tui-file-manager";
             license = licenses.agpl3Only;
             maintainers = [ ];
           };
