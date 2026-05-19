@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.115.0] - Documentation & CI Fixes
+
+### Fixed
+- **MSRV** — Added `rust-version = "1.80"` to Cargo.toml
+- **Repo URLs** — Updated flake.nix, CONTRIBUTING.md, and README to `tiles-tui-file-manager`
+- **README** — Fixed clone dir (`cd tiles-tui-file-manager`), added `Ctrl+Shift+T` to shortcuts table
+- **CI** — Cached `cargo-audit` install with `actions/cache@v4`
+- **TODO.md** — Updated stale stats (129 tests, 21,004 lines)
+
 ## [14.112.0] - Architecture Overhaul, Performance, Dead Code Cleanup
 
 ### Changed
