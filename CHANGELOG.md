@@ -2,6 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.112.0] - Architecture Overhaul, Performance, Dead Code Cleanup
+
+### Changed
+- **Architecture** — Decomposed monolithic god-files into focused modules:
+  - `EventLoopCtx` — 24 handler methods extracted from main.rs (1,476 → 421 lines, -71%)
+  - `file_mouse.rs` — 647-line mouse handler extracted from file_manager.rs (1,990 → 1,143 lines, -43%)
+  - `file_actions.rs` — 381-line keyboard action handlers
+  - `nav_helpers.rs` — 330-line navigation history module
+  - `clipboard.rs` — 116-line clipboard utilities with OSC 52 fallback
+  - `refresh.rs` — 344-line async file refresh loop
+  - UI split into 14 modules (5,060 → 386 lines, -92%)
+- **App** — 120 flat fields → 13 sub-structs; FileState → 4 sub-structs
+- **Theme** — 22-field ThemeStyle, 14 presets, 34 accessors, zero hardcoded colors
+- **Performance** — Fixed unconditional redraw on every 250ms Tick (4 redraws/sec → on-demand)
+- **Performance** — Short-circuit `path_colors` HashMap lookups when empty
+- **Performance** — Zero-allocation `__DIVIDER__` check (`as_os_str` vs `to_string_lossy`)
+- **Dead code** — Removed `App.tile_queue`, duplicate `FileListState.path_colors`, dead `panes_needing_refresh` parameter chain, unused `layout.rs`, false-positive `#[allow(dead_code)]` on 8 used items
+- **Deduplication** — `is_valid_search_char`, `is_virtual_divider`, `open_file_or_navigate` consolidated into `file_actions.rs`
+
+### Added
+- **Marquee drag selection** — transparent border-only rect, Ctrl+drag toggles, Escape cancels
+- **Marquee from Name column** — vertical-drag heuristic (dy > dx*2 && dy >= 2)
+- **Cross-pane drop on empty space** — `DropTarget::CurrentDir(pane_idx)`
+- **Undo close tab (Ctrl+Shift+T)** — max 10 closed tabs restored
+- **Deferred click pattern** — `pending_click_idx` preserves multi-selection during marquee drags
+- **Criterion benchmarks** — 4 benchmark groups, 8 measurements
+- **Tests** — 78 → 129 tests (+65%): theme (6), file actions (6), clipboard (2), nav helpers (18), file_mouse (6), file_manager (4), event_helpers (7), files.rs (6), double-click edge cases (4)
+
+### Fixed
+- **CPU spike** — `handle_tick()` forced full redraw every 250ms even when idle
+- **Theme persistence cycle** — 4 root causes: stale state.json discarded, skip persisting when current == default
+- **Self-save guard** — Don't remove inotify entries on first match; let 5s retain() cleanup handle expiration
+- **Stale file list on navigation** — All paths clear files/metadata immediately
+- **Bounds-check crash** — `pending_click_idx` and marquee `file_row_bounds` bounds-checked before indexing
+- **Konsole tabs** — pipewire noise, settings off-by-one, editor reload race, Ctrl+H hidden, sidebar dotfiles
+
 ## [14.32.0] - Keybinding Rework, Scroll Restore, UI Refinements
 
 ### Changed

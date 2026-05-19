@@ -32,3 +32,9 @@ jobs:
 
       - name: Doc check
         run: cargo doc --no-deps
+
+      - name: Install cargo-audit
+        run: cargo install cargo-audit
+
+      - name: Security audit
+        run: cargo audit

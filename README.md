@@ -10,6 +10,9 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 ## Features
 
 - **Dual-Pane File Manager** — Navigate two directories side-by-side with drag & drop, batch operations, hidden file toggle, column sorting
+- **Marquee Selection** — Drag-select multiple files at once; Ctrl+drag toggles selection; Escape cancels. Drag from Name column for marquee, from other columns for file drag.
+- **Cross-Pane Drag & Drop** — Drag files between panes, including drop on empty space to move/copy to the target directory
+- **Undo Close Tab** — Ctrl+Shift+T reopens recently closed tabs (up to 10)
 - **Built-in Text Editor** — Syntax highlighting via syntect, unlimited undo/redo, multi-selection, live search, right-click context menu, line movement (Alt+Up/Down), duplicate (Ctrl+D), kill line (Ctrl+K/U)
 - **Smart Terminal Spawning** — Commands open in a new tab in your current terminal window (Konsole via D-Bus, Kitty, Wezterm) instead of a new window
 - **Run Files** — Ctrl+R runs scripts (shebang), Cargo projects, and extension-mapped executables
@@ -17,6 +20,7 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 - **Remote SSH** — Browse remote filesystems via SSH, SFTP-style file operations, auto-import from `~/.ssh/config`
 - **System Monitor** — CPU/memory/disk/network stats with sparklines, process list with kill support
 - **Sidebar** — Folder tree, Favorites, Recent folders, Storage devices, SSH remotes. Toggle sections in Settings.
+- **14 Theme Presets** — Legacy Red (default), Cyberpunk, Ocean Deep, Solarized, Gruvbox, Dracula, Tokyo Night, Nord, Catppuccin, Rose Pine, One Dark, Monokai, Paper, and Terminal. All WCAG-compliant.
 - **Path Input** — Click the breadcrumb bar to edit the path directly
 - **Keyboard-first** — Vim-style navigation, command palette (`:`), context menus
 
@@ -143,4 +147,4 @@ This project is dual-licensed:
 - **AGPL-3.0-only** — See [LICENSE](LICENSE) for the full text. This is the default license for open source use.
 - **Commercial License** — For organizations that prefer not to comply with AGPLv3's source disclosure requirements. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for details.
 
-By contributing to this project, you agree to the terms in [CLA.md](CLA.md).# test
+By contributing to this project, you agree to the terms in [CLA.md](CLA.md).
