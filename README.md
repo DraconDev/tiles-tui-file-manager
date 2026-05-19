@@ -1,7 +1,7 @@
 # Tiles — TUI File Manager
 
 [![crates.io](https://img.shields.io/crates/v/tiles-tui-file-manager.svg)](https://crates.io/crates/tiles-tui-file-manager)
-[![GitHub release](https://img.shields.io/github/v/release/DraconDev/tiles?label=latest)](https://github.com/DraconDev/tiles/releases)
+[![GitHub release](https://img.shields.io/github/v/release/DraconDev/tiles-tui-file-manager?label=latest)](https://github.com/DraconDev/tiles-tui-file-manager/releases)
 
 ![Tiles](assets/tiles-screenshot.png)
 
@@ -99,7 +99,7 @@ tiles
 ### From source
 
 ```bash
-git clone https://github.com/DraconDev/tiles
+git clone https://github.com/DraconDev/tiles-tui-file-manager
 cd tiles
 cargo build --release
 ./target/release/tiles
@@ -113,7 +113,7 @@ Or use the build script (auto-detects install path):
 
 ### Pre-compiled Binaries
 
-Download from [GitHub Releases](https://github.com/DraconDev/tiles/releases).
+Download from [GitHub Releases](https://github.com/DraconDev/tiles-tui-file-manager/releases).
 
 ## Terminal Compatibility
 
