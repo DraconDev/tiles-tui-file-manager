@@ -27,7 +27,7 @@
 
         tiles = rustPlatform.buildRustPackage {
           pname = "tiles";
-          version = "14.114.0";
+          version = "14.116.0";
 
           src = ./.;
 

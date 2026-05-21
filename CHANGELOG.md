@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.116.0] - Remote session cleanup on local navigation
+
+### Fixed
+- **Remote session not cleared on local navigation** — Clicking a sidebar favorite, recent folder,
+  or project tree item, pressing `~` to go home, or pressing Enter on a local sidebar target
+  while a remote connection is active now properly clears the remote session.
+  Previously the remote stayed highlighted in the sidebar and file operations
+  could incorrectly route through the stale SSH connection.
+
 ## [14.115.0] - Documentation & CI Fixes
 
 ### Fixed
