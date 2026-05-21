@@ -764,6 +764,7 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                 KeyCode::Char('~') => {
                     if let Some(fs) = app.current_file_state_mut() {
                         if let Some(home) = dirs::home_dir() {
+                            fs.nav.remote_session = None;
                             fs.nav.current_path = home.clone();
                             fs.list.selection.selected = Some(0);
                             fs.list.selection.anchor = Some(0);

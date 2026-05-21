@@ -505,6 +505,7 @@ fn handle_sidebar_mouse(
                         }
                         SidebarTarget::Favorite(path) => {
                             if let Some(fs) = app.current_file_state_mut() {
+                                fs.nav.remote_session = None;
                                 fs.nav.current_path = path.clone();
                                 fs.list.selection.clear();
                                 crate::nav_helpers::push_history(fs, path.clone());
@@ -530,6 +531,7 @@ fn handle_sidebar_mouse(
                                 } else {
                                     // Name click: navigate to folder only (Dolphin-style — no auto-expand)
                                     if let Some(fs) = app.current_file_state_mut() {
+                                        fs.nav.remote_session = None;
                                         fs.nav.current_path = path_ref.clone();
                                         fs.list.files.clear();
                                         fs.list.tree_file_depths.clear();

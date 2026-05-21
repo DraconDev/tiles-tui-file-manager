@@ -109,6 +109,7 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
             match target {
                 SidebarTarget::Favorite(path) | SidebarTarget::Recent(path) => {
                     if let Some(fs) = app.current_file_state_mut() {
+                        fs.nav.remote_session = None;
                         fs.nav.current_path = path.clone();
                         fs.list.files.clear();
                         fs.list.tree_file_depths.clear();
@@ -130,6 +131,7 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     if path.is_dir() {
                         // Enter on folder = navigate only (Dolphin-style, no auto-expand)
                         if let Some(fs) = app.current_file_state_mut() {
+                            fs.nav.remote_session = None;
                             fs.nav.current_path = path.clone();
                             fs.list.files.clear();
                             fs.list.tree_file_depths.clear();
