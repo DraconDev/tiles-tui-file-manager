@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.117.0] - Remote session cleanup + scroll past selection + flashing fix
+
+### Fixed
+- **Cannot scroll past the last selection** — `move_down`/`move_up` now advances
+  the viewport offset even when the selection is at the first or last file,
+  allowing you to scroll past the visible selection boundary.
+- **Screen flashing on remote→local navigation** — Sidebar navigation no longer
+  synchronously clears the file list before sending RefreshFiles. The async
+  refresh now replaces files atomically, eliminating the empty-frame blink.
+
 ## [14.116.0] - Remote session cleanup on local navigation
 
 ### Fixed
