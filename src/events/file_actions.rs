@@ -111,10 +111,6 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                     if let Some(fs) = app.current_file_state_mut() {
                         fs.nav.remote_session = None;
                         fs.nav.current_path = path.clone();
-                        fs.list.files.clear();
-                        fs.list.tree_file_depths.clear();
-                        fs.list.metadata.clear();
-                        fs.list.local_count = 0;
                         fs.list.selection.selected = Some(0);
                         fs.list.selection.anchor = Some(0);
                         fs.list.selection.clear_multi();
@@ -133,10 +129,6 @@ pub fn handle_enter_key(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) {
                         if let Some(fs) = app.current_file_state_mut() {
                             fs.nav.remote_session = None;
                             fs.nav.current_path = path.clone();
-                            fs.list.files.clear();
-                            fs.list.tree_file_depths.clear();
-                            fs.list.metadata.clear();
-                            fs.list.local_count = 0;
                             fs.list.selection.selected = Some(0);
                             fs.list.selection.anchor = Some(0);
                             fs.list.selection.clear_multi();

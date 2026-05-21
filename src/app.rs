@@ -354,6 +354,9 @@ impl App {
                     if next < fs.view.table_state.offset() {
                         *fs.view.table_state.offset_mut() = next;
                     }
+                } else if fs.view.table_state.offset() > 0 {
+                    // At first item but offset > 0: scroll up without moving selection
+                    *fs.view.table_state.offset_mut() = fs.view.table_state.offset().saturating_sub(1);
                 }
             }
         }
@@ -387,6 +390,12 @@ impl App {
                     if next >= fs.view.table_state.offset() + capacity {
                         let keep_visible = capacity.saturating_sub(1);
                         *fs.view.table_state.offset_mut() = next.saturating_sub(keep_visible);
+                    }
+                } else {
+                    // At last item: scroll down if there are more files below the viewport
+                    let max_offset = fs.list.files.len().saturating_sub(capacity);
+                    if fs.view.table_state.offset() < max_offset {
+                        *fs.view.table_state.offset_mut() = fs.view.table_state.offset() + 1;
                     }
                 }
             }

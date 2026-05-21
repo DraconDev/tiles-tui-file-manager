@@ -533,10 +533,6 @@ fn handle_sidebar_mouse(
                                     if let Some(fs) = app.current_file_state_mut() {
                                         fs.nav.remote_session = None;
                                         fs.nav.current_path = path_ref.clone();
-                                        fs.list.files.clear();
-                                        fs.list.tree_file_depths.clear();
-                                        fs.list.metadata.clear();
-                                        fs.list.local_count = 0;
                                         fs.list.selection.selected = Some(0);
                                         fs.list.selection.anchor = Some(0);
                                         fs.list.selection.clear_multi();
