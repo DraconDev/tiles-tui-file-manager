@@ -360,9 +360,9 @@ impl App {
                     let new_screen_row = 3 + new_sel.saturating_sub(current_offset);
                     
                     if new_screen_row < capacity {
-                        // New selection is visible in viewport, don't scroll
+                        // New selection is visible in viewport, keep viewport unchanged
                     } else {
-                        // New selection would go out of viewport, scroll up
+                        // New selection would go out of viewport, scroll up to keep it visible
                         *fs.view.table_state.offset_mut() = fs.view.table_state.offset().saturating_sub(1);
                     }
                 } else if fs.view.table_state.offset() > 0 {
