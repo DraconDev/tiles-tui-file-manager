@@ -398,24 +398,22 @@ impl App {
                     }
                     fs.list.selection.handle_move(next, shift);
                     fs.view.table_state.select(fs.list.selection.selected);
-                    if next >= fs.view.table_state.offset() + capacity {
-                        let keep_visible = capacity.saturating_sub(1);
-                        *fs.view.table_state.offset_mut() = next.saturating_sub(keep_visible);
-                    }
-                } else {
-                    // At last item: scroll down only if selection would go out of viewport
-                    let capacity = fs.view.view_height.saturating_sub(3);
                     
-                    // Check if selection is already visible in viewport
+                    // Check if NEXT selection is within viewport before scrolling
                     let current_offset = fs.view.table_state.offset();
-                    let _selected_screen_row = 3 + sel.saturating_sub(current_offset);
                     
-                    if sel + 1 >= current_offset && sel + 1 < current_offset + capacity {
-                        // Selection is still visible, don't scroll
-                    } else if sel + 1 >= current_offset + capacity {
-                        // Selection would go out of viewport, scroll down
-                        *fs.view.table_state.offset_mut() = (sel + 1).saturating_sub(capacity);
+                    // Calculate where the new selection would be in the viewport
+                    let new_sel = fs.list.selection.selected.unwrap_or(0);
+                    let new_screen_row = 3 + new_sel.saturating_sub(current_offset);
+                    
+                    if new_screen_row >= capacity {
+                        // New selection is out of viewport, scroll down to keep it visible
+                        let keep_visible = capacity.saturating_sub(1);
+                        *fs.view.table_state.offset_mut() = new_sel.saturating_sub(keep_visible);
                     }
+                    // If new_screen_row < capacity, keep viewport unchanged
+                } else {
+                    // At last item: don't scroll
                 }
             }
         }
