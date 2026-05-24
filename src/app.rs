@@ -351,25 +351,19 @@ impl App {
                     }
                     fs.list.selection.handle_move(next, shift);
                     fs.view.table_state.select(fs.list.selection.selected);
-                    if next < fs.view.table_state.offset() {
-                        *fs.view.table_state.offset_mut() = next;
-                    }
-                } else if fs.view.table_state.offset() > 0 {
-                    // At first item but offset > 0: check if selection is visible
+                    // Check if selection is within viewport before scrolling
                     let capacity = fs.view.view_height.saturating_sub(3);
                     let current_offset = fs.view.table_state.offset();
-                    let _selected_screen_row = 3 + sel.saturating_sub(current_offset);
+                    let selected_screen_row = 3 + sel.saturating_sub(current_offset);
                     
-                    // Check if selection would go out of viewport when scrolling up
-                    if sel >= current_offset {
-                        // Selection is visible, check if scrolling up would hide it
-                        let _selection_screen_row = 3 + sel.saturating_sub(current_offset);
-                        if _selection_screen_row < capacity - 1 {
-                            // Selection would still be visible, don't scroll
-                            return;
-                        }
+                    if selected_screen_row < capacity {
+                        // Selection is visible in viewport, don't scroll
+                    } else {
+                        // Selection would go out of viewport, scroll up
+                        *fs.view.table_state.offset_mut() = fs.view.table_state.offset().saturating_sub(1);
                     }
-                    // Otherwise scroll up
+                } else if fs.view.table_state.offset() > 0 {
+                    // At first item but offset > 0: scroll up without moving selection
                     *fs.view.table_state.offset_mut() = fs.view.table_state.offset().saturating_sub(1);
                 }
             }
