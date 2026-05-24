@@ -22,10 +22,13 @@ fn reselect_after_filter(fs: &mut crate::state::FileState, old_path: Option<&std
             fs.view.table_state.select(Some(new_idx));
             let capacity = fs.view.view_height.saturating_sub(3).max(1);
             let offset = fs.view.table_state.offset();
-            if new_idx < offset {
-                *fs.view.table_state.offset_mut() = new_idx;
-            } else if new_idx >= offset + capacity {
-                *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+            let new_screen_row = 3 + new_idx.saturating_sub(offset);
+            
+            if new_screen_row < capacity - 1 {
+                // New selection is visible in viewport, keep offset unchanged
+            } else {
+                // New selection would go out of viewport, scroll to keep it visible
+                *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity);
             }
             return;
         }
