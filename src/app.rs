@@ -415,7 +415,6 @@ impl App {
                     
                     if sel + 1 >= current_offset && sel + 1 < current_offset + capacity {
                         // Selection is still visible, don't scroll
-                        return;
                     } else if sel + 1 >= current_offset + capacity {
                         // Selection would go out of viewport, scroll down
                         *fs.view.table_state.offset_mut() = (sel + 1).saturating_sub(capacity);
