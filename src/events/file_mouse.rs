@@ -502,6 +502,15 @@ pub fn handle_file_mouse(
             if let Some((sx, sy)) = app.drag.drag_start_pos {
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
+                // Check if in Name column for drag behavior
+                let in_name_column = app.current_file_state()
+                    .and_then(|fs| fs.view.column_bounds.iter()
+                        .find(|(_, ct)| *ct == FileColumn::Name)
+                        .map(|(name_rect, _)| {
+                            column >= name_rect.x && column < name_rect.x + name_rect.width
+                        }))
+                    .unwrap_or(false);
+                
                 // Only start file drag if click is in Name column AND no SHIFT modifier
                 if dist_sq >= 1.0
                     && !me.modifiers.contains(KeyModifiers::SHIFT)
