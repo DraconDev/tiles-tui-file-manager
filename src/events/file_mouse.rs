@@ -431,7 +431,6 @@ pub fn handle_file_mouse(
                 }
             } else if row >= 3
                 && !app.selection.prevent_mouse_up_selection_cleanup
-                && !sel_mode
                 && !me.modifiers.contains(KeyModifiers::SHIFT)
             {
                 // Fallback: no pending_click, no marquee, no modifiers → select clicked item
