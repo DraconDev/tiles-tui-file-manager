@@ -466,17 +466,28 @@ pub fn handle_file_mouse(
             true
         }
         MouseEventKind::Drag(_) => {
-            // Marquee drag: activate if click was outside Name column,
-            // OR if dragging vertically from Name column (user wants selection, not file drag).
+            // Marquee drag: only activate if click was in Name column, OR if
+            // dragging vertically from Name column (user wants selection, not file drag).
             if let Some((sx, sy)) = app.drag.marquee_start {
                 app.drag.marquee_end = Some((column, row));
                 let dx = (column as f32 - sx as f32).abs();
                 let dy = (row as f32 - sy as f32).abs();
                 let dist_sq = dx * dx + dy * dy;
                 let is_vertical_drag = dy > dx * 2.0 && dy >= 2.0;
+                let in_name_column = app.current_file_state()
+                    .and_then(|fs| fs.view.column_bounds.iter()
+                        .find(|(_, ct)| *ct == FileColumn::Name)
+                        .map(|(name_rect, _)| {
+                            column >= name_rect.x && column < name_rect.x + name_rect.width
+                        }))
+                    .unwrap_or(false);
+                
+                // Activate marquee only if:
+                // 1. Click is in Name column, OR
+                // 2. Vertical drag from Name column (user wants selection)
                 if dist_sq >= 4.0 && !app.drag.is_marquee
                     && (app.drag.drag_source.is_none() || is_vertical_drag)
-                {
+                    && (in_name_column || is_vertical_drag) {
                     app.drag.is_marquee = true;
                     // Cancel file drag if marquee takes over
                     app.drag.drag_source = None;
@@ -491,10 +502,12 @@ pub fn handle_file_mouse(
             if let Some((sx, sy)) = app.drag.drag_start_pos {
                 let dist_sq =
                     (column as f32 - sx as f32).powi(2) + (row as f32 - sy as f32).powi(2);
+                // Only start file drag if click is in Name column AND no SHIFT modifier
                 if dist_sq >= 1.0
                     && !me.modifiers.contains(KeyModifiers::SHIFT)
                     && !app.selection.selection_mode
                     && !app.drag.is_dragging
+                    && in_name_column
                 {
                     app.drag.is_dragging = true;
                     changed = true;
