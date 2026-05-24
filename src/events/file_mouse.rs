@@ -420,7 +420,6 @@ pub fn handle_file_mouse(
                 }
                 app.drag.is_dragging = false;
             }
-            let sel_mode = app.selection.selection_mode;
             // Resolve deferred pending_click — this is a plain click (no drag/marquee)
             if let Some(idx) = app.drag.pending_click_idx.take() {
                 if let Some(fs) = app.current_file_state_mut() {
