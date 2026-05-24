@@ -411,7 +411,7 @@ impl App {
                     
                     // Check if selection is already visible in viewport
                     let current_offset = fs.view.table_state.offset();
-                    let selected_screen_row = 3 + sel.saturating_sub(current_offset);
+                    let _selected_screen_row = 3 + sel.saturating_sub(current_offset);
                     
                     if sel + 1 >= current_offset && sel + 1 < current_offset + capacity {
                         // Selection is still visible, don't scroll
