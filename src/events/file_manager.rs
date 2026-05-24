@@ -458,10 +458,16 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                 fs.list.selection.selected = Some(next_idx);
                                 fs.list.selection.anchor = Some(next_idx);
                                 fs.view.table_state.select(Some(next_idx));
-                                if next_idx >= fs.view.table_state.offset() + fs.view.view_height {
-                                    *fs.view.table_state.offset_mut() =
-                                        next_idx.saturating_sub(fs.view.view_height - 1);
+                                // Check if new selection is visible before scrolling
+                                let capacity = fs.view.view_height.saturating_sub(3);
+                                let current_offset = fs.view.table_state.offset();
+                                let new_screen_row = 3 + next_idx.saturating_sub(current_offset);
+                                
+                                if new_screen_row >= capacity {
+                                    // New selection is out of viewport, scroll down
+                                    *fs.view.table_state.offset_mut() = next_idx.saturating_sub(capacity);
                                 }
+                                // If new_screen_row < capacity, keep viewport unchanged
                             }
                         }
                     }
