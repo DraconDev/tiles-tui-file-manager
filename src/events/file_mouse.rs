@@ -589,6 +589,7 @@ pub fn handle_file_mouse(
             }
 
             // Selection extension — works everywhere (sidebar, content, empty space)
+            let sel_mode = app.selection.selection_mode;
             if (me.modifiers.contains(KeyModifiers::SHIFT) || sel_mode) && !app.drag.is_dragging
             {
                 let Some(idx) = crate::events::mouse_helpers::fs_mouse_index(row, app) else {
