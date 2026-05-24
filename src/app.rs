@@ -355,7 +355,21 @@ impl App {
                         *fs.view.table_state.offset_mut() = next;
                     }
                 } else if fs.view.table_state.offset() > 0 {
-                    // At first item but offset > 0: scroll up without moving selection
+                    // At first item but offset > 0: check if selection is visible
+                    let capacity = fs.view.view_height.saturating_sub(3);
+                    let current_offset = fs.view.table_state.offset();
+                    let _selected_screen_row = 3 + sel.saturating_sub(current_offset);
+                    
+                    // Check if selection would go out of viewport when scrolling up
+                    if sel >= current_offset {
+                        // Selection is visible, check if scrolling up would hide it
+                        let _selection_screen_row = 3 + sel.saturating_sub(current_offset);
+                        if _selection_screen_row < capacity - 1 {
+                            // Selection would still be visible, don't scroll
+                            return;
+                        }
+                    }
+                    // Otherwise scroll up
                     *fs.view.table_state.offset_mut() = fs.view.table_state.offset().saturating_sub(1);
                 }
             }
@@ -394,11 +408,11 @@ impl App {
                 } else {
                     // At last item: scroll down only if selection would go out of viewport
                     let capacity = fs.view.view_height.saturating_sub(3);
-                    let max_offset = fs.list.files.len().saturating_sub(capacity);
+                    
+                    // Check if selection is already visible in viewport
                     let current_offset = fs.view.table_state.offset();
                     let selected_screen_row = 3 + sel.saturating_sub(current_offset);
                     
-                    // Check if selection is already visible in viewport
                     if sel + 1 >= current_offset && sel + 1 < current_offset + capacity {
                         // Selection is still visible, don't scroll
                         return;
