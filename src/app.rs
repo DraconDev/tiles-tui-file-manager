@@ -361,12 +361,15 @@ impl App {
                     let new_screen_row = new_sel.saturating_sub(current_offset);
                     
                     // Only scroll if the new selection would go out of viewport
-                    if new_screen_row >= capacity {
-                        // Selection is out of viewport, scroll to keep it visible
-                        // New offset = new selection index - capacity (to keep it at top)
+                    if new_screen_row == 0 {
+                        // New selection is at the top, scroll up to keep it visible
+                        // Check if we can actually scroll up
+                        if current_offset > 0 {
+                            *fs.view.table_state.offset_mut() = current_offset.saturating_sub(1);
+                        }
+                    } else if new_screen_row >= capacity {
+                        // New selection is out of viewport (bottom), scroll down to keep it visible
                         let new_offset = new_sel.saturating_sub(capacity);
-                        
-                        // Always update offset to keep selection visible
                         *fs.view.table_state.offset_mut() = new_offset;
                     }
                 } else if fs.view.table_state.offset() > 0 {
