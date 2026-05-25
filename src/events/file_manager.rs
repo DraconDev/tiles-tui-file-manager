@@ -466,11 +466,17 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                 let current_offset = fs.view.table_state.offset();
                                 let new_screen_row = 3 + next_idx.saturating_sub(current_offset);
                                 
+                                // Calculate the new offset that would keep the selection visible
+                                let new_offset = next_idx.saturating_sub(capacity);
+                                
                                 if new_screen_row >= capacity {
-                                    // New selection is out of viewport, scroll down
-                                    *fs.view.table_state.offset_mut() = next_idx.saturating_sub(capacity);
+                                    // New selection is out of viewport, scroll down to keep it visible
+                                    *fs.view.table_state.offset_mut() = new_offset;
+                                } else if new_offset != current_offset {
+                                    // New selection is in viewport but offset is different
+                                    // This shouldn't happen normally, but update anyway
+                                    *fs.view.table_state.offset_mut() = new_offset;
                                 }
-                                // If new_screen_row < capacity, keep viewport unchanged
                             }
                         }
                     }
