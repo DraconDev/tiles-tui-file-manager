@@ -351,19 +351,23 @@ impl App {
                     }
                     fs.list.selection.handle_move(next, shift);
                     fs.view.table_state.select(fs.list.selection.selected);
-                    // Check if NEXT selection is within viewport before scrolling
+                    // Check if NEW selection is within viewport before scrolling
                     let capacity = fs.view.view_height.saturating_sub(3);
                     let current_offset = fs.view.table_state.offset();
                     
-                    // Calculate where the new selection would be in the viewport
+                    // Calculate screen row (0-indexed) for the new selection
+                    // Screen row = selection index - offset (clamped to 0)
                     let new_sel = fs.list.selection.selected.unwrap_or(0);
-                    let new_screen_row = 3 + new_sel.saturating_sub(current_offset);
+                    let new_screen_row = new_sel.saturating_sub(current_offset);
                     
-                    if new_screen_row < capacity {
-                        // New selection is visible in viewport, keep viewport unchanged
-                    } else {
-                        // New selection would go out of viewport, scroll up to keep it visible
-                        *fs.view.table_state.offset_mut() = fs.view.table_state.offset().saturating_sub(1);
+                    // Only scroll if the new selection would go out of viewport
+                    if new_screen_row >= capacity {
+                        // Selection is out of viewport, scroll to keep it visible
+                        // New offset = new selection index - capacity (to keep it at top)
+                        let new_offset = new_sel.saturating_sub(capacity);
+                        
+                        // Always update offset to keep selection visible
+                        *fs.view.table_state.offset_mut() = new_offset;
                     }
                 } else if fs.view.table_state.offset() > 0 {
                     // At first item but offset > 0: scroll up without moving selection
