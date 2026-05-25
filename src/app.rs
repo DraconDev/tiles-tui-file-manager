@@ -401,14 +401,17 @@ impl App {
                     
                     // Check if NEW selection is within viewport before scrolling
                     let current_offset = fs.view.table_state.offset();
-                    let new_sel = fs.list.selection.selected.unwrap_or(0);
-                    let new_screen_row = 3 + new_sel.saturating_sub(current_offset);
                     
-                    // Only scroll down if the new selection would go out of viewport
-                    // AND we're not already at the maximum offset
+                    // Calculate screen row (0-indexed) for the new selection
+                    // Screen row = selection index - offset (clamped to 0)
+                    let new_sel = fs.list.selection.selected.unwrap_or(0);
+                    let new_screen_row = new_sel.saturating_sub(current_offset);
+                    
+                    // Only scroll if the new selection would go out of viewport
                     if new_screen_row >= capacity {
-                        // Calculate the new offset that would keep this selection visible
+                        // Selection is out of viewport, scroll to keep it visible
                         let new_offset = new_sel.saturating_sub(capacity);
+                        
                         // Check if we can actually scroll to this offset
                         if new_offset > current_offset {
                             *fs.view.table_state.offset_mut() = new_offset;
