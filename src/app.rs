@@ -747,34 +747,10 @@ impl App {
                     }
 
                 } else if fs.view.table_state.offset() > 0 {
-
-                    // At first item but offset > 0: check if selection is still visible
-
-                    let capacity = fs.view.view_height.saturating_sub(3);
-
+                    // At first item but offset > 0: scroll up past the first item
                     let current_offset = fs.view.table_state.offset();
-
-                    let new_sel = fs.list.selection.selected.unwrap_or(0);
-
-                    let new_screen_row = new_sel.saturating_sub(current_offset);
-
-                    
-
-                    // Only scroll if the selection would go out of viewport
-
-                    if new_screen_row < capacity {
-
-                        // Selection is still visible at offset - 1, don't scroll
-
-                    } else {
-
-                        // Selection would go out of viewport, scroll up
-
-                        *fs.view.table_state.offset_mut() = current_offset.saturating_sub(1);
-
-                    }
-
-    }
+                    *fs.view.table_state.offset_mut() = current_offset.saturating_sub(1);
+                }
             }
 
         }
@@ -870,9 +846,9 @@ impl App {
                     }
 
                 } else {
-
-                    // At last item: don't scroll
-
+                    // At last item: scroll down past the last item
+                    let current_offset = fs.view.table_state.offset();
+                    *fs.view.table_state.offset_mut() = current_offset.saturating_add(1);
                 }
 
             }
