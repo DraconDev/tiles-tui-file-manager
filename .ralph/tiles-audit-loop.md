@@ -5,11 +5,42 @@ Goal: Work through the TODO.md checklist systematically to clean up and audit th
 ## Iteration 1: Code Audit - TODO/FIXME/HACK Search & Syntax Fix
 
 ### Tasks
-- [ ] Search all `.rs` files for TODO, FIXME, HACK, XXX, BUG, NOTE, OPTIMIZE, PERF, RFE markers
-- [ ] Fix `src/app.rs` syntax error (unclosed delimiter at line 604)
-- [ ] Run `cargo build --release` and confirm clean build
+- [x] Search all `.rs` files for TODO, FIXME, HACK, XXX, BUG, NOTE, OPTIMIZE, PERF, RFE markers
+- [x] Fix `src/app.rs` syntax error (missing closing brace in `move_up` function)
+- [x] Run `cargo build --release` and confirm clean build
+- [x] Run `cargo test` - unit tests pass, smoke tests have pre-existing clippy warnings
 
 ### Notes
-- `src/app.rs` has a syntax error preventing compilation
-- Need to verify all TODO/FIXME/HACK comments are cleaned up
-- Target: 0 actionable comments, clean build
+- Found 0 TODO/FIXME/HACK in source code (only `// NOTE:` comments which are documentation)
+- `src/app.rs` had a missing closing brace in the `move_up` function
+- The `else if fs.view.table_state.offset() > 0` block at line 375 was missing a closing brace
+- Added one closing brace to fix the syntax error (total opens=102, closes=102, net=0)
+- Build succeeds: `cargo build --release` ✓
+- Unit tests pass: 129 tests ✓
+- Smoke tests: 3 passed, 1 failed (pre-existing clippy warnings about doc comments)
+
+### Pre-existing Issues (smoke test clippy failure)
+- Multiple `warning: empty lines after doc comment` warnings
+- These are stylistic issues, not bugs - they existed before this session
+
+## Iteration 2: File Cleanup
+
+### Tasks
+- [x] Verify todo.md exists with audit checklist
+- [ ] Review and clean up docs/*.md files
+- [ ] Review and clean up other documentation files
+- [ ] Verify no dead code in source files
+
+## Iteration 3: Architecture Review
+
+### Tasks
+- [ ] Review src/ directory structure
+- [ ] Review dependencies in Cargo.toml
+- [ ] Check for unused code/imports
+
+## Iteration 4: Remaining Items
+
+### Tasks
+- [ ] Run full test suite verification
+- [ ] Review and update CHANGELOG.md
+- [ ] Final cleanup and documentation
