@@ -44,13 +44,30 @@ Goal: Work through the TODO.md checklist systematically to clean up and audit th
 ## Iteration 3: Architecture Review
 
 ### Tasks
-- [ ] Review src/ directory structure
-- [ ] Review dependencies in Cargo.toml
-- [ ] Check for unused code/imports
+- [x] Review src/ directory structure - Well-organized modular architecture
+- [x] Review dependencies in Cargo.toml - 19 production deps, appropriate for TUI file manager
+- [x] Check for unused code/imports - All imports used (verified by successful builds)
+
+### Architecture Summary
+**Source Structure** (21,680 lines across 48 .rs files):
+- `src/` - Core app, main entry, config, clipboard, navigation
+- `src/events/` - Event handlers (file manager, modals, settings, git, monitor)
+- `src/ui/` - UI components (file view, header, footer, settings, theme)
+- `src/state/` - State structures (App subtypes, File subtypes)
+- `src/handlers/` - Event loop context, refresh logic
+- `src/modules/` - Files, Remote, System, Terminal modules
+
+**Dependencies** (well-curated):
+- `dracon-terminal-engine` v1.1 - Editor engine
+- `dracon-files` v94.2 - File operations
+- `dracon-git` v94.2 - Git integration
+- `dracon-system-lib` v94.2 - System utilities
+- `ratatui` v0.29 - Terminal UI
+- `tokio` - Async runtime
+- Standard utilities: walkdir, dirs, chrono, serde, toml, etc.
 
 ## Iteration 4: Remaining Items
 
 ### Tasks
 - [ ] Run clippy fixes (optional - cosmetic only)
-- [ ] Review and update CHANGELOG.md (already current)
-- [ ] Final cleanup and documentation
+- [ ] Final verification and completion

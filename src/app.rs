@@ -766,8 +766,6 @@ impl App {
 
                         // Selection is still visible at offset - 1, don't scroll
 
-                        return;
-
                     } else {
 
                         // Selection would go out of viewport, scroll up
