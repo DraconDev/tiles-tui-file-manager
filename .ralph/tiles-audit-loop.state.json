@@ -1,7 +1,7 @@
 {
   "name": "tiles-audit-loop",
   "taskFile": ".ralph/tiles-audit-loop.md",
-  "iteration": 2,
+  "iteration": 3,
   "maxIterations": 15,
   "itemsPerIteration": 3,
   "reflectEvery": 0,
