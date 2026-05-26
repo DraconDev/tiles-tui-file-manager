@@ -724,11 +724,15 @@ impl App {
 
                     // Only scroll if the new selection would go out of viewport
 
-                    if new_screen_row == 0 {
+                    if new_sel < current_offset {
+
+                        // Selection is above the viewport, scroll to show it at top
+
+                        *fs.view.table_state.offset_mut() = new_sel;
+
+                    } else if new_screen_row == 0 {
 
                         // New selection is at the top, scroll up to keep it visible
-
-                        // Check if we can actually scroll up
 
                         if current_offset > 0 {
 
@@ -740,7 +744,7 @@ impl App {
 
                         // New selection is out of viewport (bottom), scroll down to keep it visible
 
-                        let new_offset = new_sel.saturating_sub(capacity);
+                        let new_offset = new_sel.saturating_sub(capacity.saturating_sub(1));
 
                         *fs.view.table_state.offset_mut() = new_offset;
 
@@ -829,17 +833,17 @@ impl App {
 
                     // Only scroll if the new selection would go out of viewport
 
-                    if new_screen_row >= capacity {
+                    if new_sel < current_offset {
 
-                        // Selection is out of viewport, scroll to keep it visible
+                        // Selection is above the viewport, scroll to show it at top
 
-                        // New offset = new selection index - capacity (to keep it at bottom)
+                        *fs.view.table_state.offset_mut() = new_sel;
 
-                        let new_offset = new_sel.saturating_sub(capacity);
+                    } else if new_screen_row >= capacity {
 
-                        
+                        // Selection is out of viewport (bottom), scroll to keep it visible
 
-                        // Always update offset to keep selection visible
+                        let new_offset = new_sel.saturating_sub(capacity.saturating_sub(1));
 
                         *fs.view.table_state.offset_mut() = new_offset;
 
