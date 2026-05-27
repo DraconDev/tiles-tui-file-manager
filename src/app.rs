@@ -753,7 +753,9 @@ impl App {
                 } else if fs.view.table_state.offset() > 0 {
                     // At first item but offset > 0: scroll up past the first item
                     let current_offset = fs.view.table_state.offset();
-                    *fs.view.table_state.offset_mut() = current_offset.saturating_sub(1);
+                    let new_offset = current_offset.saturating_sub(1);
+                    crate::app::log_debug(&format!("move_up EDGE: offset {} → {}", current_offset, new_offset));
+                    *fs.view.table_state.offset_mut() = new_offset;
                 }
             }
 
@@ -852,7 +854,9 @@ impl App {
                 } else {
                     // At last item: scroll down past the last item
                     let current_offset = fs.view.table_state.offset();
-                    *fs.view.table_state.offset_mut() = current_offset.saturating_add(1);
+                    let new_offset = current_offset.saturating_add(1);
+                    crate::app::log_debug(&format!("move_down EDGE: offset {} → {}", current_offset, new_offset));
+                    *fs.view.table_state.offset_mut() = new_offset;
                 }
 
             }

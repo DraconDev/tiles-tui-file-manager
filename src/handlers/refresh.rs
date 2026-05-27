@@ -236,6 +236,8 @@ pub async fn handle_refreshes(
                         // Allow scrolling one full page past the last item
                         let allowed_max = max_offset.saturating_add(fs.view.view_height.saturating_sub(3));
                         if fs.view.table_state.offset() > allowed_max {
+                            let old = fs.view.table_state.offset();
+                            crate::app::log_debug(&format!("refresh CLAMP: offset {} → {} (max_off={}, allowed={})", old, allowed_max, max_offset, allowed_max));
                             *fs.view.table_state.offset_mut() = allowed_max;
                         }
 
