@@ -724,9 +724,9 @@ impl App {
 
                     // Only scroll if the new selection would go out of viewport
 
-                    if new_sel < current_offset {
+                    if new_sel + capacity < current_offset {
 
-                        // Selection is above the viewport, scroll to show it at top
+                        // Selection is more than one full page above the viewport, jump to show it
 
                         *fs.view.table_state.offset_mut() = new_sel;
 
@@ -835,9 +835,9 @@ impl App {
 
                     // Only scroll if the new selection would go out of viewport
 
-                    if new_sel < current_offset {
+                    if new_sel + capacity < current_offset {
 
-                        // Selection is above the viewport, scroll to show it at top
+                        // Selection is more than one full page above the viewport, jump to show it
 
                         *fs.view.table_state.offset_mut() = new_sel;
 
