@@ -835,13 +835,7 @@ impl App {
 
                     // Only scroll if the new selection would go out of viewport
 
-                    if new_sel + capacity < current_offset {
-
-                        // Selection is more than one full page above the viewport, jump to show it
-
-                        *fs.view.table_state.offset_mut() = new_sel;
-
-                    } else if new_screen_row >= capacity {
+                    if new_screen_row >= capacity {
 
                         // Selection is out of viewport (bottom), scroll to keep it visible
 
