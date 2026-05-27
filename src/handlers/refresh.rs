@@ -211,6 +211,11 @@ pub async fn handle_refreshes(
                         fs.list.tree_file_depths = tree_file_depths;
                         let prev_selected_path = fs.list.selection.selected
                             .and_then(|idx| fs.list.files.get(idx).cloned());
+                        let was_selected_in_view = fs.list.selection.selected.map_or(false, |old_idx| {
+                            let capacity = fs.view.view_height.saturating_sub(3).max(1);
+                            let offset = fs.view.table_state.offset();
+                            old_idx >= offset && old_idx < offset + capacity
+                        });
                         fs.list.files = files;
                         fs.list.metadata = metadata;
 
@@ -219,12 +224,14 @@ pub async fn handle_refreshes(
                                 fs.list.selection.selected = Some(new_idx);
                                 fs.list.selection.anchor = Some(new_idx);
                                 fs.view.table_state.select(Some(new_idx));
-                                let capacity = fs.view.view_height.saturating_sub(3).max(1);
-                                let offset = fs.view.table_state.offset();
-                                if new_idx < offset {
-                                    *fs.view.table_state.offset_mut() = new_idx;
-                                } else if new_idx >= offset + capacity {
-                                    *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+                                if was_selected_in_view {
+                                    let capacity = fs.view.view_height.saturating_sub(3).max(1);
+                                    let offset = fs.view.table_state.offset();
+                                    if new_idx < offset {
+                                        *fs.view.table_state.offset_mut() = new_idx;
+                                    } else if new_idx >= offset + capacity {
+                                        *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
+                                    }
                                 }
                             } else {
                                 let max_idx = fs.list.files.len().saturating_sub(1);
