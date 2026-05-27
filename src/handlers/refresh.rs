@@ -233,8 +233,10 @@ pub async fn handle_refreshes(
                             }
                         }
                         let max_offset = fs.list.files.len().saturating_sub(fs.view.view_height.saturating_sub(3).max(1));
-                        if fs.view.table_state.offset() > max_offset {
-                            *fs.view.table_state.offset_mut() = max_offset;
+                        // Allow scrolling one full page past the last item
+                        let allowed_max = max_offset.saturating_add(fs.view.view_height.saturating_sub(3));
+                        if fs.view.table_state.offset() > allowed_max {
+                            *fs.view.table_state.offset_mut() = allowed_max;
                         }
 
                         if let Some((pending_path, pending_scroll)) = fs.view.pending_select_path.take() {

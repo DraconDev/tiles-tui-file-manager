@@ -653,7 +653,9 @@ pub fn handle_file_mouse(
                     .list.files
                     .len()
                     .saturating_sub(fs.view.view_height.saturating_sub(3));
-                let new_offset = fs.view.table_state.offset().saturating_add(1).min(max_offset);
+                // Allow scrolling one full page past the last item
+                let allowed_max = max_offset.saturating_add(fs.view.view_height.saturating_sub(3));
+                let new_offset = fs.view.table_state.offset().saturating_add(1).min(allowed_max);
                 *fs.view.table_state.offset_mut() = new_offset;
             }
             true
