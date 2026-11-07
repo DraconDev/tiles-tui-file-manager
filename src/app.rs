@@ -975,6 +975,46 @@ pub fn log_debug(msg: &str) {
 
     let mut guard = LOG_FILE.lock();
 
+    // Rotate during the session too (LazyLock init only checks at startup),
+    // throttled to at most one stat per second.
+    static LAST_ROTATE_CHECK: std::sync::atomic::AtomicU64 =
+        std::sync::atomic::AtomicU64::new(0);
+    let now_secs = chrono::Utc::now().timestamp().max(0) as u64;
+    let last_check =
+        LAST_ROTATE_CHECK.swap(now_secs, std::sync::atomic::Ordering::Relaxed);
+    if now_secs.saturating_sub(last_check) >= 1 {
+        let log_path = (*guard)
+            .as_ref()
+            .map(|w| w.get_ref().name().to_path_buf());
+        if let Some(path) = log_path {
+            if let Ok(meta) = std::fs::metadata(&path) {
+                if meta.len() > MAX_LOG_SIZE_BYTES {
+                    drop(guard);
+                    let _ = std::fs::rename(&path, path.with_extension("log.1"));
+                    let _ =
+                        std::fs::rename(path.with_extension("log.1"), path.with_extension("log.2"));
+                    let _ = std::fs::remove_file(path.with_extension("log.2"));
+                    let fresh = std::fs::OpenOptions::new()
+                        .append(true)
+                        .create(true)
+                        .open(&path)
+                        .ok();
+                    if let Some(f) = fresh {
+                        *LOG_FILE.lock() = Some(std::io::BufWriter::new(f));
+                    }
+                    let mut guard = LOG_FILE.lock();
+                    if let Some(ref mut w) = *guard {
+                        let _ = writeln!(w, "[{}] DEBUG: {}", chrono::Utc::now(), msg);
+                        let _ = w.flush();
+                    }
+                    return;
+                }
+            }
+        }
+        // Re-acquire the lock after the (unchanged) rotation check.
+        guard = LOG_FILE.lock();
+    }
+
     if let Some(ref mut w) = *guard {
 
         let _ = writeln!(w, "[{}] DEBUG: {}", chrono::Utc::now(), msg);
@@ -1025,15 +1065,50 @@ use tokio::sync::mpsc::Sender;
 
 pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
 
-    if tx.try_send(evt).is_err() {
+    if tx.is_closed() {
 
-        log_debug("Channel send failed — event dropped");
+        return false;
 
-        false
+    }
 
-    } else {
+    match tx.try_send(evt) {
 
-        true
+        Ok(()) => true,
+
+        Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => false,
+
+        Err(tokio::sync::mpsc::error::TrySendError::Full(evt)) => {
+
+            // Bounded retry: the consumer loop drains every ~33ms, so a
+            // brief burst should clear. Never silently drop a user
+            // operation (save/refresh/status) under load.
+            let mut evt = evt;
+
+            for _ in 0..20 {
+
+                std::thread::sleep(std::time::Duration::from_millis(5));
+
+                match tx.try_send(evt) {
+
+                    Ok(()) => return true,
+
+                    Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => return false,
+
+                    Err(tokio::sync::mpsc::error::TrySendError::Full(returned)) => {
+
+                        evt = returned;
+
+                    }
+
+                }
+
+            }
+
+            log_debug("Channel send failed after retries — event dropped");
+
+            false
+
+        }
 
     }
 
