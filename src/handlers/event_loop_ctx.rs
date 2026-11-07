@@ -135,7 +135,9 @@ impl EventLoopCtx {
             .cloned()
             .collect();
         for path in to_remove {
-            // Note: notify_debouncer_mini doesn't support unwatch
+            // Actually remove the OS watch; merely forgetting the path here
+            // leaks inotify watches until the system watch limit is hit.
+            let _ = self.debouncer.watcher().unwatch(&path);
             self.watched_paths.remove(&path);
         }
     }
@@ -184,16 +186,19 @@ impl EventLoopCtx {
     pub fn handle_files_changed_on_disk(&mut self, path: PathBuf) -> (bool, bool) {
         crate::app::log_debug(&format!("FilesChangedOnDisk: {:?}", path));
 
-        // Self-save guard: skip events for files we just wrote.
-        if let Some((_saved_mtime, _saved_size, saved_at)) = self.last_self_save.get(&path) {
+        // Self-save guard: skip only the echo of our own write (identical
+        // mtime+size). An external edit within 5s of a save differs in
+        // mtime/size and must still refresh/reload — suppressing by elapsed
+        // time alone silently swallowed legitimate changes.
+        if let Some((saved_mtime, saved_size, _saved_at)) = self.last_self_save.get(&path) {
             let exact_match = std::fs::metadata(&path).ok().and_then(|meta| {
                 meta.modified().ok().map(|mtime| {
                     let size: u64 = meta.len();
-                    mtime == *_saved_mtime && size == *_saved_size
+                    mtime == *saved_mtime && size == *saved_size
                 })
             }).unwrap_or(false);
 
-            if exact_match || saved_at.elapsed() < Duration::from_secs(5) {
+            if exact_match {
                 return (false, true); // continue (skip this event)
             }
         }
@@ -211,22 +216,15 @@ impl EventLoopCtx {
                 };
 
                 if should_refresh {
-                    let is_self_save_dir = path.parent().map(|parent| {
-                        self.last_self_save.keys().any(|sp| sp.parent() == Some(parent))
-                    }).unwrap_or(false)
-                        && self.last_self_save.values().any(|(_, _, at)| at.elapsed() < Duration::from_secs(2));
-
-                    if !is_self_save_dir {
-                        crate::app::log_debug(&format!("Refreshing pane {} for path {:?}", i, path));
-                        self.panes_needing_refresh.insert(i);
-                    }
+                    crate::app::log_debug(&format!("Refreshing pane {} for path {:?}", i, path));
+                    self.panes_needing_refresh.insert(i);
                 }
             }
             if let Some(fs) = pane.current_state() {
                 if let Some(ref preview) = fs.view.preview {
                     if preview.path == path {
                         if let Some(editor) = &preview.editor {
-                            if !editor.modified && !self.last_self_save.contains_key(&path) {
+                            if !editor.modified && !self.self_save_unchanged(&path) {
                                 needs_reload.push((i, path.clone()));
                             }
                         }
@@ -238,7 +236,7 @@ impl EventLoopCtx {
         if let Some(preview) = &app_guard.editor_global.editor_state {
             if preview.path == path {
                 if let Some(editor) = &preview.editor {
-                    if !editor.modified && !self.last_self_save.contains_key(&path) {
+                    if !editor.modified && !self.self_save_unchanged(&path) {
                         needs_reload.push((app_guard.focused_pane_index, path.clone()));
                     }
                 }
@@ -250,6 +248,17 @@ impl EventLoopCtx {
             let _ = crate::app::try_send_event(&self.event_tx, AppEvent::PreviewRequested(p_idx, p_path));
         }
         (true, false) // needs_draw = true, don't continue
+    }
+
+    /// True when `path` was written by us and its on-disk fingerprint still
+    /// matches what we saved (i.e. the current FS change is our own echo).
+    fn self_save_unchanged(&self, path: &std::path::Path) -> bool {
+        let Some((saved_mtime, saved_size, _)) = self.last_self_save.get(path) else {
+            return false;
+        };
+        std::fs::metadata(path).ok().and_then(|meta| {
+            meta.modified().ok().map(|mtime| mtime == *saved_mtime && meta.len() == *saved_size)
+        }).unwrap_or(false)
     }
 
     /// Handle the SaveFile event: write content to disk, update self-save guard,
