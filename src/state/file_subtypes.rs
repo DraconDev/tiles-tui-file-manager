@@ -23,6 +23,8 @@ pub struct FileNavState {
     pub search_filter: String,
     #[serde(skip)]
     pub search_generation: u64,
+    #[serde(skip)]
+    pub preview_generation: u64,
     pub history: Vec<PathBuf>,
     pub history_index: usize,
     pub sort_column: FileColumn,
@@ -39,6 +41,7 @@ impl Default for FileNavState {
             show_hidden: false,
             search_filter: String::new(),
             search_generation: 0,
+            preview_generation: 0,
             history: Vec::new(),
             history_index: 0,
             sort_column: FileColumn::Name,
