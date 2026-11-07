@@ -821,26 +821,58 @@ impl EventLoopCtx {
         app_clone: Arc<Mutex<App>>,
     ) {
         let tx = self.event_tx.clone();
-        let (current_dir, preview_limit_mb, remote_session) = {
-            let app_guard = self.app.lock();
-            if let Some(pane) = app_guard.panes.get(pane_idx) {
-                if let Some(fs) = pane.current_state() {
+        let (current_dir, preview_limit_mb, remote_session, generation) = {
+            let mut app_guard = self.app.lock();
+            if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
+                if let Some(fs) = pane.current_state_mut() {
+                    fs.nav.preview_generation += 1;
                     (
                         fs.nav.current_path.clone(),
                         app_guard.preview_max_mb.max(1),
                         fs.nav.remote_session.clone(),
+                        fs.nav.preview_generation,
                     )
                 } else {
-                    (PathBuf::from("."), app_guard.preview_max_mb.max(1), None)
+                    (PathBuf::from("."), app_guard.preview_max_mb.max(1), None, 0)
                 }
             } else {
-                (PathBuf::from("."), app_guard.preview_max_mb.max(1), None)
+                (PathBuf::from("."), app_guard.preview_max_mb.max(1), None, 0)
             }
         };
 
         tokio::spawn(async move {
             let path_str = path.to_string_lossy();
-            let content = if let Some(hash) = path_str.strip_prefix("git://") {
+            // Do blocking file/image I/O on a blocking thread so a slow or
+            // special file cannot stall a tokio worker.
+            let content = tokio::task::spawn_blocking(move || {
+                load_preview_content(&path, &current_dir, &remote_session, preview_limit_mb as u64)
+            })
+            .await
+            .unwrap_or_else(|e| format!("Error loading preview: {}", e));
+
+            let _ = content;
+            return finish_preview_request(
+                tx,
+                app_clone,
+                pane_idx,
+                path,
+                generation,
+                content,
+            )
+            .await;
+        });
+    }
+}
+
+/// Load preview content for `path`. Runs on a blocking thread.
+fn load_preview_content(
+    path: &std::path::Path,
+    current_dir: &std::path::Path,
+    remote_session: &Option<crate::state::RemoteSession>,
+    preview_limit_mb: u64,
+) -> String {
+    let path_str = path.to_string_lossy();
+    if let Some(hash) = path_str.strip_prefix("git://") {
                 match crate::modules::files::show_commit_patch(&current_dir, hash) {
                     Ok(c) => c,
                     Err(e) => format!("Error fetching commit data: {}", e),
@@ -873,65 +905,107 @@ impl EventLoopCtx {
                         .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
                     Err(e) => format!("Error probing remote path: {e}"),
                 }
-            } else if path.is_dir() {
-                format!(
-                    "\n\n   << PROJECT VIEW: {} >>\n\n   Select a file from the sidebar to begin editing.",
-                    path.file_name()
-                        .map(|n| n.to_string_lossy().to_string())
-                        .unwrap_or_else(|| "/".to_string())
-                )
-            } else {
-                let (is_binary, is_too_large, size_mb) =
-                    crate::modules::files::check_file_suitability(
-                        &path,
-                        preview_limit_mb as u64 * 1024 * 1024,
-                    );
-                if is_too_large {
-                    format!("<File too large: {} MB>", size_mb)
-                } else if is_binary {
-                    let ext = path.extension()
-                        .and_then(|s| s.to_str())
-                        .unwrap_or("")
-                        .to_lowercase();
-                    let image_exts = ["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "tiff"];
-                    if image_exts.contains(&ext.as_str()) {
-                        match image::open(&path) {
-                            Ok(img) => {
-                                let (w, h) = img.dimensions();
-                                format!("<Image: {}x{} {} KB - preview below>", w, h, size_mb)
-                            }
-                            Err(_) => format!("<Binary file: {} MB>", size_mb),
-                        }
-                    } else {
-                        format!("<Binary file: {} MB>", size_mb)
+    } else if path.is_dir() {
+        format!(
+            "\n\n   << PROJECT VIEW: {} >>\n\n   Select a file from the sidebar to begin editing.",
+            path.file_name()
+                .map(|n| n.to_string_lossy().to_string())
+                .unwrap_or_else(|| "/".to_string())
+        )
+    } else {
+        let (is_binary, is_too_large, size_mb) =
+            crate::modules::files::check_file_suitability(
+                path,
+                preview_limit_mb * 1024 * 1024,
+            );
+        if is_too_large {
+            format!("<File too large: {} MB>", size_mb)
+        } else if is_binary {
+            let ext = path.extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_lowercase();
+            let image_exts = ["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "tiff"];
+            if image_exts.contains(&ext.as_str()) {
+                match image::open(path) {
+                    Ok(img) => {
+                        let (w, h) = img.dimensions();
+                        format!("<Image: {}x{} {} KB - preview below>", w, h, size_mb)
                     }
-                } else {
-                    std::fs::read_to_string(&path)
-                        .unwrap_or_else(|e| format!("Error reading file: {}", e))
+                    Err(_) => format!("<Binary file: {} MB>", size_mb),
                 }
-            };
-
-            let mut editor = dracon_terminal_engine::widgets::TextEditor::with_content(&content);
-            if path_str.starts_with("git://") || path_str.starts_with("git-diff://") {
-                editor.language = "diff".to_string();
-                editor.read_only = true;
-            } else if let Some(rs) = &remote_session {
-                let is_dir = crate::modules::remote::is_dir(rs, &path).unwrap_or(false);
-                if is_dir {
-                    editor.read_only = true;
-                }
-            } else if path.is_dir() {
-                editor.read_only = true;
             } else {
-                editor.language = path
-                    .extension()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-                    .to_string();
+                format!("<Binary file: {} MB>", size_mb)
             }
+        } else {
+            // Read only regular files with a size cap: FIFO/device/growing
+            // files would otherwise block or OOM the read.
+            match std::fs::metadata(path) {
+                Ok(meta) if !meta.is_file() => format!("<Not a regular file: {}>", path.display()),
+                Ok(meta) if meta.len() > preview_limit_mb * 1024 * 1024 => {
+                    format!("<File too large: {} MB>", meta.len() / 1024 / 1024)
+                }
+                _ => std::fs::read_to_string(path)
+                    .unwrap_or_else(|e| format!("Error reading file: {}", e)),
+            }
+        }
+    }
+}
+
+/// Install a loaded preview, dropping the result if a newer preview request
+/// for the same pane has superseded it.
+async fn finish_preview_request(
+    tx: tokio::sync::mpsc::Sender<AppEvent>,
+    app_clone: Arc<Mutex<App>>,
+    pane_idx: usize,
+    path: PathBuf,
+    generation: u64,
+    content: String,
+) {
+    let path_str = path.to_string_lossy().to_string();
+    let mut editor = dracon_terminal_engine::widgets::TextEditor::with_content(&content);
+    if path_str.starts_with("git://") || path_str.starts_with("git-diff://") {
+        editor.language = "diff".to_string();
+        editor.read_only = true;
+    } else {
+        let remote_session = {
+            let app_guard = app_clone.lock();
+            app_guard.panes.get(pane_idx)
+                .and_then(|pane| pane.current_state())
+                .and_then(|fs| fs.nav.remote_session.clone())
+        };
+        if let Some(rs) = &remote_session {
+            let is_dir = crate::modules::remote::is_dir(rs, &path).unwrap_or(false);
+            if is_dir {
+                editor.read_only = true;
+            }
+        } else if path.is_dir() {
+            editor.read_only = true;
+        } else {
+            editor.language = path
+                .extension()
+                .and_then(|s| s.to_str())
+                .unwrap_or("")
+                .to_string();
+        }
+    }
 
             {
                 let mut app_guard = app_clone.lock();
+
+                // Stale check: a newer request for this pane superseded ours.
+                if let Some(pane) = app_guard.panes.get(pane_idx) {
+                    if let Some(fs) = pane.current_state() {
+                        if fs.nav.preview_generation != generation {
+                            crate::app::log_debug(&format!(
+                                "Preview: superseded request for {:?} (pane={}, gen {})",
+                                path, pane_idx, generation
+                            ));
+                            return;
+                        }
+                    }
+                }
+
 
                 let old_scroll = app_guard.editor_global.scroll_positions.get(&path).copied();
 
