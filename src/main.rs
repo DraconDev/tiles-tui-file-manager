@@ -147,9 +147,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                             for byte in buffer.iter().take(n) {
                                 if let Some(evt) = parser.advance(*byte) {
                                     if let Some(converted) = crate::event::convert_event(evt) {
-                                        if let Some(ui_event) = to_ui_event(&converted) {
-                                            let _ = tx.blocking_send(AppEvent::Ui(ui_event));
-                                        }
                                         let _ = tx.blocking_send(AppEvent::Raw(converted));
                                     }
                                 }
@@ -160,9 +157,6 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
                     Ok(false) => {
                         if let Some(evt) = parser.check_timeout() {
                             if let Some(converted) = crate::event::convert_event(evt) {
-                                if let Some(ui_event) = to_ui_event(&converted) {
-                                    let _ = tx.blocking_send(AppEvent::Ui(ui_event));
-                                }
                                 let _ = tx.blocking_send(AppEvent::Raw(converted));
                             }
                         }
@@ -369,12 +363,18 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
         // Handle Refreshes
         crate::handlers::refresh::handle_refreshes(&mut ctx.panes_needing_refresh, app.clone(), ctx.event_tx.clone()).await;
 
-        if needs_draw {
-            let mut app_guard = ctx.app.lock();
+        // Honor quit even when this iteration needed no redraw (e.g. a quit
+        // handled without a state change).
+        {
+            let app_guard = ctx.app.lock();
             if !app_guard.core.running {
                 shutdown.store(true, Ordering::Release);
                 break;
             }
+        }
+
+        if needs_draw {
+            let mut app_guard = ctx.app.lock();
             terminal.draw(|f| ui::draw(f, &mut app_guard))?;
         }
 
