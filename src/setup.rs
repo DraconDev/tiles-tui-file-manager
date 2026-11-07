@@ -28,7 +28,11 @@ pub fn setup_app() -> (
         if !state.panes.is_empty() {
             app.panes = state.panes;
         }
+        // Never trust persisted state with structure sizes: a crafted or
+        // corrupt state.json could force thousands of panes/tabs at startup.
+        app.panes.truncate(2);
         for pane in &mut app.panes {
+            pane.tabs.truncate(crate::config::MAX_TABS);
             if pane.tabs.is_empty() {
                 let cwd = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
                 pane.tabs.push(crate::state::FileState::new(
@@ -45,6 +49,11 @@ pub fn setup_app() -> (
             }
 
             for tab in &mut pane.tabs {
+                // Sanitize history indices (a corrupt state could carry an
+                // out-of-bounds history_index).
+                if tab.nav.history_index >= tab.nav.history.len() {
+                    tab.nav.history_index = tab.nav.history.len().saturating_sub(1);
+                }
                 // Never trust persisted transient tab data; force a clean first refresh.
                 tab.list.files.clear();
                 tab.list.metadata.clear();

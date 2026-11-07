@@ -13,8 +13,10 @@ use crate::config::MAX_HISTORY;
 /// Navigate backward in the folder history.
 pub fn navigate_back(app: &mut App) {
     if let Some(fs) = app.current_file_state_mut() {
-        if fs.nav.history_index > 0 {
-            fs.nav.history_index -= 1;
+        // Require a sane history: a corrupt/hand-edited state could carry
+        // `history_index` beyond the vector and panic the index below.
+        if fs.nav.history_index > 0 && fs.nav.history.len() > 1 {
+            fs.nav.history_index = (fs.nav.history_index - 1).min(fs.nav.history.len() - 1);
             fs.nav.current_path = fs.nav.history[fs.nav.history_index].clone();
             fs.list.files.clear();
             fs.list.tree_file_depths.clear();
@@ -115,6 +117,11 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
 
     let remote = fs.nav.remote_session.is_some();
     let target = resolve_path_input(&input, &fs.nav.current_path, remote);
+
+    // Do not silently land the user in a non-existent directory on a typo.
+    if !remote && !target.is_dir() {
+        return Err(format!("Not a directory: {}", target.display()));
+    }
 
     fs.nav.current_path = target.clone();
     fs.view.pending_select_path = None;
