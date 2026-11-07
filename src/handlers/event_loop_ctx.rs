@@ -352,19 +352,49 @@ impl EventLoopCtx {
         }
     }
 
-    /// Helper: get the remote session for the current file state.
-    fn current_remote_session(&self) -> Option<crate::state::RemoteSession> {
+    /// Helper: get the remote session for the pane displaying `path`.
+    ///
+    /// Operations must run against the filesystem owning the listing the
+    /// path came from (e.g. pane 2 in split local+remote mode), not the
+    /// currently focused pane. Falls back to the focused pane only when no
+    /// pane owns the path.
+    fn remote_session_for_path(&self, path: &std::path::Path) -> Option<crate::state::RemoteSession> {
         let app_guard = self.app.lock();
-        app_guard.current_file_state().and_then(|fs| fs.nav.remote_session.clone())
+        let parent = path.parent();
+        let mut best: Option<(usize, Option<crate::state::RemoteSession>)> = None;
+        for pane in app_guard.panes.iter() {
+            if let Some(fs) = pane.current_state() {
+                let cwd = &fs.nav.current_path;
+                // Owns `path` if its cwd is the file's parent dir, or an
+                // ancestor of the path (deepest matching cwd wins).
+                let owns = parent.map(|p| p == cwd.as_path()).unwrap_or(false)
+                    || path.starts_with(cwd);
+                if owns {
+                    let depth = cwd.components().count();
+                    if best.as_ref().map(|(d, _)| depth >= *d).unwrap_or(true) {
+                        best = Some((depth, fs.nav.remote_session.clone()));
+                    }
+                }
+            }
+        }
+        match best {
+            Some((_, session)) => session,
+            None => app_guard.current_file_state().and_then(|fs| fs.nav.remote_session.clone()),
+        }
     }
 
     /// Handle CreateFile: create a new empty file (local or remote).
     pub fn handle_create_file(&self, path: PathBuf) {
-        let remote = self.current_remote_session();
+        let remote = self.remote_session_for_path(&path);
         let result: Result<(), std::io::Error> = if let Some(remote) = remote {
             crate::modules::remote::create_file(&remote, &path)
         } else {
-            std::fs::File::create(&path).map(|_| ())
+            // create_new fails instead of truncating an existing file.
+            std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+                .map(|_| ())
         };
         if let Err(e) = result {
             self.send_event(AppEvent::StatusMsg(format!("Failed to create file: {}", e)));
@@ -377,7 +407,7 @@ impl EventLoopCtx {
 
     /// Handle CreateFolder: create a new directory (local or remote).
     pub fn handle_create_folder(&self, path: PathBuf) {
-        let remote = self.current_remote_session();
+        let remote = self.remote_session_for_path(&path);
         let result: Result<(), std::io::Error> = if let Some(remote) = remote {
             crate::modules::remote::create_dir_all(&remote, &path)
         } else {
@@ -392,7 +422,7 @@ impl EventLoopCtx {
 
     /// Handle Rename: rename a file/folder (local or remote).
     pub fn handle_rename(&self, old: PathBuf, new: PathBuf) {
-        let remote = self.current_remote_session();
+        let remote = self.remote_session_for_path(&old);
         let rename_res = if let Some(remote) = &remote {
             crate::modules::remote::rename(remote, &old, &new)
         } else {
@@ -414,7 +444,7 @@ impl EventLoopCtx {
 
     /// Handle Delete: permanently delete a file/folder.
     pub fn handle_delete(&self, path: PathBuf) {
-        let remote = self.current_remote_session();
+        let remote = self.remote_session_for_path(&path);
         let result: Result<(), std::io::Error> = if let Some(remote) = remote {
             crate::modules::remote::remove_path(&remote, &path)
         } else if path.is_dir() {
@@ -436,7 +466,7 @@ impl EventLoopCtx {
     /// Handle TrashFile: move a file to trash (local only).
     /// Returns true if the event should continue (skip).
     pub fn handle_trash_file(&self, path: PathBuf) -> bool {
-        let remote = self.current_remote_session();
+        let remote = self.remote_session_for_path(&path);
         let focused = self.app.lock().focused_pane_index;
         if remote.is_some() {
             self.send_event(AppEvent::StatusMsg(
@@ -467,7 +497,7 @@ impl EventLoopCtx {
     /// Handle Symlink: create a symbolic link (local only).
     /// Returns true if remote (should continue/skip).
     pub fn handle_symlink(&mut self, src: PathBuf, dest: PathBuf) -> bool {
-        let remote = self.current_remote_session();
+        let remote = self.remote_session_for_path(&dest);
         if remote.is_some() {
             self.send_event(AppEvent::StatusMsg(
                 "Symlink is not supported for remote panes".to_string(),
