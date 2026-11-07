@@ -67,21 +67,31 @@ pub async fn handle_refreshes(
             let TreeScanResult { tree_files, tree_metadata: mut metadata, git_files: g_files, git_metadata: g_meta } =
                 tokio::task::spawn_blocking(move || {
                     let t_dir = std::time::Instant::now();
-                    if let Some(session) = &list_remote {
-                        let _ = crate::modules::remote::read_dir_with_metadata(session, &list_path);
+                    // For remote panes, build the listing from the remote host. Falling
+                    // through to the local walk_tree would show the local filesystem at
+                    // the same path string, so the remote result must drive the list.
+                    let (tree_files, files_meta) = if let Some(session) = &list_remote {
+                        let (remote_files, remote_meta) =
+                            crate::modules::remote::read_dir_with_metadata(session, &list_path)
+                                .unwrap_or_default();
+                        (
+                            remote_files.into_iter().map(|p| (p, 0)).collect::<Vec<_>>(),
+                            remote_meta,
+                        )
                     } else {
                         let _ = crate::modules::files::read_dir_with_metadata(&list_path);
-                    }
 
-                    let max_depth = MAX_TREE_DEPTH;
-                    let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
-                    #[allow(clippy::too_many_arguments)]
-                    tree_walk::walk_tree(&list_path, 0, max_depth, &expanded_folders, show_hidden, &mut tree_files, sort_column, sort_ascending);
-                    let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
-                    let (files_meta, g_files, g_meta) = {
+                        let max_depth = MAX_TREE_DEPTH;
+                        let mut tree_files: Vec<(PathBuf, u16)> = Vec::new();
+                        tree_walk::walk_tree(&list_path, 0, max_depth, &expanded_folders, show_hidden, &mut tree_files, sort_column, sort_ascending);
+                        let tree_paths: Vec<PathBuf> = tree_files.iter().map(|(p, _)| p.clone()).collect();
                         let meta = crate::modules::files::read_dir_recursive_meta(&tree_paths);
+                        (tree_files, meta.1)
+                    };
+
+                    let (g_files, g_meta) = {
                         let trimmed_filter = list_filter.trim();
-                        let g_result = if trimmed_filter.len() > 3 {
+                        if trimmed_filter.len() > 3 {
                             if let Some(session) = &list_remote {
                                 crate::modules::remote::global_search(
                                     session,
@@ -89,14 +99,13 @@ pub async fn handle_refreshes(
                                     trimmed_filter,
                                 )
                             } else {
-                                let search_root =
-                                    dirs::home_dir().unwrap_or_else(|| list_path.clone());
-                                crate::modules::files::global_search(&search_root, trimmed_filter)
+                                // Scope global search to the current directory: a
+                                // home-wide scan per keystroke is unbounded.
+                                crate::modules::files::global_search(&list_path, trimmed_filter)
                             }
                         } else {
                             (Vec::new(), std::collections::HashMap::new())
-                        };
-                        (meta.1, g_result.0, g_result.1)
+                        }
                     };
 
                     crate::app::log_debug(&format!("read_dir+search took {:?} for {:?}", t_dir.elapsed(), list_path));
