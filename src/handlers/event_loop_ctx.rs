@@ -760,27 +760,33 @@ impl EventLoopCtx {
         let tx = self.event_tx.clone();
         let src_name = src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_else(|| "file".to_string());
         let task_id = uuid::Uuid::new_v4();
+        // Snapshot the session at dispatch: the user may switch panes mid-copy,
+        // and the operation must still run against the source filesystem.
+        let remote = self.remote_session_for_path(&src);
 
         self.send_event(AppEvent::TaskProgress(task_id, 0.0, format!("Copying {}...", src_name)));
 
         tokio::spawn(async move {
-            let remote = {
-                let app_guard = app_clone.lock();
-                app_guard.current_file_state()
-                    .and_then(|fs| fs.nav.remote_session.clone())
-            };
-
-            let copied = if let Some(remote) = &remote {
-                crate::modules::remote::copy_recursive(remote, &src, &dest).is_ok()
+            let copy_res: Result<(), std::io::Error> = if let Some(remote) = &remote {
+                crate::modules::remote::copy_recursive(remote, &src, &dest)
             } else {
-                dracon_terminal_engine::utils::copy_recursive(&src, &dest).is_ok()
+                dracon_terminal_engine::utils::copy_recursive(&src, &dest)
             };
 
-            if copied {
-                let mut app_guard = app_clone.lock();
-                app_guard.undo_state.undo_stack
-                    .push(crate::app::UndoAction::Copy(src.clone(), dest.clone()));
-                app_guard.undo_state.redo_stack.clear();
+            match &copy_res {
+                Ok(_) => {
+                    let mut app_guard = app_clone.lock();
+                    app_guard.undo_state.undo_stack
+                        .push(crate::app::UndoAction::Copy(src.clone(), dest.clone()));
+                    app_guard.undo_state.redo_stack.clear();
+                }
+                Err(e) => {
+                    let _ = tx.send(AppEvent::StatusMsg(format!(
+                        "Copy failed: {} - {}",
+                        src.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default(),
+                        e
+                    ))).await;
+                }
             }
 
             let _ = tx.send(AppEvent::TaskFinished(task_id)).await;
