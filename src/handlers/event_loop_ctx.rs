@@ -850,7 +850,6 @@ impl EventLoopCtx {
             .await
             .unwrap_or_else(|e| format!("Error loading preview: {}", e));
 
-            let _ = content;
             return finish_preview_request(
                 tx,
                 app_clone,
