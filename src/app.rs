@@ -517,25 +517,11 @@ impl App {
 
 
     /// Toggle between single-pane and dual-pane (split) mode.
-
+    /// Delegates to `apply_split_mode` so toggling preserves the second
+    /// pane's tabs/nav state (via `saved_pane`) instead of truncating it.
     pub fn toggle_split(&mut self) {
-
-        self.core.is_split_mode = !self.core.is_split_mode;
-
-        if self.core.is_split_mode && self.panes.len() == 1 {
-
-            let initial_fs = self.panes[0].tabs[0].clone();
-
-            self.panes.push(Pane::new(initial_fs));
-
-        } else if !self.core.is_split_mode && self.panes.len() > 1 {
-
-            self.panes.truncate(1);
-
-            self.focused_pane_index = 0;
-
-        }
-
+        let split = !self.core.is_split_mode;
+        self.apply_split_mode(split);
     }
 
 
@@ -596,9 +582,7 @@ impl App {
 
                 self.panes.push(saved);
 
-            } else {
-
-                let initial_fs = self.panes[0].tabs[0].clone();
+            } else if let Some(initial_fs) = self.panes.first().and_then(|p| p.tabs.first().cloned()) {
 
                 self.panes.push(Pane::new(initial_fs));
 
