@@ -1,36 +1,84 @@
 # --- BEGIN DRACON MANAGED BLOCK ---
 # managed by dracon-warden
-*.age filter=dracon diff=dracon merge=dracon
-*.bash filter=dracon diff=dracon merge=dracon
-*.env filter=dracon diff=dracon merge=dracon
-*.go filter=dracon diff=dracon merge=dracon
-*.js filter=dracon diff=dracon merge=dracon
-*.json filter=dracon diff=dracon merge=dracon
-*.jsx filter=dracon diff=dracon merge=dracon
-*.key filter=dracon diff=dracon merge=dracon
-*.md filter=dracon diff=dracon merge=dracon
-*.pem filter=dracon diff=dracon merge=dracon
-*.py filter=dracon diff=dracon merge=dracon
-*.rs filter=dracon diff=dracon merge=dracon
-*.sh filter=dracon diff=dracon merge=dracon
-*.sql filter=dracon diff=dracon merge=dracon
-*.toml filter=dracon diff=dracon merge=dracon
-*.ts filter=dracon diff=dracon merge=dracon
-*.tsx filter=dracon diff=dracon merge=dracon
-*.yaml filter=dracon diff=dracon merge=dracon
-*.yml filter=dracon diff=dracon merge=dracon
-.cargo/config.toml filter=dracon diff=dracon merge=dracon
-.env filter=dracon diff=dracon merge=dracon
-.env.* filter=dracon diff=dracon merge=dracon
-config.json filter=dracon diff=dracon merge=dracon
+* filter=dracon
+*.png -filter
+*.PNG -filter
+*.jpg -filter
+*.JPG -filter
+*.jpeg -filter
+*.JPEG -filter
+*.gif -filter
+*.GIF -filter
+*.webp -filter
+*.WEBP -filter
+*.avif -filter
+*.bmp -filter
+*.tiff -filter
+*.tif -filter
+*.ico -filter
+*.ICO -filter
+*.heic -filter
+*.psd -filter
+*.mp4 -filter
+*.mov -filter
+*.mkv -filter
+*.webm -filter
+*.avi -filter
+*.mp3 -filter
+*.wav -filter
+*.flac -filter
+*.ogg -filter
+*.m4a -filter
+*.zip -filter
+*.gz -filter
+*.tgz -filter
+*.bz2 -filter
+*.xz -filter
+*.7z -filter
+*.tar -filter
+*.zst -filter
+*.pdf -filter
+*.wasm -filter
+*.so -filter
+*.dylib -filter
+*.dll -filter
+*.exe -filter
+*.bin -filter
+*.o -filter
+*.a -filter
+*.class -filter
+*.jar -filter
+*.pyc -filter
+*.sqlite -filter
+*.db -filter
+affiliate/.env.credentials.md filter=dracon diff=dracon merge=dracon
+apis/services/auth-api/.env.dev filter=dracon diff=dracon merge=dracon
+apis/services/billing-api/.env.dev filter=dracon diff=dracon merge=dracon
+apis/services/email-api/.env.dev filter=dracon diff=dracon merge=dracon
+config/creds.json filter=dracon diff=dracon merge=dracon
 config/licenses.json filter=dracon diff=dracon merge=dracon
 config/licenses.test.json filter=dracon diff=dracon merge=dracon
 config/services.json filter=dracon diff=dracon merge=dracon
 config/services.test.json filter=dracon diff=dracon merge=dracon
+conversation-*.html filter=dracon diff=dracon merge=dracon
+conversation-*.json filter=dracon diff=dracon merge=dracon
+conversation-*.md filter=dracon diff=dracon merge=dracon
+conversation-*.txt filter=dracon diff=dracon merge=dracon
+pi-session-*.html filter=dracon diff=dracon merge=dracon
+pi-session-*.json filter=dracon diff=dracon merge=dracon
+pi-session-*.md filter=dracon diff=dracon merge=dracon
+pi-session-*.txt filter=dracon diff=dracon merge=dracon
 plan/pages/snapshots/*.json filter=dracon diff=dracon merge=dracon
 plan/pages/templates/*.json filter=dracon diff=dracon merge=dracon
-secrets/** filter=dracon diff=dracon merge=dracon
+rollout-*.json filter=dracon diff=dracon merge=dracon
+rollout-*.jsonl filter=dracon diff=dracon merge=dracon
 test_secret.txt filter=dracon diff=dracon merge=dracon
+trajectory-*.html filter=dracon diff=dracon merge=dracon
+trajectory-*.json filter=dracon diff=dracon merge=dracon
+trajectory-*.md filter=dracon diff=dracon merge=dracon
+trajectory-*.txt filter=dracon diff=dracon merge=dracon
+web/ai-hub/src/lib/data/promo-codes.json filter=dracon diff=dracon merge=dracon
+web/ai-hub/src/lib/data/voucher-research.json filter=dracon diff=dracon merge=dracon
 *.dll -filter
 *.dylib -filter
 *.events.jsonl -filter
@@ -61,4 +109,5 @@ flake.lock -filter
 flake.nix -filter
 rust-toolchain.toml -filter
 rustfmt.toml -filter
+state/events/*.jsonl -filter
 # --- END DRACON MANAGED BLOCK ---
