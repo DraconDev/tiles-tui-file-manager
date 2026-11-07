@@ -983,10 +983,12 @@ pub fn log_debug(msg: &str) {
     let last_check =
         LAST_ROTATE_CHECK.swap(now_secs, std::sync::atomic::Ordering::Relaxed);
     if now_secs.saturating_sub(last_check) >= 1 {
-        let log_path = (*guard)
-            .as_ref()
-            .map(|w| w.get_ref().name().to_path_buf());
-        if let Some(path) = log_path {
+        let path = dirs::data_local_dir()
+            .unwrap_or_else(|| std::path::PathBuf::from("."))
+            .join("tiles")
+            .join("debug.log");
+        {
+            let path = path;
             if let Ok(meta) = std::fs::metadata(&path) {
                 if meta.len() > MAX_LOG_SIZE_BYTES {
                     drop(guard);
