@@ -365,6 +365,7 @@ impl FileState {
                 show_hidden,
                 search_filter: String::new(),
                 search_generation: 0,
+                preview_generation: 0,
                 history: vec![path],
                 history_index: 0,
                 sort_column: sort_col,
