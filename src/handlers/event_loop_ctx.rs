@@ -841,7 +841,6 @@ impl EventLoopCtx {
         };
 
         tokio::spawn(async move {
-            let path_str = path.to_string_lossy();
             // Do blocking file/image I/O on a blocking thread so a slow or
             // special file cannot stall a tokio worker.
             let content = tokio::task::spawn_blocking(move || {
