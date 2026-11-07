@@ -823,28 +823,30 @@ impl EventLoopCtx {
         let tx = self.event_tx.clone();
         let (current_dir, preview_limit_mb, remote_session, generation) = {
             let mut app_guard = self.app.lock();
+            let preview_limit_mb = app_guard.preview_max_mb.max(1);
             if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                 if let Some(fs) = pane.current_state_mut() {
                     fs.nav.preview_generation += 1;
                     (
                         fs.nav.current_path.clone(),
-                        app_guard.preview_max_mb.max(1),
+                        preview_limit_mb,
                         fs.nav.remote_session.clone(),
                         fs.nav.preview_generation,
                     )
                 } else {
-                    (PathBuf::from("."), app_guard.preview_max_mb.max(1), None, 0)
+                    (PathBuf::from("."), preview_limit_mb, None, 0)
                 }
             } else {
-                (PathBuf::from("."), app_guard.preview_max_mb.max(1), None, 0)
+                (PathBuf::from("."), preview_limit_mb, None, 0)
             }
         };
 
         tokio::spawn(async move {
             // Do blocking file/image I/O on a blocking thread so a slow or
             // special file cannot stall a tokio worker.
+            let path_block = path.clone();
             let content = tokio::task::spawn_blocking(move || {
-                load_preview_content(&path, &current_dir, &remote_session, preview_limit_mb as u64)
+                load_preview_content(&path_block, &current_dir, &remote_session, preview_limit_mb as u64)
             })
             .await
             .unwrap_or_else(|e| format!("Error loading preview: {}", e));
