@@ -128,10 +128,14 @@ pub async fn handle_refreshes(
                 if let Some(pane) = app_guard.panes.get_mut(pane_idx) {
                     if let Some(fs) = pane.current_state_mut() {
                         // RACE CONDITION CHECK: discard stale results
-                        if fs.nav.search_generation != start_generation {
+                        // (generation bump alone misses plain navigation, so also
+                        // require the directory to be unchanged since dispatch).
+                        if fs.nav.search_generation != start_generation
+                            || fs.nav.current_path != list_path
+                        {
                             crate::app::log_debug(&format!(
-                                "RefreshFiles: generation mismatch (pane={}), dropping stale results",
-                                pane_idx
+                                "RefreshFiles: stale results (pane={}, path={:?}), dropping",
+                                pane_idx, list_path
                             ));
                             return;
                         }
@@ -242,6 +246,9 @@ pub async fn handle_refreshes(
                                         *fs.view.table_state.offset_mut() = new_idx.saturating_sub(capacity - 1);
                                     }
                                 }
+                            } else if fs.list.files.is_empty() {
+                                fs.list.selection.selected = None;
+                                fs.view.table_state.select(None);
                             } else {
                                 let max_idx = fs.list.files.len().saturating_sub(1);
                                 fs.list.selection.selected = Some(max_idx);
