@@ -1052,6 +1052,4 @@ async fn finish_preview_request(
                 }
             }
             let _ = tx.send(AppEvent::Tick).await;
-        });
-    }
 }
