@@ -55,6 +55,7 @@ pub async fn handle_refreshes(
         };
 
         let list_path_for_filter = path.clone();
+        let apply_path = path.clone();
 
         let tx = event_tx.clone();
         let app_clone = app.clone();
@@ -131,11 +132,11 @@ pub async fn handle_refreshes(
                         // (generation bump alone misses plain navigation, so also
                         // require the directory to be unchanged since dispatch).
                         if fs.nav.search_generation != start_generation
-                            || fs.nav.current_path != list_path
+                            || fs.nav.current_path != apply_path
                         {
                             crate::app::log_debug(&format!(
                                 "RefreshFiles: stale results (pane={}, path={:?}), dropping",
-                                pane_idx, list_path
+                                pane_idx, apply_path
                             ));
                             return;
                         }

@@ -27,7 +27,7 @@ fn copy_text_to_clipboard_with(
     term: &str,
 ) -> Result<(), String> {
     let mut last_err = None;
-    for (cmd, args) in attempts {
+    for &(cmd, args) in attempts {
         match Command::new(cmd)
             .args(args)
             .stdin(Stdio::piped())
