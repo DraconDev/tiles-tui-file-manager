@@ -411,7 +411,7 @@ mod tests {
                 app.layout
                     .tab_bounds
                     .iter()
-                    .map(|(r, p, t)| format!("p{p}t{t}:x{r.x}w{r.width}"))
+                    .map(|(r, p, t)| format!("p{}t{}:x{}w{}", p, t, r.x, r.width))
                     .collect::<Vec<_>>()
                     .join(" ")
             );
