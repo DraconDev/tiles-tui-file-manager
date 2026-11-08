@@ -182,7 +182,9 @@ fn handle_global_shortcuts(
             }
             Some(true)
         }
-        KeyCode::Char('t') | KeyCode::Char('T') if has_control => {
+        KeyCode::Char('t') | KeyCode::Char('T')
+            if has_control && !key.modifiers.contains(KeyModifiers::SHIFT) =>
+        {
             if let Some(pane) = app.panes.get_mut(app.focused_pane_index) {
                 if let Some(fs) = pane.current_state() {
                     let new_fs = fs.clone();
