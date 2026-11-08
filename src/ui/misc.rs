@@ -266,7 +266,7 @@ pub fn draw_drag_ghost(f: &mut Frame, app: &App) {
         let text = format!(" {} ", display_name);
         // Display width, not byte length: CJK/emoji filenames would size
         // the ghost to their UTF-8 length (3-4 cells per character).
-        let width = text.len() as u16; // MUTATION CHECK
+        let width = unicode_width::UnicodeWidthStr::width(text.as_str()) as u16; // restored
 
         // Draw slightly offset from cursor
         let x = col
@@ -336,10 +336,12 @@ mod tests {
     #[test]
     fn drag_ghost_width_uses_display_columns() {
         // 9 CJK chars: display width 18 (+2 padding = 20 cells) vs 27 bytes
-        // (+2 = 29). The ghost box must be sized by display columns.
+        // (+2 = 29). The ghost box must be sized by display columns: with the
+        // cursor near the right edge, byte length would clamp x further left
+        // (60 vs 51 in an 80-wide buffer).
         let mut app = App::new();
         app.drag.drag_source = Some(std::path::PathBuf::from("/tmp/日本語ドキュメント"));
-        app.core.mouse_pos = (0, 0);
+        app.core.mouse_pos = (78, 0);
         let backend = TestBackend::new(80, 10);
         let mut terminal = ratatui::Terminal::new(backend).unwrap();
         terminal
@@ -365,6 +367,8 @@ mod tests {
             }
         }
         let first = first.expect("ghost must render");
+        // x = min(78 + 2, 80 - 20) = 60 with display width; byte length gives 51.
+        assert_eq!(first, 60, "ghost must be clamped by display width, not byte length");
         assert_eq!(
             last - first + 1,
             20,
