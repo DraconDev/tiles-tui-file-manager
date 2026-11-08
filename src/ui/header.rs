@@ -367,33 +367,54 @@ mod tests {
     /// Probe: dump what the header emits for Editor-view tabs on a narrow width.
     #[test]
     fn probe_editor_header_tab_bounds() {
-        let mut app = App::new();
-        app.core.current_view = CurrentView::Editor;
-        app.sidebar.show_sidebar = false;
-        if let Some(pane) = app.panes.first_mut() {
-            pane.tabs.clear();
-            for name in [
-                "/home/user/documents/very-long-directory-name-for-the-first-tab",
-                "/home/user/second-tab",
-                "/home/user/third",
-            ] {
-                pane.tabs.push(crate::state::FileState::new(
-                    std::path::PathBuf::from(name),
-                    None,
-                    false,
-                    app.layout.single_columns.clone(),
-                    FileColumn::Name,
-                    true,
-                ));
+        for (width, panes, sidebar) in [
+            (40, 1, false),
+            (60, 2, true),
+            (120, 2, true),
+            (200, 3, true),
+        ] {
+            let mut app = App::new();
+            app.core.current_view = CurrentView::Editor;
+            app.sidebar.show_sidebar = sidebar;
+            // Force pane count by duplicating panes.
+            while app.panes.len() < panes {
+                let p = app.panes[0].clone();
+                app.panes.push(p);
             }
-        }
-        let backend = TestBackend::new(40, 1);
-        let mut terminal = ratatui::Terminal::new(backend).unwrap();
-        terminal
-            .draw(|f| draw_global_header(f, f.area(), 0, &mut app))
-            .unwrap();
-        for (rect, p, t) in &app.layout.tab_bounds {
-            println!("PROBE tab p={} t={} rect x={} w={}", p, t, rect.x, rect.width);
+            for pane in &mut app.panes {
+                pane.tabs.clear();
+                for name in [
+                    "/home/user/Documents-Long-Name-Alpha",
+                    "/home/user/src-Beta",
+                    "/home/user/Gamma",
+                ] {
+                    pane.tabs.push(crate::state::FileState::new(
+                        std::path::PathBuf::from(name),
+                        None,
+                        false,
+                        app.layout.single_columns.clone(),
+                        FileColumn::Name,
+                        true,
+                    ));
+                }
+            }
+            let backend = TestBackend::new(width, 1);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal
+                .draw(|f| draw_global_header(f, f.area(), 0, &mut app))
+                .unwrap();
+            println!(
+                "PROBE w={} panes={} sidebar={} -> {}",
+                width,
+                panes,
+                sidebar,
+                app.layout
+                    .tab_bounds
+                    .iter()
+                    .map(|(r, p, t)| format!("p{p}t{t}:x{r.x}w{r.width}"))
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            );
         }
     }
 }
