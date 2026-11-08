@@ -40,7 +40,12 @@ fn copy_text_to_clipboard_with(
                     use std::io::Write;
                     if stdin.write_all(text.as_bytes()).is_err() {
                         last_err = Some(format!("{} rejected clipboard data", cmd));
+                        // Release any reader blocked on the pipe, then kill and
+                        // reap the child — killing without wait() leaves a
+                        // zombie (one per failed attempt).
+                        drop(stdin);
                         let _ = child.kill();
+                        let _ = child.wait();
                         continue;
                     }
                     // Drop the stdin handle so the child sees EOF before we wait on it;
