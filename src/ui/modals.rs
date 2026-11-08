@@ -121,7 +121,7 @@ pub fn draw_command_palette(f: &mut Frame, app: &mut App) {
         .collect();
     f.render_widget(
         List::new(items),
-        Rect::new(inner.x, inner.y + 1, inner.width, inner.height - 1),
+        Rect::new(inner.x, inner.y + 1, inner.width, inner.height.saturating_sub(1)),
     );
 }
 

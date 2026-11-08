@@ -126,7 +126,7 @@ pub fn draw_pane_editor(
 
                     let footer_height = 1u16;
                     let editor_area = Rect::new(inner.x, inner.y, inner.width, inner.height.saturating_sub(footer_height));
-                    let footer_area = Rect::new(inner.x, inner.y + inner.height - footer_height, inner.width, footer_height);
+                    let footer_area = Rect::new(inner.x, inner.y.saturating_add(inner.height.saturating_sub(footer_height)), inner.width, footer_height);
 
                     f.render_widget(&*editor, editor_area);
 
