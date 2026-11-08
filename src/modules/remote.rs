@@ -404,7 +404,7 @@ mod tests {
         let cmd = build_remote_terminal_command(&remote, Path::new("/tmp/my dir"), Some("ls -la"));
         assert!(cmd.starts_with("ssh -p 2222 "));
         assert!(cmd.contains(" -i '/home/dracon/.ssh/id_ed25519' "));
-        assert!(cmd.contains(" dracon@example.com "));
+        assert!(cmd.contains("'dracon@example.com'"));
         assert!(cmd.contains("/tmp/my dir"));
         assert!(cmd.contains("ls -la"));
     }
@@ -417,7 +417,7 @@ mod tests {
         };
         let cmd = build_remote_terminal_command(&remote, Path::new("/"), None);
         assert!(cmd.contains("ssh -p 2222 "));
-        assert!(cmd.contains(" dracon@example.com "));
+        assert!(cmd.contains("'dracon@example.com'"));
         assert!(cmd.contains("exec $SHELL -l"));
     }
 
@@ -430,6 +430,23 @@ mod tests {
         assert_eq!(parsed.date, "2 days ago");
         assert_eq!(parsed.message, "feat: add parser");
         assert_eq!(parsed.decorations, "(HEAD -> main)");
+    }
+
+    #[test]
+    fn build_remote_terminal_command_rejects_unsafe_destination() {
+        let mut remote = sample_remote();
+        remote.host = "-oProxyCommand=touch /tmp/pwned".to_string();
+        let cmd = build_remote_terminal_command(&remote, Path::new("/"), None);
+        assert!(!cmd.starts_with("ssh"), "got: {}", cmd);
+        assert!(cmd.contains("Invalid SSH destination"));
+    }
+
+    #[test]
+    fn build_remote_terminal_command_rejects_metacharacters() {
+        let mut remote = sample_remote();
+        remote.user = "user; rm -rf /".to_string();
+        let cmd = build_remote_terminal_command(&remote, Path::new("/"), None);
+        assert!(!cmd.starts_with("ssh"), "got: {}", cmd);
     }
 
     #[test]
