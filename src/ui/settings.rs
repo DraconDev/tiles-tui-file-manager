@@ -849,4 +849,54 @@ mod tests {
             "persisted offset must match the rendered window for mouse mapping"
         );
     }
+
+    #[test]
+    fn tabs_keeps_selected_row_visible_on_small_terminal() {
+        use std::path::PathBuf;
+
+        // 8 tabs in one pane: 10 table rows (pane header + 8 tab rows + spacer).
+        // A 5-row-high buffer fits 3 body rows (border + header eat 2), so
+        // selecting the last tab must scroll it into view.
+        let mut app = App::new();
+        app.settings.settings_section = SettingsSection::Tabs;
+        app.settings.settings_index = 7;
+        if let Some(pane) = app.panes.first_mut() {
+            pane.tabs.clear();
+            for i in 0..8 {
+                let cwd = PathBuf::from(format!("/tmp/tabs-test-{}", i));
+                pane.tabs.push(crate::state::FileState::new(
+                    cwd,
+                    None,
+                    false,
+                    app.layout.single_columns.clone(),
+                    crate::state::FileColumn::Name,
+                    true,
+                ));
+            }
+        }
+
+        let backend = TestBackend::new(60, 5);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_tab_settings(f, f.area(), &mut app))
+            .unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(
+            text.contains("/tmp/tabs-test-7"),
+            "selected last tab row should be rendered on a small terminal"
+        );
+        assert!(
+            !text.contains("/tmp/tabs-test-0"),
+            "scrolled-off first tab row should not be rendered"
+        );
+        assert_eq!(
+            app.settings.settings_scroll, 6,
+            "persisted offset must match the rendered window"
+        );
+    }
 }
