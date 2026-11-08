@@ -138,7 +138,7 @@ pub fn submit_path_input(app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> Re
 
 /// Resolve a user-typed path string to an absolute PathBuf.
 /// Handles empty/whitespace, ~ expansion, absolute paths, and relative paths.
-fn resolve_path_input(input: &str, current_path: &std::path::Path, remote: bool) -> PathBuf {
+pub fn resolve_path_input(input: &str, current_path: &std::path::Path, remote: bool) -> PathBuf {
     let trimmed = input.trim();
     if trimmed.is_empty() {
         return current_path.to_path_buf();
