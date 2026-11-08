@@ -145,97 +145,43 @@ pub fn handle_event(
 }
 
 pub fn prime_visible_tabs(app: &mut App) {
+    let expanded = app.layout.expanded_folders.clone();
     for pane in &mut app.panes {
         if let Some(fs) = pane.current_state_mut() {
-            prime_local_file_state(fs);
+            prime_local_file_state(fs, &expanded);
         }
     }
 }
 
-pub fn prime_local_file_state(fs: &mut crate::state::FileState) {
+pub fn prime_local_file_state(
+    fs: &mut crate::state::FileState,
+    expanded: &HashSet<PathBuf>,
+) {
     if fs.nav.remote_session.is_some() {
         return;
     }
 
-    let (files, mut metadata) = crate::modules::files::read_dir_with_metadata(&fs.nav.current_path);
-    let mut filtered_files: Vec<_> = files
-        .into_iter()
-        .filter(|p| {
-            let is_hidden = p
-                .file_name()
-                .and_then(|n| n.to_str())
-                .map(|s| s.starts_with('.'))
-                .unwrap_or(false);
-            fs.nav.show_hidden || !is_hidden
-        })
-        .collect();
+    // Use the same tree walk as the async refresh path so startup renders
+    // expanded folders with correct indentation (tree_file_depths) instead
+    // of depth-0 rows until the first refresh lands.
+    let mut paired: Vec<(PathBuf, u16)> = Vec::new();
+    crate::tree_walk::walk_tree(
+        &fs.nav.current_path,
+        0,
+        MAX_TREE_DEPTH,
+        expanded,
+        fs.nav.show_hidden,
+        &mut paired,
+        fs.nav.sort_column,
+        fs.nav.sort_ascending,
+    );
+    let tree_paths: Vec<PathBuf> = paired.iter().map(|(p, _)| p.clone()).collect();
+    let (_, metadata) = crate::modules::files::read_dir_recursive_meta(&tree_paths);
 
-    filtered_files.sort_by(|a, b| {
-        let meta_a = metadata.get(a);
-        let meta_b = metadata.get(b);
-        let is_dir_a = meta_a.map(|m| m.is_dir).unwrap_or(false);
-        let is_dir_b = meta_b.map(|m| m.is_dir).unwrap_or(false);
-        if is_dir_a != is_dir_b {
-            return if is_dir_a {
-                std::cmp::Ordering::Less
-            } else {
-                std::cmp::Ordering::Greater
-            };
-        }
-
-        let ord = match fs.nav.sort_column {
-            crate::app::FileColumn::Name => {
-                let na = a
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-                    .to_lowercase();
-                let nb = b
-                    .file_name()
-                    .and_then(|s| s.to_str())
-                    .unwrap_or("")
-                    .to_lowercase();
-                na.cmp(&nb)
-            }
-            crate::app::FileColumn::Size => {
-                let sa = meta_a.map(|m| m.size).unwrap_or(0);
-                let sb = meta_b.map(|m| m.size).unwrap_or(0);
-                sa.cmp(&sb)
-            }
-            crate::app::FileColumn::Modified => {
-                let da = meta_a
-                    .map(|m| m.modified)
-                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                let db = meta_b
-                    .map(|m| m.modified)
-                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                da.cmp(&db)
-            }
-            crate::app::FileColumn::Created => {
-                let da = meta_a
-                    .map(|m| m.created)
-                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                let db = meta_b
-                    .map(|m| m.created)
-                    .unwrap_or(std::time::SystemTime::UNIX_EPOCH);
-                da.cmp(&db)
-            }
-            crate::app::FileColumn::Permissions => {
-                let pa = meta_a.map(|m| m.permissions).unwrap_or(0);
-                let pb = meta_b.map(|m| m.permissions).unwrap_or(0);
-                pa.cmp(&pb)
-            }
-        };
-        if fs.nav.sort_ascending {
-            ord
-        } else {
-            ord.reverse()
-        }
-    });
-
-    fs.list.local_count = filtered_files.len();
-    fs.list.files = filtered_files;
-    fs.list.metadata = std::mem::take(&mut metadata);
+    fs.list.local_count = paired.len();
+    fs.list.tree_file_depths = paired.iter().map(|(_, d)| *d).collect();
+    fs.list.files = tree_paths;
+    fs.list.metadata = metadata;
     if fs.list.selection.selected.is_none() && !fs.list.files.is_empty() {
         fs.list.selection.selected = Some(0);
         fs.view.table_state.select(Some(0));

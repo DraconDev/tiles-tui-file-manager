@@ -416,6 +416,51 @@ mod tests {
             .list.files
             .iter()
             .any(|p| p.file_name().and_then(|n| n.to_str()) == Some("example.txt")));
+        assert_eq!(
+            fs.list.tree_file_depths.len(),
+            fs.list.files.len(),
+            "startup prime must populate tree_file_depths parallel to files"
+        );
+
+        let _ = std::fs::remove_dir_all(&tmp);
+    }
+
+    #[test]
+    fn startup_prime_indents_expanded_folder_children() {
+        let tmp = std::env::temp_dir().join(format!("tiles-startup-prime-depth-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&tmp);
+        let subdir = tmp.join("sub");
+        std::fs::create_dir_all(&subdir).unwrap();
+        std::fs::write(subdir.join("child.txt"), "ok").unwrap();
+        std::fs::write(tmp.join("example.txt"), "ok").unwrap();
+
+        let mut app = App::new();
+        if let Some(fs) = app.current_file_state_mut() {
+            fs.nav.current_path = tmp.clone();
+            fs.list.files.clear();
+            fs.list.metadata.clear();
+            fs.list.selection.selected = None;
+        }
+        app.layout.expanded_folders.insert(subdir.clone());
+
+        setup::prime_visible_tabs(&mut app);
+
+        let fs = app.current_file_state().unwrap();
+        assert_eq!(
+            fs.list.tree_file_depths.len(),
+            fs.list.files.len(),
+            "startup prime must populate tree_file_depths parallel to files"
+        );
+        let child_idx = fs
+            .list
+            .files
+            .iter()
+            .position(|p| p.file_name().and_then(|n| n.to_str()) == Some("child.txt"))
+            .expect("startup prime should include expanded folder children");
+        assert_eq!(
+            fs.list.tree_file_depths[child_idx], 1,
+            "expanded folder children should render at depth 1 after startup prime"
+        );
 
         let _ = std::fs::remove_dir_all(&tmp);
     }
