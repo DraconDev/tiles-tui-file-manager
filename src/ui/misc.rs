@@ -266,7 +266,7 @@ pub fn draw_drag_ghost(f: &mut Frame, app: &App) {
         let text = format!(" {} ", display_name);
         // Display width, not byte length: CJK/emoji filenames would size
         // the ghost to their UTF-8 length (3-4 cells per character).
-        let width = text.len() as u16; // MUTATION CHECK
+        let width = unicode_width::UnicodeWidthStr::width(text.as_str()) as u16;
 
         // Draw slightly offset from cursor
         let x = col
