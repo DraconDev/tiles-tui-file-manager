@@ -254,7 +254,7 @@ pub fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
     f.render_widget(table, area);
 }
 
-pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
+pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &mut App) {
     let chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([Constraint::Length(3), Constraint::Min(0)])
@@ -304,8 +304,12 @@ pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
             ListItem::new(format!("{}{}", prefix, label)).style(style)
         })
         .collect();
+    let selected = (app.settings.settings_section == SettingsSection::Columns
+        && app.settings.settings_index < options.len())
+        .then_some(app.settings.settings_index);
+    let window = scroll_settings_window(app, items.len(), chunks[1].height as usize, selected);
     f.render_widget(
-        List::new(items).block(
+        List::new(items[window].to_vec()).block(
             Block::default()
                 .title(" Visible Columns ")
                 .borders(Borders::NONE),
@@ -314,7 +318,7 @@ pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &App) {
     );
 }
 
-pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
+pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &mut App) {
     let mut rows = Vec::new();
     let mut tab_counter = 0;
 
@@ -393,7 +397,7 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(table, area);
 }
 
-pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
+pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &mut App) {
     struct GeneralOption {
         label: &'static str,
         status: String,
@@ -609,7 +613,7 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &App) {
     f.render_widget(table, area);
 }
 
-pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &App) {
+pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &mut App) {
     let style = theme::style_settings();
     const STYLE_PRESET_ROWS: usize = 14;
     const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_ROWS;
