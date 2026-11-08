@@ -16,7 +16,12 @@ Status legend: `PASS` | `FAIL` | `FIXED` | `N/A`
 
 | ID | Flow | Environment | Steps | Expected | Result |
 |----|------|-------------|-------|----------|--------|
-| T1 | Konsole tab spawn | Konsole + NixOS | Right-click → Open Terminal Here | New tab in existing Konsole window | | NOT RUN | T2 | Konsole run script | Konsole + NixOS | Select .sh file, Ctrl+R | Script runs in new Konsole tab | | NOT RUN | T3 | Kitty tab spawn | Kitty | Right-click → Open Terminal Here | New tab via `kitty @ launch` | | NOT RUN | T4 | Wezterm tab spawn | Wezterm | Right-click → Open Terminal Here | New tab via `wezterm cli spawn` | | NOT RUN | T5 | Generic fallback | gnome-terminal | Right-click → Open Terminal Here | `--tab` flag used | | NOT RUN | T6 | cargo install | Clean machine | `cargo install tiles-tui-file-manager` | Binary `tiles` installed | PASS |
+| T1 | Konsole tab spawn | Konsole + NixOS | Right-click → Open Terminal Here | New tab in existing Konsole window | NOT RUN |
+| T2 | Konsole run script | Konsole + NixOS | Select .sh file, Ctrl+R | Script runs in new Konsole tab | NOT RUN |
+| T3 | Kitty tab spawn | Kitty | Right-click → Open Terminal Here | New tab via `kitty @ launch` | NOT RUN |
+| T4 | Wezterm tab spawn | Wezterm | Right-click → Open Terminal Here | New tab via `wezterm cli spawn` | NOT RUN |
+| T5 | Generic fallback | gnome-terminal | Right-click → Open Terminal Here | `--tab` flag used | NOT RUN |
+| T6 | cargo install | Clean machine | `cargo install tiles-tui-file-manager` | Binary `tiles` installed | PASS |
 | T7 | All deps from crates.io | Any | `cargo build` with crates.io Cargo.toml | No git deps needed | PASS |
 | T8 | Unit tests | Any | `cargo test` | 52 tests pass | PASS |
 
@@ -77,9 +82,8 @@ Status legend: `PASS` | `FAIL` | `FIXED` | `N/A`
 - [x] Patch arithmetic/refresh safety issues
 - [x] Re-run build/tests and update matrix
 
-> Status note (2026-11-08 audit): rows marked NOT RUN were never executed and claim no coverage.
-
 ## Final Results
+> **Status note (2026-11-08 audit): rows marked NOT RUN were never executed and claim no coverage.**
 
 Code-level verification completed on 2026-02-08:
 
@@ -117,11 +121,40 @@ Manual interactive validation is still recommended for UI feel/regression checks
 
 | ID | Flow | Mode | Steps | Expected | Result |
 |----|------|------|-------|----------|--------|
-| EC1 | Editor context menu | Single pane | Right-click in editor area | Menu appears with Edit actions | | NOT RUN | EC2 | Editor context menu | Read-only | Right-click in Viewer/git-diff | Menu shows only Copy, Select All, Run | | NOT RUN | EC3 | Copy round-trip | Single pane | Select text, right-click Copy, click elsewhere, right-click Paste | Text pastes correctly | | NOT RUN | EC4 | Cut round-trip | Single pane | Select text, right-click Cut, right-click Paste | Text moves correctly | | NOT RUN | EC5 | Modified indicator | Single pane | Edit a file, check tab | Amber dot appears on tab | | NOT RUN | EC6 | Modified indicator | Split pane | Edit file in pane 1, check pane 2 tabs | Correct tab shows dot | | NOT RUN | EC7 | Run script | File browser | Select `.sh` file, Ctrl+R | Terminal opens and runs script | | NOT RUN | EC8 | Run Cargo | Pane editor | Open `src/main.rs`, Ctrl+R | Terminal opens with `cargo run` | | NOT RUN | EC9 | Editor footer | Pane editor | Open file, move cursor | Footer shows Ln X, Col Y, language, modified dot | | NOT RUN | EC10 | Save-As path | Pane editor | Save-As to new file | Tab and title update to new filename | | NOT RUN | EC11 | Auto-open new file | File browser | Navigate to dir, Ctrl+N "test.txt", Enter | New file opens in editor | | NOT RUN | EC12 | Ctrl+K kill line | Pane editor | Position cursor, Ctrl+K | Text after cursor on line is deleted | | NOT RUN | EC13 | Alt+↑ move line | Pane editor | Position cursor on line, Alt+↑ | Line moves up, cursor follows | | NOT RUN | EC14 | Middle-click paste | Pane editor | Select text externally, middle-click | Text inserts at cursor | | NOT RUN | EC15 | Tab limit | Pane editor | Open 9 tabs | Only 8 tabs allowed, 9th rejected | NOT RUN |
+| EC1 | Editor context menu | Single pane | Right-click in editor area | Menu appears with Edit actions | NOT RUN |
+| EC2 | Editor context menu | Read-only | Right-click in Viewer/git-diff | Menu shows only Copy, Select All, Run | NOT RUN |
+| EC3 | Copy round-trip | Single pane | Select text, right-click Copy, click elsewhere, right-click Paste | Text pastes correctly | NOT RUN |
+| EC4 | Cut round-trip | Single pane | Select text, right-click Cut, right-click Paste | Text moves correctly | NOT RUN |
+| EC5 | Modified indicator | Single pane | Edit a file, check tab | Amber dot appears on tab | NOT RUN |
+| EC6 | Modified indicator | Split pane | Edit file in pane 1, check pane 2 tabs | Correct tab shows dot | NOT RUN |
+| EC7 | Run script | File browser | Select `.sh` file, Ctrl+R | Terminal opens and runs script | NOT RUN |
+| EC8 | Run Cargo | Pane editor | Open `src/main.rs`, Ctrl+R | Terminal opens with `cargo run` | NOT RUN |
+| EC9 | Editor footer | Pane editor | Open file, move cursor | Footer shows Ln X, Col Y, language, modified dot | NOT RUN |
+| EC10 | Save-As path | Pane editor | Save-As to new file | Tab and title update to new filename | NOT RUN |
+| EC11 | Auto-open new file | File browser | Navigate to dir, Ctrl+N "test.txt", Enter | New file opens in editor | NOT RUN |
+| EC12 | Ctrl+K kill line | Pane editor | Position cursor, Ctrl+K | Text after cursor on line is deleted | NOT RUN |
+| EC13 | Alt+↑ move line | Pane editor | Position cursor on line, Alt+↑ | Line moves up, cursor follows | NOT RUN |
+| EC14 | Middle-click paste | Pane editor | Select text externally, middle-click | Text inserts at cursor | NOT RUN |
+| EC15 | Tab limit | Pane editor | Open 9 tabs | Only 8 tabs allowed, 9th rejected | NOT RUN |
 
 ## Final Results
+> **Status note (2026-11-08 audit): rows marked NOT RUN were never executed and claim no coverage.**
 
 | ID | Status | Notes |
 |----|--------|-------|
-| EC1 | | | NOT RUN | EC2 | | | NOT RUN | EC3 | | | NOT RUN | EC4 | | | NOT RUN | EC5 | | | NOT RUN | EC6 | | | NOT RUN | EC7 | | | NOT RUN | EC8 | | | NOT RUN | EC9 | | | NOT RUN | EC10 | | | NOT RUN | EC11 | | | NOT RUN | EC12 | | | NOT RUN | EC13 | | | NOT RUN | EC14 | | | NOT RUN | EC15 | | NOT RUN |
+| EC1 | | |
+| EC2 | | |
+| EC3 | | |
+| EC4 | | |
+| EC5 | | |
+| EC6 | | |
+| EC7 | | |
+| EC8 | | |
+| EC9 | | |
+| EC10 | | |
+| EC11 | | |
+| EC12 | | |
+| EC13 | | |
+| EC14 | | |
+| EC15 | | |
 
