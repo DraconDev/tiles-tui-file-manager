@@ -663,14 +663,17 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         .unwrap_or_default(),
                     SidebarTarget::Header(name) => name.clone(),
                 };
-                if !hint.is_empty() && hint != title_text {
+                // Only draw the hint when there is at least one list row
+                // above the reserved row; below height 2 there is no list
+                // to hint about and drawing would underflow/overwrite.
+                if !hint.is_empty() && hint != title_text && list_inner.height > 1 {
                     let text =
                         truncate_to_width(&hint, list_inner.width.saturating_sub(1) as usize, "..");
                     f.render_widget(
                         Paragraph::new(Span::styled(text, Style::default().fg(theme::muted()))),
                         Rect::new(
                             list_inner.x,
-                            list_inner.y + list_inner.height - 1,
+                            list_inner.y + list_inner.height.saturating_sub(1),
                             list_inner.width,
                             1,
                         ),
@@ -1032,6 +1035,24 @@ mod tests {
             text.contains("FOLDERS"),
             "selected header hint should still render on the reserved row"
         );
+
+        // Degenerate heights: a 2-row area leaves zero inner height for the
+        // list (3 rows leaves one) — the hint must neither panic nor draw
+        // outside the block.
+        for height in [2, 3] {
+            let backend = TestBackend::new(30, height);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal.draw(|f| draw_sidebar(f, f.area(), &mut app)).unwrap();
+            let buffer = terminal.backend().buffer().clone();
+            let mut text = String::new();
+            for cell in buffer.content.iter() {
+                text.push_str(cell.symbol());
+            }
+            assert!(
+                text.contains("FOLDERS") || height == 2,
+                "degenerate-height sidebar must render without panic (height={height})"
+            );
+        }
         let _ = std::fs::remove_dir_all(&home);
     }
 }
