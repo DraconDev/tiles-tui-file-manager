@@ -321,7 +321,7 @@ pub fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
     f.render_widget(table, chunks[1]);
 }
 
-pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
+pub fn draw_open_with_modal(f: &mut Frame, app: &mut App, path: &std::path::Path) {
     let area = centered_rect(60, 60, f.area()); // Increased height
     f.render_widget(Clear, area);
     let block = Block::default()
@@ -367,14 +367,35 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         suggestions.retain(|s| s.to_lowercase().contains(&query));
     }
 
+    let list_block = Block::default()
+        .title(if app.core.input.value.is_empty() {
+            " Suggestions (Click to Launch) "
+        } else {
+            " Filtered Suggestions (Click to Launch) "
+        })
+        .borders(Borders::TOP)
+        .border_style(Style::default().fg(theme::muted()));
+    // Keep the selected suggestion in view on small terminals, sharing the
+    // persisted offset so hover styling lines up with the rendered rows.
+    let visible = list_block.inner(chunks[2]).height as usize;
+    let selected = (!suggestions.is_empty())
+        .then_some(app.settings.open_with_index.min(suggestions.len() - 1));
+    let start = crate::ui::settings::clamp_scroll(
+        app.settings.open_with_scroll as usize,
+        selected,
+        suggestions.len(),
+        visible,
+    );
+    app.settings.open_with_scroll = start as u16;
+    let inner = list_block.inner(chunks[2]);
     let (mx, my) = app.core.mouse_pos;
-    let list_items: Vec<ListItem> = suggestions
-        .iter()
-        .enumerate()
-        .map(|(i, s)| {
-            let item_y = chunks[2].y + i as u16;
+    let list_items: Vec<ListItem> = (start..(start + visible).min(suggestions.len()))
+        .map(|i| {
+            let s = &suggestions[i];
+            // True rendered row: the list body starts inside the top border.
+            let item_y = inner.y + (i - start) as u16;
             let is_mouse_hovered =
-                mx >= chunks[2].x && mx < chunks[2].x + chunks[2].width && my == item_y;
+                mx >= inner.x && mx < inner.x + inner.width && my == item_y;
             let is_selected = i == app.settings.open_with_index;
 
             let style = if is_mouse_hovered || is_selected {
@@ -390,28 +411,5 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         })
         .collect();
 
-    let title = if app.core.input.value.is_empty() {
-        " Suggestions (Click to Launch) "
-    } else {
-        " Filtered Suggestions (Click to Launch) "
-    };
-
-    let list = List::new(list_items)
-        .block(
-            Block::default()
-                .title(title)
-                .borders(Borders::TOP)
-                .border_style(Style::default().fg(theme::muted())),
-        )
-        // Selection is styled manually per-item; the state only drives
-        // scrolling so the selected row stays visible on small terminals.
-        .highlight_style(Style::default())
-        .highlight_spacing(HighlightSpacing::Never);
-    let mut state = ListState::default();
-    if !suggestions.is_empty() {
-        state.select(Some(
-            app.settings.open_with_index.min(suggestions.len() - 1),
-        ));
-    }
-    f.render_stateful_widget(list, chunks[2], &mut state);
+    f.render_widget(List::new(list_items).block(list_block), chunks[2]);
 }
