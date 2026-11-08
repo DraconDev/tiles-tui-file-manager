@@ -89,6 +89,13 @@ pub struct ThemeStyle {
     pub stat_progress_bg: RgbColor,
 }
 
+impl Default for ThemeStyle {
+    /// Default theme — Legacy Red (the original Tiles identity).
+    fn default() -> Self {
+        ThemeStyle::preset_legacy_red()
+    }
+}
+
 impl ThemeStyle {
     pub fn preset_warm() -> Self {
         Self {
@@ -351,10 +358,6 @@ impl ThemeStyle {
         }
     }
 
-    /// Default theme — Legacy Red (the original Tiles identity).
-    pub fn default() -> Self {
-        ThemeStyle::preset_legacy_red()
-    }
 
     pub fn preset_nord() -> Self {
         Self {

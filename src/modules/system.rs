@@ -11,6 +11,12 @@ pub struct SystemModule {
     monitor: SystemSnapshotProvider,
 }
 
+impl Default for SystemModule {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl SystemModule {
     pub fn new() -> Self {
         Self {

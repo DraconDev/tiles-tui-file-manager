@@ -94,6 +94,12 @@ pub struct App {
 
 
 
+impl Default for App {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl App {
 
     /// Create a new App instance with default state.
