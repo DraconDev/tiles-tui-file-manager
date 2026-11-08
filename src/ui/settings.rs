@@ -757,3 +757,88 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &mut App) {
 
     f.render_widget(table, area);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::backend::TestBackend;
+
+    fn settings_app(index: usize) -> App {
+        let mut app = App::new();
+        app.settings.settings_section = SettingsSection::General;
+        app.settings.settings_index = index;
+        app
+    }
+
+    #[test]
+    fn scroll_window_scrolls_down_to_selected_row() {
+        let mut app = settings_app(14);
+        let window = scroll_settings_window(&mut app, 15, 6, Some(14));
+        assert_eq!(window.start, 9, "selected row 14 in a 6-row view starts at 9");
+        assert_eq!(app.settings.settings_scroll, 9, "persisted offset must match the rendered window");
+    }
+
+    #[test]
+    fn scroll_window_scrolls_up_to_selected_row() {
+        let mut app = settings_app(2);
+        app.settings.settings_scroll = 9;
+        let window = scroll_settings_window(&mut app, 15, 6, Some(2));
+        assert_eq!(window.start, 2);
+    }
+
+    #[test]
+    fn scroll_window_keeps_selected_row_when_inside_view() {
+        let mut app = settings_app(4);
+        app.settings.settings_scroll = 2;
+        let window = scroll_settings_window(&mut app, 15, 6, Some(4));
+        assert_eq!(window.start, 2, "no scrolling while the selection is visible");
+    }
+
+    #[test]
+    fn scroll_window_clamps_for_small_content() {
+        let mut app = settings_app(0);
+        app.settings.settings_scroll = 8;
+        let window = scroll_settings_window(&mut app, 3, 10, Some(0));
+        assert_eq!(window, 0..3);
+        assert_eq!(app.settings.settings_scroll, 0);
+    }
+
+    #[test]
+    fn scroll_window_without_selection_only_clamps() {
+        let mut app = settings_app(0);
+        app.settings.settings_scroll = 9;
+        let window = scroll_settings_window(&mut app, 15, 6, None);
+        assert_eq!(window.start, 9);
+    }
+
+    #[test]
+    fn general_settings_keeps_selected_row_visible_on_small_terminal() {
+        // 4-row-high buffer: only 3 option rows fit below the block border.
+        // Row 14 (Reset All Settings) must still render; row 0 (Version)
+        // scrolls off the top.
+        let mut app = settings_app(14);
+        let backend = TestBackend::new(60, 4);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_general_settings(f, f.area(), &mut app))
+            .unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(
+            text.contains("Reset All Settings"),
+            "selected last row should be rendered on a small terminal"
+        );
+        assert!(
+            !text.contains("Version"),
+            "scrolled-off first row should not be rendered"
+        );
+        assert_eq!(
+            app.settings.settings_scroll, 12,
+            "persisted offset must match the rendered window for mouse mapping"
+        );
+    }
+}
