@@ -5,7 +5,7 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::LazyLock;
 use parking_lot::Mutex;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 static LAST_SAVE: LazyLock<Mutex<Option<(Instant, String)>>> = LazyLock::new(|| Mutex::new(None));
 
