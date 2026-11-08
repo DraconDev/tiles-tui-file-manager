@@ -1021,6 +1021,8 @@ mod tests {
         for cell in buffer.content.iter() {
             text.push_str(cell.symbol());
         }
+        println!("DBG text=[{}]", text);
+        println!("DBG bounds={:?}", app.sidebar.sidebar_bounds);
         assert!(
             text.contains("marker-delta-4"),
             "fourth item must be visible: the hint must not overwrite the last visible row"
