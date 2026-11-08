@@ -124,7 +124,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(160, 118, 255),   // Purple
             accent_secondary: RgbColor::new(116, 184, 255),  // Ice blue
             selection_bg: RgbColor::new(104, 80, 150),      // Deep violet
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(160, 118, 255),    // Purple
             border_inactive: RgbColor::new(82, 86, 104),    // Cool slate
             header_fg: RgbColor::new(198, 164, 255),        // Soft violet
@@ -153,7 +153,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(126, 196, 102),   // Moss green
             accent_secondary: RgbColor::new(86, 168, 142),  // Pine teal
             selection_bg: RgbColor::new(66, 116, 84),       // Deep fern
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(126, 196, 102),    // Moss green
             border_inactive: RgbColor::new(76, 88, 82),    // Bark slate
             header_fg: RgbColor::new(182, 226, 164),        // Pale leaf
@@ -182,7 +182,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(236, 146, 98),   // Orange coral
             accent_secondary: RgbColor::new(236, 99, 141),  // Pink coral
             selection_bg: RgbColor::new(142, 74, 92),       // Plum dusk
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(236, 146, 98),    // Orange coral
             border_inactive: RgbColor::new(94, 78, 92),    // Dusk slate
             header_fg: RgbColor::new(255, 198, 156),        // Peach light
@@ -211,7 +211,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(210, 214, 224),   // Soft silver
             accent_secondary: RgbColor::new(162, 172, 188),  // Steel blue-gray
             selection_bg: RgbColor::new(82, 90, 108),        // Graphite
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(210, 214, 224),    // Soft silver
             border_inactive: RgbColor::new(72, 78, 92),    // Slate dark
             header_fg: RgbColor::new(228, 232, 240),        // Light silver
@@ -269,7 +269,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(251, 189, 34),   // Gruvbox yellow
             accent_secondary: RgbColor::new(142, 192, 124),  // Gruvbox green
             selection_bg: RgbColor::new(80, 73, 69),         // Gruvbox bg2
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(251, 189, 34),     // Yellow
             border_inactive: RgbColor::new(60, 56, 54),     // Gruvbox bg1
             header_fg: RgbColor::new(235, 219, 178),         // Gruvbox fg0
@@ -298,7 +298,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(203, 166, 247),   // Catppuccin mauve
             accent_secondary: RgbColor::new(148, 226, 213),  // Catppuccin teal
             selection_bg: RgbColor::new(88, 91, 112),        // Catppuccin surface0
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(203, 166, 247),    // Mauve
             border_inactive: RgbColor::new(69, 71, 90),      // Catppuccin mantle
             header_fg: RgbColor::new(205, 214, 244),         // Catppuccin text
@@ -327,7 +327,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(196, 167, 231),   // Rose Pine iris
             accent_secondary: RgbColor::new(110, 191, 171),  // Rose Pine foam
             selection_bg: RgbColor::new(64, 60, 83),         // Rose Pine highlight low
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(196, 167, 231),    // Iris
             border_inactive: RgbColor::new(38, 35, 58),      // Rose Pine base
             header_fg: RgbColor::new(224, 222, 244),         // Rose Pine text
@@ -390,7 +390,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(189, 147, 249),   // Dracula purple
             accent_secondary: RgbColor::new(80, 250, 123),   // Dracula green
             selection_bg: RgbColor::new(98, 114, 164),       // Dracula comment blue
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(189, 147, 249),    // Purple
             border_inactive: RgbColor::new(68, 71, 90),     // Dracula current line
             header_fg: RgbColor::new(248, 248, 242),         // Foreground
@@ -419,7 +419,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(181, 137, 0),     // Solarized yellow
             accent_secondary: RgbColor::new(42, 161, 152),   // Solarized cyan
             selection_bg: RgbColor::new(7, 54, 66),          // Solarized base02
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(181, 137, 0),      // Yellow
             border_inactive: RgbColor::new(54, 62, 68),     // Base02 variant
             header_fg: RgbColor::new(147, 161, 161),        // Base1
@@ -448,7 +448,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(198, 120, 221),   // One Dark purple
             accent_secondary: RgbColor::new(86, 182, 194),   // One Dark cyan
             selection_bg: RgbColor::new(61, 68, 83),         // One Dark selection
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(198, 120, 221),    // Purple
             border_inactive: RgbColor::new(55, 61, 74),     // One Dark gutter
             header_fg: RgbColor::new(171, 178, 191),         // One Dark silver
@@ -477,7 +477,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(125, 207, 255),   // Tokyo Night blue
             accent_secondary: RgbColor::new(187, 154, 247),  // Tokyo Night purple
             selection_bg: RgbColor::new(53, 59, 83),         // Tokyo Night selection
-            selection_fg: RgbColor::new(235, 238, 245), // Near-white
+            selection_fg: RgbColor::new(255, 255, 255), // White
             border_active: RgbColor::new(125, 207, 255),    // Blue
             border_inactive: RgbColor::new(42, 45, 62),     // Tokyo Night dark
             header_fg: RgbColor::new(192, 202, 245),         // Tokyo Night foreground dim
