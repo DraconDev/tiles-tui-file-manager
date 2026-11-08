@@ -909,7 +909,7 @@ fn load_preview_content(
                         match crate::modules::remote::read_dir_with_metadata(remote, &parent) {
                             Ok((_, meta)) => {
                                 match meta.get(path) {
-                                    None => format!("Error reading remote file: not found in parent listing"),
+                                    None => "Error reading remote file: not found in parent listing".to_string(),
                                     Some(entry) if entry.is_dir => format!(
                                         "\n\n   << PROJECT VIEW: {} >>\n\n   Select a file from the sidebar to begin editing.",
                                         path.file_name()
