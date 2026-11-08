@@ -741,7 +741,9 @@ fn handle_input_modals_keys(
                         }
                     }
                     AppMode::Delete(ref mode) => {
-                        if input.trim().to_lowercase() == "y" || input.is_empty() {
+                        // Require an explicit "y": an empty Enter must not
+                        // bypass the confirmation prompt.
+                        if input.trim().to_lowercase() == "y" {
                             // Collect paths to delete
                             let mut paths = Vec::new();
                             if !fs.list.selection.is_empty() {

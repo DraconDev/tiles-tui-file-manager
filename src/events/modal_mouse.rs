@@ -336,8 +336,15 @@ pub fn handle_modal_mouse(
                                 paths.push(p.clone());
                             }
                         }
+                        // Honor trash mode: this click could otherwise
+                        // permanently delete when the user chose Trash.
+                        let trash = matches!(&app.core.mode, AppMode::Delete(m) if m == "trash");
                         for p in paths {
-                            let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(p));
+                            if trash {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::TrashFile(p));
+                            } else {
+                                let _ = crate::app::try_send_event(&event_tx, AppEvent::Delete(p));
+                            }
                         }
                     }
                     app.core.mode = AppMode::Normal;
