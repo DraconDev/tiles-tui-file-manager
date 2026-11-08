@@ -255,6 +255,8 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
                         args.push(file_str.to_string());
                         return Some((work_dir, program.to_string(), args));
                     }
+                }
+            }
         }
     }
 
