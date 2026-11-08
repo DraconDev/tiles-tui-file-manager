@@ -324,7 +324,11 @@ fn handle_context_menu_keys(
                 }
                 None => actions.len().saturating_sub(1),
             };
-            if let Some(ContextMenuAction::Separator) = actions.get(new_idx) {
+            // Skip separators (consecutive separators included).
+            for _ in 0..=actions.len() {
+                if !matches!(actions.get(new_idx), Some(ContextMenuAction::Separator)) {
+                    break;
+                }
                 new_idx = new_idx.saturating_sub(1);
             }
             if let AppMode::ContextMenu {
@@ -347,10 +351,12 @@ fn handle_context_menu_keys(
                 }
                 None => 0,
             };
-            if let Some(ContextMenuAction::Separator) = actions.get(new_idx) {
-                if new_idx < actions.len().saturating_sub(1) {
-                    new_idx += 1;
+            // Skip separators (consecutive separators included).
+            for _ in 0..=actions.len() {
+                if !matches!(actions.get(new_idx), Some(ContextMenuAction::Separator)) {
+                    break;
                 }
+                new_idx = if new_idx + 1 < actions.len() { new_idx + 1 } else { 0 };
             }
             if let AppMode::ContextMenu {
                 selected_index: ref mut si,
