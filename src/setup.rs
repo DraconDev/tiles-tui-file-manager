@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-
 //! App setup and initialization.
 //! Extracted from main.rs (Phase 4).
 
@@ -8,7 +6,7 @@ use std::sync::Arc;
 use std::collections::HashSet;
 
 use crate::app::{App, AppEvent};
-use crate::config::{fuzzy_contains, FILE_WATCH_DEBOUNCE_MS, FUZZY_SEARCH, GIT_CACHE_TTL_SECONDS, MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
+use crate::config::{MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use crate::events;
 use crate::state::FileState;
 use dracon_terminal_engine::contracts::InputEvent as Event;
