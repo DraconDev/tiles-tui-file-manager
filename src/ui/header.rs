@@ -357,3 +357,43 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::FileColumn;
+    use ratatui::backend::TestBackend;
+
+    /// Probe: dump what the header emits for Editor-view tabs on a narrow width.
+    #[test]
+    fn probe_editor_header_tab_bounds() {
+        let mut app = App::new();
+        app.core.current_view = CurrentView::Editor;
+        app.sidebar.show_sidebar = false;
+        if let Some(pane) = app.panes.first_mut() {
+            pane.tabs.clear();
+            for name in [
+                "/home/user/documents/very-long-directory-name-for-the-first-tab",
+                "/home/user/second-tab",
+                "/home/user/third",
+            ] {
+                pane.tabs.push(crate::state::FileState::new(
+                    std::path::PathBuf::from(name),
+                    None,
+                    false,
+                    app.layout.single_columns.clone(),
+                    FileColumn::Name,
+                    true,
+                ));
+            }
+        }
+        let backend = TestBackend::new(40, 1);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_global_header(f, f.area(), 0, &mut app))
+            .unwrap();
+        for (rect, p, t) in &app.layout.tab_bounds {
+            println!("PROBE tab p={} t={} rect x={} w={}", p, t, rect.x, rect.width);
+        }
+    }
+}
