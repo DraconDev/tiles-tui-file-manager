@@ -395,7 +395,7 @@ pub fn draw_file_view(
                                     let available_width =
                                         (col_rect.width as usize).saturating_sub(icon_w + marker_w + CELL_TEXT_RESERVE);
 
-                                    let display_name = if file_idx > file_state.list.local_count {
+                                    let display_name = if file_idx >= file_state.list.local_count {
                                         let full_str = path.to_string_lossy();
                                         let home = dirs::home_dir()
                                             .map(|p| p.to_string_lossy().to_string())

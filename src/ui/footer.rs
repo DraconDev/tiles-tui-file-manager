@@ -376,8 +376,9 @@ pub fn draw_footer(f: &mut Frame, area: Rect, app: &mut App) {
     // 5. Bottom Line: Background Tasks
     let mut task_spans = Vec::new();
     for task in &app.output.background_tasks {
-        let pct = (task.progress * 100.0) as usize;
-        let bar = "█".repeat(pct / 10) + &"░".repeat(10 - (pct / 10));
+        // Clamp: progress > 1.0 would underflow `10 - pct/10` into a huge repeat.
+        let pct = ((task.progress.clamp(0.0, 1.0)) * 100.0) as usize;
+        let bar = "█".repeat(pct / 10) + &"░".repeat(10usize.saturating_sub(pct / 10));
         task_spans.push(Span::styled(
             format!(" {} [{}%] ", task.name, pct),
             Style::default().fg(theme::info()),
