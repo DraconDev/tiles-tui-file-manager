@@ -345,10 +345,7 @@ mod tests {
 
     #[test]
     fn drag_state_marquee_rect_normalizes() {
-        let mut drag = DragState::default();
-        drag.is_marquee = true;
-        drag.marquee_start = Some((10, 5));
-        drag.marquee_end = Some((3, 8));
+        let drag = DragState { is_marquee: true, marquee_start: Some((10, 5)), marquee_end: Some((3, 8)), ..Default::default() };
         let rect = drag.marquee_rect().unwrap();
         assert_eq!(rect.min_col, 3);
         assert_eq!(rect.min_row, 5);
@@ -364,10 +361,7 @@ mod tests {
 
     #[test]
     fn drag_state_clear_marquee() {
-        let mut drag = DragState::default();
-        drag.is_marquee = true;
-        drag.marquee_start = Some((5, 5));
-        drag.marquee_end = Some((10, 10));
+        let mut drag = DragState { is_marquee: true, marquee_start: Some((5, 5)), marquee_end: Some((10, 10)), ..Default::default() };
         drag.clear_marquee();
         assert!(!drag.is_marquee);
         assert!(drag.marquee_start.is_none());
@@ -376,10 +370,7 @@ mod tests {
 
     #[test]
     fn drag_state_marquee_same_point() {
-        let mut drag = DragState::default();
-        drag.is_marquee = true;
-        drag.marquee_start = Some((5, 5));
-        drag.marquee_end = Some((5, 5));
+        let drag = DragState { is_marquee: true, marquee_start: Some((5, 5)), marquee_end: Some((5, 5)), ..Default::default() };
         let rect = drag.marquee_rect().unwrap();
         assert_eq!(rect.min_col, 5);
         assert_eq!(rect.max_col, 5);
