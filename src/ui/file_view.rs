@@ -9,7 +9,7 @@ use ratatui::{
     text::{Line, Span, Text},
     widgets::{
         Block, BorderType, Borders, Cell, Clear, Paragraph, Row,
-        Scrollbar, ScrollbarOrientation, ScrollbarState, Table, TableState, Widget,
+        Scrollbar, ScrollbarOrientation, ScrollbarState, Table, Widget,
     },
     Frame,
 };
@@ -151,19 +151,10 @@ pub fn draw_file_view(
     {
         file_state.view.view_height = area.height as usize;
 
-        let mut render_state = TableState::default();
-
-        if let Some(sel) = file_state.list.selection.selected {
-            let offset = file_state.view.table_state.offset();
-
-            let capacity = file_state.view.view_height.saturating_sub(3);
-
-            if sel >= offset && sel < offset + capacity {
-                render_state.select(Some(sel));
-            }
-        }
-
-        *render_state.offset_mut() = file_state.view.table_state.offset();
+        // NOTE: no render TableState is built here — rows below are rendered
+        // cell-by-cell by the absolute-cell isolation renderer, and the
+        // scrollbar uses its own ScrollbarState. Selection/offset live on
+        // file_state.view.table_state (see clamp below).
 
         let mut display_columns = Vec::new();
 
@@ -258,8 +249,14 @@ pub fn draw_file_view(
         }
 
         // 2. Render Rows
-        let offset_val = file_state.view.table_state.offset();
         let total_files = file_state.list.files.len();
+        // Clamp the persisted offset to total_files: files can shrink while
+        // scrolled (refresh, delete) and would otherwise render an empty
+        // viewport. Persist the clamped value so the scrollbar and all
+        // event handlers read a coherent offset.
+        let max_offset = total_files.saturating_sub(1);
+        let offset_val = file_state.view.table_state.offset().min(max_offset);
+        *file_state.view.table_state.offset_mut() = offset_val;
         let has_path_colors = !app.selection.path_colors.is_empty();
         let use_semantic_coloring = app.settings.semantic_coloring;
         for i in 0..visible_height {
@@ -494,6 +491,68 @@ pub fn draw_file_view(
 
             f.render_stateful_widget(scrollbar, area, &mut scroll_state);
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::backend::TestBackend;
+
+    fn pane_with_files(n: usize) -> crate::app::App {
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        let mut app = crate::app::App::new();
+        app.core.current_view = crate::app::CurrentView::Files;
+        if let Some(fs) = app.current_file_state_mut() {
+            fs.list.files = (0..n).map(|i| std::path::PathBuf::from(format!("/tmp/file-{i:03}.txt"))).collect();
+            fs.list.metadata.clear();
+            fs.list.selection.selected = Some(0);
+        }
+        app
+    }
+
+    #[test]
+    fn stale_offset_past_end_is_clamped() {
+        // 10 files but a stale offset of 99 (e.g. files shrank while
+        // scrolled). The render must reset the offset to the last valid
+        // row (9) and show rows instead of a blank viewport.
+        let mut app = pane_with_files(10);
+        if let Some(fs) = app.current_file_state_mut() {
+            *fs.view.table_state.offset_mut() = 99;
+        }
+        let backend = TestBackend::new(40, 8);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw_file_view(f, f.area(), &mut app, 0, true, Borders::ALL)).unwrap();
+
+        let fs = app.current_file_state().unwrap();
+        assert_eq!(fs.view.table_state.offset(), 9, "offset must be clamped to the last row");
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(text.contains("file-009"), "last file must be visible after clamping");
+    }
+
+    #[test]
+    fn valid_offset_is_preserved() {
+        // A sane offset (2 of 10 files, 4 visible rows) must not be moved.
+        let mut app = pane_with_files(10);
+        if let Some(fs) = app.current_file_state_mut() {
+            *fs.view.table_state.offset_mut() = 2;
+        }
+        let backend = TestBackend::new(40, 8);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw_file_view(f, f.area(), &mut app, 0, true, Borders::ALL)).unwrap();
+
+        let fs = app.current_file_state().unwrap();
+        assert_eq!(fs.view.table_state.offset(), 2);
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(text.contains("file-002"), "rows at the clamped offset must render");
     }
 }
 
