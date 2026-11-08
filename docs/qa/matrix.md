@@ -142,19 +142,19 @@ Manual interactive validation is still recommended for UI feel/regression checks
 
 | ID | Status | Notes |
 |----|--------|-------|
-| EC1 | | |
-| EC2 | | |
-| EC3 | | |
-| EC4 | | |
-| EC5 | | |
-| EC6 | | |
-| EC7 | | |
-| EC8 | | |
-| EC9 | | |
-| EC10 | | |
-| EC11 | | |
-| EC12 | | |
-| EC13 | | |
-| EC14 | | |
-| EC15 | | |
+| EC1 | | NOT RUN |
+| EC2 | | NOT RUN |
+| EC3 | | NOT RUN |
+| EC4 | | NOT RUN |
+| EC5 | | NOT RUN |
+| EC6 | | NOT RUN |
+| EC7 | | NOT RUN |
+| EC8 | | NOT RUN |
+| EC9 | | NOT RUN |
+| EC10 | | NOT RUN |
+| EC11 | | NOT RUN |
+| EC12 | | NOT RUN |
+| EC13 | | NOT RUN |
+| EC14 | | NOT RUN |
+| EC15 | | NOT RUN |
 
