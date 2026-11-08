@@ -348,16 +348,27 @@ mod tests {
 
         let buffer = terminal.backend().buffer().clone();
         let accent = crate::ui::theme::accent_primary();
-        // Ghost row is y=1 (mouse row + 1); count the styled cells on it.
-        let mut width = 0u16;
+        // Ghost row is y=1 (mouse row + 1). The box must span the full
+        // display width (20 columns): measure first..last accent cell —
+        // wide-char continuation cells do not count as separate cells.
+        let mut first: Option<u16> = None;
+        let mut last = 0u16;
         for x in 0..80 {
             let cell = buffer
                 .cell(ratatui::layout::Position { x, y: 1 })
                 .expect("ghost row cell in bounds");
             if cell.bg == accent {
-                width += 1;
+                if first.is_none() {
+                    first = Some(x);
+                }
+                last = x;
             }
         }
-        assert_eq!(width, 20, "ghost width must be display columns + padding, not bytes");
+        let first = first.expect("ghost must render");
+        assert_eq!(
+            last - first + 1,
+            20,
+            "ghost width must be display columns + padding, not bytes"
+        );
     }
 }
