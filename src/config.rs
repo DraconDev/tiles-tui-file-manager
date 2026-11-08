@@ -253,18 +253,19 @@ fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
 }
 
 fn parse_ssh_config_value(line: &str) -> Option<&str> {
-    let mut tokens = line.split_whitespace().skip(1);
-    let second = tokens.next();
-    if second == Some("=") {
-        tokens.next()
+    // Handles `Keyword value`, `Keyword=value`, and `Keyword = value`.
+    let after_keyword = line.splitn(2, char::is_whitespace).nth(1).unwrap_or("").trim_start();
+    let value = after_keyword.strip_prefix('=').unwrap_or(after_keyword).trim();
+    if value.is_empty() {
+        None
     } else {
-        second
+        Some(value)
     }
 }
 
 fn parse_ssh_config_content(content: &str) -> Vec<RemoteBookmark> {
     let mut results = Vec::new();
-    let mut current_entry: Option<SshHostEntry> = None;
+    let mut entries: Vec<SshHostEntry> = Vec::new();
 
     for line in content.lines() {
         let line = line.trim();
@@ -273,35 +274,54 @@ fn parse_ssh_config_content(content: &str) -> Vec<RemoteBookmark> {
         }
 
         let line_lower = line.to_ascii_lowercase();
-        if line_lower.starts_with("host ") {
-            if let Some(entry) = current_entry.take() {
+        if line_lower.starts_with("host")
+            && line_lower["host".len()..]
+                .chars()
+                .next()
+                .is_some_and(|c| c.is_whitespace() || c == '=')
+        {
+            // Flush the previous Host block (one entry per alias).
+            for entry in entries.drain(..) {
                 if let Some(bookmark) = try_flush_entry(entry) {
                     results.push(bookmark);
                 }
             }
-            let name = parse_ssh_config_value(line).unwrap_or("").trim().to_string();
-            current_entry = Some(SshHostEntry {
-                name,
-                host: None,
-                user: None,
-                port: None,
-                key_path: None,
-            });
-        } else if let Some(current) = current_entry.as_mut() {
-            if line_lower.starts_with("hostname ") {
-                current.host = parse_ssh_config_value(line).map(|v| v.trim().to_string());
-            } else if line_lower.starts_with("user ") {
-                current.user = parse_ssh_config_value(line).map(|v| v.trim().to_string());
-            } else if line_lower.starts_with("port ") {
-                current.port = parse_ssh_config_value(line).and_then(|v| v.trim().parse().ok());
-            } else if line_lower.starts_with("identityfile ") {
-                let path = parse_ssh_config_value(line).unwrap_or("").trim();
-                current.key_path = Some(PathBuf::from(expand_tilde(path)));
+            // `Host a b c` names three aliases sharing the block below;
+            // treating them as one name produced a bogus hostname.
+            if let Some(value) = parse_ssh_config_value(line) {
+                for alias in value.split_whitespace() {
+                    entries.push(SshHostEntry {
+                        name: alias.to_string(),
+                        host: None,
+                        user: None,
+                        port: None,
+                        key_path: None,
+                    });
+                }
+            }
+        } else if !entries.is_empty() {
+            for current in entries.iter_mut() {
+                if line_lower.starts_with("hostname") {
+                    current.host = parse_ssh_config_value(line).map(|v| v.trim().to_string());
+                } else if line_lower.starts_with("user") {
+                    current.user = parse_ssh_config_value(line).map(|v| v.trim().to_string());
+                } else if line_lower.starts_with("port") {
+                    current.port =
+                        parse_ssh_config_value(line).and_then(|v| v.trim().parse().ok());
+                } else if line_lower.starts_with("identityfile") {
+                    let path = parse_ssh_config_value(line).unwrap_or("").trim();
+                    // An empty IdentityFile must not become an empty key path.
+                    current.key_path = if path.is_empty() {
+                        None
+                    } else {
+                        Some(PathBuf::from(expand_tilde(path)))
+                    };
+                }
             }
         }
     }
 
-    if let Some(entry) = current_entry.take() {
+    for entry in entries.drain(..) {
         if let Some(bookmark) = try_flush_entry(entry) {
             results.push(bookmark);
         }
@@ -334,7 +354,11 @@ fn parse_ssh_config() -> Vec<RemoteBookmark> {
 pub fn merge_ssh_config_bookmarks(bookmarks: &mut Vec<RemoteBookmark>) {
     let ssh_bookmarks = parse_ssh_config();
     for sb in ssh_bookmarks {
-        if !bookmarks.iter().any(|b| b.host == sb.host && b.user == sb.user) {
+        // Distinct entries for the same host/user (different port or key)
+        // must not collapse into one another.
+        if !bookmarks.iter().any(|b| b.host == sb.host && b.user == sb.user
+            && b.port == sb.port && b.key_path == sb.key_path)
+        {
             bookmarks.push(sb);
         }
     }
