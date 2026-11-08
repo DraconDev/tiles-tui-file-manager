@@ -124,7 +124,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(160, 118, 255),   // Purple
             accent_secondary: RgbColor::new(116, 184, 255),  // Ice blue
             selection_bg: RgbColor::new(104, 80, 150),      // Deep violet
-            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(160, 118, 255),    // Purple
             border_inactive: RgbColor::new(82, 86, 104),    // Cool slate
             header_fg: RgbColor::new(198, 164, 255),        // Soft violet
@@ -153,7 +153,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(126, 196, 102),   // Moss green
             accent_secondary: RgbColor::new(86, 168, 142),  // Pine teal
             selection_bg: RgbColor::new(66, 116, 84),       // Deep fern
-            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(126, 196, 102),    // Moss green
             border_inactive: RgbColor::new(76, 88, 82),    // Bark slate
             header_fg: RgbColor::new(182, 226, 164),        // Pale leaf
@@ -182,7 +182,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(236, 146, 98),   // Orange coral
             accent_secondary: RgbColor::new(236, 99, 141),  // Pink coral
             selection_bg: RgbColor::new(142, 74, 92),       // Plum dusk
-            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(236, 146, 98),    // Orange coral
             border_inactive: RgbColor::new(94, 78, 92),    // Dusk slate
             header_fg: RgbColor::new(255, 198, 156),        // Peach light
@@ -211,7 +211,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(210, 214, 224),   // Soft silver
             accent_secondary: RgbColor::new(162, 172, 188),  // Steel blue-gray
             selection_bg: RgbColor::new(82, 90, 108),        // Graphite
-            selection_fg: RgbColor::new(0, 0, 0),            // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(210, 214, 224),    // Soft silver
             border_inactive: RgbColor::new(72, 78, 92),    // Slate dark
             header_fg: RgbColor::new(228, 232, 240),        // Light silver
@@ -269,7 +269,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(251, 189, 34),   // Gruvbox yellow
             accent_secondary: RgbColor::new(142, 192, 124),  // Gruvbox green
             selection_bg: RgbColor::new(80, 73, 69),         // Gruvbox bg2
-            selection_fg: RgbColor::new(0, 0, 0),              // Black
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(251, 189, 34),     // Yellow
             border_inactive: RgbColor::new(60, 56, 54),     // Gruvbox bg1
             header_fg: RgbColor::new(235, 219, 178),         // Gruvbox fg0
@@ -298,7 +298,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(203, 166, 247),   // Catppuccin mauve
             accent_secondary: RgbColor::new(148, 226, 213),  // Catppuccin teal
             selection_bg: RgbColor::new(88, 91, 112),        // Catppuccin surface0
-            selection_fg: RgbColor::new(0, 0, 0),             // Black
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(203, 166, 247),    // Mauve
             border_inactive: RgbColor::new(69, 71, 90),      // Catppuccin mantle
             header_fg: RgbColor::new(205, 214, 244),         // Catppuccin text
@@ -327,7 +327,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(196, 167, 231),   // Rose Pine iris
             accent_secondary: RgbColor::new(110, 191, 171),  // Rose Pine foam
             selection_bg: RgbColor::new(64, 60, 83),         // Rose Pine highlight low
-            selection_fg: RgbColor::new(0, 0, 0),             // Black
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(196, 167, 231),    // Iris
             border_inactive: RgbColor::new(38, 35, 58),      // Rose Pine base
             header_fg: RgbColor::new(224, 222, 244),         // Rose Pine text
@@ -390,7 +390,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(189, 147, 249),   // Dracula purple
             accent_secondary: RgbColor::new(80, 250, 123),   // Dracula green
             selection_bg: RgbColor::new(98, 114, 164),       // Dracula comment blue
-            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(189, 147, 249),    // Purple
             border_inactive: RgbColor::new(68, 71, 90),     // Dracula current line
             header_fg: RgbColor::new(248, 248, 242),         // Foreground
@@ -419,7 +419,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(181, 137, 0),     // Solarized yellow
             accent_secondary: RgbColor::new(42, 161, 152),   // Solarized cyan
             selection_bg: RgbColor::new(7, 54, 66),          // Solarized base02
-            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(181, 137, 0),      // Yellow
             border_inactive: RgbColor::new(54, 62, 68),     // Base02 variant
             header_fg: RgbColor::new(147, 161, 161),        // Base1
@@ -448,7 +448,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(198, 120, 221),   // One Dark purple
             accent_secondary: RgbColor::new(86, 182, 194),   // One Dark cyan
             selection_bg: RgbColor::new(61, 68, 83),         // One Dark selection
-            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(198, 120, 221),    // Purple
             border_inactive: RgbColor::new(55, 61, 74),     // One Dark gutter
             header_fg: RgbColor::new(171, 178, 191),         // One Dark silver
@@ -477,7 +477,7 @@ impl ThemeStyle {
             accent_primary: RgbColor::new(125, 207, 255),   // Tokyo Night blue
             accent_secondary: RgbColor::new(187, 154, 247),  // Tokyo Night purple
             selection_bg: RgbColor::new(53, 59, 83),         // Tokyo Night selection
-            selection_fg: RgbColor::new(0, 0, 0),             // Black (dark on bright bg)
+            selection_fg: RgbColor::new(235, 238, 245), // Near-white
             border_active: RgbColor::new(125, 207, 255),    // Blue
             border_inactive: RgbColor::new(42, 45, 62),     // Tokyo Night dark
             header_fg: RgbColor::new(192, 202, 245),         // Tokyo Night foreground dim
@@ -639,9 +639,9 @@ pub fn bg() -> Color { ACTIVE_THEME.read().bg }
 
 pub fn gauge_danger() -> Color { Color::Rgb(255, 60, 60) }
 pub fn gauge_warning() -> Color { Color::Rgb(255, 180, 0) }
-pub fn monitor_label() -> Color { Color::Rgb(60, 65, 75) }
-pub fn monitor_dim() -> Color { Color::Rgb(100, 100, 110) }
-pub fn monitor_separator() -> Color { Color::Rgb(30, 30, 35) }
+pub fn monitor_label() -> Color { Color::Rgb(165, 180, 196) }
+pub fn monitor_dim() -> Color { Color::Rgb(120, 130, 145) }
+pub fn monitor_separator() -> Color { Color::Rgb(90, 105, 125) }
 pub fn monitor_row_even() -> Color { Color::Rgb(180, 185, 190) }
 pub fn monitor_row_odd() -> Color { Color::Rgb(140, 145, 150) }
 
@@ -658,7 +658,18 @@ mod tests {
     }
 
     #[test]
-    fn all_presets_have_black_selection_fg() {
+    fn all_presets_have_readable_selection_contrast() {
+        fn rel_lum(c: crate::ui::theme::RgbColor) -> f64 {
+            let f = |v: u8| {
+                let x = v as f64 / 255.0;
+                if x > 0.03928 { ((x + 0.055) / 1.055).powf(2.4) } else { x / 12.92 }
+            };
+            0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b)
+        }
+        fn contrast(a: crate::ui::theme::RgbColor, b: crate::ui::theme::RgbColor) -> f64 {
+            let (hi, lo) = (rel_lum(a).max(rel_lum(b)), rel_lum(a).min(rel_lum(b)));
+            (hi + 0.05) / (lo + 0.05)
+        }
         let presets: Vec<(&str, ThemeStyle)> = vec![
             ("legacy_red", ThemeStyle::preset_legacy_red()),
             ("warm", ThemeStyle::preset_warm()),
@@ -676,9 +687,12 @@ mod tests {
             ("rose_pine", ThemeStyle::preset_rose_pine()),
         ];
         for (name, preset) in &presets {
-            assert_eq!(preset.selection_fg.r, 0, "{}: selection_fg.r", name);
-            assert_eq!(preset.selection_fg.g, 0, "{}: selection_fg.g", name);
-            assert_eq!(preset.selection_fg.b, 0, "{}: selection_fg.b", name);
+            let c = contrast(preset.selection_fg, preset.selection_bg);
+            assert!(
+                c >= 4.5,
+                "{}: selection contrast {:.2} < 4.5 (fg {:?} bg {:?})",
+                name, c, preset.selection_fg, preset.selection_bg
+            );
         }
     }
 
