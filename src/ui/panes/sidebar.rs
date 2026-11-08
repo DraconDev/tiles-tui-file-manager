@@ -881,9 +881,8 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
         });
         current_y += 1;
 
-        if current_y >= inner.y + inner.height {
-            break;
-        }
+        // NOTE: no screenful break here — truncating the collection before
+        // the scroll-slice made items past page 1 permanently unreachable.
     }
 
     // Apply scroll offset for Editor view sidebar (same as Files view)
