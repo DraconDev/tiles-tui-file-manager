@@ -229,7 +229,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
-        Span::styled("─".repeat(w), sep),
+        Span::styled("─".repeat(w.saturating_sub(2)), sep),
         Span::styled("╯", sep),
     ]));
     lines.push(Line::from(""));
@@ -280,7 +280,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
-        Span::styled("─".repeat(w), sep),
+        Span::styled("─".repeat(w.saturating_sub(2)), sep),
         Span::styled("╯", sep),
     ]));
     lines.push(Line::from(""));
@@ -314,7 +314,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
-        Span::styled("─".repeat(w), sep),
+        Span::styled("─".repeat(w.saturating_sub(2)), sep),
         Span::styled("╯", sep),
     ]));
     lines.push(Line::from(""));
@@ -353,7 +353,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
-        Span::styled("─".repeat(w), sep),
+        Span::styled("─".repeat(w.saturating_sub(2)), sep),
         Span::styled("╯", sep),
     ]));
     lines.push(Line::from(""));
@@ -434,7 +434,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
-        Span::styled("─".repeat(w), sep),
+        Span::styled("─".repeat(w.saturating_sub(2)), sep),
         Span::styled("╯", sep),
     ]));
     lines.push(Line::from(""));
@@ -460,7 +460,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 
     lines.push(Line::from(vec![
         Span::styled("╰", sep),
-        Span::styled("─".repeat(w), sep),
+        Span::styled("─".repeat(w.saturating_sub(2)), sep),
         Span::styled("╯", sep),
     ]));
 
