@@ -541,13 +541,10 @@ pub struct BackgroundTask {
     pub progress: f32,
 }
 
-#[allow(dead_code)] // protocol enum — undo/redo variants
 #[derive(Clone, Debug)]
 pub enum UndoAction {
-    Rename(PathBuf, PathBuf),
     Move(PathBuf, PathBuf),
     Copy(PathBuf, PathBuf),
-    Delete(PathBuf),
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

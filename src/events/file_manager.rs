@@ -48,7 +48,7 @@ fn execute_undo(
         .and_then(|fs| fs.nav.remote_session.clone());
     let success;
     let action_name = match &action {
-        UndoAction::Rename(old, new) | UndoAction::Move(old, new) => {
+        UndoAction::Move(old, new) => {
             success = if let Some(remote) = &active_remote {
                 crate::modules::remote::rename(remote, new, old).is_ok()
             } else {
@@ -65,14 +65,6 @@ fn execute_undo(
                 std::fs::remove_file(dest).is_ok()
             };
             "copy"
-        }
-        UndoAction::Delete(path) => {
-            success = if let Some(remote) = &active_remote {
-                crate::modules::remote::remove_path(remote, path).is_ok()
-            } else {
-                std::fs::remove_file(path).is_ok()
-            };
-            "delete"
         }
     };
     if success {
@@ -98,7 +90,7 @@ fn execute_redo(
         .and_then(|fs| fs.nav.remote_session.clone());
     let success;
     let action_name = match &action {
-        UndoAction::Rename(old, new) | UndoAction::Move(old, new) => {
+        UndoAction::Move(old, new) => {
             success = if let Some(remote) = &active_remote {
                 crate::modules::remote::rename(remote, old, new).is_ok()
             } else {
@@ -113,14 +105,6 @@ fn execute_redo(
                 crate::modules::files::copy_recursive(src, dest).is_ok()
             };
             "copy"
-        }
-        UndoAction::Delete(path) => {
-            success = if let Some(remote) = &active_remote {
-                crate::modules::remote::remove_path(remote, path).is_ok()
-            } else {
-                std::fs::remove_file(path).is_ok()
-            };
-            "delete"
         }
     };
     if success {
