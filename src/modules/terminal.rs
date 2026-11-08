@@ -199,31 +199,53 @@ fn command_exists(cmd: &str) -> bool {
         .unwrap_or(false)
 }
 
+/// Quote one argument for safe interpolation into an `sh -c` command.
+/// Single-quote wrapping with `'` escaped as `'\''`; always safe, including
+/// for args containing spaces or shell metacharacters.
+pub fn shell_quote_arg(arg: &str) -> String {
+    format!("'{}'", arg.replace('\'', "'\\''"))
+}
+
 fn split_command(cmd: &str) -> Vec<String> {
     let mut args = Vec::new();
     let mut in_single = false;
     let mut in_double = false;
     let mut current = String::new();
-    for c in cmd.chars() {
+    // A quoted empty string is a real (empty) argument: track token starts
+    // separately from content so `""` yields one empty arg, not zero.
+    let mut token_started = false;
+    let mut chars = cmd.chars();
+    while let Some(c) = chars.next() {
         match c {
+            '\\' if !in_single => {
+                // Backslash escape: next char is taken literally.
+                if let Some(next) = chars.next() {
+                    token_started = true;
+                    current.push(next);
+                }
+            }
             '\'' if !in_double => {
                 in_single = !in_single;
+                token_started = true;
             }
             '"' if !in_single => {
                 in_double = !in_double;
+                token_started = true;
             }
             ' ' | '\t' | '\n' if !in_single && !in_double => {
-                if !current.is_empty() {
+                if token_started {
                     args.push(current.clone());
                     current.clear();
+                    token_started = false;
                 }
             }
             _ => {
+                token_started = true;
                 current.push(c);
             }
         }
     }
-    if !current.is_empty() {
+    if token_started {
         args.push(current);
     }
     args
