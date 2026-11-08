@@ -8,7 +8,6 @@ use std::collections::HashSet;
 use crate::app::{App, AppEvent};
 use crate::config::{MAX_TREE_DEPTH, MPSC_CHANNEL_CAPACITY};
 use crate::events;
-use crate::state::FileState;
 use dracon_terminal_engine::contracts::InputEvent as Event;
 use tokio::sync::mpsc;
 
