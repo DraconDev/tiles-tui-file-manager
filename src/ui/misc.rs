@@ -264,7 +264,9 @@ pub fn draw_drag_ghost(f: &mut Frame, app: &App) {
         };
 
         let text = format!(" {} ", display_name);
-        let width = text.len() as u16;
+        // Display width, not byte length: CJK/emoji filenames would size
+        // the ghost to their UTF-8 length (3-4 cells per character).
+        let width = unicode_width::UnicodeWidthStr::width(text.as_str()) as u16;
 
         // Draw slightly offset from cursor
         let x = col
@@ -324,4 +326,38 @@ pub fn draw_marquee_rect(f: &mut Frame, app: &App) {
         .border_type(ratatui::widgets::BorderType::Rounded);
 
     f.render_widget(block, marquee_area);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::backend::TestBackend;
+
+    #[test]
+    fn drag_ghost_width_uses_display_columns() {
+        // 9 CJK chars: display width 18 (+2 padding = 20 cells) vs 27 bytes
+        // (+2 = 29). The ghost box must be sized by display columns.
+        let mut app = App::new();
+        app.drag.drag_source = Some(std::path::PathBuf::from("/tmp/日本語ドキュメント"));
+        app.core.mouse_pos = (0, 0);
+        let backend = TestBackend::new(80, 10);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_drag_ghost(f, &app))
+            .unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+        let accent = crate::ui::theme::accent_primary();
+        // Ghost row is y=1 (mouse row + 1); count the styled cells on it.
+        let mut width = 0u16;
+        for x in 0..80 {
+            let cell = buffer
+                .cell(ratatui::layout::Position { x, y: 1 })
+                .expect("ghost row cell in bounds");
+            if cell.bg == accent {
+                width += 1;
+            }
+        }
+        assert_eq!(width, 20, "ghost width must be display columns + padding, not bytes");
+    }
 }
