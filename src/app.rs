@@ -211,6 +211,7 @@ impl App {
                 process_selected_idx: None,
 
                 process_table_state: TableState::default(),
+                application_table_state: TableState::default(),
 
                 process_search_filter: String::new(),
 
