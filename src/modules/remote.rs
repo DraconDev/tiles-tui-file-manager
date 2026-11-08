@@ -103,9 +103,12 @@ pub fn global_search(
     root: &Path,
     query: &str,
 ) -> (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) {
-    let root_str = root.to_string_lossy();
-    let pattern = format!("*{}*", query.replace('\'', "'\"'\"'"));
-    let cmd = format!("find '{}' -type f -iname '{}' 2>/dev/null | head -n 200", root_str, pattern);
+    let root_str = escape_shell_single_quoted(&root.to_string_lossy());
+    let pattern = format!(
+        "*{}*",
+        query.replace('\'', "'\"'\"'")
+    );
+    let cmd = format!("find {} -type f -iname {} 2>/dev/null | head -n 200", root_str, escape_shell_single_quoted(&pattern));
     let out = exec_program(remote, "sh", &["-c", &cmd]).unwrap_or_default();
     let files = out
         .lines()
