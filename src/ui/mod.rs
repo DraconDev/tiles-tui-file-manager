@@ -373,8 +373,14 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     if matches!(app.core.mode, AppMode::ImportServers) {
         draw_import_servers_modal(f, app);
     }
-    if let AppMode::OpenWith(ref path) = app.core.mode {
-        draw_open_with_modal(f, app, path);
+    // Clone the path: draw_open_with_modal needs &mut app (scroll offset).
+    let open_with_path = if let AppMode::OpenWith(ref path) = app.core.mode {
+        Some(path.clone())
+    } else {
+        None
+    };
+    if let Some(path) = open_with_path {
+        draw_open_with_modal(f, app, &path);
     }
     if let AppMode::DragDropMenu {
         ref sources,

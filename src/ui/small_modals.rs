@@ -8,7 +8,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{
-        Block, BorderType, Borders, Cell, Clear, HighlightSpacing, List, ListItem, ListState, Paragraph, Row, Table, TableState, Widget,
+        Block, BorderType, Borders, Cell, Clear, List, ListItem, Paragraph, Row, Table,
     },
     Frame,
 };
