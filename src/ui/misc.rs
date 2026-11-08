@@ -254,10 +254,11 @@ pub fn draw_drag_ghost(f: &mut Frame, app: &App) {
     if let Some(path) = &app.drag.drag_source {
         let (col, row) = app.core.mouse_pos;
         let name = path.file_name().unwrap_or_default().to_string_lossy();
-        // Truncate name if too long
-        let max_len = 20;
-        let display_name = if name.len() > max_len {
-            format!("{}...", &name[..max_len])
+        // Truncate name if too long (char-wise: byte slicing would panic
+        // when byte 20 falls inside a multibyte character, e.g. CJK names).
+        let max_chars = 20;
+        let display_name = if name.chars().count() > max_chars {
+            format!("{}...", name.chars().take(max_chars).collect::<String>())
         } else {
             name.to_string()
         };
