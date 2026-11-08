@@ -24,34 +24,43 @@ pub fn walk_tree(
         return;
     }
     let Ok(entries) = std::fs::read_dir(path) else { return };
-    let mut sorted: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+    // Stat each entry once (re-statting per comparison is O(n log n) syscalls
+    // and can observe a changing filesystem mid-sort).
+    struct Row {
+        p: PathBuf,
+        is_dir: bool,
+        name_lower: String,
+        size: u64,
+        modified: Option<std::time::SystemTime>,
+        created: Option<std::time::SystemTime>,
+    }
+    let mut sorted: Vec<Row> = entries.filter_map(|e| e.ok()).map(|e| {
+        let p = e.path();
+        let meta = e.metadata().ok();
+        let is_dir = meta.as_ref().map(|m| m.is_dir()).unwrap_or(false);
+        Row {
+            name_lower: e.file_name().to_string_lossy().to_lowercase(),
+            size: meta.as_ref().map(|m| m.len()).unwrap_or(0),
+            modified: meta.as_ref().and_then(|m| m.modified().ok()),
+            created: meta.as_ref().and_then(|m| m.created().ok()),
+            is_dir,
+            p,
+        }
+    }).collect();
     sorted.sort_by(|a, b| {
-        let a_is_dir = a.path().is_dir();
-        let b_is_dir = b.path().is_dir();
-        if a_is_dir != b_is_dir {
-            return if a_is_dir {
+        if a.is_dir != b.is_dir {
+            return if a.is_dir {
                 std::cmp::Ordering::Less
             } else {
                 std::cmp::Ordering::Greater
             };
         }
         let ordering = match sort_column {
-            FileColumn::Name => {
-                let na = a.file_name().to_string_lossy().to_lowercase();
-                let nb = b.file_name().to_string_lossy().to_lowercase();
-                na.cmp(&nb)
-            }
-            FileColumn::Size => {
-                let sa = a.path().metadata().map(|m| m.len()).unwrap_or(0);
-                let sb = b.path().metadata().map(|m| m.len()).unwrap_or(0);
-                sa.cmp(&sb)
-            }
-            FileColumn::Modified | FileColumn::Created => {
-                let da = a.path().metadata().ok().and_then(|m| m.modified().ok());
-                let db = b.path().metadata().ok().and_then(|m| m.modified().ok());
-                da.cmp(&db)
-            }
-            _ => a.file_name().cmp(&b.file_name()),
+            FileColumn::Name => a.name_lower.cmp(&b.name_lower),
+            FileColumn::Size => a.size.cmp(&b.size),
+            FileColumn::Modified => a.modified.cmp(&b.modified),
+            FileColumn::Created => a.created.cmp(&b.created),
+            _ => a.p.cmp(&b.p),
         };
         if sort_ascending {
             ordering
@@ -59,14 +68,14 @@ pub fn walk_tree(
             ordering.reverse()
         }
     });
-    for entry in sorted {
-        let p = entry.path();
+    for row in sorted {
+        let p = row.p;
         let name = p.file_name().unwrap_or_default().to_string_lossy();
         if !hidden && name.starts_with('.') {
             continue;
         }
         tree_files.push((p.clone(), depth));
-        if p.is_dir() && expanded.contains(&p) {
+        if row.is_dir && expanded.contains(&p) {
             walk_tree(&p, depth + 1, max_depth, expanded, hidden, tree_files, sort_column, sort_ascending);
         }
     }
