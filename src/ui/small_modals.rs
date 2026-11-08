@@ -8,7 +8,7 @@ use ratatui::{
     style::{Color, Modifier, Style},
     text::{Line, Span, Text},
     widgets::{
-        Block, BorderType, Borders, Cell, Clear, List, ListItem, ListState, Paragraph, Row, Table, TableState, Widget,
+        Block, BorderType, Borders, Cell, Clear, HighlightSpacing, List, ListItem, ListState, Paragraph, Row, Table, TableState, Widget,
     },
     Frame,
 };
@@ -396,11 +396,22 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &App, path: &std::path::Path) {
         " Filtered Suggestions (Click to Launch) "
     };
 
-    let list = List::new(list_items).block(
-        Block::default()
-            .title(title)
-            .borders(Borders::TOP)
-            .border_style(Style::default().fg(theme::muted())),
-    );
-    f.render_widget(list, chunks[2]);
+    let list = List::new(list_items)
+        .block(
+            Block::default()
+                .title(title)
+                .borders(Borders::TOP)
+                .border_style(Style::default().fg(theme::muted())),
+        )
+        // Selection is styled manually per-item; the state only drives
+        // scrolling so the selected row stays visible on small terminals.
+        .highlight_style(Style::default())
+        .highlight_spacing(HighlightSpacing::Never);
+    let mut state = ListState::default();
+    if !suggestions.is_empty() {
+        state.select(Some(
+            app.settings.open_with_index.min(suggestions.len() - 1),
+        ));
+    }
+    f.render_stateful_widget(list, chunks[2], &mut state);
 }

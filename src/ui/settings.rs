@@ -729,8 +729,18 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &mut App) {
             .collect::<Vec<_>>(),
     );
 
+    let selected = (app.settings.settings_section == SettingsSection::Style
+        && app.settings.settings_index < rows.len())
+        .then_some(app.settings.settings_index);
+    let window = scroll_settings_window(
+        app,
+        rows.len(),
+        area.height.saturating_sub(1) as usize,
+        selected,
+    );
+
     let table = Table::new(
-        rows,
+        rows[window].to_vec(),
         [
             Constraint::Fill(1),
             Constraint::Length(3),

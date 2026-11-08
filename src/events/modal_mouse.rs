@@ -211,8 +211,11 @@ pub fn handle_modal_mouse(
                         SettingsSection::General => {
                             // Indices match the drawn list: 0=Version (read-only),
                             // 1=hidden, ..., 8=separator, 9-13=sidebar, 14=Reset.
-                            if rel_y < 15 {
-                                app.settings.settings_index = rel_y as usize;
+                            // The table may be scrolled on small terminals; the
+                            // persisted offset keeps clicks on the rendered row.
+                            let idx = rel_y as usize + app.settings.settings_scroll as usize;
+                            if idx < 15 {
+                                app.settings.settings_index = idx;
                                 match app.settings.settings_index {
                                     0 => {} // Version is read-only
                                     1 => app.settings.default_show_hidden = !app.settings.default_show_hidden,
@@ -257,7 +260,7 @@ pub fn handle_modal_mouse(
                                     app.settings.settings_target = crate::app::SettingsTarget::SplitMode;
                                 }
                             } else {
-                                let idx = rel_y.saturating_sub(3) as usize;
+                                let idx = rel_y.saturating_sub(3) as usize + app.settings.settings_scroll as usize;
                                 if idx < 4 {
                                     app.settings.settings_index = idx;
                                     let col = match idx {
@@ -285,8 +288,9 @@ pub fn handle_modal_mouse(
                             }
                         }
                         SettingsSection::Style => {
-                            if rel_y < (STYLE_MAX_INDEX as u16 + 1) {
-                                app.settings.settings_index = rel_y as usize;
+                            let idx = rel_y as usize + app.settings.settings_scroll as usize;
+                            if idx < (STYLE_MAX_INDEX as usize + 1) {
+                                app.settings.settings_index = idx;
                                 if app.settings.settings_index == 0 {
                                     crate::ui::theme::set_style_settings(
                                         crate::ui::theme::ThemeStyle::preset_legacy_red(),
