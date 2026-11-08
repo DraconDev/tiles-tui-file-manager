@@ -20,7 +20,7 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 - **Remote SSH** — Browse remote filesystems via SSH, SFTP-style file operations, auto-import from `~/.ssh/config`
 - **System Monitor** — CPU/memory/disk/network stats with sparklines, process list with kill support
 - **Sidebar** — Folder tree, Favorites, Recent folders, Storage devices, SSH remotes. Toggle sections in Settings.
-- **14 Theme Presets** — Legacy Red (default), Cyberpunk, Ocean Deep, Solarized, Gruvbox, Dracula, Tokyo Night, Nord, Catppuccin, Rose Pine, One Dark, Monokai, Paper, and Terminal. All WCAG-compliant.
+- **14 Theme Presets** — Legacy Red (default), Warm, Cool, Forest, Sunset, Mono, Nord, Dracula, Solarized Dark, One Dark, Tokyo Night, Gruvbox Dark, Catppuccin Mocha, Rose Pine. Selected text meets WCAG AA contrast (4.5:1+) on every preset (enforced by tests).
 - **Path Input** — Click the breadcrumb bar to edit the path directly
 - **Keyboard-first** — Vim-style navigation, command palette (`:`), context menus
 
@@ -32,7 +32,7 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 | `Enter` | Enter directory / open file with `xdg-open` | — |
 | `Ctrl+R` | — | Run current file |
 | `F2` | Rename | Find & Replace |
-| `Ctrl+D` | System monitor | Duplicate current line |
+| `Ctrl+D` | Debug screen | Duplicate current line |
 | `Ctrl+E` | — | Switch to editor |
 
 ## Keyboard Shortcuts
@@ -79,8 +79,8 @@ A dual-pane TUI file manager built in Rust. Vim-style navigation, built-in text 
 ### Other Views
 | Key | Action |
 |-----|--------|
-| `Ctrl+G` | Git history view |
-| `Ctrl+L` | Edit current path |
+| `Ctrl+G` | Open Settings |
+| `Ctrl+L` | Git history view |
 | `q` | Quit |
 
 ## Install
@@ -122,12 +122,12 @@ Tiles detects your terminal and spawns commands as new tabs in the current windo
 
 | Terminal | Tab Spawning Method |
 |----------|-------------------|
-| Konsole | D-Bus `org.kde.KDBusService.CommandLine` (falls back to `--new-tab` CLI flag) |
+| Konsole | `qdbus <service> <window> org.kde.konsole.Window.newSession` (when `KONSOLE_DBUS_SERVICE`/`KONSOLE_DBUS_WINDOW` are set) |
 | Kitty | `kitty @ launch --type=tab` |
-| Wezterm | `wezterm cli spawn --new-window=false` |
+| Wezterm | `wezterm cli spawn --cwd <dir>` |
 | Others | Per-terminal CLI flags (`--new-tab`, `--tab`, etc.) |
 
-> **Konsole note:** `qdbus` crashes on some NixOS/Konsole versions (SIGSEGV exit 139). Tiles uses `dbus-send` instead, which works reliably. The blocked `runCommand` D-Bus API is bypassed via `KDBusService.CommandLine`.
+> **Konsole note:** tab spawning only works when the Konsole process exports its D-Bus service/window identifiers (`KONSOLE_DBUS_SERVICE`/`KONSOLE_DBUS_WINDOW`); otherwise Tiles falls back to opening a new window.
 
 ## Optional Dependencies
 
@@ -146,6 +146,6 @@ Settings are stored in `~/.config/tiles/settings.toml`. Toggle sidebar sections,
 This project is dual-licensed:
 
 - **AGPL-3.0-only** — See [LICENSE](LICENSE) for the full text. This is the default license for open source use.
-- **Commercial License** — For organizations that prefer not to comply with AGPLv3's source disclosure requirements. See [COMMERCIAL-LICENSE.md](COMMERCIAL-LICENSE.md) for details.
+- **Commercial License** — For organizations that prefer not to comply with AGPLv3's source disclosure requirements. Contact the maintainer for licensing terms.
 
-By contributing to this project, you agree to the terms in [CLA.md](CLA.md).
+This project is released under AGPL-3.0-only; no CLA is in effect.
