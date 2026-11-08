@@ -1,69 +1,78 @@
 //! Criterion benchmarks for Tiles TUI hot paths.
+//!
+//! Every benchmark here calls the production function it measures (via the
+//! library crate root), so a regression in the real code shows up here.
+//! Nothing in this file reimplements production logic inline.
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 use std::path::PathBuf;
+
+use tiles_tui_file_manager::config::fuzzy_contains;
+use tiles_tui_file_manager::events::file_actions::is_valid_search_char;
+use tiles_tui_file_manager::nav_helpers::{push_history, resolve_path_input};
+use tiles_tui_file_manager::state::{FileColumn, FileState};
 
 /// Benchmark: resolve_path_input (path resolution)
 fn bench_resolve_path_input(c: &mut Criterion) {
     let mut group = c.benchmark_group("resolve_path_input");
-    
+
     let current = PathBuf::from("/home/user/projects");
-    
+
     group.bench_function("absolute_path", |b| {
-        b.iter(|| {
-            let input = "/etc/config";
-            let trimmed = input.trim();
-            let typed = PathBuf::from(trimmed);
-            let _ = if typed.is_absolute() {
-                std::fs::canonicalize(&typed).unwrap_or(typed)
-            } else {
-                let joined = current.join(&typed);
-                std::fs::canonicalize(&joined).unwrap_or(joined)
-            };
-        });
+        b.iter(|| resolve_path_input("/etc/config", &current, false));
     });
-    
+
     group.bench_function("relative_path", |b| {
-        b.iter(|| {
-            let input = "tiles/src";
-            let trimmed = input.trim();
-            let typed = PathBuf::from(trimmed);
-            let _ = if typed.is_absolute() {
-                typed
-            } else {
-                current.join(&typed)
-            };
-        });
+        b.iter(|| resolve_path_input("tiles/src", &current, false));
     });
-    
+
+    group.bench_function("tilde_path", |b| {
+        b.iter(|| resolve_path_input("~/Documents", &current, false));
+    });
+
     group.finish();
+}
+
+fn make_file_state(path: &str, history_len: usize) -> FileState {
+    let mut fs = FileState::new(
+        PathBuf::from(path),
+        None,
+        false,
+        vec![FileColumn::Name],
+        FileColumn::Name,
+        true,
+    );
+    for i in 0..history_len {
+        push_history(&mut fs, PathBuf::from(format!("/dir{}", i)));
+    }
+    fs
 }
 
 /// Benchmark: push_history (navigation history)
 fn bench_push_history(c: &mut Criterion) {
     let mut group = c.benchmark_group("push_history");
-    
+
     for size in [10, 50, 100] {
         group.bench_with_input(BenchmarkId::new("history_len", size), &size, |b, &size| {
+            let mut fs = make_file_state("/", size);
             b.iter(|| {
-                let mut history: Vec<PathBuf> = (0..size)
-                    .map(|i| PathBuf::from(format!("/dir{}", i)))
-                    .collect();
-                let new_path = PathBuf::from("/new_dir");
-                // Deduplicate consecutive
-                if history.last() != Some(&new_path) {
-                    history.push(new_path.clone());
-                }
-                // Cap at 50
-                if history.len() > 50 {
-                    let excess = history.len() - 50;
-                    history.drain(0..excess);
-                }
-                black_box(&history);
+                // A fresh path each call exercises the append + cap paths;
+                // cycling the suffix keeps history from unbounded growth.
+                let next = PathBuf::from(format!("/next{}", fs.nav.history_index));
+                push_history(&mut fs, next);
+                black_box(&fs.nav.history_index);
             });
         });
     }
-    
+
+    group.bench_function("duplicate_path", |b| {
+        let mut fs = make_file_state("/home", 10);
+        b.iter(|| {
+            push_history(&mut fs, PathBuf::from("/home"));
+            black_box(&fs.nav.history_index);
+        });
+    });
+
     group.finish();
 }
 
@@ -74,12 +83,8 @@ fn bench_is_valid_search_char(c: &mut Criterion) {
             .chars()
             .collect();
         b.iter(|| {
-            for &c in &chars {
-                let bad = (c as u32) < 32 
-                    || c == '\x7f' 
-                    || c == '\x1b'
-                    || matches!(c, '[' | ']' | '~' | '^' | '_' | '=' | '+' | '<' | '>' | '*' | '?' | '!' | '$' | '%' | '&' | '@' | '#' | '{' | '}' | '\\' | '|' | '`');
-                black_box(!bad);
+            for &ch in &chars {
+                black_box(is_valid_search_char(ch));
             }
         });
     });
@@ -88,31 +93,31 @@ fn bench_is_valid_search_char(c: &mut Criterion) {
 /// Benchmark: fuzzy_contains (search matching)
 fn bench_fuzzy_contains(c: &mut Criterion) {
     let mut group = c.benchmark_group("fuzzy_contains");
-    
+
     let names = vec![
         "main.rs",
-        "cargo.toml", 
+        "cargo.toml",
         "event_helpers.rs",
         "file_manager.rs",
         "very_long_filename_with_many_underscores_and_words.rs",
     ];
-    
+
     group.bench_function("short_query", |b| {
         b.iter(|| {
             for name in &names {
-                let _ = name.to_lowercase().contains(&"main".to_lowercase());
+                black_box(fuzzy_contains(name, "main"));
             }
         });
     });
-    
+
     group.bench_function("no_match_query", |b| {
         b.iter(|| {
             for name in &names {
-                let _ = name.to_lowercase().contains(&"zzzzz".to_lowercase());
+                black_box(fuzzy_contains(name, "zzzzz"));
             }
         });
     });
-    
+
     group.finish();
 }
 
@@ -124,5 +129,3 @@ criterion_group!(
     bench_fuzzy_contains,
 );
 criterion_main!(benches);
-
-
