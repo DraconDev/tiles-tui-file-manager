@@ -879,9 +879,7 @@ fn load_preview_content(
                 }
             } else if let Some(file_path) = path_str.strip_prefix("git-diff://") {
                 if let Some(remote) = &remote_session {
-                    match crate::modules::remote::show_file_diff(
-                        remote,
-                        &current_dir,
+                    match crate::modules::remote::show_file_diff(remote, current_dir,
                         file_path,
                     ) {
                         Ok(content) => content,
