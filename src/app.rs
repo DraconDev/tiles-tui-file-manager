@@ -251,6 +251,8 @@ impl App {
 
                 open_with_index: 0,
 
+                open_with_scroll: 0,
+
                 confirm_delete: true,
 
                 smart_date: true,

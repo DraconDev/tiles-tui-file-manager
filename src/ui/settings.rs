@@ -22,20 +22,13 @@ use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::format_size;
 use dracon_terminal_engine::widgets::HotkeyHint;
 
-/// Keep the selected settings row inside the visible window on small
-/// terminals by adjusting the persisted `settings_scroll` offset, then
-/// return the row range to render. Draw functions and mouse handlers share
-/// this single offset, so click rows always match the rendered rows
-/// (rel_y + settings_scroll). Mirrors the sidebar auto-scroll pattern.
-fn scroll_settings_window(
-    app: &mut App,
-    total: usize,
-    visible: usize,
-    selected: Option<usize>,
-) -> std::ops::Range<usize> {
+/// Pure scroll-window math (mirrors the sidebar auto-scroll pattern): adjust
+/// `current` so `selected` is visible within `visible` rows over `total` rows,
+/// then clamp to the content. Shared by settings tables and open-with so
+/// click/hover rows always match the rendered rows.
+pub(crate) fn clamp_scroll(current: usize, selected: Option<usize>, total: usize, visible: usize) -> usize {
     let visible = visible.max(1);
-    let scroll = app.settings.settings_scroll as usize;
-    let mut scroll = scroll;
+    let mut scroll = current;
     if let Some(sel) = selected {
         if sel < scroll {
             scroll = sel;
@@ -43,10 +36,23 @@ fn scroll_settings_window(
             scroll = sel + 1 - visible;
         }
     }
-    let max_scroll = total.saturating_sub(visible);
-    scroll = scroll.min(max_scroll);
-    app.settings.settings_scroll = scroll as u16;
-    scroll..(scroll + visible).min(total)
+    scroll.min(total.saturating_sub(visible))
+}
+
+/// Keep the selected settings row inside the visible window on small
+/// terminals by adjusting the persisted `settings_scroll` offset, then
+/// return the row range to render. Draw functions and mouse handlers share
+/// this single offset, so click rows always match the rendered rows.
+fn scroll_settings_window(
+    app: &mut App,
+    total: usize,
+    visible: usize,
+    selected: Option<usize>,
+) -> std::ops::Range<usize> {
+    let visible = visible.max(1);
+    let start = clamp_scroll(app.settings.settings_scroll as usize, selected, total, visible);
+    app.settings.settings_scroll = start as u16;
+    start..(start + visible).min(total)
 }
 
 pub fn draw_settings_modal(f: &mut Frame, app: &mut App) {
@@ -376,10 +382,12 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &mut App) {
         ])); // Spacer
     }
 
+    // The Tabs table has a top border plus a header row, so only height-2
+    // body rows fit — the window must match the table's actual capacity.
     let window = scroll_settings_window(
         app,
         rows.len(),
-        area.height.saturating_sub(1) as usize,
+        area.height.saturating_sub(2) as usize,
         selected_row,
     );
     let table = Table::new(
