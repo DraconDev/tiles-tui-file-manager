@@ -254,7 +254,11 @@ fn try_flush_entry(entry: SshHostEntry) -> Option<RemoteBookmark> {
 
 fn parse_ssh_config_value(line: &str) -> Option<&str> {
     // Handles `Keyword value`, `Keyword=value`, and `Keyword = value`.
-    let after_keyword = line.splitn(2, char::is_whitespace).nth(1).unwrap_or("").trim_start();
+    let after_keyword = match line.split_once(char::is_whitespace) {
+        Some((_, value)) => value.trim_start(),
+        // No whitespace at all (Hostname=10.0.0.1): split on '='.
+        None => line.split_once('=').map(|(_, v)| v.trim()).unwrap_or(""),
+    };
     let value = after_keyword.strip_prefix('=').unwrap_or(after_keyword).trim();
     if value.is_empty() {
         None
