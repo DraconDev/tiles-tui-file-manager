@@ -171,12 +171,13 @@ mod tests {
         }
 
         let before = zombie_children(std::process::id());
-        // `sh` closes its stdin pipe then sleeps, so the parent's write fails
-        // with a broken pipe and the helper must be killed and reaped promptly.
+        // `true` exits immediately, closing the pipe's read end. A payload far
+        // larger than the 64KiB pipe buffer then reliably hits a broken pipe
+        // on write; the helper must be killed and reaped promptly.
         let start = Instant::now();
         let result = copy_text_to_clipboard_with(
-            "clipboard payload",
-            &[("sh", &["-c", "exec 0<&-; sleep 30"])],
+            &"x".repeat(256 * 1024),
+            &[("sh", &["-c", "true"])],
             "dumb",
         );
         let elapsed = start.elapsed();
