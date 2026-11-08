@@ -989,15 +989,27 @@ mod tests {
         app.sidebar.sidebar_favorites = false;
         app.sidebar.sidebar_recent = false;
         app.sidebar.sidebar_storage = false;
-        app.sidebar.sidebar_remotes = false;
+        app.sidebar.sidebar_remotes = true;
         app.sidebar.sidebar_index = 0;
         app.sidebar.sidebar_scroll_offset = 0;
-        app.sidebar.sidebar_folders_items = vec![
-            std::path::PathBuf::from("/marker-alpha-1"),
-            std::path::PathBuf::from("/marker-beta-2"),
-            std::path::PathBuf::from("/marker-gamma-3"),
-            std::path::PathBuf::from("/marker-delta-4"),
-        ];
+        for (i, name) in [
+            "marker-alpha-1",
+            "marker-beta-2",
+            "marker-gamma-3",
+            "marker-delta-4",
+        ]
+        .iter()
+        .enumerate()
+        {
+            app.remote.remote_bookmarks.push(crate::state::RemoteBookmark {
+                name: name.to_string(),
+                host: format!("host-{}", i),
+                user: "tester".to_string(),
+                port: 22,
+                last_path: std::path::PathBuf::from("/"),
+                key_path: None,
+            });
+        }
 
         // 7-row area => 5 inner rows => 4 list rows + 1 reserved hint row.
         let backend = TestBackend::new(30, 7);
