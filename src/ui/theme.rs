@@ -737,6 +737,7 @@ mod tests {
 
     #[test]
     fn set_and_get_roundtrip() {
+        let _guard = super::STYLE_TEST_LOCK.lock().unwrap();
         let original = ThemeStyle::preset_cool();
         set_style_settings(original.clone());
         let retrieved = style_settings();
@@ -747,6 +748,7 @@ mod tests {
 
     #[test]
     fn accent_primary_accessor_matches_style() {
+        let _guard = super::STYLE_TEST_LOCK.lock().unwrap();
         let style = ThemeStyle::preset_legacy_red();
         set_style_settings(style.clone());
         let color = accent_primary();

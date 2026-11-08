@@ -478,6 +478,8 @@ mod tests {
 
     #[test]
     fn style_preset_and_custom_color_apply() {
+        // Global theme style is shared across tests: serialize.
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
         let (tx, _rx) = mpsc::channel(8);
         let mut app = test_app();
         app.core.mode = AppMode::Settings;
