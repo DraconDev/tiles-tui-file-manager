@@ -321,6 +321,7 @@ pub fn draw_column_settings(f: &mut Frame, area: Rect, app: &mut App) {
 pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &mut App) {
     let mut rows = Vec::new();
     let mut tab_counter = 0;
+    let mut selected_row = None;
 
     for (p_idx, pane) in app.panes.iter().enumerate() {
         rows.push(Row::new(vec![
@@ -346,6 +347,10 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &mut App) {
             }
 
             let is_active = t_idx == pane.active_tab_index;
+            if is_selected {
+                // Visible-row index in the table (pane headers/spacers aside).
+                selected_row = Some(rows.len());
+            }
             let status = if is_active {
                 " [ACTIVE] "
             } else {
@@ -371,8 +376,14 @@ pub fn draw_tab_settings(f: &mut Frame, area: Rect, app: &mut App) {
         ])); // Spacer
     }
 
+    let window = scroll_settings_window(
+        app,
+        rows.len(),
+        area.height.saturating_sub(1) as usize,
+        selected_row,
+    );
     let table = Table::new(
-        rows,
+        rows[window].to_vec(),
         [
             Constraint::Length(10),
             Constraint::Fill(1),
@@ -594,8 +605,18 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &mut App) {
         })
         .collect();
 
+    let selected = (app.settings.settings_section == SettingsSection::General
+        && app.settings.settings_index < rows.len())
+        .then_some(app.settings.settings_index);
+    let window = scroll_settings_window(
+        app,
+        rows.len(),
+        area.height.saturating_sub(1) as usize,
+        selected,
+    );
+
     let table = Table::new(
-        rows,
+        rows[window].to_vec(),
         [
             Constraint::Fill(1),
             Constraint::Length(15),
