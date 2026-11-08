@@ -220,6 +220,8 @@ if let Some(tab) = app.panes.get_mut(pane_idx).and_then(|p| p.tabs.get_mut(activ
     }
 
     if !search_filter_text.is_empty() {
+        // Clamp: cur_x may already be past the pane on narrow widths, which
+        // would put the rect outside the pane (rendered as garbage pixels).
         let max_filter_w = area.right().saturating_sub(cur_x + 2) as usize;
         let display_filter = if search_filter_text.width() > max_filter_w {
             truncate_to_width(&search_filter_text, max_filter_w, "..]")
@@ -227,7 +229,7 @@ if let Some(tab) = app.panes.get_mut(pane_idx).and_then(|p| p.tabs.get_mut(activ
             search_filter_text
         };
 
-        let filter_rect = Rect::new(cur_x + 1, area.y, display_filter.width() as u16, 1);
+        let filter_rect = Rect::new(cur_x.saturating_add(1).min(area.right()), area.y, display_filter.width() as u16, 1);
         f.render_widget(
             Paragraph::new(Span::styled(
                 display_filter,
