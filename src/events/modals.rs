@@ -18,6 +18,19 @@ const STYLE_COLOR_FIELD_COUNT: usize = 6;
 pub const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_COUNT;
 const STYLE_MAX_INDEX: usize = STYLE_COLOR_START_INDEX + STYLE_COLOR_FIELD_COUNT - 1;
 
+/// A name typed into a new-file / rename modal must be a plain file name.
+/// Reject absolute paths, separators, and `.`/`..` so input cannot escape
+/// the current directory or (via an absolute path) replace the base dir.
+fn is_plain_file_name(input: &str) -> bool {
+    let t = input.trim();
+    !t.is_empty()
+        && t != "."
+        && t != ".."
+        && !t.contains('/')
+        && !t.contains('\\')
+        && !std::path::Path::new(t).is_absolute()
+}
+
 pub fn handle_modal_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<AppEvent>) -> bool {
     match evt {
         Event::Key(key) => handle_modal_keys(key, app, event_tx, evt),
@@ -696,18 +709,6 @@ fn handle_input_modals_keys(
             true
         }
 
-/// A name typed into a new-file / rename modal must be a plain file name.
-/// Reject absolute paths, separators, and `.`/`..` so input cannot escape
-/// the current directory or (via an absolute path) replace the base dir.
-fn is_plain_file_name(input: &str) -> bool {
-    let t = input.trim();
-    !t.is_empty()
-        && t != "."
-        && t != ".."
-        && !t.contains('/')
-        && !t.contains('\\')
-        && !std::path::Path::new(t).is_absolute()
-}
         KeyCode::Enter => {
             let input = app.core.input.value.clone();
             if let AppMode::DeleteFile(ref path) = app.core.mode {
