@@ -1,7 +1,10 @@
 # Theme Hardcoded Color Audit — ✅ COMPLETE
 
-All 16 TODO items resolved. Only 12 `Color::` references remain in `src/ui/`,
-all of which are intentional and correct.
+All 16 TODO items resolved at the time of writing; the counts in this
+snapshot have drifted since (14 presets now, 383 `Color::` path mentions
+mostly via the `theme::` accessors and preset data). Treat the section
+below as a historical snapshot; presets and contrast are tested in
+`theme.rs` (`all_presets_have_readable_selection_contrast`).
 
 ## What was fixed
 
@@ -46,6 +49,5 @@ all of which are intentional and correct.
 
 ## Summary stats
 - Before: ~261 hardcoded colors → After: 12 intentional `Color::` (6 Reset, 3 dynamic Rgb, 1 Blue swatch, 2 image Rgb)
-- ThemeStyle fields: 6 → 22
-- Theme presets: 6 → 11
-- Theme accessors: 6 → 28
+- Theme presets: 6 → 11 at the time (14 as of the 2026 audit pass)
+- ThemeStyle/DraconTheme fields and accessors have grown since; see `src/ui/theme.rs`
