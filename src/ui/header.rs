@@ -450,7 +450,7 @@ mod tests {
 
         let buffer = terminal.backend().buffer().clone();
         let text = buffer_text(&buffer);
-        assert!(text.contains("documents"), "truncated tab should show characters, not just an ellipsis");
+        assert!(text.contains("very-long-directory"), "truncated tab should show characters, not just an ellipsis");
         assert_eq!(app.layout.tab_bounds.len(), 1);
         let (rect, _, _) = app.layout.tab_bounds[0];
         assert!(rect.width > 1, "click rect must cover the rendered tab");
