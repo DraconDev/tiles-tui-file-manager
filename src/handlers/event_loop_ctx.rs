@@ -899,8 +899,50 @@ fn load_preview_content(
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_else(|| "/".to_string())
                     ),
-                    Ok(false) => crate::modules::remote::read_to_string(remote, path)
-                        .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
+                    Ok(false) => {
+                        // Cap remote previews like local ones: stat via the
+                        // parent listing (the contract has no single-file
+                        // stat) and refuse oversized/non-regular paths
+                        // instead of loading a multi-GB file as a string.
+                        let limit = preview_limit_mb * 1024 * 1024;
+                        let parent = path.parent().map(|p| p.to_path_buf()).unwrap_or_else(|| PathBuf::from("/"));
+                        match crate::modules::remote::read_dir_with_metadata(remote, &parent) {
+                            Ok((_, meta)) => {
+                                match meta.get(path) {
+                                    None => format!("Error reading remote file: not found in parent listing"),
+                                    Some(entry) if entry.is_dir => format!(
+                                        "\n\n   << PROJECT VIEW: {} >>\n\n   Select a file from the sidebar to begin editing.",
+                                        path.file_name()
+                                            .map(|n| n.to_string_lossy().to_string())
+                                            .unwrap_or_else(|| "/".to_string())
+                                    ),
+                                    Some(entry) if entry.permissions & 0o170000 != 0 && entry.permissions & 0o170000 != 0o100000 => {
+                                        format!("<Not a regular file: {}>", path.display())
+                                    }
+                                    Some(entry) if entry.size > limit => format!(
+                                        "<File too large: {} MB>",
+                                        entry.size / 1024 / 1024
+                                    ),
+                                    Some(entry) => {
+                                        let ext = path.extension()
+                                            .and_then(|s| s.to_str())
+                                            .unwrap_or("")
+                                            .to_lowercase();
+                                        let image_exts = ["png", "jpg", "jpeg", "gif", "bmp", "webp", "ico", "tiff"];
+                                        if image_exts.contains(&ext.as_str()) {
+                                            format!("<Image: {} KB - preview below>", entry.size / 1024)
+                                        } else {
+                                            crate::modules::remote::read_to_string(remote, path)
+                                                .unwrap_or_else(|e| {
+                                                    format!("Error reading remote file: {e}")
+                                                })
+                                        }
+                                    }
+                                }
+                            }
+                            Err(e) => format!("Error probing remote path: {e}"),
+                        }
+                    }
                     Err(e) => format!("Error probing remote path: {e}"),
                 }
     } else if path.is_dir() {
