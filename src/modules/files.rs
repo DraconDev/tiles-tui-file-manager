@@ -229,8 +229,32 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
                             .trim_start_matches("#!")
                             .split_whitespace()
                             .collect();
-                        let mut iter = tokens.iter();
-                        let interpreter = iter.next()?.trim_end_matches('/')...;
+                        if tokens.is_empty() {
+                            return None;
+                        }
+                        // `#!/usr/bin/env python3`: tokens past the interpreter
+                        // are the real program and its args (also covers
+                        // `#!/bin/sh -e` extra flags).
+                        let (program, extra): (&str, Vec<String>) =
+                            if tokens[0].rsplit('/').next() == Some("env") {
+                                if tokens.len() < 2 {
+                                    return None;
+                                }
+                                (
+                                    tokens[1],
+                                    tokens[2..].iter().map(|s| s.to_string()).collect(),
+                                )
+                            } else {
+                                (
+                                    tokens[0],
+                                    tokens[1..].iter().map(|s| s.to_string()).collect(),
+                                )
+                            };
+                        let file_str = path.to_string_lossy();
+                        let mut args = extra;
+                        args.push(file_str.to_string());
+                        return Some((work_dir, program.to_string(), args));
+                    }
         }
     }
 
