@@ -673,7 +673,14 @@ pub fn handle_context_menu_action(
                                 path: work_dir,
                                 new_tab: true,
                                 remote,
-                                command: Some(format!("{} {}", program, args.join(" "))),
+                                command: Some(format!(
+                                "{} {}",
+                                crate::modules::terminal::shell_quote_arg(&program),
+                                args.iter()
+                                    .map(|a| crate::modules::terminal::shell_quote_arg(a))
+                                    .collect::<Vec<_>>()
+                                    .join(" ")
+                            )),
                             });
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Running: {} {}",
@@ -701,7 +708,14 @@ pub fn handle_context_menu_action(
                                 path: work_dir,
                                 new_tab: true,
                                 remote,
-                                command: Some(format!("{} {}", program, args.join(" "))),
+                                command: Some(format!(
+                                "{} {}",
+                                crate::modules::terminal::shell_quote_arg(&program),
+                                args.iter()
+                                    .map(|a| crate::modules::terminal::shell_quote_arg(a))
+                                    .collect::<Vec<_>>()
+                                    .join(" ")
+                            )),
                             });
                             let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                 "Running: {} {}",

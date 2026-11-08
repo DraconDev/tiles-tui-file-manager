@@ -685,7 +685,14 @@ pub fn handle_file_events(evt: &Event, app: &mut App, event_tx: &mpsc::Sender<Ap
                                             path: work_dir,
                                             new_tab: true,
                                             remote: fs.nav.remote_session.clone(),
-                                            command: Some(format!("{} {}", program, args.join(" "))),
+                                            command: Some(format!(
+                                "{} {}",
+                                crate::modules::terminal::shell_quote_arg(&program),
+                                args.iter()
+                                    .map(|a| crate::modules::terminal::shell_quote_arg(a))
+                                    .collect::<Vec<_>>()
+                                    .join(" ")
+                            )),
                                         });
                                         let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(format!(
                                             "Running: {} {}",
