@@ -497,7 +497,9 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
 }
 
 pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
-    let current_user = std::env::var("USER").unwrap_or_else(|_| "dracon".to_string());
+    // Never hard-code a person: an unset USER must not silently filter the
+    // Applications list to someone else's processes.
+    let current_user = std::env::var("USER").unwrap_or_default();
     let mut app_procs: Vec<_> = app.system_state
         .processes
         .iter()

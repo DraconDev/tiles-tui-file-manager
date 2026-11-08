@@ -107,7 +107,7 @@ pub fn draw_git_page(f: &mut Frame, area: Rect, app: &mut App) {
         .style(Style::default().bg(theme::bg()))
         .title_top(Line::from(vec![
             Span::styled(
-                " GIT HUB ",
+                " GIT ",
                 Style::default()
                     .fg(theme::selection_fg())
                     .bg(theme::accent_primary())
