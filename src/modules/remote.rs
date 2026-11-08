@@ -176,8 +176,16 @@ pub fn fetch_git_data(remote: &RemoteSession, path: &Path) -> Option<GitData> {
         for line in raw.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 3 {
+                // Rename lines look like `1 0 old.ts => src/app/config.ts`:
+                // key by the post-rename name so status lookups hit.
+                let key = parts[2..]
+                    .join(" ")
+                    .rsplit(" => ")
+                    .next()
+                    .unwrap_or(parts[2])
+                    .to_string();
                 stats_map.insert(
-                    parts[2].to_string(),
+                    key,
                     (parts[0].parse().unwrap_or(0), parts[1].parse().unwrap_or(0)),
                 );
             }
@@ -187,7 +195,13 @@ pub fn fetch_git_data(remote: &RemoteSession, path: &Path) -> Option<GitData> {
         for line in raw.lines() {
             let parts: Vec<&str> = line.split_whitespace().collect();
             if parts.len() >= 3 {
-                let entry = stats_map.entry(parts[2].to_string()).or_insert((0, 0));
+                let key = parts[2..]
+                    .join(" ")
+                    .rsplit(" => ")
+                    .next()
+                    .unwrap_or(parts[2])
+                    .to_string();
+                let entry = stats_map.entry(key).or_insert((0, 0));
                 entry.0 += parts[0].parse::<usize>().unwrap_or(0);
                 entry.1 += parts[1].parse::<usize>().unwrap_or(0);
             }
@@ -198,7 +212,12 @@ pub fn fetch_git_data(remote: &RemoteSession, path: &Path) -> Option<GitData> {
             if line.len() > 3 {
                 let status = line[0..2].trim().to_string();
                 let file = line[3..].to_string();
-                let (ins, del) = stats_map.get(&file).cloned().unwrap_or((0, 0));
+                // Rename entries list "old -> new"; numstat is keyed by the new name.
+                let lookup = file
+                    .rsplit(" -> ")
+                    .next()
+                    .unwrap_or(&file);
+                let (ins, del) = stats_map.get(lookup).cloned().unwrap_or((0, 0));
                 pending.push(GitPendingChange {
                     status,
                     path: file,
@@ -234,7 +253,13 @@ pub fn build_remote_terminal_command(
     path: &Path,
     command: Option<&str>,
 ) -> String {
-    let dest = format!("{}@{}", remote.user, remote.host);
+    // The destination is interpolated into a `sh -c` command string: never let
+    // a crafted bookmark inject extra ssh options (`-o ProxyCommand=...`) or
+    // shell metacharacters. Validate + quote the whole token.
+    if !is_safe_ssh_identity(&remote.user, &remote.host) {
+        return "echo 'Invalid SSH destination'".to_string();
+    }
+    let dest = escape_shell_single_quoted(&format!("{}@{}", remote.user, remote.host));
     let path_q = shell_quote_path(path);
     let body = if let Some(cmd) = command {
         format!("cd {path_q} && {cmd}")
@@ -330,6 +355,19 @@ fn parse_git_shortstat(line: &str) -> (usize, usize, usize) {
         }
     }
     (files_changed, insertions, deletions)
+}
+
+/// A bookmark user/host is safe to interpolate into a shell command when it
+/// contains only typical identity characters and never a shell metacharacter
+/// or a leading `-` (ssh would parse it as an option).
+fn is_safe_ssh_identity(user: &str, host: &str) -> bool {
+    let safe = |s: &str| {
+        !s.is_empty()
+            && !s.starts_with('-')
+            && s.chars()
+                .all(|c| c.is_ascii_alphanumeric() || "-._@:[]".contains(c))
+    };
+    safe(user) && safe(host)
 }
 
 fn shell_quote_path(path: &Path) -> String {
