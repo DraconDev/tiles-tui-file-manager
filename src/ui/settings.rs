@@ -139,7 +139,7 @@ pub fn draw_shortcuts_settings(f: &mut Frame, area: Rect, _app: &App) {
                 ("Enter", "Open Directory / File"),
                 ("Shift + Enter", "Open Folder in New Tab"),
                 ("Backspace", "Go to Parent Directory"),
-                ("Alt + Left / Right", "Back / Forward in History"),
+                ("Alt + Left / Right", "Resize Sidebar"),
                 ("~", "Go to Home Directory"),
                 ("Middle Click / Space", "Expand / Edit"),
             ],

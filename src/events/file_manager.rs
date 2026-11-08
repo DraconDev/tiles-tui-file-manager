@@ -160,6 +160,19 @@ fn handle_global_shortcuts(
             app.settings.settings_scroll = 0;
             Some(true)
         }
+        // Help: both `?` (from the Settings shortcuts list) and F1 (from the
+        // hotkeys modal) open the hotkeys popup. Previously the Hotkeys mode
+        // had no opener at all, so neither documented key worked.
+        KeyCode::Char('?') => {
+            app.core.previous_mode = app.core.mode.clone();
+            app.core.mode = AppMode::Hotkeys;
+            Some(true)
+        }
+        KeyCode::F(1) => {
+            app.core.previous_mode = app.core.mode.clone();
+            app.core.mode = AppMode::Hotkeys;
+            Some(true)
+        }
         KeyCode::Char('n') | KeyCode::Char('N') if has_control => {
             if let Some(fs) = app.current_file_state() {
                 let _ = crate::app::try_send_event(&event_tx, AppEvent::SpawnTerminal {
