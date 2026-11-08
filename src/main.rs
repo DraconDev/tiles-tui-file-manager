@@ -3,7 +3,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::Duration;
 
 use dracon_terminal_engine::input::parser::Parser as TuiParser;
-use dracon_terminal_engine::input::mapping::to_ui_event;
 use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBackend;
 
 // Ratatui Imports

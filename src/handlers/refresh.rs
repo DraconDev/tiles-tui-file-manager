@@ -225,7 +225,7 @@ pub async fn handle_refreshes(
                         fs.list.tree_file_depths = tree_file_depths;
                         let prev_selected_path = fs.list.selection.selected
                             .and_then(|idx| fs.list.files.get(idx).cloned());
-                        let was_selected_in_view = fs.list.selection.selected.map_or(false, |old_idx| {
+                        let was_selected_in_view = fs.list.selection.selected.is_some_and(|old_idx| {
                             let capacity = fs.view.view_height.saturating_sub(3).max(1);
                             let offset = fs.view.table_state.offset();
                             old_idx >= offset && old_idx < offset + capacity

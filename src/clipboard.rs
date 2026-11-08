@@ -77,12 +77,6 @@ pub fn copy_text_to_clipboard_async(text: String) {
     });
 }
 
-/// OSC 52 terminal escape sequence clipboard copy (fallback).
-fn copy_text_to_clipboard_via_osc52(text: &str) -> Result<(), String> {
-    let term = std::env::var("TERM").unwrap_or_default();
-    copy_text_to_clipboard_via_osc52_with_term(text, &term)
-}
-
 fn copy_text_to_clipboard_via_osc52_with_term(text: &str, term: &str) -> Result<(), String> {
     use std::io::Write;
 

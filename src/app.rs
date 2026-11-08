@@ -97,13 +97,9 @@ pub struct App {
 impl App {
 
     /// Create a new App instance with default state.
-
     ///
-
     /// Initializes with a single pane showing the current working directory,
-
     /// default sidebar settings, and the Files view active.
-
     pub fn new() -> Self {
 
         let start_path = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
@@ -421,9 +417,7 @@ impl App {
 
 
     /// Set the input shield cooldown to ignore keyboard events for `duration_ms` milliseconds.
-
     /// Used after mode transitions to prevent stray keypresses.
-
     pub fn set_input_shield(&mut self, duration_ms: u64) {
 
         let now = std::time::Instant::now();
@@ -439,7 +433,6 @@ impl App {
 
 
     /// Check if we're currently in the soft input shield cooldown period.
-
     pub fn in_soft_shield(&self) -> bool {
 
         self.output
@@ -455,7 +448,6 @@ impl App {
 
 
     /// Add a folder to the recent folders list, trimming to MAX_HISTORY.
-
     pub fn push_recent_folder(&mut self, path: PathBuf) {
 
         self.nav.recent_folders.retain(|p| p != &path);
@@ -473,7 +465,6 @@ impl App {
 
 
     /// Get a reference to the currently focused pane's FileState.
-
     pub fn current_file_state(&self) -> Option<&FileState> {
 
         self.panes
@@ -487,7 +478,6 @@ impl App {
 
 
     /// Get a mutable reference to the currently focused pane's FileState.
-
     pub fn current_file_state_mut(&mut self) -> Option<&mut FileState> {
 
         self.panes
@@ -501,7 +491,6 @@ impl App {
 
 
     /// Calculate the sidebar width in character columns based on the percentage setting.
-
     pub fn sidebar_width(&self) -> u16 {
 
         if !self.sidebar.show_sidebar {
@@ -908,13 +897,9 @@ const MAX_LOG_SIZE_BYTES: u64 = 5 * 1024 * 1024;
 
 
 /// Log a debug message to the XDG data directory log file.
-
 ///
-
 /// Messages are written to `$XDG_DATA_HOME/tiles/debug.log` with ISO timestamps.
-
 /// No-op if debug logging is disabled.
-
 pub fn log_debug(msg: &str) {
 
     if !debug_logging_enabled() {
@@ -988,7 +973,6 @@ pub fn log_debug(msg: &str) {
             .join("tiles")
             .join("debug.log");
         {
-            let path = path;
             if let Ok(meta) = std::fs::metadata(&path) {
                 if meta.len() > MAX_LOG_SIZE_BYTES {
                     drop(guard);
@@ -1030,7 +1014,6 @@ pub fn log_debug(msg: &str) {
 
 
 /// Check if debug logging is enabled via the TILES_DEBUG environment variable.
-
 pub fn debug_logging_enabled() -> bool {
 
     static ENABLED: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
@@ -1054,17 +1037,11 @@ use tokio::sync::mpsc::Sender;
 
 
 #[allow(clippy::needless_borrow, clippy::collapsible_match, clippy::manual_checked_ops)]
-
 /// Attempt to send an event through the channel without blocking.
-
 ///
-
 /// Returns `true` if the event was sent successfully, `false` if the channel
-
 /// is full (event is dropped and a log message is written).
-
 #[must_use = "try_send_event returns false if the channel is full"]
-
 pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
 
     if tx.is_closed() {
@@ -1117,7 +1094,6 @@ pub fn try_send_event(tx: &Sender<AppEvent>, evt: AppEvent) -> bool {
 }
 
 #[cfg(test)]
-
 mod tests {
 
     use super::*;
@@ -1133,7 +1109,6 @@ mod tests {
 
 
     #[test]
-
     fn app_new_defaults() {
 
         let app = test_app();
@@ -1153,7 +1128,6 @@ mod tests {
 
 
     #[test]
-
     fn app_new_has_single_pane() {
 
         let app = test_app();
@@ -1167,7 +1141,6 @@ mod tests {
 
 
     #[test]
-
     fn app_new_has_file_state() {
 
         let app = test_app();
@@ -1187,7 +1160,6 @@ mod tests {
 
 
     #[test]
-
     fn toggle_split_mode() {
 
         let mut app = test_app();
@@ -1213,7 +1185,6 @@ mod tests {
 
 
     #[test]
-
     fn sidebar_defaults() {
 
         let app = test_app();
@@ -1229,7 +1200,6 @@ mod tests {
 
 
     #[test]
-
     fn input_shield_mechanism() {
 
         let mut app = test_app();

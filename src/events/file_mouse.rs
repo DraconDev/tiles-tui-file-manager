@@ -705,10 +705,7 @@ mod tests {
 
     #[test]
     fn drag_state_marquee_rect_when_active() {
-        let mut drag = DragState::default();
-        drag.is_marquee = true;
-        drag.marquee_start = Some((5, 3));
-        drag.marquee_end = Some((10, 8));
+        let drag = DragState { is_marquee: true, marquee_start: Some((5, 3)), marquee_end: Some((10, 8)), ..Default::default() };
         let rect = drag.marquee_rect().unwrap();
         assert_eq!(rect.min_col, 5);
         assert_eq!(rect.max_col, 10);
@@ -718,10 +715,7 @@ mod tests {
 
     #[test]
     fn drag_state_marquee_rect_normalized_when_end_before_start() {
-        let mut drag = DragState::default();
-        drag.is_marquee = true;
-        drag.marquee_start = Some((10, 8));
-        drag.marquee_end = Some((5, 3));
+        let drag = DragState { is_marquee: true, marquee_start: Some((10, 8)), marquee_end: Some((5, 3)), ..Default::default() };
         let rect = drag.marquee_rect().unwrap();
         assert_eq!(rect.min_col, 5);
         assert_eq!(rect.max_col, 10);
@@ -731,10 +725,7 @@ mod tests {
 
     #[test]
     fn drag_state_clear_marquee_resets_all() {
-        let mut drag = DragState::default();
-        drag.is_marquee = true;
-        drag.marquee_start = Some((5, 3));
-        drag.marquee_end = Some((10, 8));
+        let drag = DragState { is_marquee: true, marquee_start: Some((5, 3)), marquee_end: Some((10, 8)), ..Default::default() };
         drag.pending_click_idx = Some(5);
         drag.clear_marquee();
         assert!(!drag.is_marquee);

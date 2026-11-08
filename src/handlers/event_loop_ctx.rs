@@ -851,7 +851,7 @@ impl EventLoopCtx {
             .await
             .unwrap_or_else(|e| format!("Error loading preview: {}", e));
 
-            return finish_preview_request(
+            finish_preview_request(
                 tx,
                 app_clone,
                 pane_idx,
@@ -873,7 +873,7 @@ fn load_preview_content(
 ) -> String {
     let path_str = path.to_string_lossy();
     if let Some(hash) = path_str.strip_prefix("git://") {
-                match crate::modules::files::show_commit_patch(&current_dir, hash) {
+                match crate::modules::files::show_commit_patch(current_dir, hash) {
                     Ok(c) => c,
                     Err(e) => format!("Error fetching commit data: {}", e),
                 }
@@ -888,20 +888,20 @@ fn load_preview_content(
                         Err(e) => format!("Error fetching diff data: {}", e),
                     }
                 } else {
-                    match crate::modules::files::show_file_diff(&current_dir, file_path) {
+                    match crate::modules::files::show_file_diff(current_dir, file_path) {
                         Ok(content) => content,
                         Err(e) => format!("Error fetching diff data: {}", e),
                     }
                 }
             } else if let Some(remote) = &remote_session {
-                match crate::modules::remote::is_dir(remote, &path) {
+                match crate::modules::remote::is_dir(remote, path) {
                     Ok(true) => format!(
                         "\n\n   << PROJECT VIEW: {} >>\n\n   Select a file from the sidebar to begin editing.",
                         path.file_name()
                             .map(|n| n.to_string_lossy().to_string())
                             .unwrap_or_else(|| "/".to_string())
                     ),
-                    Ok(false) => crate::modules::remote::read_to_string(remote, &path)
+                    Ok(false) => crate::modules::remote::read_to_string(remote, path)
                         .unwrap_or_else(|e| format!("Error reading remote file: {e}")),
                     Err(e) => format!("Error probing remote path: {e}"),
                 }

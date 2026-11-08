@@ -303,7 +303,7 @@ pub fn draw_monitor_overview(f: &mut Frame, area: Rect, app: &mut App) {
         };
         lines.push(Line::from(vec![
             Span::styled("│  ", sep),
-            Span::styled(format!("{:14}", &disk.name), Style::default().fg(theme::fg())),
+            Span::styled(format!("{:14}", disk.name), Style::default().fg(theme::fg())),
             Span::styled(gauge_bar(ratio as f32, disk_bar_w), Style::default().fg(color)),
             Span::styled(
                 format!("  {:.0}G / {:.0}G [{:.0}%]", disk.used_space, disk.total_space, ratio * 100.0),
