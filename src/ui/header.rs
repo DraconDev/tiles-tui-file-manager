@@ -9,13 +9,50 @@ use ratatui::{
     Frame,
 };
 use std::time::SystemTime;
-use unicode_width::UnicodeWidthStr;
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
 
 use crate::state::CurrentView;
 use crate::{state::AppMode, App};
 use crate::icons::Icon;
 use crate::ui::theme as theme;
 use crate::ui::theme::{accent_primary, accent_secondary, selection_bg};
+
+/// Smallest tab width worth rendering: a leading space + 2 chars + ellipsis.
+/// Below this a tab is drawn as a degenerate 1-cell sliver with a click rect
+/// too small to hit — skip such tabs entirely (mirrors the existing
+/// `max_width == 0` bail-out).
+const MIN_TAB_WIDTH: u16 = 4;
+
+/// Truncate a line to `max_width` cells at character granularity, keeping
+/// per-span styling and reserving the last cell for "…". The returned line
+/// has width exactly `min(original, max_width)`, so the click rect built
+/// from the same numbers always matches what is actually drawn. Whole-span
+/// truncation drew a lone "…" inside a wide rect whose click bounds were
+/// far larger than the visible tab.
+fn truncate_line_to_width(line: Line, max_width: u16) -> Line {
+    let mut truncated: Vec<Span> = Vec::new();
+    let mut current_w: u16 = 0;
+    let budget = max_width.saturating_sub(1);
+    for span in line.spans {
+        if current_w >= budget {
+            break;
+        }
+        let mut kept = String::new();
+        for ch in span.content.chars() {
+            let cw = ch.width().unwrap_or(0) as u16;
+            if current_w + cw > budget {
+                break;
+            }
+            kept.push(ch);
+            current_w += cw;
+        }
+        if !kept.is_empty() {
+            truncated.push(Span::styled(kept, span.style));
+        }
+    }
+    truncated.push(Span::styled("\u{2026}", Style::default().fg(theme::muted())));
+    Line::from(truncated)
+}
 
 pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &mut App) {
     let _now = SystemTime::now()
@@ -112,7 +149,7 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     .map(|e| e.modified)
                     .unwrap_or(false);
 
-                let base_style = if is_active_tab {
+                let mut base_style = if is_active_tab {
                     if is_focused_pane {
                         Style::default()
                             .bg(if is_modified { selection_bg() } else { Color::Reset })
@@ -126,6 +163,17 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 } else {
                     Style::default().fg(theme::muted())
                 };
+
+                // Header-mode focus highlight (matches the non-Editor branch):
+                // keyboard focus on this tab must be visible in Editor view too.
+                if let AppMode::Header(idx) = app.core.mode {
+                    if idx == global_tab_idx {
+                        base_style = base_style
+                            .bg(accent_primary())
+                            .fg(theme::selection_fg())
+                            .add_modifier(Modifier::BOLD);
+                    }
+                }
 
                 let base_name = if is_active_tab {
                     if let Some(fs) = pane.current_state() {
@@ -198,27 +246,20 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                     spans.push(Span::raw(" "));
                 }
 
-                let line = Line::from(spans.clone());
+                let line = Line::from(spans);
                 let total_width = line.width() as u16;
                 let end_x = chunk.x + chunk.width;
                 let max_width = end_x.saturating_sub(current_x);
-                if max_width == 0 {
+                // No point drawing a tab that cannot show even a few glyphs +
+                // ellipsis: it would emit a degenerate 1-cell click rect.
+                if max_width < MIN_TAB_WIDTH {
                     break;
                 }
 
-                let final_line = if total_width > max_width && max_width > 3 {
-                    let mut truncated = vec![];
-                    let mut current_w = 0;
-                    for span in spans {
-                        let span_w = span.content.width() as u16;
-                        if current_w + span_w > max_width - 1 {
-                            truncated.push(Span::styled("\u{2026}", Style::default().fg(theme::muted())));
-                            break;
-                        }
-                        truncated.push(span);
-                        current_w += span_w;
-                    }
-                    Line::from(truncated)
+                // Character-level truncation so the rendered width always
+                // equals the click rect width.
+                let final_line = if total_width > max_width {
+                    truncate_line_to_width(line, max_width)
                 } else {
                     line
                 };
