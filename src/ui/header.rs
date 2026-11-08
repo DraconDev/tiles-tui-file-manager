@@ -355,33 +355,23 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 }
             }
 
-            let line = Line::from(spans.clone());
+            let line = Line::from(spans);
             let total_width = line.width() as u16;
 
             // Calculate max available width for this tab (saturating so an
             // exactly-filled previous tab cannot underflow the next one).
             let end_x = chunk.x + chunk.width;
             let max_available = end_x.saturating_sub(current_x);
-            if max_available == 0 {
+            // No point drawing a tab that cannot show even a few glyphs +
+            // ellipsis: it would emit a degenerate 1-cell click rect.
+            if max_available < MIN_TAB_WIDTH {
                 break;
             }
 
-            // Actually truncate the line content if too wide
-            let final_line = if total_width > max_available && max_available > 3 {
-                // Build truncated spans
-                let mut truncated = vec![];
-                let mut current_w = 0;
-                for span in spans {
-                    let span_w = span.content.width() as u16;
-                    if current_w + span_w > max_available - 1 {
-                        // Add ellipsis and stop
-                        truncated.push(Span::styled("\u{2026}", Style::default().fg(theme::muted())));
-                        break;
-                    }
-                    truncated.push(span);
-                    current_w += span_w;
-                }
-                Line::from(truncated)
+            // Character-level truncation so the rendered width always
+            // equals the click rect width.
+            let final_line = if total_width > max_available {
+                truncate_line_to_width(line, max_available)
             } else {
                 line
             };
