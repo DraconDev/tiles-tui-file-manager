@@ -289,7 +289,7 @@ pub fn handle_modal_mouse(
                         }
                         SettingsSection::Style => {
                             let idx = rel_y as usize + app.settings.settings_scroll as usize;
-                            if idx < (STYLE_MAX_INDEX as usize + 1) {
+                            if idx < STYLE_MAX_INDEX + 1 {
                                 app.settings.settings_index = idx;
                                 if app.settings.settings_index == 0 {
                                     crate::ui::theme::set_style_settings(
