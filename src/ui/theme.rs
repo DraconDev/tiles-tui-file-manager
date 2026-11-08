@@ -578,6 +578,13 @@ pub fn style_settings() -> ThemeStyle {
     ACTIVE_STYLE.read().clone()
 }
 
+/// Serializes tests that read/mutate the global theme style. The style lives
+/// in process-global statics, so parallel tests mutating it race each other
+/// (a preset applied by one test can be overwritten before another's assert).
+#[cfg(test)]
+pub(crate) static STYLE_TEST_LOCK: std::sync::Mutex<()> =
+    std::sync::Mutex::new(());
+
 pub fn set_style_settings(style: ThemeStyle) {
     {
         let mut active_style = ACTIVE_STYLE.write();
