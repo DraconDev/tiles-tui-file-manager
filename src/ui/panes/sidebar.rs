@@ -591,8 +591,11 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 );
             }
 
-            // Apply scroll offset: slice visible items and adjust bounds
-            let visible_height = inner.height as usize;
+            // Apply scroll offset: slice visible items and adjust bounds.
+            // One usable row is held back from the list for the
+            // hover/selected hint drawn below, so the hint never overwrites
+            // the last visible item.
+            let visible_height = (inner.height as usize).saturating_sub(1).max(1);
             let total_items = sidebar_items.len();
 
             // Auto-scroll to keep selected item in view
@@ -635,6 +638,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
             let list_inner = list_block.inner(area);
             f.render_widget(List::new(visible_items).block(list_block), area);
 
+            // Hint row: the reserved last inner row (list rows stop above it).
             let hint_target = app.sidebar.sidebar_bounds
                 .iter()
                 .find(|b| b.y == app.core.mouse_pos.1)
@@ -659,14 +663,14 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         .unwrap_or_default(),
                     SidebarTarget::Header(name) => name.clone(),
                 };
-                if !hint.is_empty() && hint != title_text && list_inner.height > 0 {
+                if !hint.is_empty() && hint != title_text {
                     let text =
                         truncate_to_width(&hint, list_inner.width.saturating_sub(1) as usize, "..");
                     f.render_widget(
                         Paragraph::new(Span::styled(text, Style::default().fg(theme::muted()))),
                         Rect::new(
                             list_inner.x,
-                            list_inner.y + list_inner.height.saturating_sub(1),
+                            list_inner.y + list_inner.height - 1,
                             list_inner.width,
                             1,
                         ),
@@ -965,5 +969,55 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
                 collect_tree_items(&p, depth + 1, app, items);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ratatui::backend::TestBackend;
+
+    #[test]
+    fn files_sidebar_hint_does_not_overwrite_last_visible_row() {
+        // Global theme style is shared across tests: serialize.
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+
+        let mut app = crate::app::App::new();
+        app.core.current_view = crate::state::CurrentView::Files;
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_folders = true;
+        app.sidebar.sidebar_favorites = false;
+        app.sidebar.sidebar_recent = false;
+        app.sidebar.sidebar_storage = false;
+        app.sidebar.sidebar_remotes = false;
+        app.sidebar.sidebar_index = 0;
+        app.sidebar.sidebar_scroll_offset = 0;
+        app.sidebar.sidebar_folders_items = vec![
+            std::path::PathBuf::from("/marker-alpha-1"),
+            std::path::PathBuf::from("/marker-beta-2"),
+            std::path::PathBuf::from("/marker-gamma-3"),
+            std::path::PathBuf::from("/marker-delta-4"),
+        ];
+
+        // 7-row area => 5 inner rows => 4 list rows + 1 reserved hint row.
+        let backend = TestBackend::new(30, 7);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw_sidebar(f, f.area(), &mut app)).unwrap();
+
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(
+            text.contains("marker-delta-4"),
+            "fourth item must be visible: the hint must not overwrite the last visible row"
+        );
+        // The selected folder's full path (the hint) appears on the reserved
+        // bottom row instead.
+        assert!(
+            text.contains("/marker-alpha-1"),
+            "selected item hint should still render on the reserved row"
+        );
     }
 }
