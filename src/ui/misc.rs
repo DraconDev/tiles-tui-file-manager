@@ -339,6 +339,12 @@ mod tests {
         // (+2 = 29). The ghost box must be sized by display columns: with the
         // cursor near the right edge, byte length would clamp x further left
         // (60 vs 51 in an 80-wide buffer).
+        // Global theme style is shared across tests: serialize.
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        // Capture the accent before rendering: a concurrent theme test
+        // mutating the global style must not change the expected color
+        // between the draw and the assertion.
+        let accent = crate::ui::theme::accent_primary();
         let mut app = App::new();
         app.drag.drag_source = Some(std::path::PathBuf::from("/tmp/日本語ドキュメント"));
         app.core.mouse_pos = (78, 0);
@@ -349,7 +355,6 @@ mod tests {
             .unwrap();
 
         let buffer = terminal.backend().buffer().clone();
-        let accent = crate::ui::theme::accent_primary();
         // Ghost row is y=1 (mouse row + 1). The box must span the full
         // display width (20 columns): measure first..last accent cell —
         // wide-char continuation cells do not count as separate cells.
