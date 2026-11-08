@@ -289,11 +289,12 @@ fn read_process_ppid() -> HashMap<u32, u32> {
 }
 
 fn parse_ppid_from_stat(stat: &str) -> Option<u32> {
+    // /proc/[pid]/stat after "comm)" reads: state ppid pgrp session ...
     let start = stat.rfind(')')?;
     let rest = &stat[start + 2..];
     let mut fields = rest.split_whitespace();
-    fields.nth(1)?;
-    fields.next().and_then(|s| s.parse().ok())
+    fields.next()?; // state
+    fields.next().and_then(|s| s.parse().ok()) // ppid
 }
 
 pub fn process_tree_depth(pid: u32, ppid_map: &std::collections::HashMap<u32, u32>) -> usize {
@@ -363,16 +364,14 @@ mod tests {
     #[test]
     fn parse_ppid_from_stat_valid() {
         // /proc/[pid]/stat format: pid (comm) state ppid pgrp session...
-        // After rfind(')'), nth(1) skips state, next() reads pgrp (field 5).
-        // Note: this reads pgrp, not ppid — see code comment above.
         let stat = "1234 (bash) S 1 1234 1 ...";
-        assert_eq!(parse_ppid_from_stat(stat), Some(1234));
+        assert_eq!(parse_ppid_from_stat(stat), Some(1));
     }
 
     #[test]
     fn parse_ppid_from_stat_with_parens() {
         let stat = "42 (my (app)) S 100 42 100 ...";
-        assert_eq!(parse_ppid_from_stat(stat), Some(42));
+        assert_eq!(parse_ppid_from_stat(stat), Some(100));
     }
 
     #[test]
