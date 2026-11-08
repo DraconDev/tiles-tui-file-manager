@@ -599,7 +599,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
             if app.sidebar.sidebar_index < app.sidebar.sidebar_scroll_offset {
                 app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index;
             } else if app.sidebar.sidebar_index >= app.sidebar.sidebar_scroll_offset + visible_height {
-                app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height - 1);
+                app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height.saturating_sub(1));
             }
 
             let max_scroll = total_items.saturating_sub(visible_height);
@@ -794,6 +794,7 @@ if app.sidebar.editor_sidebar_cache_key != editor_cache_key {
     app.sidebar.sidebar_bounds.clear();
     let mut current_y = inner.y;
 
+#[allow(clippy::manual_loop_counter)]
 for (path, depth, is_dir) in tree_items.iter().cloned() {
         let name = path
             .file_name()
@@ -892,7 +893,7 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
     if app.sidebar.sidebar_index < app.sidebar.sidebar_scroll_offset {
         app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index;
     } else if app.sidebar.sidebar_index >= app.sidebar.sidebar_scroll_offset + visible_height {
-        app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height - 1);
+        app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height.saturating_sub(1));
     }
 
     let max_scroll = total_items.saturating_sub(visible_height);

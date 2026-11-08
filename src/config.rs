@@ -22,8 +22,6 @@ pub const MAX_RECENT_FOLDERS: usize = 10;
 pub const MAX_HISTORY: usize = 50;
 /// Debounce interval for file watch events (milliseconds)
 pub const FILE_WATCH_DEBOUNCE_MS: u64 = 200;
-/// Debounce interval for auto-save (milliseconds)
-pub const SAVE_DEBOUNCE_MS: u64 = 350;
 /// Maximum preview file size (megabytes)
 pub const PREVIEW_MAX_MB: u16 = 20;
 pub const MPSC_CHANNEL_CAPACITY: usize = 1000;
