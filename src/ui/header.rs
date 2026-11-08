@@ -91,7 +91,8 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
         ));
 
     app.layout.tab_bounds.clear();
-    let mut global_tab_idx = if show_icons { 6 } else { 0 };
+    // Toolbar icons occupy indices 0-6; tabs follow from 7.
+    let mut global_tab_idx = if show_icons { 7 } else { 0 };
     for (p_i, pane) in app.panes.iter().enumerate() {
         let chunk = pane_chunks[p_i];
         let mut current_x = chunk.x;
@@ -199,7 +200,11 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
 
                 let line = Line::from(spans.clone());
                 let total_width = line.width() as u16;
-                let max_width = chunk.x + chunk.width - current_x;
+                let end_x = chunk.x + chunk.width;
+                let max_width = end_x.saturating_sub(current_x);
+                if max_width == 0 {
+                    break;
+                }
 
                 let final_line = if total_width > max_width && max_width > 3 {
                     let mut truncated = vec![];
@@ -219,10 +224,14 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
                 };
 
                 let width = total_width.min(max_width);
-                if width > 0 {
+                if width > 0 && current_x + width <= chunk.x + chunk.width {
                     let rect = Rect::new(current_x, area.y, width, 1);
                     f.render_widget(Paragraph::new(final_line), rect);
                     app.layout.tab_bounds.push((rect, p_i, t_i));
+                    // Advance: without this every tab overdraws at chunk.x so
+                    // only the last tab is visible and click bounds coincide.
+                    current_x = current_x.saturating_add(width + 1);
+                    global_tab_idx += 1;
                 }
             }
             continue;
@@ -308,8 +317,13 @@ pub fn draw_global_header(f: &mut Frame, area: Rect, sidebar_width: u16, app: &m
             let line = Line::from(spans.clone());
             let total_width = line.width() as u16;
 
-            // Calculate max available width for this tab
-            let max_available = chunk.x + chunk.width - current_x;
+            // Calculate max available width for this tab (saturating so an
+            // exactly-filled previous tab cannot underflow the next one).
+            let end_x = chunk.x + chunk.width;
+            let max_available = end_x.saturating_sub(current_x);
+            if max_available == 0 {
+                break;
+            }
 
             // Actually truncate the line content if too wide
             let final_line = if total_width > max_available && max_available > 3 {
