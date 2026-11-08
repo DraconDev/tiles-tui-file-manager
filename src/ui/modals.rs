@@ -271,7 +271,10 @@ pub fn draw_save_as_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_delete_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(40, 10, f.area());
+    // At least 36 columns wide so [ YES ](+5..14) and [ NO ](+25..33) fit
+    // inside the borders; 40% is narrower than that below ~90 columns.
+    let percent_x = 40u16.max(((36u32 * 100) / f.area().width.max(1) as u32) as u16);
+    let area = centered_rect(percent_x, 10, f.area());
     f.render_widget(Clear, area);
 
     let (title, message) = match &app.core.mode {

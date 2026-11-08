@@ -178,15 +178,19 @@ pub fn draw_context_menu(
         crate::app::ContextMenuTarget::Editor => " Editor ",
     };
 
-    let menu_width = 30;
-    let menu_height = items.len() as u16 + 2;
+    let fw = f.area().width;
+    let fh = f.area().height;
+    // Clamp both dimensions to the frame: only draw_y was saturated, so the
+    // menu could extend past the frame bottom on short terminals.
+    let menu_width = 30u16.min(fw);
+    let menu_height = (items.len() as u16 + 2).min(fh);
     let mut draw_x = x;
     let mut draw_y = y;
-    if draw_x + menu_width > f.area().width {
-        draw_x = f.area().width.saturating_sub(menu_width);
+    if draw_x + menu_width > fw {
+        draw_x = fw.saturating_sub(menu_width);
     }
-    if draw_y + menu_height > f.area().height {
-        draw_y = f.area().height.saturating_sub(menu_height);
+    if draw_y + menu_height > fh {
+        draw_y = fh.saturating_sub(menu_height);
     }
 
     let area = Rect::new(draw_x, draw_y, menu_width, menu_height);
