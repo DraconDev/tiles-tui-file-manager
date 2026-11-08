@@ -209,38 +209,41 @@ pub fn handle_modal_mouse(
 
                     match app.settings.settings_section {
                         SettingsSection::General => {
-                            if rel_y < 14 {
+                            // Indices match the drawn list: 0=Version (read-only),
+                            // 1=hidden, ..., 8=separator, 9-13=sidebar, 14=Reset.
+                            if rel_y < 15 {
                                 app.settings.settings_index = rel_y as usize;
                                 match app.settings.settings_index {
-                                    0 => app.settings.default_show_hidden = !app.settings.default_show_hidden,
-                                    1 => app.settings.confirm_delete = !app.settings.confirm_delete,
-                                    2 => app.settings.smart_date = !app.settings.smart_date,
-                                    3 => app.settings.semantic_coloring = !app.settings.semantic_coloring,
-                                    4 => app.settings.auto_save = !app.settings.auto_save,
-                                    5 => {
+                                    0 => {} // Version is read-only
+                                    1 => app.settings.default_show_hidden = !app.settings.default_show_hidden,
+                                    2 => app.settings.confirm_delete = !app.settings.confirm_delete,
+                                    3 => app.settings.smart_date = !app.settings.smart_date,
+                                    4 => app.settings.semantic_coloring = !app.settings.semantic_coloring,
+                                    5 => app.settings.auto_save = !app.settings.auto_save,
+                                    6 => {
                                         app.preview_max_mb =
                                             cycle_preview_max_mb(app.preview_max_mb)
                                     }
-                                    6 => {
+                                    7 => {
                                         app.core.icon_mode = match app.core.icon_mode {
                                             IconMode::Nerd => IconMode::Unicode,
                                             IconMode::Unicode => IconMode::ASCII,
                                             IconMode::ASCII => IconMode::Nerd,
                                         }
                                     }
-                                    7 => {} // separator, do nothing
-                                    8 => app.sidebar.sidebar_folders = !app.sidebar.sidebar_folders,
-                                    9 => app.sidebar.sidebar_favorites = !app.sidebar.sidebar_favorites,
-                                    10 => app.sidebar.sidebar_recent = !app.sidebar.sidebar_recent,
-                                    11 => app.sidebar.sidebar_storage = !app.sidebar.sidebar_storage,
-                                    12 => app.sidebar.sidebar_remotes = !app.sidebar.sidebar_remotes,
-                                    13 => {
+                                    8 => {} // separator, do nothing
+                                    9 => app.sidebar.sidebar_folders = !app.sidebar.sidebar_folders,
+                                    10 => app.sidebar.sidebar_favorites = !app.sidebar.sidebar_favorites,
+                                    11 => app.sidebar.sidebar_recent = !app.sidebar.sidebar_recent,
+                                    12 => app.sidebar.sidebar_storage = !app.sidebar.sidebar_storage,
+                                    13 => app.sidebar.sidebar_remotes = !app.sidebar.sidebar_remotes,
+                                    14 => {
                                         app.core.mode = AppMode::ResetSettingsConfirm;
                                         app.core.input.clear();
                                     }
                                     _ => {}
                                 }
-                                if app.settings.settings_index != 7 && app.settings.settings_index != 13 {
+                                if app.settings.settings_index != 8 && app.settings.settings_index != 14 && app.settings.settings_index != 0 {
                                     crate::config::save_state_quiet(app);
                                 }
                             }
