@@ -452,10 +452,12 @@ mod tests {
         let (rect, _, _) = app.layout.tab_bounds[0];
         assert!(rect.width > 1, "click rect must cover the rendered tab");
         // The rect's last cell holds the ellipsis: rendered width == rect width.
-        assert_eq!(buffer[(rect.x + rect.width - 1, area_y())].symbol(), "\u{2026}");
+        let last = buffer.cell(ratatui::layout::Position {
+            x: rect.x + rect.width - 1,
+            y: 0,
+        });
+        assert_eq!(last.symbol(), "\u{2026}");
     }
-
-    fn area_y() -> u16 { 0 }
 
     #[test]
     fn editor_sliver_tabs_are_not_emitted() {
@@ -497,7 +499,7 @@ mod tests {
         let buffer = terminal.backend().buffer().clone();
         assert_eq!(app.layout.tab_bounds.len(), 3);
         let (rect, _, _) = app.layout.tab_bounds[1];
-        let cell = &buffer[(rect.x, 0)];
+        let cell = buffer.cell(ratatui::layout::Position { x: rect.x, y: 0 });
         assert_eq!(
             cell.bg,
             accent_primary(),
