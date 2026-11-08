@@ -1,16 +1,20 @@
 //! Tiles TUI file manager library.
-//! Tiles binary shim — the crate root lives in `lib.rs` so benches and
-//! integration tests can call production code.
-
-#[tokio::main]
-async fn main() -> color_eyre::Result<()> {
-    tiles_tui_file_manager::run().await
-}
-
 
 //! The binary (`src/main.rs`) is a thin shim over this crate root so that
 //! benches and integration tests can call production functions directly.
 
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::time::Duration;
+
+use dracon_terminal_engine::input::parser::Parser as TuiParser;
+use dracon_terminal_engine::integration::ratatui::RatatuiBackend as EngineBackend;
+
+// Ratatui Imports
+use ratatui::Terminal;
+
+use crate::app::{App, AppEvent};
+use crate::config::FILE_WATCH_DEBOUNCE_MS;
 pub mod tree_walk;
 pub mod setup;
 pub mod app;
@@ -70,6 +74,7 @@ pub async fn run() -> color_eyre::Result<()> {
     shutdown.store(true, Ordering::Release);
     result
 }
+
 async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
     crate::app::log_debug("run_tty start");
     let backend = EngineBackend::new(std::io::stdout())?;
@@ -379,6 +384,7 @@ async fn run_tty(shutdown: Arc<AtomicBool>) -> color_eyre::Result<()> {
 
     Ok(())
 }
+
 #[cfg(test)]
 mod tests {
     use crate::app::App;
