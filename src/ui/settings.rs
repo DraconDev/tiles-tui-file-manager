@@ -22,7 +22,34 @@ use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::format_size;
 use dracon_terminal_engine::widgets::HotkeyHint;
 
-pub fn draw_settings_modal(f: &mut Frame, app: &App) {
+/// Keep the selected settings row inside the visible window on small
+/// terminals by adjusting the persisted `settings_scroll` offset, then
+/// return the row range to render. Draw functions and mouse handlers share
+/// this single offset, so click rows always match the rendered rows
+/// (rel_y + settings_scroll). Mirrors the sidebar auto-scroll pattern.
+fn scroll_settings_window(
+    app: &mut App,
+    total: usize,
+    visible: usize,
+    selected: Option<usize>,
+) -> std::ops::Range<usize> {
+    let visible = visible.max(1);
+    let scroll = app.settings.settings_scroll as usize;
+    let mut scroll = scroll;
+    if let Some(sel) = selected {
+        if sel < scroll {
+            scroll = sel;
+        } else if sel >= scroll + visible {
+            scroll = sel + 1 - visible;
+        }
+    }
+    let max_scroll = total.saturating_sub(visible);
+    scroll = scroll.min(max_scroll);
+    app.settings.settings_scroll = scroll as u16;
+    scroll..(scroll + visible).min(total)
+}
+
+pub fn draw_settings_modal(f: &mut Frame, app: &mut App) {
     let area = f.area();
 
     f.render_widget(Clear, area);
