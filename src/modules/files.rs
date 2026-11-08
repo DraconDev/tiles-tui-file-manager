@@ -212,18 +212,25 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
             let mode = meta.permissions().mode();
             let is_executable = (mode & 0o111) != 0;
             if is_executable {
-                if let Ok(first_line) = std::fs::read_to_string(path) {
-                    let shebang_line = first_line.lines().next()?;
+                // Read only the head of the file: a bounded read cannot
+                // OOM on huge/binary files, and lossy conversion keeps
+                // non-UTF-8 scripts from masking the shebang result.
+                let head = std::fs::File::open(path).ok().and_then(|mut f| {
+                    use std::io::Read;
+                    let mut buf = vec![0u8; 1024];
+                    let n = f.read(&mut buf).ok()?;
+                    buf.truncate(n);
+                    Some(String::from_utf8_lossy(&buf).into_owned())
+                });
+                if let Some(head) = head {
+                    let shebang_line = head.lines().next().unwrap_or("");
                     if shebang_line.starts_with("#!") {
-                        let interpreter = shebang_line
+                        let tokens: Vec<&str> = shebang_line
                             .trim_start_matches("#!")
                             .split_whitespace()
-                            .next()?;
-                        let file_str = path.to_string_lossy();
-                        return Some((work_dir, interpreter.to_string(), vec![file_str.to_string()]));
-                    }
-                }
-            }
+                            .collect();
+                        let mut iter = tokens.iter();
+                        let interpreter = iter.next()?.trim_end_matches('/')...;
         }
     }
 
