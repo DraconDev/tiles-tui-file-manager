@@ -794,7 +794,7 @@ if app.sidebar.editor_sidebar_cache_key != editor_cache_key {
     app.sidebar.sidebar_bounds.clear();
     let mut current_y = inner.y;
 
-#[allow(clippy::for_loop_increment)]
+#[allow(clippy::explicit_counter_loop)]
 for (path, depth, is_dir) in tree_items.iter().cloned() {
         let name = path
             .file_name()
