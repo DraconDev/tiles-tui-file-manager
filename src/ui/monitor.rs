@@ -623,11 +623,18 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         )
     });
 
-    f.render_widget(
+    // Stateful so long lists scroll (the previous plain render_widget
+    // clipped everything past the first screenful).
+    if let Some(sel) = app.monitor.process_selected_idx {
+        app.monitor.application_table_state
+            .select(Some(sel.min(app_procs.len().saturating_sub(1))));
+    }
+    f.render_stateful_widget(
         Table::new(rows, column_constraints)
             .header(Row::new(header_cells).height(1).bottom_margin(1))
             .column_spacing(2),
         area,
+        &mut app.monitor.application_table_state,
     );
 }
 

@@ -105,6 +105,7 @@ pub struct MonitorState {
     pub process_column_bounds: Vec<(ratatui::layout::Rect, ProcessColumn)>,
     pub process_selected_idx: Option<usize>,
     pub process_table_state: TableState,
+    pub application_table_state: TableState,
     pub process_search_filter: String,
     pub process_tree_view: bool,
 }
