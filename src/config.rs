@@ -174,18 +174,20 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
             if *last_json == json {
                 return Ok(());
             }
-            // Debounce bursts while app is active/autosaving.
-            if app.core.running
-                && app.settings.auto_save
-                && now.duration_since(*last_at) < Duration::from_millis(SAVE_DEBOUNCE_MS)
-            {
-                return Ok(());
-            }
+            // NOTE: a debounce drop here previously lost real changes (e.g. a
+            // favorite added <350ms before quit was never persisted). Content
+            // dedup above already bounds write storms, so always write.
+            let _ = last_at;
         }
         *last = Some((now, json.clone()));
     }
 
-    fs::write(state_path, json)?;
+    // Write atomically via tmp+rename so a crash mid-write cannot corrupt
+    // state.json (a non-atomic fs::write of half a JSON document would make
+    // load_state return None and lose all persisted state).
+    let tmp_path = state_path.with_extension("json.tmp");
+    fs::write(&tmp_path, &json)?;
+    fs::rename(&tmp_path, &state_path)?;
     Ok(())
 }
 
@@ -202,7 +204,13 @@ pub fn load_state() -> Option<PersistentState> {
         return None;
     }
     let json = fs::read_to_string(state_path).ok()?;
-    serde_json::from_str(&json).ok()
+    match serde_json::from_str(&json) {
+        Ok(state) => Some(state),
+        Err(e) => {
+            crate::app::log_debug(&format!("load_state: corrupt state.json: {}", e));
+            None
+        }
+    }
 }
 
 #[derive(Debug)]
