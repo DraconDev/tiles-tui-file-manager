@@ -695,6 +695,19 @@ fn handle_input_modals_keys(
             app.selection.rename_selected = false;
             true
         }
+
+/// A name typed into a new-file / rename modal must be a plain file name.
+/// Reject absolute paths, separators, and `.`/`..` so input cannot escape
+/// the current directory or (via an absolute path) replace the base dir.
+fn is_plain_file_name(input: &str) -> bool {
+    let t = input.trim();
+    !t.is_empty()
+        && t != "."
+        && t != ".."
+        && !t.contains('/')
+        && !t.contains('\\')
+        && !std::path::Path::new(t).is_absolute()
+}
         KeyCode::Enter => {
             let input = app.core.input.value.clone();
             if let AppMode::DeleteFile(ref path) = app.core.mode {
@@ -712,6 +725,14 @@ fn handle_input_modals_keys(
                 let path = fs.nav.current_path.join(&input);
                 match mode {
                     AppMode::NewFile => {
+                        if !is_plain_file_name(&input) {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                                "Invalid file name: use letters/digits without path separators".to_string(),
+                            ));
+                            app.core.mode = AppMode::Normal;
+                            app.core.input.clear();
+                            return true;
+                        }
                         let pane_idx = app.focused_pane_index;
                         let path_clone = path.clone();
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFile(path));
@@ -722,9 +743,25 @@ fn handle_input_modals_keys(
                         return true;
                     }
                     AppMode::NewFolder => {
+                        if !is_plain_file_name(&input) {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                                "Invalid folder name: use letters/digits without path separators".to_string(),
+                            ));
+                            app.core.mode = AppMode::Normal;
+                            app.core.input.clear();
+                            return true;
+                        }
                         let _ = crate::app::try_send_event(&event_tx, AppEvent::CreateFolder(path));
                     }
                     AppMode::Rename => {
+                        if !is_plain_file_name(&input) {
+                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                                "Invalid name: use letters/digits without path separators".to_string(),
+                            ));
+                            app.core.mode = AppMode::Normal;
+                            app.core.input.clear();
+                            return true;
+                        }
                         if let Some(idx) = fs.list.selection.selected {
                             if let Some(old) = fs.list.files.get(idx) {
                                 if let Some(parent) = old.parent() {
@@ -776,7 +813,11 @@ fn handle_input_modals_keys(
                                     if let Some(parent) = f.parent() {
                                         let old_name = f.file_name().unwrap_or_default().to_string_lossy();
                                         let new_name = re.replace_all(&old_name, replacement.as_str()).to_string();
-                                        if new_name != old_name {
+                                        if !is_plain_file_name(&new_name) {
+                                            let _ = crate::app::try_send_event(&event_tx, AppEvent::StatusMsg(
+                                                "Skipped a rename: generated name contains a path separator".to_string(),
+                                            ));
+                                        } else if new_name != old_name {
                                             let _ = crate::app::try_send_event(&event_tx, AppEvent::Rename(f.clone(), parent.join(&new_name)));
                                         }
                                     }
