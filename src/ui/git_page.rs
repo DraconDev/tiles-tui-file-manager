@@ -19,7 +19,7 @@ use crate::app::{App, CurrentView, DropTarget};
 use crate::icons::Icon;
 use crate::state::{FileColumn, FileViewState};
 use crate::ui::theme as theme;
-use crate::ui::footer::{draw_stat_bar, draw_footer};
+
 use crate::ui::git_view::draw_commit_view;
 use crate::ui::small_modals::draw_signal_select_modal;
 use dracon_terminal_engine::layout::centered_rect;

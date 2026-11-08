@@ -252,7 +252,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                     }
 
                     let current_idx = sidebar_items.len();
-                    let is_selected = app.sidebar.sidebar_index == current_idx;
+                    let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
                     let is_hovered = matches!(&app.drag.hovered_drop_target, Some(DropTarget::Folder(p)) if p == path);
 
                     // Active highlighting for favorites
@@ -340,7 +340,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         continue;
                     }
                     let current_idx = sidebar_items.len();
-                    let is_selected = app.sidebar.sidebar_index == current_idx;
+                    let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
                     let mut style = Style::default().fg(theme::muted());
                     if is_selected {
                         style = style
@@ -411,7 +411,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 }
 
                 let current_disk_idx = sidebar_items.len();
-                let is_selected = app.sidebar.sidebar_index == current_disk_idx;
+                let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_disk_idx;
 
                 let markers = active_storage_markers.get(&disk.name);
 
@@ -529,7 +529,7 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                 }
 
                 let current_bookmark_idx = sidebar_items.len();
-                let is_selected = app.sidebar.sidebar_index == current_bookmark_idx;
+                let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_bookmark_idx;
 
                 let markers = active_remote_markers.get(&bookmark.host);
 

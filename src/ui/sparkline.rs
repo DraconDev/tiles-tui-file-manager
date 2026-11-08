@@ -43,6 +43,10 @@ impl Sparkline {
                 }
             })
             .collect();
-        Line::from(Span::raw(filled)).style(Style::default().fg(self.color))
+        // Pad to the requested width so callers can rely on the line
+        // filling `width` columns (previously short data gave a short line).
+        let width = usize::try_from(self.width).unwrap_or(usize::MAX);
+        let padded = format!("{:>width$}", filled, width = width);
+        Line::from(Span::raw(padded)).style(Style::default().fg(self.color))
     }
 }

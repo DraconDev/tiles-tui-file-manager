@@ -21,7 +21,7 @@ use crate::app::{App, CurrentView, DropTarget};
 use crate::icons::Icon;
 use crate::state::FileColumn;
 use crate::ui::theme as theme;
-use crate::ui::footer::draw_stat_bar;
+;
 use crate::ui::panes::editor::draw_ide_editor;
 use crate::ui::panes::breadcrumbs::draw_pane_breadcrumbs;
 use crate::ui::misc::format_modified_time;
