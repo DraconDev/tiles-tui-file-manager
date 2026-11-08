@@ -270,7 +270,12 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
 
                     if app.drag.is_dragging
                         && app.core.mouse_pos.1 == current_y
-                        && app.core.mouse_pos.0 < area.width
+                        // Horizontal check must use the pane's absolute right
+                        // edge (area.x + area.width), not the bare width:
+                        // the sidebar can start at a nonzero x (split view),
+                        // and mouse coordinates are absolute.
+                        && app.core.mouse_pos.0 >= area.x
+                        && app.core.mouse_pos.0 < area.x + area.width
                     {
                         app.drag.hovered_drop_target = Some(DropTarget::ReorderFavorite(starred_idx));
                     }
@@ -1054,5 +1059,41 @@ mod tests {
             );
         }
         let _ = std::fs::remove_dir_all(&home);
+    }
+
+    #[test]
+    fn favorite_drag_hover_uses_absolute_area_bounds() {
+        // Global theme style is shared across tests: serialize.
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+
+        let mut app = crate::app::App::new();
+        app.core.current_view = crate::state::CurrentView::Files;
+        app.sidebar.show_sidebar = true;
+        // Favorites only: the first favorite is the first (and only) row at
+        // inner.y, so the drag-hover row check is deterministic.
+        app.sidebar.sidebar_folders = false;
+        app.sidebar.sidebar_favorites = true;
+        app.sidebar.sidebar_recent = false;
+        app.sidebar.sidebar_storage = false;
+        app.sidebar.sidebar_remotes = false;
+        app.nav.starred = vec![std::path::PathBuf::from("/tmp/fav-one")];
+        app.drag.is_dragging = true;
+        app.drag.drag_source = Some(std::path::PathBuf::from("/tmp/drag-source"));
+        app.drag.hovered_drop_target = None;
+
+        // Sidebar occupies x in [10, 30); the first favorite row is at y=3
+        // (inner margin + spacer + FAVORITES header). x=27 is past
+        // area.width (20) but inside the area.
+        app.core.mouse_pos = (27, 3);
+        let area = ratatui::layout::Rect::new(10, 0, 20, 10);
+        let backend = TestBackend::new(40, 10);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw_sidebar(f, area, &mut app)).unwrap();
+
+        assert_eq!(
+            app.drag.hovered_drop_target,
+            Some(crate::state::DropTarget::ReorderFavorite(0)),
+            "drag hover at x=27 within absolute [10,30) must target the favorite"
+        );
     }
 }
