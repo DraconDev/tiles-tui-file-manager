@@ -563,9 +563,6 @@ impl DraconTheme {
     }
 }
 
-pub static THEME: std::sync::LazyLock<DraconTheme> =
-    std::sync::LazyLock::new(DraconTheme::cyberpunk);
-
 static ACTIVE_STYLE: LazyLock<RwLock<ThemeStyle>> =
     LazyLock::new(|| RwLock::new(ThemeStyle::default()));
 static ACTIVE_THEME: LazyLock<RwLock<DraconTheme>> = LazyLock::new(|| {
