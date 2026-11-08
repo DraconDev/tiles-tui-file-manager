@@ -440,7 +440,10 @@ mod tests {
         // characters (not a lone ellipsis) and its click rect must span the
         // rendered glyphs.
         let mut app = editor_app(1);
-        add_editor_tabs(&mut app, &["/home/user/Documents-Long-Name-Alpha"]);
+        add_editor_tabs(
+            &mut app,
+            &["/home/user/documents/very-long-directory-name-for-truncation-test"],
+        );
         let backend = TestBackend::new(40, 1);
         let mut terminal = ratatui::Terminal::new(backend).unwrap();
         render_header(&mut terminal, &mut app);
@@ -452,17 +455,20 @@ mod tests {
         let (rect, _, _) = app.layout.tab_bounds[0];
         assert!(rect.width > 1, "click rect must cover the rendered tab");
         // The rect's last cell holds the ellipsis: rendered width == rect width.
-        let last = buffer.cell(ratatui::layout::Position {
-            x: rect.x + rect.width - 1,
-            y: 0,
-        });
+        let last = buffer
+            .cell(ratatui::layout::Position {
+                x: rect.x + rect.width - 1,
+                y: 0,
+            })
+            .expect("tab rect last cell in bounds");
         assert_eq!(last.symbol(), "\u{2026}");
     }
 
     #[test]
     fn editor_sliver_tabs_are_not_emitted() {
-        // Third tab would only get a 1-cell remainder: it must not appear in
-        // tab_bounds at all (and no 1-cell-wide click rect may exist).
+        // Long first tab crowds the second into a sliver remainder: the third
+        // tab must not appear in tab_bounds at all, and no degenerate
+        // few-cell click rect may be emitted.
         let mut app = editor_app(1);
         add_editor_tabs(
             &mut app,
@@ -480,7 +486,10 @@ mod tests {
         for (rect, _, t) in &app.layout.tab_bounds {
             assert!(rect.width >= MIN_TAB_WIDTH, "tab t={} emitted with degenerate {}-cell rect", t, rect.width);
         }
-        assert!(app.layout.tab_bounds.iter().all(|(_, _, t)| *t < 2), "third tab must not be clickable");
+        assert!(
+            app.layout.tab_bounds.iter().all(|(_, _, t)| *t < 2),
+            "the squeezed third tab must not be clickable"
+        );
     }
 
     #[test]
@@ -499,7 +508,9 @@ mod tests {
         let buffer = terminal.backend().buffer().clone();
         assert_eq!(app.layout.tab_bounds.len(), 3);
         let (rect, _, _) = app.layout.tab_bounds[1];
-        let cell = buffer.cell(ratatui::layout::Position { x: rect.x, y: 0 });
+        let cell = buffer
+            .cell(ratatui::layout::Position { x: rect.x, y: 0 })
+            .expect("tab rect first cell in bounds");
         assert_eq!(
             cell.bg,
             accent_primary(),
