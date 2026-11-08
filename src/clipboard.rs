@@ -130,4 +130,65 @@ mod tests {
         let result = copy_text_to_clipboard_via_osc52_with_term("", "xterm");
         let _ = result;
     }
+
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn clipboard_write_failure_reaps_child() {
+        use std::time::{Duration, Instant};
+
+        // Count zombie children of this process via /proc (state Z, ppid == self).
+        fn zombie_children(pid: u32) -> usize {
+            let mut count = 0;
+            let Ok(entries) = std::fs::read_dir("/proc") else { return 0 };
+            for entry in entries.flatten() {
+                let name = entry.file_name();
+                let Some(name) = name.to_str() else { continue };
+                if !name.chars().all(|c| c.is_ascii_digit()) {
+                    continue;
+                }
+                if let Ok(stat) = std::fs::read_to_string(entry.path().join("stat")) {
+                    // comm (field 2) may contain spaces/parens; parse from the last ')'.
+                    if let Some(close) = stat.rfind(')') {
+                        let rest: Vec<&str> = stat[close + 1..].split_whitespace().collect();
+                        if rest.len() >= 2 && rest[0] == "Z" && rest[1] == pid.to_string() {
+                            count += 1;
+                        }
+                    }
+                }
+            }
+            count
+        }
+
+        // Nothing to exercise without a POSIX shell.
+        if Command::new("sh")
+            .arg("-c")
+            .arg("true")
+            .stdin(Stdio::null())
+            .status()
+            .is_err()
+        {
+            return;
+        }
+
+        let before = zombie_children(std::process::id());
+        // `sh` closes its stdin pipe then sleeps, so the parent's write fails
+        // with a broken pipe and the helper must be killed and reaped promptly.
+        let start = Instant::now();
+        let result = copy_text_to_clipboard_with(
+            "clipboard payload",
+            &[("sh", &["-c", "exec 0<&-; sleep 30"])],
+            "dumb",
+        );
+        let elapsed = start.elapsed();
+
+        assert!(result.is_err(), "broken-pipe helper must not report success");
+        assert!(
+            elapsed < Duration::from_secs(10),
+            "helper must be killed and reaped promptly, took {elapsed:?}"
+        );
+        assert!(
+            zombie_children(std::process::id()) <= before,
+            "failed attempt must not leave a zombie child"
+        );
+    }
 }
