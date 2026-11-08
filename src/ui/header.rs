@@ -395,57 +395,113 @@ mod tests {
     use crate::state::FileColumn;
     use ratatui::backend::TestBackend;
 
-    /// Probe: dump what the header emits for Editor-view tabs on a narrow width.
-    #[test]
-    fn probe_editor_header_tab_bounds() {
-        for (width, panes, sidebar) in [
-            (40, 1, false),
-            (60, 2, true),
-            (120, 2, true),
-            (200, 3, true),
-        ] {
-            let mut app = App::new();
-            app.core.current_view = CurrentView::Editor;
-            app.sidebar.show_sidebar = sidebar;
-            // Force pane count by duplicating panes.
-            while app.panes.len() < panes {
-                let p = app.panes[0].clone();
-                app.panes.push(p);
-            }
-            for pane in &mut app.panes {
-                pane.tabs.clear();
-                for name in [
-                    "/home/user/Documents-Long-Name-Alpha",
-                    "/home/user/src-Beta",
-                    "/home/user/Gamma",
-                ] {
-                    pane.tabs.push(crate::state::FileState::new(
-                        std::path::PathBuf::from(name),
-                        None,
-                        false,
-                        app.layout.single_columns.clone(),
-                        FileColumn::Name,
-                        true,
-                    ));
-                }
-            }
-            let backend = TestBackend::new(width, 1);
-            let mut terminal = ratatui::Terminal::new(backend).unwrap();
-            terminal
-                .draw(|f| draw_global_header(f, f.area(), 0, &mut app))
-                .unwrap();
-            println!(
-                "PROBE w={} panes={} sidebar={} -> {}",
-                width,
-                panes,
-                sidebar,
-                app.layout
-                    .tab_bounds
-                    .iter()
-                    .map(|(r, p, t)| format!("p{}t{}:x{}w{}", p, t, r.x, r.width))
-                    .collect::<Vec<_>>()
-                    .join(" ")
-            );
+    fn editor_app(width_panes: usize) -> App {
+        let mut app = App::new();
+        app.core.current_view = CurrentView::Editor;
+        app.sidebar.show_sidebar = false;
+        while app.panes.len() < width_panes {
+            let p = app.panes[0].clone();
+            app.panes.push(p);
         }
+        app
+    }
+
+    fn add_editor_tabs(app: &mut App, names: &[&str]) {
+        for pane in &mut app.panes {
+            pane.tabs.clear();
+            for name in names {
+                pane.tabs.push(crate::state::FileState::new(
+                    std::path::PathBuf::from(name),
+                    None,
+                    false,
+                    app.layout.single_columns.clone(),
+                    FileColumn::Name,
+                    true,
+                ));
+            }
+        }
+    }
+
+    fn render_header(term: &mut ratatui::Terminal<TestBackend>, app: &mut App) {
+        term.draw(|f| draw_global_header(f, f.area(), 0, app)).unwrap();
+    }
+
+    fn buffer_text(buffer: &ratatui::buffer::Buffer) -> String {
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        text
+    }
+
+    #[test]
+    fn editor_truncated_tab_click_rect_matches_rendered_width() {
+        // One long-named tab in a 40-wide header: it must render identifiable
+        // characters (not a lone ellipsis) and its click rect must span the
+        // rendered glyphs.
+        let mut app = editor_app(1);
+        add_editor_tabs(&mut app, &["/home/user/Documents-Long-Name-Alpha"]);
+        let backend = TestBackend::new(40, 1);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        render_header(&mut terminal, &mut app);
+
+        let buffer = terminal.backend().buffer().clone();
+        let text = buffer_text(&buffer);
+        assert!(text.contains("Documents"), "truncated tab should show characters, not just an ellipsis");
+        assert_eq!(app.layout.tab_bounds.len(), 1);
+        let (rect, _, _) = app.layout.tab_bounds[0];
+        assert!(rect.width > 1, "click rect must cover the rendered tab");
+        // The rect's last cell holds the ellipsis: rendered width == rect width.
+        assert_eq!(buffer[(rect.x + rect.width - 1, area_y())].symbol(), "\u{2026}");
+    }
+
+    fn area_y() -> u16 { 0 }
+
+    #[test]
+    fn editor_sliver_tabs_are_not_emitted() {
+        // Third tab would only get a 1-cell remainder: it must not appear in
+        // tab_bounds at all (and no 1-cell-wide click rect may exist).
+        let mut app = editor_app(1);
+        add_editor_tabs(
+            &mut app,
+            &[
+                "/home/user/Documents-Long-Name-Alpha",
+                "/home/user/src-Beta",
+                "/home/user/Gamma",
+            ],
+        );
+        let backend = TestBackend::new(40, 1);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        render_header(&mut terminal, &mut app);
+
+        assert!(!app.layout.tab_bounds.is_empty());
+        for (rect, _, t) in &app.layout.tab_bounds {
+            assert!(rect.width >= MIN_TAB_WIDTH, "tab t={} emitted with degenerate {}-cell rect", t, rect.width);
+        }
+        assert!(app.layout.tab_bounds.iter().all(|(_, _, t)| *t < 2), "third tab must not be clickable");
+    }
+
+    #[test]
+    fn editor_header_mode_highlights_focused_tab() {
+        let mut app = editor_app(1);
+        add_editor_tabs(
+            &mut app,
+            &["/home/user/alpha", "/home/user/beta", "/home/user/gamma"],
+        );
+        // Focus the second tab (index 1 — no sidebar icons at width 100, start at 0).
+        app.core.mode = AppMode::Header(1);
+        let backend = TestBackend::new(100, 1);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        render_header(&mut terminal, &mut app);
+
+        let buffer = terminal.backend().buffer().clone();
+        assert_eq!(app.layout.tab_bounds.len(), 3);
+        let (rect, _, _) = app.layout.tab_bounds[1];
+        let cell = &buffer[(rect.x, 0)];
+        assert_eq!(
+            cell.bg,
+            accent_primary(),
+            "Header-mode focused tab must get the accent highlight in Editor view"
+        );
     }
 }
