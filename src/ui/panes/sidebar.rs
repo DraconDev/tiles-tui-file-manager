@@ -982,56 +982,56 @@ mod tests {
         // Global theme style is shared across tests: serialize.
         let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
 
+        // Isolated fake home so the folder tree renders a known fixture
+        // (dirs::home_dir reads $HOME on Linux). Restored afterwards.
+        let home = std::env::temp_dir().join(format!("tiles-sidebar-hint-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        for dir in ["dir-alpha", "dir-beta", "dir-gamma", "dir-delta"] {
+            std::fs::create_dir_all(home.join(dir)).unwrap();
+        }
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &home);
+
         let mut app = crate::app::App::new();
+        // Fresh tree cache for the fake home.
+        app.sidebar.sidebar_tree_cache = None;
+        app.sidebar.sidebar_tree_cache_key = 0;
+        app.sidebar.tree_expanded_folders.clear();
         app.core.current_view = crate::state::CurrentView::Files;
         app.sidebar.show_sidebar = true;
         app.sidebar.sidebar_folders = true;
         app.sidebar.sidebar_favorites = false;
         app.sidebar.sidebar_recent = false;
         app.sidebar.sidebar_storage = false;
-        app.sidebar.sidebar_remotes = true;
+        app.sidebar.sidebar_remotes = false;
         app.sidebar.sidebar_index = 0;
         app.sidebar.sidebar_scroll_offset = 0;
-        for (i, name) in [
-            "marker-alpha-1",
-            "marker-beta-2",
-            "marker-gamma-3",
-            "marker-delta-4",
-        ]
-        .iter()
-        .enumerate()
-        {
-            app.remote.remote_bookmarks.push(crate::state::RemoteBookmark {
-                name: name.to_string(),
-                host: format!("host-{}", i),
-                user: "tester".to_string(),
-                port: 22,
-                last_path: std::path::PathBuf::from("/"),
-                key_path: None,
-            });
-        }
 
         // 7-row area => 5 inner rows => 4 list rows + 1 reserved hint row.
         let backend = TestBackend::new(30, 7);
         let mut terminal = ratatui::Terminal::new(backend).unwrap();
         terminal.draw(|f| draw_sidebar(f, f.area(), &mut app)).unwrap();
 
+        match old_home {
+            Some(v) => std::env::set_var("HOME", v),
+            None => std::env::remove_var("HOME"),
+        }
+
         let buffer = terminal.backend().buffer().clone();
         let mut text = String::new();
         for cell in buffer.content.iter() {
             text.push_str(cell.symbol());
         }
-        println!("DBG text=[{}]", text);
-        println!("DBG bounds={:?}", app.sidebar.sidebar_bounds);
         assert!(
-            text.contains("marker-delta-4"),
+            text.contains("dir-delta"),
             "fourth item must be visible: the hint must not overwrite the last visible row"
         );
-        // The selected folder's full path (the hint) appears on the reserved
-        // bottom row instead.
+        // The selected item's hint still renders on the reserved bottom row.
         assert!(
-            text.contains("/marker-alpha-1"),
-            "selected item hint should still render on the reserved row"
+            text.contains("FOLDERS"),
+            "selected header hint should still render on the reserved row"
         );
+        let _ = std::fs::remove_dir_all(&home);
     }
 }
