@@ -55,6 +55,8 @@ All notable changes to this project will be documented in this file.
   uncompilable; the binding now matches its use.
 - **Changelog** — The 14.112.0 notes landed with this release rather than at
   their own tag.
+- **Version sources** — `Cargo.lock` and `flake.nix` still reported 14.112.0 at
+  the v14.113.0 tag and were reconciled in the following release commits.
 
 ### Fixed
 - **Doc comment** — The `EventLoopCtx::app` field comment renders
