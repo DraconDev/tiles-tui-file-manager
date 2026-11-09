@@ -359,13 +359,17 @@ fn parse_git_shortstat(line: &str) -> (usize, usize, usize) {
 
 /// A bookmark user/host is safe to interpolate into a shell command when it
 /// contains only typical identity characters and never a shell metacharacter
-/// or a leading `-` (ssh would parse it as an option).
+/// or a leading `-` (ssh would parse it as an option). `@` and `:` are
+/// rejected in both fields: ssh splits the destination at the *last* `@`,
+/// so a crafted value like `user@attacker` inside the host (or `a@b` in the
+/// user) would silently redirect the connection to a different host than
+/// the bookmark claims.
 fn is_safe_ssh_identity(user: &str, host: &str) -> bool {
     let safe = |s: &str| {
         !s.is_empty()
             && !s.starts_with('-')
             && s.chars()
-                .all(|c| c.is_ascii_alphanumeric() || "-._@:[]".contains(c))
+                .all(|c| c.is_ascii_alphanumeric() || "-._".contains(c))
     };
     safe(user) && safe(host)
 }
@@ -447,6 +451,29 @@ mod tests {
         remote.user = "user; rm -rf /".to_string();
         let cmd = build_remote_terminal_command(&remote, Path::new("/"), None);
         assert!(!cmd.starts_with("ssh"), "got: {}", cmd);
+    }
+
+    #[test]
+    fn build_remote_terminal_command_rejects_at_and_colon() {
+        // ssh splits the destination at the LAST @: a bookmark claiming
+        // user "victim@attacker" or host "host:2222" would connect to a
+        // different host than displayed. Both fields must reject @ and :
+        // (and the now-pointless IPv6-literal brackets, which existed only
+        // to delimit colon-bearing addresses — they fail closed instead of
+        // relying on ssh's bracket parsing).
+        for (user, host) in [
+            ("victim@attacker", "real-host"),
+            ("victim", "host@attacker"),
+            ("victim", "host:2222"),
+            ("vic:tim", "host"),
+            ("victim", "[fd00::1]"),
+        ] {
+            let mut remote = sample_remote();
+            remote.user = user.to_string();
+            remote.host = host.to_string();
+            let cmd = build_remote_terminal_command(&remote, Path::new("/"), None);
+            assert!(!cmd.starts_with("ssh"), "user={user} host={host} must be rejected, got: {cmd}");
+        }
     }
 
     #[test]
