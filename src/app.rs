@@ -1214,4 +1214,129 @@ mod tests {
 
     }
 
+    fn log_fixture(tag: &str) -> PathBuf {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!("tiles-logrot-{tag}-{unique}"));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create fixture dir");
+        dir
+    }
+
+    fn read_or_empty(path: &Path) -> String {
+        std::fs::read_to_string(path).unwrap_or_default()
+    }
+
+    /// The rotation used to rename the active log to `.1`, shift `.1` to `.2`,
+    /// then delete `.2` — deleting the very file it had just preserved, so a
+    /// rotation lost the whole log. The log that is being rotated out must
+    /// survive as `.1`.
+    #[test]
+    fn rotate_active_log_keeps_the_log_it_just_rotated() {
+        let dir = log_fixture("keep");
+        std::fs::write(dir.join("debug.log"), "ACTIVE-CONTENT").expect("seed active");
+        std::fs::write(dir.join("debug.log.1"), "GEN1-CONTENT").expect("seed gen1");
+        std::fs::write(dir.join("debug.log.2"), "GEN2-EXPIRED").expect("seed gen2");
+
+        let mut writer = rotate_active_log(&dir).expect("rotate");
+        drop(&mut writer);
+
+        assert_eq!(
+            read_or_empty(&dir.join("debug.log.1")),
+            "ACTIVE-CONTENT",
+            "the log being rotated out must become generation 1, not be deleted"
+        );
+        assert_eq!(
+            read_or_empty(&dir.join("debug.log.2")),
+            "GEN1-CONTENT",
+            "generation 1 must shift to generation 2"
+        );
+        assert_eq!(
+            read_or_empty(&dir.join("debug.log")),
+            "",
+            "rotation must start a fresh active log"
+        );
+        assert!(
+            dir.join("debug.log").exists(),
+            "the fresh active log must exist"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// Rotation is bounded: repeated rotations keep exactly the configured
+    /// generations, never growing an unbounded `.N` chain.
+    #[test]
+    fn rotate_active_log_stays_bounded_across_repeated_rotations() {
+        let dir = log_fixture("bounded");
+        for round in 0..4 {
+            std::fs::write(dir.join("debug.log"), format!("ROUND-{round}")).expect("seed active");
+            rotate_active_log(&dir).expect("rotate");
+        }
+
+        let generations: Vec<String> = std::fs::read_dir(&dir)
+            .expect("read dir")
+            .filter_map(|e| e.ok())
+            .map(|e| e.file_name().to_string_lossy().to_string())
+            .collect();
+        assert!(
+            !generations.iter().any(|n| n == "debug.log.3"),
+            "no generation beyond the configured count: {generations:?}"
+        );
+        assert!(
+            generations.iter().any(|n| n == "debug.log.1"),
+            "at least generation 1 survives: {generations:?}"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A small active log opens for appending without rotating anything.
+    #[test]
+    fn open_active_log_does_not_rotate_a_small_log() {
+        let dir = log_fixture("small");
+        std::fs::write(dir.join("debug.log"), "small").expect("seed active");
+
+        let _writer = open_active_log(&dir).expect("open");
+
+        assert_eq!(read_or_empty(&dir.join("debug.log")), "small", "content preserved");
+        assert!(
+            !dir.join("debug.log.1").exists(),
+            "a log below the size cap must not be rotated"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// An oversized active log is rotated on open, and the oversized content
+    /// is preserved as generation 1 rather than dropped.
+    #[test]
+    fn open_active_log_rotates_an_oversized_log_and_preserves_it() {
+        let dir = log_fixture("oversized");
+        let big = vec![b'x'; (MAX_LOG_SIZE_BYTES as usize) + 64];
+        std::fs::write(dir.join("debug.log"), &big).expect("seed oversized");
+
+        let mut writer = open_active_log(&dir).expect("open");
+        write_log_line(&mut Some(&mut writer), "after rotation");
+        drop(writer);
+
+        let rotated = std::fs::metadata(dir.join("debug.log.1")).expect("rotated generation exists");
+        assert_eq!(
+            rotated.len(),
+            big.len() as u64,
+            "the oversized log must survive rotation intact as generation 1"
+        );
+
+        let active = read_or_empty(&dir.join("debug.log"));
+        assert_eq!(
+            std::fs::metadata(dir.join("debug.log")).map(|m| m.len()).unwrap_or(0),
+            0,
+            "the fresh active log starts empty, got {active:?}"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
 }
