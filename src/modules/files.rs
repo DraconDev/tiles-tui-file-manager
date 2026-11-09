@@ -30,6 +30,39 @@ fn map_metadata(meta: dracon_files::EntryMetadata) -> FileMetadata {
     }
 }
 
+/// Metadata for one directory entry, resolved the way the file list shows it.
+///
+/// A symlink is followed when its target resolves, and the link entry itself is
+/// used when it does not (broken or unreadable link), so the row still renders.
+/// `is_dir` mirrors that resolution, which is what makes a symlinked directory
+/// a directory here: the tree walk and the file list must agree on which rows
+/// are expandable.
+///
+/// This is the single place the listing resolves metadata, so `walk_tree`
+/// cannot drift from `read_dir_with_metadata` again.
+pub(crate) fn resolve_entry_metadata(path: &Path) -> Option<(std::fs::Metadata, bool)> {
+    let target_meta = std::fs::metadata(path).ok();
+    if let Some(m) = target_meta {
+        let is_dir = m.is_dir();
+        return Some((m, is_dir));
+    }
+    // Target missing: keep the link's own metadata so a broken link still
+    // renders as a row instead of vanishing from the listing.
+    let link_meta = std::fs::symlink_metadata(path).ok()?;
+    let is_dir = link_meta.file_type().is_dir();
+    Some((link_meta, is_dir))
+}
+
+fn file_metadata_from(meta: &std::fs::Metadata, is_dir: bool) -> FileMetadata {
+    FileMetadata {
+        size: meta.len(),
+        modified: meta.modified().unwrap_or(SystemTime::UNIX_EPOCH),
+        created: meta.created().unwrap_or(SystemTime::UNIX_EPOCH),
+        permissions: permissions_bits(meta),
+        is_dir,
+    }
+}
+
 pub fn read_dir_with_metadata(path: &Path) -> (Vec<PathBuf>, HashMap<PathBuf, FileMetadata>) {
     let mut files = Vec::new();
     let mut metadata = HashMap::new();
@@ -40,29 +73,10 @@ pub fn read_dir_with_metadata(path: &Path) -> (Vec<PathBuf>, HashMap<PathBuf, Fi
 
     for entry in entries.flatten() {
         let p = entry.path();
-        let symlink_meta = std::fs::symlink_metadata(&p).ok();
-        let target_meta = std::fs::metadata(&p).ok();
-        let meta = target_meta.as_ref().or(symlink_meta.as_ref());
-
-        files.push(p.clone());
-
-        if let Some(m) = meta {
-            let is_dir = target_meta
-                .as_ref()
-                .map(|tm| tm.is_dir())
-                .or_else(|| symlink_meta.as_ref().map(|sm| sm.file_type().is_dir()))
-                .unwrap_or(false);
-            metadata.insert(
-                p,
-                FileMetadata {
-                    size: m.len(),
-                    modified: m.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                    created: m.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                    permissions: permissions_bits(m),
-                    is_dir,
-                },
-            );
+        if let Some((meta, is_dir)) = resolve_entry_metadata(&p) {
+            metadata.insert(p.clone(), file_metadata_from(&meta, is_dir));
         }
+        files.push(p);
     }
 
     (files, metadata)
@@ -73,27 +87,10 @@ pub fn read_dir_recursive_meta(paths: &[PathBuf]) -> (Vec<PathBuf>, HashMap<Path
     let mut metadata = HashMap::new();
     for path in paths {
         let p = path.clone();
-        let symlink_meta = std::fs::symlink_metadata(&p).ok();
-        let target_meta = std::fs::metadata(&p).ok();
-        let meta = target_meta.as_ref().or(symlink_meta.as_ref());
-        files.push(p.clone());
-        if let Some(m) = meta {
-            let is_dir = target_meta
-                .as_ref()
-                .map(|tm| tm.is_dir())
-                .or_else(|| symlink_meta.as_ref().map(|sm| sm.file_type().is_dir()))
-                .unwrap_or(false);
-            metadata.insert(
-                p,
-                FileMetadata {
-                    size: m.len(),
-                    modified: m.modified().unwrap_or(SystemTime::UNIX_EPOCH),
-                    created: m.created().unwrap_or(SystemTime::UNIX_EPOCH),
-                    permissions: permissions_bits(m),
-                    is_dir,
-                },
-            );
+        if let Some((meta, is_dir)) = resolve_entry_metadata(&p) {
+            metadata.insert(p.clone(), file_metadata_from(&meta, is_dir));
         }
+        files.push(p);
     }
     (files, metadata)
 }
