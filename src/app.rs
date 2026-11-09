@@ -1331,10 +1331,13 @@ mod tests {
         );
 
         let active = read_or_empty(&dir.join("debug.log"));
-        assert_eq!(
-            std::fs::metadata(dir.join("debug.log")).map(|m| m.len()).unwrap_or(0),
-            0,
-            "the fresh active log starts empty, got {active:?}"
+        assert!(
+            active.contains("after rotation"),
+            "the new line must land in the fresh log, got {active:?}"
+        );
+        assert!(
+            !active.contains("xxxx"),
+            "the rotated content must not leak into the fresh log"
         );
 
         let _ = std::fs::remove_dir_all(&dir);
