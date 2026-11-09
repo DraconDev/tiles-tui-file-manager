@@ -532,4 +532,97 @@ Host server5
         assert_eq!(results.len(), 1);
         assert_eq!(results[0].host, "10.0.0.5");
     }
+    /// `LAST_SAVE` is process-global; tests that exercise it must not interleave.
+    static SAVE_TEST_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// Fresh, empty config directory under the temp dir.
+    fn save_fixture(tag: &str) -> std::path::PathBuf {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let dir = std::env::temp_dir().join(format!("tiles-savestate-{tag}-{unique}"));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).expect("create fixture");
+        *LAST_SAVE.lock() = None;
+        dir
+    }
+
+    #[test]
+    fn state_unchanged_is_false_before_anything_is_persisted() {
+        let _guard = SAVE_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = save_fixture("fresh");
+        assert!(
+            !state_unchanged(&dir.join("state.json"), "{}"),
+            "nothing has been written yet"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// The regression: a save that failed left the dedup cache claiming the
+    /// content was already on disk, so every later identical save no-opped and
+    /// the user's state was never written for the rest of the session.
+    #[test]
+    fn failed_persist_does_not_poison_the_dedup_cache() {
+        let _guard = SAVE_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = save_fixture("poison");
+
+        // Make the write fail deterministically: a regular file occupies the
+        // directory path, so create_dir_all cannot produce a directory.
+        let broken = dir.join("tiles");
+        std::fs::write(&broken, b"not a directory").expect("occupy the path");
+        let err = persist_state_at(&broken, "{\"k\":1}")
+            .expect_err("writing under a file path must fail");
+        assert!(!err.to_string().is_empty());
+        assert!(
+            !state_unchanged(&broken.join("state.json"), "{\"k\":1}"),
+            "a failed write must not be remembered as persisted"
+        );
+
+        // Clear the obstruction: the same content must now really be written.
+        let _ = std::fs::remove_file(&broken);
+        persist_state_at(&broken, "{\"k\":1}").expect("retry after the failure must succeed");
+        let written = std::fs::read_to_string(broken.join("state.json")).expect("state file");
+        assert_eq!(written, "{\"k\":1}", "the retry must actually reach disk");
+        assert!(
+            state_unchanged(&broken.join("state.json"), "{\"k\":1}"),
+            "a successful write is remembered"
+        );
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn repeated_identical_saves_are_deduped_after_a_success() {
+        let _guard = SAVE_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = save_fixture("dedup");
+        persist_state_at(&dir, "{\"a\":1}").expect("first save");
+        assert!(
+            state_unchanged(&dir.join("state.json"), "{\"a\":1}"),
+            "identical content is skipped"
+        );
+        assert!(
+            !state_unchanged(&dir.join("state.json"), "{\"a\":2}"),
+            "changed content is written"
+        );
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    /// A state file deleted while the app runs must be recreated, not skipped
+    /// because the cache still remembers the content.
+    #[test]
+    fn missing_state_file_forces_a_write_even_when_content_matches() {
+        let _guard = SAVE_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+        let dir = save_fixture("missing");
+        persist_state_at(&dir, "{\"b\":1}").expect("first save");
+        std::fs::remove_file(dir.join("state.json")).expect("delete state file");
+        assert!(
+            !state_unchanged(&dir.join("state.json"), "{\"b\":1}"),
+            "a missing file must never count as persisted"
+        );
+        persist_state_at(&dir, "{\"b\":1}").expect("recreate the state file");
+        assert!(dir.join("state.json").exists(), "the file is recreated");
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
 }
