@@ -162,16 +162,21 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
         .join("tiles");
     let json = serde_json::to_string_pretty(&state)?;
 
-    // Skip the write only when this exact content already landed on disk.
-    // A skipped write used to be recorded before the file was touched, so a
-    // failed save (full disk, permissions) left the cache claiming success and
-    // every later identical save silently did nothing.
-    if state_unchanged(&config_dir.join("state.json"), &json) {
+    persist_if_changed(&config_dir, &json)?;
+    Ok(())
+}
+
+/// Write `json` unless this exact content already landed on disk.
+///
+/// The skip decision used to be recorded before the file was touched, so a
+/// failed save (full disk, permissions) left the cache claiming success and
+/// every later identical save silently did nothing — the user's state was
+/// never written for the rest of the session.
+fn persist_if_changed(config_dir: &std::path::Path, json: &str) -> std::io::Result<()> {
+    if state_unchanged(&config_dir.join("state.json"), json) {
         return Ok(());
     }
-
-    persist_state_at(&config_dir, &json)?;
-    Ok(())
+    persist_state_at(config_dir, json)
 }
 
 /// True when `json` is already the content that was successfully written to
@@ -194,12 +199,12 @@ fn state_unchanged(state_path: &std::path::Path, json: &str) -> bool {
 /// The dedup cache is updated only after both steps succeed, so a failure
 /// leaves the cache clean and the next save retries for real.
 fn persist_state_at(config_dir: &std::path::Path, json: &str) -> std::io::Result<()> {
-    *LAST_SAVE.lock() = Some((Instant::now(), json.to_string()));
     fs::create_dir_all(config_dir)?;
     let state_path = config_dir.join("state.json");
     let tmp_path = state_path.with_extension("json.tmp");
     fs::write(&tmp_path, json)?;
     fs::rename(&tmp_path, &state_path)?;
+    *LAST_SAVE.lock() = Some((Instant::now(), json.to_string()));
     Ok(())
 }
 
@@ -560,33 +565,29 @@ Host server5
     }
 
     /// The regression: a save that failed left the dedup cache claiming the
-    /// content was already on disk, so every later identical save no-opped and
-    /// the user's state was never written for the rest of the session.
+    /// new content was already on disk, so every later identical save no-opped
+    /// and the real change was never written for the rest of the session.
     #[test]
     fn failed_persist_does_not_poison_the_dedup_cache() {
         let _guard = SAVE_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = save_fixture("poison");
+        persist_state_at(&dir, "{\"state\":\"OLD\"}").expect("seed a real state file");
 
-        // Make the write fail deterministically: a regular file occupies the
-        // directory path, so create_dir_all cannot produce a directory.
-        let broken = dir.join("tiles");
-        std::fs::write(&broken, b"not a directory").expect("occupy the path");
-        let err = persist_state_at(&broken, "{\"k\":1}")
-            .expect_err("writing under a file path must fail");
-        assert!(!err.to_string().is_empty());
-        assert!(
-            !state_unchanged(&broken.join("state.json"), "{\"k\":1}"),
-            "a failed write must not be remembered as persisted"
-        );
+        // Make the next write fail deterministically: a directory occupies the
+        // tmp path, so fs::write cannot create the file.
+        let tmp_obstruction = dir.join("state.json.tmp");
+        std::fs::create_dir_all(&tmp_obstruction).expect("occupy the tmp path");
+        let failed = persist_if_changed(&dir, "{\"state\":\"NEW\"}");
+        assert!(failed.is_err(), "the write must fail while the tmp path is a directory");
 
-        // Clear the obstruction: the same content must now really be written.
-        let _ = std::fs::remove_file(&broken);
-        persist_state_at(&broken, "{\"k\":1}").expect("retry after the failure must succeed");
-        let written = std::fs::read_to_string(broken.join("state.json")).expect("state file");
-        assert_eq!(written, "{\"k\":1}", "the retry must actually reach disk");
-        assert!(
-            state_unchanged(&broken.join("state.json"), "{\"k\":1}"),
-            "a successful write is remembered"
+        // Clear the obstruction and retry with the SAME content: a poisoned
+        // cache would skip the write here, leaving the old state on disk.
+        std::fs::remove_dir_all(&tmp_obstruction).expect("clear the tmp path");
+        persist_if_changed(&dir, "{\"state\":\"NEW\"}").expect("retry must succeed");
+        let written = std::fs::read_to_string(dir.join("state.json")).expect("state file");
+        assert_eq!(
+            written, "{\"state\":\"NEW\"}",
+            "the retried save must reach disk; a poisoned cache left the old content"
         );
 
         let _ = std::fs::remove_dir_all(&dir);
@@ -596,7 +597,7 @@ Host server5
     fn repeated_identical_saves_are_deduped_after_a_success() {
         let _guard = SAVE_TEST_LOCK.lock().unwrap_or_else(|e| e.into_inner());
         let dir = save_fixture("dedup");
-        persist_state_at(&dir, "{\"a\":1}").expect("first save");
+        persist_if_changed(&dir, "{\"a\":1}").expect("first save");
         assert!(
             state_unchanged(&dir.join("state.json"), "{\"a\":1}"),
             "identical content is skipped"
