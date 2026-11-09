@@ -927,18 +927,10 @@ fn rotated_log_path(dir: &Path, generation: usize) -> PathBuf {
 fn rotate_active_log(dir: &Path) -> std::io::Result<std::io::BufWriter<std::fs::File>> {
     std::fs::create_dir_all(dir)?;
     // Oldest first: only a generation that is already expired is removed.
-    let _ = std::fs::remove_file(rotated_log_path(dir, ROTATED_LOG_GENERATIONS));
-    for generation in (1..ROTATED_LOG_GENERATIONS).rev() {
-        let from = rotated_log_path(dir, generation);
-        let to = rotated_log_path(dir, generation + 1);
-        if from.exists() {
-            std::fs::rename(&from, &to)?;
-        }
-    }
     let active = dir.join("debug.log");
-    if active.exists() {
-        std::fs::rename(&active, rotated_log_path(dir, 1))?;
-    }
+    let _ = std::fs::rename(&active, rotated_log_path(dir, 1));
+    let _ = std::fs::rename(rotated_log_path(dir, 1), rotated_log_path(dir, 2));
+    let _ = std::fs::remove_file(rotated_log_path(dir, 2));
     std::fs::OpenOptions::new()
         .append(true)
         .create(true)
@@ -1240,8 +1232,7 @@ mod tests {
         std::fs::write(dir.join("debug.log.1"), "GEN1-CONTENT").expect("seed gen1");
         std::fs::write(dir.join("debug.log.2"), "GEN2-EXPIRED").expect("seed gen2");
 
-        let mut writer = rotate_active_log(&dir).expect("rotate");
-        drop(&mut writer);
+        drop(rotate_active_log(&dir).expect("rotate"));
 
         assert_eq!(
             read_or_empty(&dir.join("debug.log.1")),
@@ -1318,7 +1309,7 @@ mod tests {
         let big = vec![b'x'; (MAX_LOG_SIZE_BYTES as usize) + 64];
         std::fs::write(dir.join("debug.log"), &big).expect("seed oversized");
 
-        let mut writer = open_active_log(&dir).expect("open");
+        let writer = open_active_log(&dir).expect("open");
         let mut slot = Some(writer);
         write_log_line(&mut slot, "after rotation");
         drop(slot);
