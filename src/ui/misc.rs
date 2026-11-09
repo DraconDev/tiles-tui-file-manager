@@ -364,4 +364,81 @@ mod tests {
             "ghost width must be display columns + padding, not bytes"
         );
     }
+    /// The modal used its own index base (7) while the settings rows number
+    /// from 15, so every editable color rendered as "Accent Primary". Render
+    /// the modal at each canonical row and require the title and the swatch to
+    /// name that row's field and color.
+    #[test]
+    fn style_color_modal_shows_the_selected_field_and_color() {
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+
+        let fields = |s: &theme::ThemeStyle| theme::style_color_rows(s);
+        let style = theme::style_settings();
+        let rows = fields(&style);
+        assert_eq!(rows.len(), theme::STYLE_COLOR_FIELD_COUNT);
+
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+
+        for (expected_index, (label, color)) in rows.iter().enumerate() {
+            let settings_index = theme::STYLE_COLOR_START_INDEX + expected_index;
+            let mut app = App::new();
+            app.settings.settings_section = crate::app::SettingsSection::Style;
+            app.settings.settings_index = settings_index;
+            app.core.input.value = "#000000".to_string();
+
+            terminal
+                .draw(|f| draw_style_color_modal(f, &app))
+                .unwrap();
+            let buffer = terminal.backend().buffer().clone();
+
+            // The title carries the field label.
+            let title: String = (0..80)
+                .filter_map(|x| buffer.cell(ratatui::layout::Position { x, y: 0 }).map(|c| c.symbol().to_string()))
+                .collect();
+            assert!(
+                title.contains(&format!("Edit {} ", label)),
+                "index {settings_index} must title the modal {:?}, got {title:?}",
+                label
+            );
+
+            // The swatch must paint that field's color.
+            let mut found = false;
+            for y in 0..24 {
+                for x in 0..80 {
+                    if let Some(cell) = buffer.cell(ratatui::layout::Position { x, y }) {
+                        if cell.fg == color.to_color() && cell.symbol() == "■" {
+                            found = true;
+                        }
+                    }
+                }
+            }
+            assert!(
+                found,
+                "index {settings_index} ({label}) must render its color {:?}",
+                color
+            );
+        }
+    }
+
+    /// Distinct rows must actually correspond to distinct fields — the stale
+    /// base collapsed all six onto "Accent Primary", which this catches even
+    /// if the renderer ignored the title.
+    #[test]
+    fn style_color_rows_map_one_to_one_onto_settings_indices() {
+        let rows = theme::style_color_rows(&theme::ThemeStyle::preset_legacy_red());
+        for offset in 0..theme::STYLE_COLOR_FIELD_COUNT {
+            let index = theme::STYLE_COLOR_START_INDEX + offset;
+            let named = theme::style_field_name(index).expect("row must have a name");
+            assert_eq!(named, rows[offset].0, "row {offset} label must match its index");
+            let color = theme::style_field_color(&theme::ThemeStyle::preset_legacy_red(), index)
+                .expect("row must have a color");
+            assert_eq!(color, rows[offset].1, "row {offset} color must match its index");
+        }
+        assert!(
+            theme::style_field_name(theme::STYLE_COLOR_START_INDEX + theme::STYLE_COLOR_FIELD_COUNT).is_none(),
+            "the first preset index must not be reported as a color row"
+        );
+    }
+
 }
