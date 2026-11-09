@@ -370,7 +370,9 @@ mod tests {
     /// name that row's field and color.
     #[test]
     fn style_color_modal_shows_the_selected_field_and_color() {
-        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
 
         let fields = |s: &theme::ThemeStyle| theme::style_color_rows(s);
         let style = theme::style_settings();
@@ -392,10 +394,17 @@ mod tests {
                 .unwrap();
             let buffer = terminal.backend().buffer().clone();
 
-            // The title carries the field label.
-            let title: String = (0..80)
-                .filter_map(|x| buffer.cell(ratatui::layout::Position { x, y: 0 }).map(|c| c.symbol().to_string()))
-                .collect();
+            // The block title carries the field label. The modal is centered,
+            // so scan the whole buffer rather than assuming row 0.
+            let mut title = String::new();
+            for y in 0..24 {
+                for x in 0..80 {
+                    if let Some(cell) = buffer.cell(ratatui::layout::Position { x, y }) {
+                        title.push_str(cell.symbol());
+                    }
+                }
+                title.push('\n');
+            }
             assert!(
                 title.contains(&format!("Edit {} ", label)),
                 "index {settings_index} must title the modal {:?}, got {title:?}",
