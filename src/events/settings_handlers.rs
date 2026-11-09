@@ -13,7 +13,8 @@ use tokio::sync::mpsc;
 // Style-section indices come from the canonical theme table so the rows the
 // UI renders, the keys that move through them, and the editors that write them
 // can never drift apart again.
-use crate::ui::theme::{STYLE_COLOR_START_INDEX, STYLE_MAX_INDEX};
+use crate::ui::theme::STYLE_COLOR_START_INDEX;
+pub use crate::ui::theme::STYLE_MAX_INDEX;
 
 pub fn cycle_preview_max_mb(current: u16) -> u16 {
     match current {

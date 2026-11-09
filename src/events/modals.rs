@@ -13,10 +13,9 @@ use dracon_terminal_engine::contracts::{
 use serde::Deserialize;
 use tokio::sync::mpsc;
 
-const STYLE_PRESET_COUNT: usize = 14;
-const STYLE_COLOR_FIELD_COUNT: usize = 6;
-pub const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_COUNT;
-const STYLE_MAX_INDEX: usize = STYLE_COLOR_START_INDEX + STYLE_COLOR_FIELD_COUNT - 1;
+// Style-section index bounds live in the canonical theme table, which also
+// defines the color rows themselves.
+pub use crate::ui::theme::{STYLE_COLOR_START_INDEX, STYLE_MAX_INDEX};
 
 /// A name typed into a new-file / rename modal must be a plain file name.
 /// Reject absolute paths, separators, and `.`/`..` so input cannot escape
