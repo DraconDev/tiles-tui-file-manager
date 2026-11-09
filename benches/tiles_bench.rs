@@ -52,16 +52,22 @@ fn make_file_state(path: &str, history_len: usize) -> FileState {
 fn bench_push_history(c: &mut Criterion) {
     let mut group = c.benchmark_group("push_history");
 
-    for size in [10, 50, 100] {
+    // History lengths are bounded by MAX_HISTORY (50): push_history drains
+    // anything beyond it, so a size > 50 would silently measure the same
+    // capped 50-entry history as the 50 case. Seed fresh state per batch so
+    // warmup iterations can't drift the starting length either.
+    for size in [1, 10, 50] {
         group.bench_with_input(BenchmarkId::new("history_len", size), &size, |b, &size| {
-            let mut fs = make_file_state("/", size);
-            b.iter(|| {
-                // A fresh path each call exercises the append + cap paths;
-                // cycling the suffix keeps history from unbounded growth.
-                let next = PathBuf::from(format!("/next{}", fs.nav.history_index));
-                push_history(&mut fs, next);
-                black_box(&fs.nav.history_index);
-            });
+            b.iter_batched(
+                || make_file_state("/", size),
+                |mut fs| {
+                    // A fresh path always appends (exercises the cap-drain
+                    // path once the history is at MAX_HISTORY).
+                    push_history(&mut fs, PathBuf::from("/next"));
+                    black_box(&fs.nav.history_index);
+                },
+                criterion::BatchSize::SmallInput,
+            );
         });
     }
 
