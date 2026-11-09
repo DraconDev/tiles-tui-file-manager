@@ -1107,4 +1107,52 @@ mod tests {
             "drag hover at x=27 within absolute [10,30) must target the favorite"
         );
     }
+
+    fn tree_fixture(tag: &str) -> PathBuf {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        std::env::temp_dir().join(format!("tiles-sidebar-tree-{tag}-{unique}"))
+    }
+
+    /// The sidebar tree must treat a symlinked directory like the file pane
+    /// does: expandable, with its children listed once it is expanded. Before
+    /// the fix the sidebar used `DirEntry::file_type()` (lstat-like), so such a
+    /// row was flagged non-dir and expanding it produced nothing.
+    #[cfg(unix)]
+    #[test]
+    fn collect_tree_items_expands_symlinked_directory() {
+        use std::os::unix::fs::symlink;
+
+        let root = tree_fixture("symlink");
+        let real = root.join("real");
+        std::fs::create_dir_all(&real).expect("create real dir");
+        std::fs::write(real.join("inner.txt"), "x").expect("write inner");
+        let link = root.join("linked");
+        symlink(&real, &link).expect("create symlink");
+
+        let app = crate::app::App::new();
+        let mut collapsed = Vec::new();
+        collect_tree_items(&root, 0, &app, &mut collapsed);
+        let link_row = collapsed
+            .iter()
+            .find(|(p, _, _)| p == &link)
+            .expect("symlinked dir must appear in the tree");
+        assert!(link_row.2, "symlinked dir must be flagged as a dir");
+
+        let mut expanded_app = crate::app::App::new();
+        expanded_app.sidebar.tree_expanded_folders.insert(link.clone());
+        let mut expanded = Vec::new();
+        collect_tree_items(&root, 0, &expanded_app, &mut expanded);
+        assert!(
+            expanded
+                .iter()
+                .any(|(p, d, _)| *d == 1 && p.file_name().is_some_and(|n| n == "inner.txt")),
+            "expanded symlinked dir must list children: {:?}",
+            expanded.iter().map(|(p, d, _)| (p.clone(), *d)).collect::<Vec<_>>()
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
 }
