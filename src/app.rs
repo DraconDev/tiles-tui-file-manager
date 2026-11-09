@@ -927,10 +927,18 @@ fn rotated_log_path(dir: &Path, generation: usize) -> PathBuf {
 fn rotate_active_log(dir: &Path) -> std::io::Result<std::io::BufWriter<std::fs::File>> {
     std::fs::create_dir_all(dir)?;
     // Oldest first: only a generation that is already expired is removed.
+    let _ = std::fs::remove_file(rotated_log_path(dir, ROTATED_LOG_GENERATIONS));
+    for generation in (1..ROTATED_LOG_GENERATIONS).rev() {
+        let from = rotated_log_path(dir, generation);
+        let to = rotated_log_path(dir, generation + 1);
+        if from.exists() {
+            std::fs::rename(&from, &to)?;
+        }
+    }
     let active = dir.join("debug.log");
-    let _ = std::fs::rename(&active, rotated_log_path(dir, 1));
-    let _ = std::fs::rename(rotated_log_path(dir, 1), rotated_log_path(dir, 2));
-    let _ = std::fs::remove_file(rotated_log_path(dir, 2));
+    if active.exists() {
+        std::fs::rename(&active, rotated_log_path(dir, 1))?;
+    }
     std::fs::OpenOptions::new()
         .append(true)
         .create(true)
