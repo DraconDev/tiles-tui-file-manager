@@ -293,8 +293,8 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
 
 /// Shortest object name git accepts as an unambiguous abbreviation.
 const MIN_COMMIT_HASH_LEN: usize = 4;
-/// Longest object name we accept: a full SHA-1 commit id.
-const MAX_COMMIT_HASH_LEN: usize = 40;
+/// Longest object name we accept: covers full SHA-1 (40) and SHA-256 (64) ids.
+const MAX_COMMIT_HASH_LEN: usize = 64;
 
 /// A commit id handed to git must be plain hexadecimal: anything else could
 /// be parsed as a git option (a crafted preview path like
