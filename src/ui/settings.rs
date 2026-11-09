@@ -706,7 +706,7 @@ pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &mut App) {
             .iter()
             .enumerate()
             .map(|(i, (label, rgb))| {
-                let row_idx = i + STYLE_COLOR_START_INDEX;
+                let row_idx = i + theme::STYLE_COLOR_START_INDEX;
                 let is_selected =
                     row_idx == app.settings.settings_index && app.settings.settings_section == SettingsSection::Style;
                 let mut left_style = Style::default().fg(theme::fg());
