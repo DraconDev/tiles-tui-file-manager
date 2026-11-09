@@ -25,6 +25,58 @@ pub type SelfSaveMap = HashMap<PathBuf, (std::time::SystemTime, u64, Instant)>;
 /// Watch sync interval in milliseconds.
 const WATCH_SYNC_INTERVAL_MS: u64 = 2000;
 
+/// Remote session of the pane that owns `path`, or `None` when a local pane
+/// owns it.
+///
+/// The deepest matching working directory wins, and a pane owns a path when
+/// its cwd is the file's parent or an ancestor of the path.
+fn pane_owning_path(app: &App, path: &std::path::Path) -> Option<Option<crate::state::RemoteSession>> {
+    let parent = path.parent();
+    let mut best: Option<(usize, Option<crate::state::RemoteSession>)> = None;
+    for pane in app.panes.iter() {
+        if let Some(fs) = pane.current_state() {
+            let cwd = &fs.nav.current_path;
+            let owns = parent.map(|p| p == cwd.as_path()).unwrap_or(false)
+                || path.starts_with(cwd);
+            if owns {
+                let depth = cwd.components().count();
+                if best.as_ref().map(|(d, _)| depth >= *d).unwrap_or(true) {
+                    best = Some((depth, fs.nav.remote_session.clone()));
+                }
+            }
+        }
+    }
+    best.map(|(_, session)| session)
+}
+
+/// Filesystem owning `path` for file operations: the owning pane's session,
+/// falling back to the focused pane only when no pane's listing contains it.
+pub(crate) fn session_owning_path(app: &App, path: &std::path::Path) -> Option<crate::state::RemoteSession> {
+    match pane_owning_path(app, path) {
+        Some(session) => session,
+        None => app.current_file_state().and_then(|fs| fs.nav.remote_session.clone()),
+    }
+}
+
+/// Filesystem owning `path` for a save.
+///
+/// A pane whose preview is *this exact file* decides first — that pane is the
+/// one the user is editing in, so its filesystem is authoritative. Otherwise
+/// ownership falls back to the path itself. Nothing here consults an editor
+/// buffer that belongs to a different file.
+fn save_session_for_path(app: &App, path: &std::path::Path) -> Option<crate::state::RemoteSession> {
+    for pane in app.panes.iter() {
+        if let Some(fs) = pane.current_state() {
+            if let Some(preview) = fs.view.preview.as_ref() {
+                if preview.path == path {
+                    return fs.nav.remote_session.clone();
+                }
+            }
+        }
+    }
+    session_owning_path(app, path)
+}
+
 /// Shared mutable state for the main event loop.
 ///
 /// Instead of 8+ loose local variables in `run_tty()`, handlers receive
@@ -264,24 +316,14 @@ impl EventLoopCtx {
     /// Handle the SaveFile event: write content to disk, update self-save guard,
     /// and update editor preview state.
     pub fn handle_save_file(&mut self, path: PathBuf, content: String) {
+        // Route the write through the filesystem that actually owns `path`.
+        // An open editor buffer is NOT evidence about where an arbitrary path
+        // lives: the old fallback handed back the focused pane's session
+        // whenever any editor buffer was open, so saving a local file while a
+        // remote pane had focus (or the reverse) wrote to the wrong filesystem.
         let remote_for_save = {
             let app_guard = self.app.lock();
-            app_guard.panes
-                .iter()
-                .find_map(|pane| {
-                    let fs = pane.current_state()?;
-                    let preview = fs.view.preview.as_ref()?;
-                    if preview.path == path {
-                        fs.nav.remote_session.clone()
-                    } else {
-                        None
-                    }
-                })
-                .or_else(|| {
-                    let fs = app_guard.current_file_state()?;
-                    app_guard.editor_global.editor_state.as_ref()?;
-                    fs.nav.remote_session.clone()
-                })
+            save_session_for_path(&app_guard, &path)
         };
 
         let save_res = if let Some(remote) = &remote_for_save {
@@ -360,27 +402,7 @@ impl EventLoopCtx {
     /// pane owns the path.
     fn remote_session_for_path(&self, path: &std::path::Path) -> Option<crate::state::RemoteSession> {
         let app_guard = self.app.lock();
-        let parent = path.parent();
-        let mut best: Option<(usize, Option<crate::state::RemoteSession>)> = None;
-        for pane in app_guard.panes.iter() {
-            if let Some(fs) = pane.current_state() {
-                let cwd = &fs.nav.current_path;
-                // Owns `path` if its cwd is the file's parent dir, or an
-                // ancestor of the path (deepest matching cwd wins).
-                let owns = parent.map(|p| p == cwd.as_path()).unwrap_or(false)
-                    || path.starts_with(cwd);
-                if owns {
-                    let depth = cwd.components().count();
-                    if best.as_ref().map(|(d, _)| depth >= *d).unwrap_or(true) {
-                        best = Some((depth, fs.nav.remote_session.clone()));
-                    }
-                }
-            }
-        }
-        match best {
-            Some((_, session)) => session,
-            None => app_guard.current_file_state().and_then(|fs| fs.nav.remote_session.clone()),
-        }
+        session_owning_path(&app_guard, path)
     }
 
     /// Handle CreateFile: create a new empty file (local or remote).
