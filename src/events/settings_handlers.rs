@@ -10,10 +10,10 @@ use crate::state::IconMode;
 use crate::ui::theme as theme;
 use tokio::sync::mpsc;
 
-const STYLE_PRESET_COUNT: usize = 14;
-const STYLE_COLOR_FIELD_COUNT: usize = 6;
-const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_COUNT;
-pub const STYLE_MAX_INDEX: usize = STYLE_COLOR_START_INDEX + STYLE_COLOR_FIELD_COUNT - 1;
+// Style-section indices come from the canonical theme table so the rows the
+// UI renders, the keys that move through them, and the editors that write them
+// can never drift apart again.
+use crate::ui::theme::{STYLE_COLOR_START_INDEX, STYLE_MAX_INDEX};
 
 pub fn cycle_preview_max_mb(current: u16) -> u16 {
     match current {
@@ -56,33 +56,25 @@ pub fn style_preset_for_index(index: usize) -> Option<crate::ui::theme::ThemeSty
     }
 }
 
+/// Field identifier used in user-facing messages, e.g. "accent_primary".
 pub fn style_field_name(index: usize) -> &'static str {
-    let idx = index.saturating_sub(STYLE_COLOR_START_INDEX);
-    match idx {
-        0 => "accent_primary",
-        1 => "accent_secondary",
-        2 => "selection_bg",
-        3 => "border_active",
-        4 => "border_inactive",
-        5 => "header_fg",
-        _ => "accent_primary",
-    }
+    crate::ui::theme::style_field_index(index)
+        .map(|i| match i {
+            0 => "accent_primary",
+            1 => "accent_secondary",
+            2 => "selection_bg",
+            3 => "border_active",
+            4 => "border_inactive",
+            _ => "header_fg",
+        })
+        .unwrap_or("accent_primary")
 }
 
 pub fn style_field_color(
     index: usize,
     style: &crate::ui::theme::ThemeStyle,
 ) -> crate::ui::theme::RgbColor {
-    let idx = index.saturating_sub(STYLE_COLOR_START_INDEX);
-    match idx {
-        0 => style.accent_primary,
-        1 => style.accent_secondary,
-        2 => style.selection_bg,
-        3 => style.border_active,
-        4 => style.border_inactive,
-        5 => style.header_fg,
-        _ => style.accent_primary,
-    }
+    crate::ui::theme::style_field_color(style, index).unwrap_or(style.accent_primary)
 }
 
 pub fn set_style_field_color(
@@ -90,16 +82,7 @@ pub fn set_style_field_color(
     style: &mut crate::ui::theme::ThemeStyle,
     color: crate::ui::theme::RgbColor,
 ) {
-    let idx = index.saturating_sub(STYLE_COLOR_START_INDEX);
-    match idx {
-        0 => style.accent_primary = color,
-        1 => style.accent_secondary = color,
-        2 => style.selection_bg = color,
-        3 => style.border_active = color,
-        4 => style.border_inactive = color,
-        5 => style.header_fg = color,
-        _ => {}
-    }
+    crate::ui::theme::set_style_field_color(style, index, color);
 }
 
 pub fn parse_style_color_input(input: &str) -> Option<crate::ui::theme::RgbColor> {
