@@ -5,22 +5,24 @@ fn main() {
     let dir = std::path::PathBuf::from(&cfg).join("tiles");
     let path = dir.join("state.json");
     let tmp = dir.join("state.json.tmp");
+    let len = |p: &std::path::Path| std::fs::metadata(p).map(|m| m.len()).unwrap_or(0);
 
-    let app = tiles_tui_file_manager::app::App::new();
-    let r0 = tiles_tui_file_manager::config::save_state(&app);
-    let mtime0 = std::fs::metadata(&path).ok().and_then(|m| m.modified().ok());
-    println!("seed -> ok={} mtime0 set={}", r0.is_ok(), mtime0.is_some());
+    // App::new seeds its pane from the working directory, so changing the
+    // working directory changes the serialized state.
+    std::fs::create_dir_all("/tmp/saveprobe-a").unwrap();
+    std::fs::create_dir_all("/tmp/saveprobe-b").unwrap();
+    std::env::set_current_dir("/tmp/saveprobe-a").unwrap();
+    let app_a = tiles_tui_file_manager::app::App::new();
+    println!("seed (cwd=a) -> ok={} len={}", tiles_tui_file_manager::config::save_state(&app_a).is_ok(), len(&path));
 
-    std::fs::create_dir_all(&tmp).expect("occupy tmp path");
-    let failed = tiles_tui_file_manager::config::save_state(&app);
-    println!("identical save, tmp obstructed -> err={}", failed.is_err());
+    std::env::set_current_dir("/tmp/saveprobe-b").unwrap();
+    let app_b = tiles_tui_file_manager::app::App::new();
+    // Obstruct the atomic write, so this save fails for real.
+    std::fs::create_dir_all(&tmp).unwrap();
+    let failed = tiles_tui_file_manager::config::save_state(&app_b);
+    println!("changed content, tmp obstructed -> err={} (state.json still a-cwd: {})", failed.is_err(), len(&path));
 
-    std::fs::remove_dir_all(&tmp).expect("clear tmp path");
-    let retry = tiles_tui_file_manager::config::save_state(&app);
-    let mtime1 = std::fs::metadata(&path).ok().and_then(|m| m.modified().ok());
-    println!(
-        "identical retry -> ok={} rewritten={} (a poisoned cache would skip it)",
-        retry.is_ok(),
-        mtime0 != mtime1
-    );
+    std::fs::remove_dir_all(&tmp).unwrap();
+    let retry = tiles_tui_file_manager::config::save_state(&app_b);
+    println!("identical retry -> ok={} len={} (a poisoned cache would keep the old file)", retry.is_ok(), len(&path));
 }
