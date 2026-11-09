@@ -160,32 +160,46 @@ pub fn save_state(app: &App) -> Result<(), Box<dyn std::error::Error>> {
     let config_dir = dirs::config_dir()
         .ok_or("Could not find config dir")?
         .join("tiles");
-    fs::create_dir_all(&config_dir)?;
-    let state_path = config_dir.join("state.json");
     let json = serde_json::to_string_pretty(&state)?;
 
-    {
-        let mut last = LAST_SAVE.lock();
-        let now = Instant::now();
-        if let Some((last_at, last_json)) = last.as_ref() {
-            // Avoid repeated writes of identical content.
-            if *last_json == json {
-                return Ok(());
-            }
-            // NOTE: a debounce drop here previously lost real changes (e.g. a
-            // favorite added <350ms before quit was never persisted). Content
-            // dedup above already bounds write storms, so always write.
-            let _ = last_at;
-        }
-        *last = Some((now, json.clone()));
+    // Skip the write only when this exact content already landed on disk.
+    // A skipped write used to be recorded before the file was touched, so a
+    // failed save (full disk, permissions) left the cache claiming success and
+    // every later identical save silently did nothing.
+    if state_unchanged(&config_dir.join("state.json"), &json) {
+        return Ok(());
     }
 
-    // Write atomically via tmp+rename so a crash mid-write cannot corrupt
-    // state.json (a non-atomic fs::write of half a JSON document would make
-    // load_state return None and lose all persisted state).
+    persist_state_at(&config_dir, &json)?;
+    Ok(())
+}
+
+/// True when `json` is already the content that was successfully written to
+/// `state_path`. A missing file never counts as persisted: if the file was
+/// deleted while running, the next save must recreate it.
+fn state_unchanged(state_path: &std::path::Path, json: &str) -> bool {
+    if !state_path.exists() {
+        return false;
+    }
+    match LAST_SAVE.lock().as_ref() {
+        Some((_, last_json)) => *last_json == json,
+        None => false,
+    }
+}
+
+/// Write `json` to `config_dir/state.json`, then record it as persisted.
+///
+/// The write is atomic (tmp + rename) so a crash mid-write cannot leave a
+/// half-written JSON document that makes `load_state` discard everything.
+/// The dedup cache is updated only after both steps succeed, so a failure
+/// leaves the cache clean and the next save retries for real.
+fn persist_state_at(config_dir: &std::path::Path, json: &str) -> std::io::Result<()> {
+    fs::create_dir_all(config_dir)?;
+    let state_path = config_dir.join("state.json");
     let tmp_path = state_path.with_extension("json.tmp");
-    fs::write(&tmp_path, &json)?;
+    fs::write(&tmp_path, json)?;
     fs::rename(&tmp_path, &state_path)?;
+    *LAST_SAVE.lock() = Some((Instant::now(), json.to_string()));
     Ok(())
 }
 
