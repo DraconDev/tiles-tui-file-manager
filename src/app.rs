@@ -903,124 +903,117 @@ impl App {
 
 const MAX_LOG_SIZE_BYTES: u64 = 5 * 1024 * 1024;
 
+/// Rotated generations kept besides the active log.
+const ROTATED_LOG_GENERATIONS: usize = 2;
 
+/// Directory holding the debug log: `$XDG_DATA_HOME/tiles`, or the working
+/// directory when the platform exposes no data dir.
+fn log_dir() -> PathBuf {
+    dirs::data_local_dir()
+        .unwrap_or_else(|| PathBuf::from("."))
+        .join("tiles")
+}
+
+fn rotated_log_path(dir: &Path, generation: usize) -> PathBuf {
+    dir.join(format!("debug.log.{generation}"))
+}
+
+/// Rotate the active log one generation down, then open a fresh active log.
+///
+/// The oldest generation is removed BEFORE the shift, so the file that was
+/// just rotated is never the one deleted. Rotating used to rename the active
+/// log to `.1`, shift `.1` to `.2`, then delete `.2` — throwing away the whole
+/// log it had just preserved.
+fn rotate_active_log(dir: &Path) -> std::io::Result<std::io::BufWriter<std::fs::File>> {
+    std::fs::create_dir_all(dir)?;
+    // Oldest first: only a generation that is already expired is removed.
+    let _ = std::fs::remove_file(rotated_log_path(dir, ROTATED_LOG_GENERATIONS));
+    for generation in (1..ROTATED_LOG_GENERATIONS).rev() {
+        let from = rotated_log_path(dir, generation);
+        let to = rotated_log_path(dir, generation + 1);
+        if from.exists() {
+            std::fs::rename(&from, &to)?;
+        }
+    }
+    let active = dir.join("debug.log");
+    if active.exists() {
+        std::fs::rename(&active, rotated_log_path(dir, 1))?;
+    }
+    std::fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(&active)
+        .map(std::io::BufWriter::new)
+}
+
+/// Open the active log, rotating it first when it has passed the size cap.
+fn open_active_log(dir: &Path) -> Option<std::io::BufWriter<std::fs::File>> {
+    let active = dir.join("debug.log");
+    let oversized = std::fs::metadata(&active)
+        .map(|meta| meta.len() > MAX_LOG_SIZE_BYTES)
+        .unwrap_or(false);
+    if oversized {
+        if let Ok(writer) = rotate_active_log(dir) {
+            return Some(writer);
+        }
+        // Rotation failed (read-only dir, permissions, ...): appending to the
+        // oversized log still beats dropping the message.
+    }
+    std::fs::OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(&active)
+        .ok()
+        .map(std::io::BufWriter::new)
+}
+
+fn write_log_line(writer: &mut Option<std::io::BufWriter<std::fs::File>>, msg: &str) {
+    use std::io::Write;
+    if let Some(w) = writer {
+        let _ = writeln!(w, "[{}] DEBUG: {}", chrono::Utc::now(), msg);
+        let _ = w.flush();
+    }
+}
 
 /// Log a debug message to the XDG data directory log file.
 ///
 /// Messages are written to `$XDG_DATA_HOME/tiles/debug.log` with ISO timestamps.
 /// No-op if debug logging is disabled.
 pub fn log_debug(msg: &str) {
-
     if !debug_logging_enabled() {
-
         return;
-
     }
 
-
-
-    use std::io::Write;
-
     static LOG_FILE: std::sync::LazyLock<
-
         parking_lot::Mutex<Option<std::io::BufWriter<std::fs::File>>>,
-
-    > = std::sync::LazyLock::new(|| {
-
-        let log_dir = dirs::data_local_dir()
-
-            .unwrap_or_else(|| std::path::PathBuf::from("."));
-
-        let log_dir = log_dir.join("tiles");
-
-        let _ = std::fs::create_dir_all(&log_dir);
-
-        let path = log_dir.join("debug.log");
-
-        if let Ok(meta) = std::fs::metadata(&path) {
-
-            if meta.len() > MAX_LOG_SIZE_BYTES {
-
-                let _ = std::fs::rename(&path, log_dir.join("debug.log.1"));
-
-                let _ = std::fs::remove_file(log_dir.join("debug.log.2"));
-
-                let _ = std::fs::rename(log_dir.join("debug.log.1"), log_dir.join("debug.log.2"));
-
-            }
-
-        }
-
-        let file = std::fs::OpenOptions::new()
-
-            .append(true)
-
-            .create(true)
-
-            .open(path)
-
-            .ok();
-
-        parking_lot::Mutex::new(file.map(std::io::BufWriter::new))
-
-    });
-
-
+    > = std::sync::LazyLock::new(|| parking_lot::Mutex::new(open_active_log(&log_dir())));
 
     let mut guard = LOG_FILE.lock();
 
-    // Rotate during the session too (LazyLock init only checks at startup),
+    // Rotate during the session too (the lazy init only checks at startup),
     // throttled to at most one stat per second.
     static LAST_ROTATE_CHECK: std::sync::atomic::AtomicU64 =
         std::sync::atomic::AtomicU64::new(0);
     let now_secs = chrono::Utc::now().timestamp().max(0) as u64;
-    let last_check =
-        LAST_ROTATE_CHECK.swap(now_secs, std::sync::atomic::Ordering::Relaxed);
+    let last_check = LAST_ROTATE_CHECK.swap(now_secs, std::sync::atomic::Ordering::Relaxed);
     if now_secs.saturating_sub(last_check) >= 1 {
-        let path = dirs::data_local_dir()
-            .unwrap_or_else(|| std::path::PathBuf::from("."))
-            .join("tiles")
-            .join("debug.log");
-        {
-            if let Ok(meta) = std::fs::metadata(&path) {
-                if meta.len() > MAX_LOG_SIZE_BYTES {
-                    drop(guard);
-                    let _ = std::fs::rename(&path, path.with_extension("log.1"));
-                    let _ =
-                        std::fs::rename(path.with_extension("log.1"), path.with_extension("log.2"));
-                    let _ = std::fs::remove_file(path.with_extension("log.2"));
-                    let fresh = std::fs::OpenOptions::new()
-                        .append(true)
-                        .create(true)
-                        .open(&path)
-                        .ok();
-                    if let Some(f) = fresh {
-                        *LOG_FILE.lock() = Some(std::io::BufWriter::new(f));
-                    }
-                    let mut guard = LOG_FILE.lock();
-                    if let Some(ref mut w) = *guard {
-                        let _ = writeln!(w, "[{}] DEBUG: {}", chrono::Utc::now(), msg);
-                        let _ = w.flush();
-                    }
-                    return;
-                }
-            }
+        let dir = log_dir();
+        let oversized = std::fs::metadata(dir.join("debug.log"))
+            .map(|meta| meta.len() > MAX_LOG_SIZE_BYTES)
+            .unwrap_or(false);
+        if oversized {
+            // Close the writer before renaming: a live handle would keep
+            // appending into the rotated generation (and Windows refuses to
+            // rename an open file).
+            guard.take();
+            *guard = open_active_log(&dir);
+            write_log_line(&mut guard, msg);
+            return;
         }
-        // Re-acquire the lock after the (unchanged) rotation check.
-        guard = LOG_FILE.lock();
     }
 
-    if let Some(ref mut w) = *guard {
-
-        let _ = writeln!(w, "[{}] DEBUG: {}", chrono::Utc::now(), msg);
-
-        let _ = w.flush();
-
-    }
-
+    write_log_line(&mut guard, msg);
 }
-
-
 
 /// Check if debug logging is enabled via the TILES_DEBUG environment variable.
 pub fn debug_logging_enabled() -> bool {
