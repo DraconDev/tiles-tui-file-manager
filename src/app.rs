@@ -2,7 +2,7 @@ use ratatui::widgets::TableState;
 
 use std::collections::{HashMap, HashSet};
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::config::{MAX_RECENT_FOLDERS, PREVIEW_MAX_MB};
 
