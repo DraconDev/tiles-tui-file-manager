@@ -64,12 +64,17 @@ pub(crate) fn session_owning_path(app: &App, path: &std::path::Path) -> Option<c
 /// one the user is editing in, so its filesystem is authoritative. Otherwise
 /// ownership falls back to the path itself. Nothing here consults an editor
 /// buffer that belongs to a different file.
-fn save_session_for_path(app: &App, _path: &std::path::Path) -> Option<crate::state::RemoteSession> {
-    // MUTATED: the pre-fix fallback (any open editor buffer -> focused pane).
-    if app.editor_global.editor_state.is_none() {
-        return None;
+fn save_session_for_path(app: &App, path: &std::path::Path) -> Option<crate::state::RemoteSession> {
+    for pane in app.panes.iter() {
+        if let Some(fs) = pane.current_state() {
+            if let Some(preview) = fs.view.preview.as_ref() {
+                if preview.path == path {
+                    return fs.nav.remote_session.clone();
+                }
+            }
+        }
     }
-    app.current_file_state().and_then(|fs| fs.nav.remote_session.clone())
+    session_owning_path(app, path)
 }
 
 /// Shared mutable state for the main event loop.
