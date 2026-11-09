@@ -30,6 +30,36 @@ All notable changes to this project will be documented in this file.
 - **CI** — Cached `cargo-audit` install with `actions/cache@v4`
 - **TODO.md** — Updated stale stats (129 tests, 21,004 lines)
 
+## [14.114.0] - Release bump
+
+### Changed
+- **Version** — Cargo.toml advanced to 14.114.0 for publishing; no functional
+  changes ship in this version.
+- **Version sources** — `flake.nix` and `Cargo.lock` still reported 14.113.0 at
+  the v14.114.0 tag and were reconciled in the next release commit.
+
+## [14.113.0] - crates.io metadata, CI security audit, README refresh
+
+### Added
+- **crates.io metadata** — `readme`, `keywords`, and `categories` added to
+  Cargo.toml so the published crate carries discoverable metadata.
+- **CI security audit** — `cargo audit` now runs in CI, with the `cargo-audit`
+  install cached by `actions/cache` in later releases.
+
+### Changed
+- **README** — Documented marquee selection, cross-pane drag & drop, undo
+  close tab, and the theme preset list; removed stray `# test` text that had
+  been appended to the license footer.
+- **Tests** — `read_dir_with_metadata_includes_dirs` bound its metadata map as
+  `_metadata` while reading `metadata`, which left the test target
+  uncompilable; the binding now matches its use.
+- **Changelog** — The 14.112.0 notes landed with this release rather than at
+  their own tag.
+
+### Fixed
+- **Doc comment** — The `EventLoopCtx::app` field comment renders
+  `Arc<Mutex>` as code instead of bare prose.
+
 ## [14.112.0] - Architecture Overhaul, Performance, Dead Code Cleanup
 
 ### Changed
@@ -55,7 +85,8 @@ All notable changes to this project will be documented in this file.
 - **Cross-pane drop on empty space** — `DropTarget::CurrentDir(pane_idx)`
 - **Undo close tab (Ctrl+Shift+T)** — max 10 closed tabs restored
 - **Deferred click pattern** — `pending_click_idx` preserves multi-selection during marquee drags
-- **Criterion benchmarks** — 4 benchmark groups, 8 measurements
+- **Criterion benchmarks** — 4 benchmark groups: `resolve_path_input`,
+  `push_history`, `is_valid_search_char`, `fuzzy_contains`
 - **Tests** — 78 → 129 tests (+65%): theme (6), file actions (6), clipboard (2), nav helpers (18), file_mouse (6), file_manager (4), event_helpers (7), files.rs (6), double-click edge cases (4)
 
 ### Fixed
