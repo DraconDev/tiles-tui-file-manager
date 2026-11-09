@@ -635,6 +635,14 @@ pub const STYLE_COLOR_FIELDS: [StyleColorField; STYLE_COLOR_FIELD_COUNT] = [
     },
 ];
 
+/// Labels and current colors of every custom-color row, in settings order.
+pub fn style_color_rows(style: &ThemeStyle) -> Vec<(&'static str, RgbColor)> {
+    STYLE_COLOR_FIELDS
+        .iter()
+        .map(|field| (field.label, (field.get)(style)))
+        .collect()
+}
+
 /// Row offset of a style index inside the custom-color rows, or `None` when
 /// the index is not a custom-color row.
 pub fn style_field_index(settings_index: usize) -> Option<usize> {

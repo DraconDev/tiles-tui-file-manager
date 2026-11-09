@@ -644,16 +644,9 @@ pub fn draw_general_settings(f: &mut Frame, area: Rect, app: &mut App) {
 
 pub fn draw_style_settings(f: &mut Frame, area: Rect, app: &mut App) {
     let style = theme::style_settings();
-    const STYLE_PRESET_ROWS: usize = 14;
-    const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_ROWS;
-    let color_rows = [
-        ("Accent Primary", style.accent_primary),
-        ("Accent Secondary", style.accent_secondary),
-        ("Selection Background", style.selection_bg),
-        ("Border Active", style.border_active),
-        ("Border Inactive", style.border_inactive),
-        ("Header Accent", style.header_fg),
-    ];
+    // Rows come from the canonical theme table so the list this renders and
+    // the indices the key/mouse handlers walk are the same numbering.
+    let color_rows = theme::style_color_rows(&style);
 
     let mut rows: Vec<Row> = Vec::new();
     let reset_selected = app.settings.settings_index == 0 && app.settings.settings_section == SettingsSection::Style;
