@@ -435,14 +435,14 @@ mod tests {
     /// if the renderer ignored the title.
     #[test]
     fn style_color_rows_map_one_to_one_onto_settings_indices() {
-        let rows = theme::style_color_rows(&theme::ThemeStyle::preset_legacy_red());
-        for offset in 0..theme::STYLE_COLOR_FIELD_COUNT {
+        let style = theme::ThemeStyle::preset_legacy_red();
+        let rows = theme::style_color_rows(&style);
+        for (offset, (row_label, row_color)) in rows.iter().enumerate() {
             let index = theme::STYLE_COLOR_START_INDEX + offset;
             let named = theme::style_field_name(index).expect("row must have a name");
-            assert_eq!(named, rows[offset].0, "row {offset} label must match its index");
-            let color = theme::style_field_color(&theme::ThemeStyle::preset_legacy_red(), index)
-                .expect("row must have a color");
-            assert_eq!(color, rows[offset].1, "row {offset} color must match its index");
+            assert_eq!(named, *row_label, "row {offset} label must match its index");
+            let color = theme::style_field_color(&style, index).expect("row must have a color");
+            assert_eq!(color, *row_color, "row {offset} color must match its index");
         }
         assert!(
             theme::style_field_name(theme::STYLE_COLOR_START_INDEX + theme::STYLE_COLOR_FIELD_COUNT).is_none(),
