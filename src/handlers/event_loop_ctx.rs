@@ -1115,3 +1115,134 @@ async fn finish_preview_request(
             }
             let _ = tx.send(AppEvent::Tick).await;
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::state::{FileColumn, FileState, Pane, PreviewState, RemoteSession};
+
+    fn remote(host: &str) -> RemoteSession {
+        RemoteSession {
+            host: host.to_string(),
+            user: "dracon".to_string(),
+            name: host.to_string(),
+            port: 22,
+            key_path: None,
+        }
+    }
+
+    fn fs_at(path: &str, session: Option<RemoteSession>) -> FileState {
+        FileState::new(
+            PathBuf::from(path),
+            session,
+            false,
+            vec![FileColumn::Name],
+            FileColumn::Name,
+            true,
+        )
+    }
+
+    fn preview_of(path: &str) -> PreviewState {
+        PreviewState {
+            path: PathBuf::from(path),
+            content: String::new(),
+            editor: Some(dracon_terminal_engine::widgets::TextEditor::with_content("")),
+            last_saved: None,
+            highlighted_lines: None,
+        }
+    }
+
+    fn app_with_panes(panes: Vec<FileState>) -> App {
+        let mut app = App::new();
+        app.panes = panes.into_iter().map(Pane::new).collect();
+        app.focused_pane_index = 0;
+        app
+    }
+
+    /// The regression: an open editor buffer made the save fall back to the
+    /// focused pane's session, so a LOCAL path was written over SSH because a
+    /// REMOTE pane happened to have focus. A save must follow the path.
+    #[test]
+    fn save_does_not_use_the_focused_remote_session_for_a_local_path() {
+        let mut app = app_with_panes(vec![
+            fs_at("/home/dracon/project", Some(remote("remote-host"))),
+            fs_at("/home/dracon/local-project", None),
+        ]);
+        app.focused_pane_index = 0; // remote pane is focused
+        // An unrelated editor buffer is open elsewhere (this used to trigger
+        // the focused-pane fallback regardless of the path).
+        app.editor_global.editor_state = Some(preview_of("/home/dracon/project/notes.md"));
+
+        let path = PathBuf::from("/home/dracon/local-project/src/main.rs");
+        assert_eq!(
+            save_session_for_path(&app, &path),
+            None,
+            "a local path must be written locally even while a remote pane has focus"
+        );
+    }
+
+    /// The mirror case: editing inside the remote pane must write over SSH,
+    /// not to a same-named local file.
+    #[test]
+    fn save_uses_the_owning_pane_session_for_a_remote_path() {
+        let app = app_with_panes(vec![
+            fs_at("/home/dracon/project", Some(remote("remote-host"))),
+            fs_at("/home/dracon/local-project", None),
+        ]);
+        let path = PathBuf::from("/home/dracon/project/src/main.rs");
+        assert_eq!(
+            save_session_for_path(&app, &path).map(|s| s.host),
+            Some("remote-host".to_string()),
+            "a path under the remote pane's listing must be written over SSH"
+        );
+    }
+
+    /// The pane holding the preview of exactly this file decides, even when
+    /// another pane's listing also contains the path (deepest cwd otherwise).
+    #[test]
+    fn save_prefers_the_pane_whose_preview_is_this_file() {
+        let mut app = app_with_panes(vec![
+            fs_at("/home/dracon/project", None),
+            fs_at("/home/dracon/other", Some(remote("remote-host"))),
+        ]);
+        if let Some(fs) = app.panes[1].current_state_mut() {
+            fs.view.preview = Some(preview_of("/home/dracon/project/src/main.rs"));
+        }
+        let path = PathBuf::from("/home/dracon/project/src/main.rs");
+        assert_eq!(
+            save_session_for_path(&app, &path).map(|s| s.host),
+            Some("remote-host".to_string()),
+            "the pane editing this file owns the write"
+        );
+    }
+
+    /// Deepest matching working directory wins, matching every other file
+    /// operation (create/delete/rename/trash all use the same resolver).
+    #[test]
+    fn session_owning_path_prefers_the_deepest_matching_cwd() {
+        let app = app_with_panes(vec![
+            fs_at("/", None),
+            fs_at("/home/dracon/project", Some(remote("remote-host"))),
+        ]);
+        let path = PathBuf::from("/home/dracon/project/src/main.rs");
+        assert_eq!(
+            session_owning_path(&app, &path).map(|s| s.host),
+            Some("remote-host".to_string())
+        );
+    }
+
+    /// A path no pane is listing keeps the old focused-pane fallback, so files
+    /// opened through a picker outside any listing still save to the pane's
+    /// filesystem.
+    #[test]
+    fn session_owning_path_falls_back_to_the_focused_pane() {
+        let mut app = app_with_panes(vec![fs_at("/home/dracon/project", Some(remote("remote-host"))),]);
+        app.focused_pane_index = 0;
+        let path = PathBuf::from("/etc/hosts");
+        assert_eq!(
+            session_owning_path(&app, &path).map(|s| s.host),
+            Some("remote-host".to_string()),
+            "an unowned path follows the pane that owns the UI"
+        );
+    }
+}
