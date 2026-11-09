@@ -28,29 +28,9 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
     // from the canonical field table. It previously carried its own index base
     // (7), which never matched the settings rows (15..=20): every field showed
     // "Accent Primary" because the offset always fell through to the fallback.
-    // MUTATED: the pre-fix stale index base (7).
-    const STALE_BASE: usize = 7;
-    let field_name = match app.settings.settings_index.saturating_sub(STALE_BASE) {
-        0 => "Accent Primary",
-        1 => "Accent Secondary",
-        2 => "Selection Background",
-        3 => "Border Active",
-        4 => "Border Inactive",
-        5 => "Header Accent",
-        _ => "Accent Primary",
-    };
-    let color = {
-        let style = theme::style_settings();
-        match app.settings.settings_index.saturating_sub(STALE_BASE) {
-            0 => style.accent_primary,
-            1 => style.accent_secondary,
-            2 => style.selection_bg,
-            3 => style.border_active,
-            4 => style.border_inactive,
-            5 => style.header_fg,
-            _ => style.accent_primary,
-        }
-    };
+    let field_name = theme::style_field_name(app.settings.settings_index).unwrap_or("Color");
+    let color = theme::style_field_color(&theme::style_settings(), app.settings.settings_index)
+        .unwrap_or_else(|| theme::style_settings().accent_primary);
 
     let block = Block::default()
         .title(format!(" Edit {} ", field_name))
