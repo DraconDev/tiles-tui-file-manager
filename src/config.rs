@@ -199,7 +199,6 @@ fn state_unchanged(state_path: &std::path::Path, json: &str) -> bool {
 /// The dedup cache is updated only after both steps succeed, so a failure
 /// leaves the cache clean and the next save retries for real.
 fn persist_state_at(config_dir: &std::path::Path, json: &str) -> std::io::Result<()> {
-    *LAST_SAVE.lock() = Some((Instant::now(), json.to_string()));
     fs::create_dir_all(config_dir)?;
     let state_path = config_dir.join("state.json");
     let tmp_path = state_path.with_extension("json.tmp");
