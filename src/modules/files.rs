@@ -483,4 +483,102 @@ mod tests {
         assert_eq!(std::fs::read_to_string(&dst).unwrap(), "hello");
         let _ = std::fs::remove_dir_all(&tmp);
     }
+
+    #[test]
+    fn is_valid_commit_hash_accepts_hex_ids() {
+        assert!(is_valid_commit_hash("783ce43e"));
+        assert!(is_valid_commit_hash("ABCDEF12"));
+        assert!(is_valid_commit_hash(&"a".repeat(40)), "full SHA-1 id");
+        assert!(is_valid_commit_hash(&"b".repeat(64)), "full SHA-256 id");
+    }
+
+    #[test]
+    fn is_valid_commit_hash_rejects_option_injection() {
+        // A crafted `git://--output=…` preview path must never reach git as an
+        // option, so every non-hexadecimal or out-of-range id is refused.
+        assert!(!is_valid_commit_hash("--output=/tmp/pwn"));
+        assert!(!is_valid_commit_hash("--format=%H"));
+        assert!(!is_valid_commit_hash("-c"));
+        assert!(!is_valid_commit_hash(""));
+        assert!(!is_valid_commit_hash(" abc12"));
+        assert!(!is_valid_commit_hash("abc12 "));
+        assert!(!is_valid_commit_hash("abc12\n"));
+        assert!(!is_valid_commit_hash("../../../etc/passwd"));
+        assert!(!is_valid_commit_hash("gggg"), "non-hex letters");
+        assert!(!is_valid_commit_hash(&"a".repeat(65)), "longer than any object id");
+        assert!(!is_valid_commit_hash("abc"), "shorter than MIN_COMMIT_HASH_LEN");
+    }
+
+    #[test]
+    fn show_commit_patch_rejects_injected_option_hash() {
+        // The hash comes from a `git://<hash>` preview path, which the UI builds
+        // from commit metadata. A crafted hash must fail before git is spawned —
+        // git would otherwise honour the embedded option and write the file.
+        let repo = std::env::temp_dir().join(format!("tiles-hashguard-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&repo);
+        std::fs::create_dir_all(&repo).ok();
+        let target = repo.join("pwned.txt");
+        let crafted = format!("--output={}", target.display());
+        let err = show_commit_patch(&repo, &crafted).expect_err("crafted hash must be rejected");
+        assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+        assert!(
+            !target.exists(),
+            "git must not run with the crafted option: {}",
+            target.display()
+        );
+        let _ = std::fs::remove_dir_all(&repo);
+    }
+
+    /// Regression guard for the legitimate path: hash validation plus
+    /// `--end-of-options` must still resolve a real commit id to its patch.
+    #[test]
+    fn show_commit_patch_renders_a_real_commit() {
+        let repo = std::env::temp_dir().join(format!("tiles-showcommit-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&repo);
+        if std::fs::create_dir_all(&repo).is_err() {
+            eprintln!("skip: cannot create temp repo dir");
+            return;
+        }
+        let git = |args: &[&str]| -> Option<std::process::Output> {
+            let mut cmd = std::process::Command::new("git");
+            cmd.args(args)
+                .current_dir(&repo)
+                .env("GIT_AUTHOR_NAME", "tiles test")
+                .env("GIT_AUTHOR_EMAIL", "test@example.com")
+                .env("GIT_COMMITTER_NAME", "tiles test")
+                .env("GIT_COMMITTER_EMAIL", "test@example.com")
+                .env("GIT_CONFIG_GLOBAL", "/dev/null")
+                .env("GIT_CONFIG_SYSTEM", "/dev/null");
+            cmd.output().ok().filter(|o| o.status.success())
+        };
+        let Ok(init) = std::process::Command::new("git").arg("--version").output() else {
+            eprintln!("skip: git is not available");
+            return;
+        };
+        if !init.status.success() {
+            eprintln!("skip: git is not available");
+            return;
+        }
+        if git(&["init", "-q"]).is_none() || git(&["commit", "-q", "--allow-empty", "-m", "seed"]).is_none() {
+            eprintln!("skip: cannot seed a temp git repo");
+            let _ = std::fs::remove_dir_all(&repo);
+            return;
+        }
+        let head = git(&["rev-parse", "--short=8", "HEAD"])
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim().to_string())
+            .filter(|h| is_valid_commit_hash(h));
+        let Some(hash) = head else {
+            eprintln!("skip: cannot resolve HEAD in temp repo");
+            let _ = std::fs::remove_dir_all(&repo);
+            return;
+        };
+        let patch = show_commit_patch(&repo, &hash).expect("valid hash must resolve");
+        assert!(
+            patch.contains(&hash),
+            "patch should name the commit {}: {}",
+            hash,
+            patch
+        );
+        let _ = std::fs::remove_dir_all(&repo);
+    }
 }
