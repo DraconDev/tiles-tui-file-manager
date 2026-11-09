@@ -1347,4 +1347,38 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// First use on a machine with no `$XDG_DATA_HOME/tiles` directory at all
+    /// must still create the log file and receive the line. The fixture here
+    /// deliberately does NOT pre-create the directory: an earlier refactor
+    /// dropped the directory creation and every message was silently dropped
+    /// forever, which a pre-created fixture would hide.
+    #[test]
+    fn open_active_log_creates_the_directory_on_first_use() {
+        let unique = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("clock")
+            .as_nanos();
+        let parent = std::env::temp_dir().join(format!("tiles-logfresh-{unique}"));
+        let _ = std::fs::remove_dir_all(&parent);
+        std::fs::create_dir_all(&parent).expect("create parent");
+        // The log directory itself must NOT exist yet.
+        let dir = parent.join("tiles");
+        assert!(!dir.exists(), "fixture must start without the log directory");
+
+        let writer = open_active_log(&dir).expect("first use must open a log");
+        let mut slot = Some(writer);
+        write_log_line(&mut slot, "first line on a fresh install");
+        drop(slot);
+
+        assert!(dir.exists(), "the log directory must be created on first use");
+        let contents = read_or_empty(&dir.join("debug.log"));
+        assert!(
+            contents.contains("first line on a fresh install"),
+            "the first message must reach the new log, got {contents:?}"
+        );
+
+        let _ = std::fs::remove_dir_all(&parent);
+    }
+
+
 }
