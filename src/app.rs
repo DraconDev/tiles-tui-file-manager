@@ -952,6 +952,7 @@ fn rotate_active_log(dir: &Path) -> std::io::Result<std::io::BufWriter<std::fs::
 /// `log_debug` on a fresh `$XDG_DATA_HOME` still produces a file instead of
 /// caching a permanently-empty writer.
 fn open_active_log(dir: &Path) -> Option<std::io::BufWriter<std::fs::File>> {
+    let _ = std::fs::create_dir_all(dir);
     let active = dir.join("debug.log");
     let oversized = std::fs::metadata(&active)
         .map(|meta| meta.len() > MAX_LOG_SIZE_BYTES)
