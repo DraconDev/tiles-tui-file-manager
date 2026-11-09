@@ -36,8 +36,14 @@ pub fn walk_tree(
     }
     let mut sorted: Vec<Row> = entries.filter_map(|e| e.ok()).map(|e| {
         let p = e.path();
-        let meta = e.metadata().ok();
-        let is_dir = meta.as_ref().map(|m| m.is_dir()).unwrap_or(false);
+        // `DirEntry::metadata()` is `lstat`-like: it reports a symlink as
+        // "not a directory" even when it points at one, which made symlinked
+        // directories unexpandable in the tree while the file list (which
+        // follows links) showed them as directories. Resolve through the
+        // shared listing helper so both views agree on which rows expand.
+        let resolved = crate::modules::files::resolve_entry_metadata(&p);
+        let is_dir = resolved.as_ref().map(|(_, is_dir)| *is_dir).unwrap_or(false);
+        let meta = resolved.map(|(m, _)| m);
         Row {
             name_lower: e.file_name().to_string_lossy().to_lowercase(),
             size: meta.as_ref().map(|m| m.len()).unwrap_or(0),
