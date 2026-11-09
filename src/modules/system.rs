@@ -296,8 +296,10 @@ fn read_process_ppid() -> HashMap<u32, u32> {
 
 fn parse_ppid_from_stat(stat: &str) -> Option<u32> {
     // /proc/[pid]/stat after "comm)" reads: state ppid pgrp session ...
+    // `get` (not `[start + 2..]`) so a truncated read returns None instead
+    // of panicking; the whitespace splitter absorbs any spacing.
     let start = stat.rfind(')')?;
-    let rest = &stat[start + 2..];
+    let rest = stat.get(start + 1..)?;
     let mut fields = rest.split_whitespace();
     fields.next()?; // state
     fields.next().and_then(|s| s.parse().ok()) // ppid
@@ -383,6 +385,17 @@ mod tests {
     #[test]
     fn parse_ppid_from_stat_empty() {
         assert_eq!(parse_ppid_from_stat(""), None);
+    }
+
+    #[test]
+    fn parse_ppid_from_stat_truncated() {
+        // Truncated reads must return None, not panic: the closing paren may
+        // be the last byte, or only the state field may be present.
+        assert_eq!(parse_ppid_from_stat("1234 (bash)"), None);
+        assert_eq!(parse_ppid_from_stat("1234 (bash) "), None);
+        assert_eq!(parse_ppid_from_stat("1234 (bash) S"), None);
+        assert_eq!(parse_ppid_from_stat("1234 (bash) S "), None);
+        assert_eq!(parse_ppid_from_stat("1234 (bash) S 1"), Some(1));
     }
 
     #[test]
