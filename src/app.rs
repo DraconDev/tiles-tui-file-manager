@@ -1319,8 +1319,9 @@ mod tests {
         std::fs::write(dir.join("debug.log"), &big).expect("seed oversized");
 
         let mut writer = open_active_log(&dir).expect("open");
-        write_log_line(&mut Some(&mut writer), "after rotation");
-        drop(writer);
+        let mut slot = Some(writer);
+        write_log_line(&mut slot, "after rotation");
+        drop(slot);
 
         let rotated = std::fs::metadata(dir.join("debug.log.1")).expect("rotated generation exists");
         assert_eq!(
