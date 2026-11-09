@@ -1174,9 +1174,8 @@ mod tests {
         app.editor_global.editor_state = Some(preview_of("/home/dracon/project/notes.md"));
 
         let path = PathBuf::from("/home/dracon/local-project/src/main.rs");
-        assert_eq!(
-            save_session_for_path(&app, &path),
-            None,
+        assert!(
+            save_session_for_path(&app, &path).is_none(),
             "a local path must be written locally even while a remote pane has focus"
         );
     }
