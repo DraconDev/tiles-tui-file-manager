@@ -174,9 +174,11 @@ mod tests {
         let mut rows = Vec::new();
         walk_tree(&root, 0, 4, &HashSet::new(), false, &mut rows, FileColumn::Name, true);
         let names: Vec<String> = rows.iter().map(|(p, _)| name_of(p)).collect();
+        // Dirs sort first, alphabetically among themselves: `real`, then the
+        // symlink (`zzz-linked`), then the plain file.
         assert_eq!(
             names,
-            vec!["zzz-linked".to_string(), "aaa.txt".to_string()],
+            vec!["real".to_string(), "zzz-linked".to_string(), "aaa.txt".to_string()],
             "walk must order the symlinked dir with the dirs, matching the file list"
         );
 
