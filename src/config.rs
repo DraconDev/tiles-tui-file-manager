@@ -183,7 +183,9 @@ fn persist_if_changed(config_dir: &std::path::Path, json: &str) -> std::io::Resu
 /// `state_path`. A missing file never counts as persisted: if the file was
 /// deleted while running, the next save must recreate it.
 fn state_unchanged(state_path: &std::path::Path, json: &str) -> bool {
-    let _ = state_path;
+    if !state_path.exists() {
+        return false;
+    }
     match LAST_SAVE.lock().as_ref() {
         Some((_, last_json)) => *last_json == json,
         None => false,
