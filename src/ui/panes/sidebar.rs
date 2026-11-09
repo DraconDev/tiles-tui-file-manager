@@ -927,24 +927,35 @@ for (path, depth, is_dir) in tree_items.iter().cloned() {
 
 fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(PathBuf, u16, bool)>) {
     if let Ok(entries) = std::fs::read_dir(path) {
-        let mut sorted_entries: Vec<_> = entries.filter_map(|e| e.ok()).collect();
+        // Same listing semantics as the file pane: a symlink pointing at a
+        // directory counts as a directory, so `tree_expanded_folders` toggled
+        // on such a row actually lists its children (the arrow-click gate in
+        // `events::mod` already accepts it via `Path::is_dir`).
+        let mut resolved: Vec<(std::path::PathBuf, bool, std::ffi::OsString)> = entries
+            .filter_map(|e| e.ok())
+            .map(|e| {
+                let p = e.path();
+                let is_dir = crate::modules::files::resolve_entry_metadata(&p)
+                    .map(|(_, is_dir)| is_dir)
+                    .unwrap_or(false);
+                let name = e.file_name();
+                (p, is_dir, name)
+            })
+            .collect();
 
-        sorted_entries.sort_by(|a, b| {
-            let a_is_dir = a.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-            let b_is_dir = b.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-            if a_is_dir && !b_is_dir {
-                std::cmp::Ordering::Less
-            } else if !a_is_dir && b_is_dir {
-                std::cmp::Ordering::Greater
-            } else {
-                a.file_name().cmp(&b.file_name())
+        resolved.sort_by(|a, b| {
+            if a.1 != b.1 {
+                return if a.1 {
+                    std::cmp::Ordering::Less
+                } else {
+                    std::cmp::Ordering::Greater
+                };
             }
+            a.2.cmp(&b.2)
         });
 
-        for entry in sorted_entries {
-            let p = entry.path();
-            let is_dir = entry.file_type().map(|ft| ft.is_dir()).unwrap_or(false);
-            let name = p.file_name().unwrap_or_default().to_string_lossy();
+        for (p, is_dir, file_name) in resolved {
+            let name = file_name.to_string_lossy();
 
             // Sidebar never shows dotfiles — only the file pane toggles hidden visibility
             if name.starts_with('.') {
