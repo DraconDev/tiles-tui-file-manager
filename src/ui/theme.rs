@@ -566,6 +566,105 @@ impl DraconTheme {
     }
 }
 
+/// Number of built-in preset themes, excluding the leading "Reset To Default"
+/// row. Presets occupy settings indices 1..=STYLE_PRESET_COUNT.
+pub const STYLE_PRESET_COUNT: usize = 14;
+
+/// Custom-color fields listed below the presets, in settings-row order.
+pub const STYLE_COLOR_FIELD_COUNT: usize = 6;
+
+/// Settings index of the first custom-color row (0 is the reset row).
+pub const STYLE_COLOR_START_INDEX: usize = 1 + STYLE_PRESET_COUNT;
+
+/// Highest settings index in the Style section.
+pub const STYLE_MAX_INDEX: usize = STYLE_COLOR_START_INDEX + STYLE_COLOR_FIELD_COUNT - 1;
+
+/// One editable color of [`ThemeStyle`].
+///
+/// This table is the single definition of the custom-color rows: the settings
+/// list, the color-editing modal, the key handlers and the mouse handlers all
+/// derive their labels, reads and writes from it, so an index base can no
+/// longer drift away from the rows it indexes.
+pub struct StyleColorField {
+    /// Human-readable label shown in the settings list and the modal title.
+    pub label: &'static str,
+    /// Reads this field from a style.
+    pub get: fn(&ThemeStyle) -> RgbColor,
+    /// Writes this field into a style.
+    pub set: fn(&mut ThemeStyle, RgbColor),
+}
+
+impl std::fmt::Debug for StyleColorField {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("StyleColorField")
+            .field("label", &self.label)
+            .finish()
+    }
+}
+
+pub const STYLE_COLOR_FIELDS: [StyleColorField; STYLE_COLOR_FIELD_COUNT] = [
+    StyleColorField {
+        label: "Accent Primary",
+        get: |s| s.accent_primary,
+        set: |s, c| s.accent_primary = c,
+    },
+    StyleColorField {
+        label: "Accent Secondary",
+        get: |s| s.accent_secondary,
+        set: |s, c| s.accent_secondary = c,
+    },
+    StyleColorField {
+        label: "Selection Background",
+        get: |s| s.selection_bg,
+        set: |s, c| s.selection_bg = c,
+    },
+    StyleColorField {
+        label: "Border Active",
+        get: |s| s.border_active,
+        set: |s, c| s.border_active = c,
+    },
+    StyleColorField {
+        label: "Border Inactive",
+        get: |s| s.border_inactive,
+        set: |s, c| s.border_inactive = c,
+    },
+    StyleColorField {
+        label: "Header Accent",
+        get: |s| s.header_fg,
+        set: |s, c| s.header_fg = c,
+    },
+];
+
+/// Row offset of a style index inside the custom-color rows, or `None` when
+/// the index is not a custom-color row.
+pub fn style_field_index(settings_index: usize) -> Option<usize> {
+    let offset = settings_index.checked_sub(STYLE_COLOR_START_INDEX)?;
+    (offset < STYLE_COLOR_FIELD_COUNT).then_some(offset)
+}
+
+/// Label of the custom-color row at `settings_index`.
+pub fn style_field_name(settings_index: usize) -> Option<&'static str> {
+    style_field_index(settings_index).map(|i| STYLE_COLOR_FIELDS[i].label)
+}
+
+/// Color currently stored in the custom-color row at `settings_index`.
+pub fn style_field_color(style: &ThemeStyle, settings_index: usize) -> Option<RgbColor> {
+    let index = style_field_index(settings_index)?;
+    Some((STYLE_COLOR_FIELDS[index].get)(style))
+}
+
+/// Write `color` into the custom-color row at `settings_index`. Returns false
+/// when the index is not a custom-color row (nothing is written).
+pub fn set_style_field_color(style: &mut ThemeStyle, settings_index: usize, color: RgbColor) -> bool {
+    match style_field_index(settings_index) {
+        Some(index) => {
+            (STYLE_COLOR_FIELDS[index].set)(style, color);
+            true
+        }
+        None => false,
+    }
+}
+
 static ACTIVE_STYLE: LazyLock<RwLock<ThemeStyle>> =
     LazyLock::new(|| RwLock::new(ThemeStyle::default()));
 static ACTIVE_THEME: LazyLock<RwLock<DraconTheme>> = LazyLock::new(|| {
