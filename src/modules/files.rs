@@ -291,11 +291,42 @@ pub fn get_run_command(path: &Path) -> Option<(PathBuf, String, Vec<String>)> {
     Some((work_dir, program, args))
 }
 
+/// Shortest object name git accepts as an unambiguous abbreviation.
+const MIN_COMMIT_HASH_LEN: usize = 4;
+/// Longest object name we accept: a full SHA-1 commit id.
+const MAX_COMMIT_HASH_LEN: usize = 40;
+
+/// A commit id handed to git must be plain hexadecimal: anything else could
+/// be parsed as a git option (a crafted preview path like
+/// `git://--output=…` would otherwise write an arbitrary file).
+fn is_valid_commit_hash(hash: &str) -> bool {
+    (MIN_COMMIT_HASH_LEN..=MAX_COMMIT_HASH_LEN).contains(&hash.len())
+        && hash.chars().all(|c| c.is_ascii_hexdigit())
+}
+
 pub fn show_commit_patch(repo_path: &Path, hash: &str) -> std::io::Result<String> {
+    // Reject a non-hex commit id up front instead of relying on the argument
+    // terminator alone, so a bad preview path never reaches git at all.
+    if !is_valid_commit_hash(hash) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("invalid commit hash: {hash:?}"),
+        ));
+    }
+
     // Bypass dracon-git's buggy implementation which incorrectly passes `--` before the hash,
     // causing git to treat the hash as a path filter instead of a commit hash.
+    // `--end-of-options` keeps the hash a revision even if validation is later
+    // relaxed, and options must precede the revision for git to honour them.
     let out = std::process::Command::new("git")
-        .args(["show", "--patch", "--stat", "--color=never", hash])
+        .args([
+            "show",
+            "--patch",
+            "--stat",
+            "--color=never",
+            "--end-of-options",
+            hash,
+        ])
         .current_dir(repo_path)
         .env_remove("DIRENV_DIR")
         .env_remove("DIRENV_FILE")
