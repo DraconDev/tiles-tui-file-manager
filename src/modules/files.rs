@@ -307,7 +307,12 @@ fn is_valid_commit_hash(hash: &str) -> bool {
 pub fn show_commit_patch(repo_path: &Path, hash: &str) -> std::io::Result<String> {
     // Reject a non-hex commit id up front instead of relying on the argument
     // terminator alone, so a bad preview path never reaches git at all.
-    // MUTATED: validation removed
+    if !is_valid_commit_hash(hash) {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            format!("invalid commit hash: {hash:?}"),
+        ));
+    }
 
     // Bypass dracon-git's buggy implementation which incorrectly passes `--` before the hash,
     // causing git to treat the hash as a path filter instead of a commit hash.
@@ -319,6 +324,7 @@ pub fn show_commit_patch(repo_path: &Path, hash: &str) -> std::io::Result<String
             "--patch",
             "--stat",
             "--color=never",
+            "--end-of-options",
             hash,
         ])
         .current_dir(repo_path)
