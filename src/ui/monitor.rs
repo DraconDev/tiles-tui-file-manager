@@ -690,19 +690,22 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let header_rects = header_rects_for(area, &column_constraints, PROCESS_COLUMN_SPACING);
 
     app.monitor.process_column_bounds.clear();
-    let header_cells = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"]
-        .iter()
-        .enumerate()
-        .map(|(i, h)| {
-            let col = match *h {
-                "PID" => ProcessColumn::Pid,
-                "NAME" => ProcessColumn::Name,
-                "USER" => ProcessColumn::User,
-                "STATUS" => ProcessColumn::Status,
-                "CPU%" => ProcessColumn::Cpu,
-                "MEM%" => ProcessColumn::Mem,
-                _ => ProcessColumn::Pid,
-            };
+    // Each header carries its column instead of looking it up by caption text:
+    // a `match` on the label silently fell back to `Pid` for every band after
+    // an edited caption, so the wrong column absorbed the click.
+    let header_cells = [
+        ("PID", ProcessColumn::Pid),
+        ("NAME", ProcessColumn::Name),
+        ("USER", ProcessColumn::User),
+        ("STATUS", ProcessColumn::Status),
+        ("CPU%", ProcessColumn::Cpu),
+        ("MEM%", ProcessColumn::Mem),
+    ]
+    .iter()
+    .enumerate()
+    .map(|(i, (h, col))| {
+        let col = *col;
+            {
             // Use the layout's own rects; accumulating widths by hand drifts
             // away from them as soon as flex or spacing change.
             let rect = header_rects[i];
