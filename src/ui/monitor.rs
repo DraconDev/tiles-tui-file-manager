@@ -764,6 +764,13 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         area,
         &mut app.monitor.process_table_state,
     );
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::app::{ProcessColumn, MonitorSubview};
+
     fn process_constraints() -> [Constraint; 6] {
         [
             Constraint::Length(8),
