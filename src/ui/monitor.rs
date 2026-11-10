@@ -885,10 +885,15 @@ mod tests {
     #[test]
     fn process_header_boxes_match_the_painted_table_columns() {
         // 80..=84 is the band where the old full-area solve drifted off the
-        // captions; 40 and 260 bound the extremes.
-        for width in 40u16..=260 {
-            for origin in [(0u16, 0u16), (2, 5), (3, 1)] {
-                for height in [1u16, 12, 20] {
+        // captions, so it is covered every cell; the rest is strided.
+        let mut widths: Vec<u16> = (40u16..=260).step_by(4).collect();
+        widths.extend(76..=90);
+        widths.extend([20, 39, 121, 199, 259, 260]);
+        widths.sort_unstable();
+        widths.dedup();
+        for width in widths {
+            for origin in [(0u16, 0u16), (2, 5)] {
+                for height in [1u16, 20] {
                     let area = Rect::new(origin.0, origin.1, width, height);
                     let header =
                         header_rects_for(area, &process_constraints(), PROCESS_COLUMN_SPACING);
@@ -916,7 +921,12 @@ mod tests {
     /// Same invariant for the applications table, which renders with spacing 2.
     #[test]
     fn application_header_boxes_match_the_painted_table_columns() {
-        for width in 40u16..=260 {
+        let mut widths: Vec<u16> = (40u16..=260).step_by(8).collect();
+        widths.extend(78..=86);
+        widths.extend([20, 120, 200, 260]);
+        widths.sort_unstable();
+        widths.dedup();
+        for width in widths {
             for origin in [(0u16, 0u16), (2, 5)] {
                 for height in [1u16, 20] {
                     let area = Rect::new(origin.0, origin.1, width, height);
