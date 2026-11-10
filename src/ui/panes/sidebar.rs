@@ -45,6 +45,26 @@ fn name_matches_filter(name: &str, filter: &str) -> bool {
     }
 }
 
+/// Auto-scroll the sidebar viewport to keep the selected row in view.
+///
+/// Runs only when the SELECTION moved since the last sync: the scroll
+/// offset is also user-controlled (mouse wheel), and re-syncing it on
+/// every frame would undo wheel scrolling — with the selection parked
+/// at the top, no wheel tick could ever move the viewport.
+fn sync_sidebar_scroll_to_selection(sidebar: &mut crate::state::SidebarState, visible_height: usize) {
+    if sidebar.sidebar_last_synced_index == Some(sidebar.sidebar_index) {
+        return;
+    }
+    sidebar.sidebar_last_synced_index = Some(sidebar.sidebar_index);
+    if sidebar.sidebar_index < sidebar.sidebar_scroll_offset {
+        sidebar.sidebar_scroll_offset = sidebar.sidebar_index;
+    } else if sidebar.sidebar_index >= sidebar.sidebar_scroll_offset + visible_height {
+        sidebar.sidebar_scroll_offset = sidebar
+            .sidebar_index
+            .saturating_sub(visible_height.saturating_sub(1));
+    }
+}
+
 pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     let selection_bg = crate::ui::theme::selection_bg();
     let inner = area.inner(ratatui::layout::Margin {
@@ -622,12 +642,9 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
             let visible_height = (inner.height as usize).saturating_sub(1).max(1);
             let total_items = sidebar_items.len();
 
-            // Auto-scroll to keep selected item in view
-            if app.sidebar.sidebar_index < app.sidebar.sidebar_scroll_offset {
-                app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index;
-            } else if app.sidebar.sidebar_index >= app.sidebar.sidebar_scroll_offset + visible_height {
-                app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height.saturating_sub(1));
-            }
+            // Auto-scroll to keep selected item in view (selection moves only;
+            // wheel scrolling must stick).
+            sync_sidebar_scroll_to_selection(&mut app.sidebar, visible_height);
 
             let max_scroll = total_items.saturating_sub(visible_height);
             app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_scroll_offset.min(max_scroll);
@@ -931,11 +948,9 @@ if app.sidebar.editor_sidebar_cache_key != editor_cache_key {
     let visible_height = inner.height as usize;
     let total_items = sidebar_items.len();
 
-    if app.sidebar.sidebar_index < app.sidebar.sidebar_scroll_offset {
-        app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index;
-    } else if app.sidebar.sidebar_index >= app.sidebar.sidebar_scroll_offset + visible_height {
-        app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_index.saturating_sub(visible_height.saturating_sub(1));
-    }
+    // Auto-scroll to keep selected item in view (selection moves only;
+    // wheel scrolling must stick).
+    sync_sidebar_scroll_to_selection(&mut app.sidebar, visible_height);
 
     let max_scroll = total_items.saturating_sub(visible_height);
     app.sidebar.sidebar_scroll_offset = app.sidebar.sidebar_scroll_offset.min(max_scroll);
