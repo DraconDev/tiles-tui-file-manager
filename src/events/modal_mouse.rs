@@ -586,12 +586,17 @@ mod tests {
 
         // Derive the click point from the same geometry the modal renders with,
         // so a box resize cannot silently move the button out from under the
-        // test. Single source => buttons sit three rows below the top border;
-        // " [L] Link " is at inner_x + 24, 10 cells wide.
+        // test: " [L] Link " starts at inner_x + 24 and is 10 cells wide, and
+        // the button row comes from the shared row-count helper.
         let (w, h) = app.core.terminal_size;
-        let area = crate::ui::centered_modal(60, 9, ratatui::layout::Rect::new(0, 0, w, h));
+        let count = 1usize;
+        let area = crate::ui::centered_modal(
+            60,
+            crate::ui::small_modals::drag_drop_content_rows(count) + 2,
+            ratatui::layout::Rect::new(0, 0, w, h),
+        );
         let column = area.x + 1 + 24 + 1;
-        let row = area.y + 1 + 3;
+        let row = area.y + 1 + crate::ui::small_modals::drag_drop_button_offset(count);
 
         let handled = handle_modal_mouse(
             &MouseEvent {
