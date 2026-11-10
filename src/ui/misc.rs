@@ -445,7 +445,7 @@ mod tests {
         app.settings.settings_index = theme::STYLE_COLOR_START_INDEX;
         app.output.last_action_msg = Some((
             "Invalid color for accent_primary. Use #RRGGBB or R,G,B".to_string(),
-            std::time::SystemTime::now().into(),
+            std::time::Instant::now(),
         ));
         let backend = TestBackend::new(80, 24);
         let mut terminal = ratatui::Terminal::new(backend).unwrap();
