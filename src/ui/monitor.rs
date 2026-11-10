@@ -970,7 +970,7 @@ mod tests {
                 assert_eq!(recorded.len(), captions.len(), "one band per column");
 
                 let mut cursor = area.x;
-                for (i, ((rect, col), caption)) in recorded.iter().zip(captions).enumerate() {
+                for ((rect, col), caption) in recorded.iter().zip(captions) {
                     let painted_x = painted_caption_x(
                         &term,
                         area.y,
@@ -1001,7 +1001,7 @@ mod tests {
                 let area = Rect::new(origin.0, origin.1, width, 18);
                 let mut app = App::new();
                 app.monitor.monitor_subview = MonitorSubview::Applications;
-                app.system_state.applications = Vec::new();
+                app.system_state.processes = Vec::new();
 
                 let backend = TestBackend::new(area.x + width + 2, area.y + area.height);
                 let mut term = Terminal::new(backend).unwrap();
@@ -1011,7 +1011,7 @@ mod tests {
                 let recorded = app.monitor.process_column_bounds.clone();
                 assert_eq!(recorded.len(), captions.len(), "one band per column");
                 let mut cursor = area.x;
-                for (i, ((rect, col), caption)) in recorded.iter().zip(captions).enumerate() {
+                for ((rect, col), caption) in recorded.iter().zip(captions) {
                     let painted_x =
                         painted_caption_x(&term, area.y, cursor, area.x + width, caption)
                             .unwrap_or_else(|| panic!("{caption} not painted at width {width}"));
