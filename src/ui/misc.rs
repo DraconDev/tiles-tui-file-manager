@@ -21,7 +21,7 @@ use dracon_terminal_engine::utils::format_time;
 use dracon_terminal_engine::widgets::HotkeyHint;
 
 pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(64, 9, f.area());
+    let area = crate::ui::centered_modal(64, 9, f.area());
     f.render_widget(Clear, area);
 
     // The modal edits a custom-color row, so the label and the value both come
@@ -91,7 +91,7 @@ pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(56, 12, f.area());
+    let area = crate::ui::centered_modal(56, 13, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Reset All Settings ")

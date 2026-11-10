@@ -21,7 +21,7 @@ use dracon_terminal_engine::utils::{format_size, format_time, format_permissions
 use dracon_terminal_engine::widgets::HotkeyHint;
 
 pub fn draw_import_servers_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(60, 20, f.area());
+    let area = crate::ui::centered_modal(60, 13, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .borders(Borders::ALL)
@@ -81,7 +81,7 @@ port = 22"#;
 }
 
 pub fn draw_command_palette(f: &mut Frame, app: &mut App) {
-    let area = centered_rect(60, 40, f.area());
+    let area = crate::ui::centered_modal(60, 14, f.area());
     f.render_widget(Clear, area);
     let inner = Block::default()
         .borders(Borders::ALL)
@@ -126,7 +126,7 @@ pub fn draw_command_palette(f: &mut Frame, app: &mut App) {
 }
 
 pub fn draw_rename_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(40, 10, f.area());
+    let area = crate::ui::centered_modal(40, 4, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Rename ")
@@ -173,7 +173,7 @@ pub fn draw_rename_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_new_folder_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(40, 10, f.area());
+    let area = crate::ui::centered_modal(40, 4, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" New Folder ")
@@ -186,7 +186,7 @@ pub fn draw_new_folder_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_new_file_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(40, 10, f.area());
+    let area = crate::ui::centered_modal(40, 4, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" New File ")
@@ -199,7 +199,7 @@ pub fn draw_new_file_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(60, 20, f.area());
+    let area = crate::ui::centered_modal(60, 15, f.area());
     f.render_widget(Clear, area);
 
     let block = Block::default()
@@ -274,7 +274,9 @@ pub fn draw_delete_modal(f: &mut Frame, app: &App) {
     // At least 36 columns wide so [ YES ](+5..14) and [ NO ](+25..33) fit
     // inside the borders; 40% is narrower than that below ~90 columns.
     let percent_x = 40u16.max(((36u32 * 100) / f.area().width.max(1) as u32) as u16);
-    let area = centered_rect(percent_x, 10, f.area());
+    // Width stays proportional (it has a computed minimum); height is a real
+    // row count, so it must not be a percentage.
+    let area = crate::ui::centered_modal(f.area().width * percent_x / 100, 7, f.area());
     f.render_widget(Clear, area);
 
     let (title, message) = match &app.core.mode {
