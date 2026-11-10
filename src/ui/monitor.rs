@@ -785,11 +785,13 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         &mut app.monitor.process_table_state,
     );
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::app::{ProcessColumn, MonitorSubview};
+    use crate::app::{MonitorSubview, ProcessColumn};
+    use ratatui::backend::TestBackend;
+    use ratatui::widgets::{Cell, Row, Table};
+    use ratatui::Terminal;
 
     fn process_constraints() -> [Constraint; 6] {
         [
@@ -802,134 +804,284 @@ mod tests {
         ]
     }
 
-    /// The header hit boxes must line up with the columns the table actually
-    /// renders. They used spacing 2 while the table used 1, so each box drifted
-    /// right of its column — five cells by the last one at 120 columns.
-    #[test]
-    fn process_header_boxes_match_the_rendered_table_columns() {
-        use ratatui::layout::{Constraint, Direction, Layout};
-
-        for width in [60u16, 80, 120, 200] {
-            let area = Rect::new(0, 0, width, 10);
-            let header = header_rects_for(area, &process_constraints(), PROCESS_COLUMN_SPACING);
-
-            // Re-derive the table's own column rects the way ratatui does:
-            // same constraints, same spacing, over the same table area.
-            let table_cols = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(process_constraints().to_vec())
-                .spacing(PROCESS_COLUMN_SPACING)
-                .split(area);
-
-            assert_eq!(header.len(), table_cols.len(), "one hit box per column");
-            for (i, (h, t)) in header.iter().zip(table_cols.iter()).enumerate() {
-                assert_eq!(h.x, t.x, "column {i} at width {width}: header x");
-                assert_eq!(h.width, t.width, "column {i} at width {width}: header width");
-            }
-            assert_eq!(
-                header.last().unwrap().x + header.last().unwrap().width,
-                table_cols.last().unwrap().x + table_cols.last().unwrap().width,
-                "the last column must end where the table ends (width {width})"
-            );
-        }
-    }
-
-    /// Same invariant for the applications table, which renders with spacing 2.
-    #[test]
-    fn application_header_boxes_match_the_rendered_table_columns() {
-        use ratatui::layout::{Direction, Layout};
-
-        let constraints = [
+    fn application_constraints() -> [Constraint; 5] {
+        [
             Constraint::Min(35),
             Constraint::Length(10),
             Constraint::Length(15),
             Constraint::Length(10),
             Constraint::Length(15),
-        ];
-        for width in [80u16, 120] {
-            let area = Rect::new(0, 0, width, 10);
-            let header = header_rects_for(area, &constraints, APPLICATION_COLUMN_SPACING);
-            let table_cols = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(constraints.to_vec())
-                .spacing(APPLICATION_COLUMN_SPACING)
-                .split(area);
-            for (i, (h, t)) in header.iter().zip(table_cols.iter()).enumerate() {
-                assert_eq!((h.x, h.width), (t.x, t.width), "column {i} at width {width}");
+        ]
+    }
+
+    /// Concatenate the glyphs painted on one buffer row, so a caption can be
+    /// located at the x where the table actually drew it.
+    fn painted_row(term: &Terminal<TestBackend>, y: u16, x0: u16, x1: u16) -> String {
+        let buf = term.backend().buffer();
+        (x0..x1)
+            .map(|x| buf[(x, y)].symbol().to_string())
+            .collect()
+    }
+
+    /// x at which `caption` is painted on row `y`, searching from `from`.
+    fn painted_caption_x(
+        term: &Terminal<TestBackend>,
+        y: u16,
+        from: u16,
+        to: u16,
+        caption: &str,
+    ) -> Option<u16> {
+        painted_row(term, y, from, to)
+            .find(caption)
+            .map(|i| from + i as u16)
+    }
+
+    /// Painted x of every column's header caption, read out of a REAL ratatui
+    /// `Table` render of the same area/constraints/spacing. Each column carries a
+    /// distinct single-glyph header instead of its caption so the probe does not
+    /// depend on caption length, but the column solve is the one the table
+    /// itself performs — no `Layout` re-derivation participates.
+    ///
+    /// `None` means the column solved to zero width and painted nothing.
+    fn table_painted_column_xs(
+        area: Rect,
+        constraints: &[Constraint],
+        spacing: u16,
+    ) -> Vec<Option<u16>> {
+        let markers: Vec<String> = (0..constraints.len())
+            .map(|i| ((b'a' + i as u8) as char).to_string())
+            .collect();
+        let header = Row::new(markers.iter().cloned().map(Cell::from).collect::<Vec<_>>())
+            .height(1)
+            .bottom_margin(1);
+        // Same widget shape the monitor views use: header row, no highlight
+        // symbol, spacing supplied by the caller.
+        let table = Table::new(Vec::<Row>::new(), constraints.to_vec())
+            .header(header)
+            .column_spacing(spacing);
+        let backend = TestBackend::new(area.x + area.width + 2, area.y + area.height + 2);
+        let mut term = Terminal::new(backend).unwrap();
+        term.draw(|f| f.render_widget(table, area)).unwrap();
+
+        let mut cursor = 0u16;
+        markers
+            .iter()
+            .map(|m| {
+                let found = painted_caption_x(&term, area.y, area.x + cursor, area.x + area.width, m);
+                if let Some(x) = found {
+                    cursor = x - area.x + 1;
+                }
+                found
+            })
+            .collect()
+    }
+
+    /// The header hit boxes must start exactly where the table paints that
+    /// column's glyph. They used to be re-derived separately (spacing 2 vs the
+    /// table's 1, then a full-area `Layout` solve instead of ratatui's height-1
+    /// one), so they drifted right of the columns and clicks landed on the wrong
+    /// header — 1-2 cells at the widths audited below.
+    #[test]
+    fn process_header_boxes_match_the_painted_table_columns() {
+        // 80..=84 is the band where the old full-area solve drifted off the
+        // captions; 40 and 260 bound the extremes.
+        for width in 40u16..=260 {
+            for origin in [(0u16, 0u16), (2, 5), (3, 1)] {
+                for height in [1u16, 12, 20] {
+                    let area = Rect::new(origin.0, origin.1, width, height);
+                    let header =
+                        header_rects_for(area, &process_constraints(), PROCESS_COLUMN_SPACING);
+                    let painted =
+                        table_painted_column_xs(area, &process_constraints(), PROCESS_COLUMN_SPACING);
+
+                    assert_eq!(header.len(), painted.len(), "one box per column");
+                    for (i, (rect, painted_x)) in header.iter().zip(painted.iter()).enumerate() {
+                        let Some(px) = painted_x else {
+                            assert_eq!(rect.width, 0, "col {i} painted nothing but has width");
+                            continue;
+                        };
+                        assert_eq!(
+                            rect.x, *px,
+                            "col {i} box x vs painted x at area {area:?}"
+                        );
+                        assert_eq!(rect.y, area.y, "col {i} sits on the header row");
+                        assert_eq!(rect.height, 1, "col {i} is one row");
+                    }
+                }
             }
         }
     }
 
-    /// The header bands that `draw_processes_view` actually records must match
-    /// the columns the table draws — this exercises the renderer's own call
-    /// sites, not just the helper.
+    /// Same invariant for the applications table, which renders with spacing 2.
+    #[test]
+    fn application_header_boxes_match_the_painted_table_columns() {
+        for width in 40u16..=260 {
+            for origin in [(0u16, 0u16), (2, 5)] {
+                for height in [1u16, 20] {
+                    let area = Rect::new(origin.0, origin.1, width, height);
+                    let header = header_rects_for(
+                        area,
+                        &application_constraints(),
+                        APPLICATION_COLUMN_SPACING,
+                    );
+                    let painted = table_painted_column_xs(
+                        area,
+                        &application_constraints(),
+                        APPLICATION_COLUMN_SPACING,
+                    );
+                    assert_eq!(header.len(), painted.len(), "one box per column");
+                    for (i, (rect, painted_x)) in header.iter().zip(painted.iter()).enumerate() {
+                        let Some(px) = painted_x else {
+                            assert_eq!(rect.width, 0, "col {i} painted nothing but has width");
+                            continue;
+                        };
+                        assert_eq!(
+                            rect.x, *px,
+                            "col {i} box x vs painted x at area {area:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
+
+    /// `draw_processes_view` records its bands from `header_rects_for`; those
+    /// bands must sit on the captions that the table in the same render paints.
+    /// This drives the renderer's own call site through a `TestBackend`, so it
+    /// fails if the helper and the table ever solve their columns differently.
     #[test]
     fn rendered_process_header_bands_line_up_with_the_table_columns() {
-        use ratatui::layout::{Constraint, Direction, Layout};
-        use ratatui::backend::TestBackend;
+        let captions = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"];
+        // Table-area widths 80..=84 are the ones the audited defect hit; the
+        // rest bound the sweep.
+        for width in [40u16, 60, 76, 78, 79, 80, 81, 82, 83, 84, 85, 100, 120, 200, 260] {
+            for origin in [(0u16, 0u16), (2, 5)] {
+                let area = Rect::new(origin.0, origin.1, width, 20);
+                let mut app = App::new();
+                app.monitor.monitor_subview = MonitorSubview::Processes;
+                app.system_state.processes = Vec::new();
 
-        let constraints = process_constraints();
-        for width in [80u16, 120, 200] {
-            let mut app = App::new();
-            app.monitor.monitor_subview = MonitorSubview::Processes;
-            app.system_state.processes = Vec::new();
-            let area = Rect::new(0, 0, width, 20);
-            let backend = TestBackend::new(width, 20);
-            let mut terminal = ratatui::Terminal::new(backend).unwrap();
-            terminal
-                .draw(|f| draw_processes_view(f, area, &mut app))
-                .unwrap();
+                let backend = TestBackend::new(area.x + width + 2, area.y + area.height);
+                let mut term = Terminal::new(backend).unwrap();
+                term.draw(|f| draw_processes_view(f, area, &mut app))
+                    .unwrap();
 
-            let recorded = app.monitor.process_column_bounds.clone();
-            assert_eq!(recorded.len(), constraints.len(), "one band per column");
+                let recorded = app.monitor.process_column_bounds.clone();
+                assert_eq!(recorded.len(), captions.len(), "one band per column");
 
-            // The table solves its columns over its own full area.
-            let table_cols = Layout::default()
-                .direction(Direction::Horizontal)
-                .constraints(constraints.to_vec())
-                .spacing(PROCESS_COLUMN_SPACING)
-                .split(area);
-            for (i, ((rect, _), t)) in recorded.iter().zip(table_cols.iter()).enumerate() {
-                assert_eq!(rect.x, t.x, "band {i} x at width {width}");
-                assert_eq!(rect.width, t.width, "band {i} width at width {width}");
-                assert_eq!(rect.y, area.y, "band {i} sits on the header row");
-                assert_eq!(rect.height, 1, "band {i} is one row");
+                let mut cursor = area.x;
+                for (i, ((rect, col), caption)) in recorded.iter().zip(captions).enumerate() {
+                    let painted_x = painted_caption_x(
+                        &term,
+                        area.y,
+                        cursor,
+                        area.x + width,
+                        caption,
+                    )
+                    .unwrap_or_else(|| panic!("{caption} not painted at width {width}"));
+                    cursor = painted_x;
+                    assert_eq!(
+                        rect.x, painted_x,
+                        "{caption:?} ({col:?}) band x vs painted caption at width {width}, \
+                         origin {origin:?}"
+                    );
+                    assert_eq!(rect.y, area.y, "{caption:?} band sits on the header row");
+                    assert_eq!(rect.height, 1, "{caption:?} band is one row");
+                }
             }
         }
     }
 
-    /// Clicking the leftmost cell of each drawn header must select that column,
-    /// which is the user-visible consequence of the drift.
+    /// Same check for the applications view, whose captions and spacing differ.
     #[test]
-    fn a_click_on_each_drawn_header_maps_to_its_own_column() {
-        let area = Rect::new(0, 0, 120, 24);
-        let header = header_rects_for(area, &process_constraints(), PROCESS_COLUMN_SPACING);
-        let mut app = App::new();
-        app.monitor.monitor_subview = MonitorSubview::Processes;
-        app.monitor.process_column_bounds = header
-            .iter()
-            .zip([
-                ProcessColumn::Pid,
-                ProcessColumn::Name,
-                ProcessColumn::User,
-                ProcessColumn::Status,
-                ProcessColumn::Cpu,
-                ProcessColumn::Mem,
-            ])
-            .map(|(rect, col)| (Rect::new(rect.x, area.y, rect.width, 1), col))
-            .collect();
+    fn rendered_application_header_bands_line_up_with_the_table_columns() {
+        let captions = ["Application", "CPU", "Memory", "PID", "Status"];
+        for width in [60u16, 80, 82, 100, 120, 200] {
+            for origin in [(0u16, 0u16), (2, 5)] {
+                let area = Rect::new(origin.0, origin.1, width, 18);
+                let mut app = App::new();
+                app.monitor.monitor_subview = MonitorSubview::Applications;
+                app.system_state.applications = Vec::new();
 
-        // For every column, a click inside its own box must resolve to it, and
-        // no other box may claim the point first.
-        for (idx, (rect, col)) in app.monitor.process_column_bounds.clone().iter().enumerate() {
-            let hit = app
-                .monitor
-                .process_column_bounds
-                .iter()
-                .find(|(r, _)| r.contains(ratatui::layout::Position { x: rect.x, y: rect.y }))
-                .map(|(_, c)| *c);
-            assert_eq!(hit, Some(*col), "column {idx} leftmost cell must hit itself");
+                let backend = TestBackend::new(area.x + width + 2, area.y + area.height);
+                let mut term = Terminal::new(backend).unwrap();
+                term.draw(|f| draw_monitor_applications(f, area, &mut app))
+                    .unwrap();
+
+                let recorded = app.monitor.process_column_bounds.clone();
+                assert_eq!(recorded.len(), captions.len(), "one band per column");
+                let mut cursor = area.x;
+                for (i, ((rect, col), caption)) in recorded.iter().zip(captions).enumerate() {
+                    let painted_x =
+                        painted_caption_x(&term, area.y, cursor, area.x + width, caption)
+                            .unwrap_or_else(|| panic!("{caption} not painted at width {width}"));
+                    cursor = painted_x;
+                    assert_eq!(
+                        rect.x, painted_x,
+                        "{caption:?} ({col:?}) band x vs painted caption at width {width}, \
+                         origin {origin:?}"
+                    );
+                }
+            }
         }
     }
 
+    /// Clicking the first glyph of a header the user can see must select THAT
+    /// column. The click points come from the rendered buffer, so this cannot
+    /// pass by re-deriving the same geometry it is checking.
+    #[test]
+    fn a_click_on_each_painted_header_selects_that_column() {
+        let captions = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"];
+        let expected = [
+            ProcessColumn::Pid,
+            ProcessColumn::Name,
+            ProcessColumn::User,
+            ProcessColumn::Status,
+            ProcessColumn::Cpu,
+            ProcessColumn::Mem,
+        ];
+        // Real terminal sizes the audited drift reproduced at (84 and 86 lose
+        // the table's own border columns, hence widths 82 and 84 here) plus
+        // wider references.
+        for (width, height) in [(82u16, 11u16), (84, 17), (80, 18), (120, 24)] {
+            for origin in [(0u16, 0u16), (2, 5)] {
+                let area = Rect::new(origin.0, origin.1, width, height);
+                let mut app = App::new();
+                app.monitor.monitor_subview = MonitorSubview::Processes;
+                app.system_state.processes = Vec::new();
+
+                let backend = TestBackend::new(area.x + width + 2, area.y + height);
+                let mut term = Terminal::new(backend).unwrap();
+                term.draw(|f| draw_processes_view(f, area, &mut app))
+                    .unwrap();
+
+                let bands = app.monitor.process_column_bounds.clone();
+                let mut cursor = area.x;
+                for (i, caption) in captions.iter().enumerate() {
+                    let click_x = painted_caption_x(&term, area.y, cursor, area.x + width, caption)
+                        .unwrap_or_else(|| panic!("{caption} not painted at {area:?}"));
+                    cursor = click_x;
+                    let hit = bands
+                        .iter()
+                        .find(|(r, _)| {
+                            r.contains(ratatui::layout::Position {
+                                x: click_x,
+                                y: area.y,
+                            })
+                        })
+                        .map(|(_, c)| *c);
+                    assert_eq!(
+                        hit,
+                        Some(expected[i]),
+                        "clicking the painted {caption:?} at x={click_x} (area {area:?}) \
+                         must select {expected:?}, got {hit:?} from bands {:?}",
+                        bands
+                            .iter()
+                            .map(|(r, c)| (*c, r.x, r.x + r.width))
+                            .collect::<Vec<_>>()
+                    );
+                }
+            }
+        }
+    }
 }
