@@ -371,15 +371,14 @@ pub fn handle_modal_mouse(
             ref target,
         } => {
             if let MouseEventKind::Down(MouseButton::Left) = me.kind {
-                // centered_rect(60, 20, ...) uses percentages
-                let area_w = w * 60 / 100;
-                let area_h = h * 20 / 100;
-                let area_x = (w.saturating_sub(area_w)) / 2;
-                let area_y = (h.saturating_sub(area_h)) / 2;
+                // Hit-testing must use the same geometry the modal renders
+                // with: a fixed 60x9 cell box (see draw_drag_drop_modal), not
+                // the 60x20 percentages it used to assume.
+                let area = crate::ui::centered_modal(60, 9, ratatui::layout::Rect::new(0, 0, w, h));
 
                 // Block borders take 1 cell each side
-                let inner_x = area_x + 1;
-                let inner_y = area_y + 1;
+                let inner_x = area.x + 1;
+                let inner_y = area.y + 1;
 
                 let button_y_offset = if sources.len() == 1 {
                     3
