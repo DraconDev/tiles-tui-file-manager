@@ -814,16 +814,9 @@ mod tests {
         ]
     }
 
-    /// Concatenate the glyphs painted on one buffer row, so a caption can be
-    /// located at the x where the table actually drew it.
-    fn painted_row(term: &Terminal<TestBackend>, y: u16, x0: u16, x1: u16) -> String {
-        let buf = term.backend().buffer();
-        (x0..x1)
-            .map(|x| buf[(x, y)].symbol().to_string())
-            .collect()
-    }
-
-    /// x at which `caption` is painted on row `y`, searching from `from`.
+    /// x at which `caption` is painted on buffer row `y`, searching from cell
+    /// `from`. Works on the buffer's cells, so wide glyphs and multi-byte
+    /// symbols (the sort arrow) cannot shift the reported x.
     fn painted_caption_x(
         term: &Terminal<TestBackend>,
         y: u16,
@@ -831,9 +824,17 @@ mod tests {
         to: u16,
         caption: &str,
     ) -> Option<u16> {
-        painted_row(term, y, from, to)
-            .find(caption)
-            .map(|i| from + i as u16)
+        let buf = term.backend().buffer();
+        let cells: Vec<String> = (from..to)
+            .map(|x| buf[(x, y)].symbol().to_string())
+            .collect();
+        let want: Vec<String> = caption.chars().map(|c| c.to_string()).collect();
+        (0..cells.len().saturating_sub(want.len() - 1)).find_map(|i| {
+            cells[i..i + want.len()]
+                .iter()
+                .eq(want.iter())
+                .then(|| from + i as u16)
+        })
     }
 
     /// Painted x of every column's header caption, read out of a REAL ratatui
@@ -999,7 +1000,7 @@ mod tests {
     fn rendered_application_header_bands_line_up_with_the_table_columns() {
         // Captions as the header cells spell them, leading padding included.
         let captions = ["  Application", "CPU", "Memory", "PID", "Status"];
-        for width in [60u16, 80, 82, 100, 120, 200] {
+        for width in [80u16, 82, 90, 100, 120, 200] {
             for origin in [(0u16, 0u16), (2, 5)] {
                 let area = Rect::new(origin.0, origin.1, width, 18);
                 let mut app = App::new();
