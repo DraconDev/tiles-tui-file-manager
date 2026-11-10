@@ -162,13 +162,7 @@ pub fn handle_modal_mouse(
                 // renders. It used to assume 64x9 while the renderer drew
                 // 64x10, so clicking the drawn bottom border closed the dialog
                 // and threw away the typed colour.
-                // MUTATED: pre-fix hand-rolled 64x9 hit box.
-                let area = ratatui::layout::Rect {
-                    x: (w.saturating_sub(64)) / 2,
-                    y: (h.saturating_sub(9)) / 2,
-                    width: 64,
-                    height: 9,
-                };
+                let area = crate::ui::style_color_modal_area(w, h);
                 if !click_inside(area, column, row) {
                     app.core.mode = AppMode::Settings;
                     app.core.input.clear();
@@ -178,13 +172,7 @@ pub fn handle_modal_mouse(
         }
         AppMode::ResetSettingsConfirm => {
             if let MouseEventKind::Down(_) = me.kind {
-                // MUTATED: pre-fix hand-rolled 56x12 hit box.
-                let area = ratatui::layout::Rect {
-                    x: (w.saturating_sub(56)) / 2,
-                    y: (h.saturating_sub(12)) / 2,
-                    width: 56,
-                    height: 12,
-                };
+                let area = crate::ui::reset_settings_modal_area(w, h);
                 if !click_inside(area, column, row) {
                     app.core.mode = AppMode::Settings;
                     app.core.input.clear();
