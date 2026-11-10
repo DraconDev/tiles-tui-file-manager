@@ -675,7 +675,6 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let header_rects = process_header_rects(area, &column_constraints);
 
     app.monitor.process_column_bounds.clear();
-    let mut current_col_x = area.x;
     let header_cells = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"]
         .iter()
         .enumerate()
