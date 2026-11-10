@@ -431,3 +431,40 @@ pub fn draw_open_with_modal(f: &mut Frame, app: &mut App, path: &std::path::Path
 
     f.render_widget(List::new(list_items).block(list_block), chunks[2]);
 }
+    #[cfg(test)]
+    mod drag_drop_layout_tests {
+        use super::*;
+
+        /// The box must grow with the item list so the Copy/Move/Link buttons
+        /// stay inside it — a fixed 9-row box lost them at four or more
+        /// sources.
+        #[test]
+        fn content_rows_cover_every_source_count_and_keep_the_buttons_inside() {
+            for count in 1..=10usize {
+                let rows = drag_drop_content_rows(count);
+                let outer = rows + 2; // borders
+                let inner = outer - 2;
+                let button_offset = drag_drop_button_offset(count);
+                assert_eq!(
+                    button_offset, rows - 1,
+                    "buttons must sit on the last content row ({count} sources)"
+                );
+                assert!(
+                    button_offset < inner,
+                    "button row {button_offset} must be inside {inner} inner rows ({count} sources)"
+                );
+            }
+        }
+
+        /// A single source stays compact; more sources add exactly the lines
+        /// the renderer draws (listed items, and the "..." overflow line).
+        #[test]
+        fn content_rows_match_the_lines_the_renderer_builds() {
+            assert_eq!(drag_drop_content_rows(1), 1 + 3, "one item line + To/spacer/buttons");
+            assert_eq!(drag_drop_content_rows(2), 1 + 2 + 3);
+            assert_eq!(drag_drop_content_rows(3), 1 + 3 + 3);
+            assert_eq!(drag_drop_content_rows(4), 1 + 3 + 1 + 3, "overflow line appears above 3");
+            assert_eq!(drag_drop_content_rows(10), 1 + 3 + 1 + 3, "listing is capped at three");
+        }
+    }
+
