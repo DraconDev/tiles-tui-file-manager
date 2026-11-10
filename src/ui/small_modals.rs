@@ -82,15 +82,35 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
     f.render_widget(Paragraph::new(text), inner);
 }
 
+/// Rows the drag-drop choice dialog draws for `source_count` items.
+pub fn drag_drop_content_rows(source_count: usize) -> u16 {
+    let mut rows = if source_count <= 1 {
+        1 // "Item: <name>"
+    } else {
+        1 + std::cmp::min(source_count, 3) as u16 // "Items: N" + listed names
+    };
+    if source_count > 3 {
+        rows += 1; // "  ..." overflow line
+    }
+    rows + 3 // To: line, spacer, button row
+}
+
+/// Row offset (inside the border) of the drag-drop dialog's button row.
+pub fn drag_drop_button_offset(source_count: usize) -> u16 {
+    drag_drop_content_rows(source_count) - 1
+}
+
 pub fn draw_drag_drop_modal(
     f: &mut Frame,
     app: &App,
     sources: &[std::path::PathBuf],
     target: &std::path::Path,
 ) {
-    // Content is a fixed number of rows (item line, To: line, buttons), so the
-    // height is a cell count, not a percentage.
-    let area = crate::ui::centered_modal(60, 9, f.area());
+    // The height follows the number of rows actually drawn (item line, up to
+    // three listed items, an "..." overflow line, the To: line, a spacer and
+    // the button row). It is a cell count, not a percentage.
+    let content_rows = drag_drop_content_rows(sources.len());
+    let area = crate::ui::centered_modal(60, content_rows + 2, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Choice Action ")
@@ -102,17 +122,9 @@ pub fn draw_drag_drop_modal(
 
     let dest_path = target.to_string_lossy();
 
-    // Calculate correct button offset based on content
-    let button_y_offset = if sources.len() == 1 {
-        3
-    } else {
-        let display_count = std::cmp::min(sources.len(), 3);
-        let mut offset = 1 + display_count;
-        if sources.len() > 3 {
-            offset += 1;
-        }
-        offset + 2 // + To: line + spacing line
-    };
+    // Buttons sit on the last content row; the offset is derived from the same
+    // row count the box is sized with.
+    let button_y_offset = drag_drop_button_offset(sources.len());
 
     let (mx, my) = app.core.mouse_pos;
 
