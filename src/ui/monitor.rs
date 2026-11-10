@@ -633,13 +633,10 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
 /// rendered with 1, so every clickable band drifted away from the text it
 /// represented (5 cells by the last column, more once the flexible column
 /// absorbed the extra width).
-///
-/// Derived from the table itself so the two cannot disagree by construction.
-pub const PROCESS_COLUMN_SPACING: u16 = Table::new(Vec::<Row>::new(), []).column_spacing;
+pub const PROCESS_COLUMN_SPACING: u16 = 1;
 
 /// Spacing the applications table renders with; the header hit boxes use it too.
-/// Taken from the table's own default rather than restated by hand.
-pub const APPLICATION_COLUMN_SPACING: u16 = Table::new(Vec::<Row>::new(), []).column_spacing;
+pub const APPLICATION_COLUMN_SPACING: u16 = 2;
 
 /// Header rectangles for a monitor table, laid out exactly like that table's
 /// own columns so a click lands on the column the user sees.
