@@ -956,18 +956,53 @@ mod tests {
         }
     }
 
-    /// `draw_processes_view` records its bands from `header_rects_for`; those
-    /// bands must sit on the captions that the table in the same render paints.
-    /// This drives the renderer's own call site through a `TestBackend`, so it
-    /// fails if the helper and the table ever solve their columns differently.
+    /// Structural invariant of a rendered header row: every band starts on a
+    /// painted glyph, and every gap between two bands is blank. Text-agnostic —
+    /// relabelling a caption passes — but a band that drifted off its column
+    /// cannot: drifting right leaves the caption's first glyph in the gap,
+    /// drifting left leaves a blank where the band claims to start.
+    fn assert_bands_sit_on_painted_columns(
+        term: &Terminal<TestBackend>,
+        area: Rect,
+        bands: &[(Rect, ProcessColumn)],
+    ) {
+        let buf = term.backend().buffer();
+        let is_blank = |x: u16| buf[(x, area.y)].symbol().trim().is_empty();
+        let mut prev_end = area.x;
+        for (rect, col) in bands {
+            if rect.width == 0 {
+                continue;
+            }
+            assert!(
+                !is_blank(rect.x),
+                "{col:?} band starts at x={} on a blank cell (area {area:?}, bands {:?})",
+                rect.x,
+                bands.iter().map(|(r, c)| (*c, r.x, r.x + r.width)).collect::<Vec<_>>()
+            );
+            for x in prev_end..rect.x {
+                assert!(
+                    is_blank(x),
+                    "{col:?} band starts at x={} but its column's caption starts at x={x} \
+                     (area {area:?})",
+                    rect.x
+                );
+            }
+            prev_end = rect.x + rect.width;
+        }
+    }
+
+    /// `draw_processes_view` records its bands from `header_rects_for`; they
+    /// must land on the columns the table in that same render paints. The
+    /// expected x comes from a real `Table` render (`table_painted_column_xs`),
+    /// never from a second `Layout` solve, so this cannot pass by re-deriving
+    /// the geometry it is checking.
     #[test]
     fn rendered_process_header_bands_line_up_with_the_table_columns() {
-        let captions = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"];
-        // Table-area widths 80..=84 are the ones the audited defect hit; the
-        // rest bound the sweep.
-        // Widths below 76 clip captions (the solver shrinks every column), so
-        // the painted-caption check starts where all six are legible.
-        for width in [76u16, 78, 79, 80, 81, 82, 83, 84, 85, 86, 88, 100, 120, 200, 260] {
+        // Widths below ~76 clip captions; 76..=90 is the band the audited
+        // drift hit, the rest bound the sweep.
+        let mut widths: Vec<u16> = vec![76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 88];
+        widths.extend([100, 120, 200, 260]);
+        for width in widths {
             for origin in [(0u16, 0u16), (2, 5)] {
                 let area = Rect::new(origin.0, origin.1, width, 20);
                 let mut app = App::new();
@@ -980,27 +1015,24 @@ mod tests {
                     .unwrap();
 
                 let recorded = app.monitor.process_column_bounds.clone();
-                assert_eq!(recorded.len(), captions.len(), "one band per column");
-
-                let mut cursor = area.x;
-                for ((rect, col), caption) in recorded.iter().zip(captions) {
-                    let painted_x = painted_caption_x(
-                        &term,
-                        area.y,
-                        cursor,
-                        area.x + width,
-                        caption,
-                    )
-                    .unwrap_or_else(|| panic!("{caption} not painted at width {width}"));
-                    cursor = painted_x;
-                    assert_eq!(
-                        rect.x, painted_x,
-                        "{caption:?} ({col:?}) band x vs painted caption at width {width}, \
-                         origin {origin:?}"
-                    );
-                    assert_eq!(rect.y, area.y, "{caption:?} band sits on the header row");
-                    assert_eq!(rect.height, 1, "{caption:?} band is one row");
+                assert_eq!(recorded.len(), process_constraints().len(), "one band per column");
+                for (rect, _) in &recorded {
+                    assert_eq!(rect.y, area.y, "band sits on the header row");
+                    assert_eq!(rect.height, 1, "band is one row");
                 }
+
+                let painted =
+                    table_painted_column_xs(area, &process_constraints(), PROCESS_COLUMN_SPACING);
+                for (i, ((rect, col), painted_x)) in recorded.iter().zip(painted.iter()).enumerate()
+                {
+                    if let Some(px) = painted_x {
+                        assert_eq!(
+                            rect.x, *px,
+                            "col {i} ({col:?}) band x vs the x the table painted at {area:?}"
+                        );
+                    }
+                }
+                assert_bands_sit_on_painted_columns(&term, area, &recorded);
             }
         }
     }
@@ -1008,9 +1040,7 @@ mod tests {
     /// Same check for the applications view, whose captions and spacing differ.
     #[test]
     fn rendered_application_header_bands_line_up_with_the_table_columns() {
-        // Captions as the header cells spell them, leading padding included.
-        let captions = ["  Application", "CPU", "Memory", "PID", "Status"];
-        for width in [80u16, 82, 90, 100, 120, 200] {
+        for width in [80u16, 82, 84, 86, 90, 100, 120, 200] {
             for origin in [(0u16, 0u16), (2, 5)] {
                 let area = Rect::new(origin.0, origin.1, width, 18);
                 let mut app = App::new();
@@ -1023,29 +1053,36 @@ mod tests {
                     .unwrap();
 
                 let recorded = app.monitor.process_column_bounds.clone();
-                assert_eq!(recorded.len(), captions.len(), "one band per column");
-                let mut cursor = area.x;
-                for ((rect, col), caption) in recorded.iter().zip(captions) {
-                    let painted_x =
-                        painted_caption_x(&term, area.y, cursor, area.x + width, caption)
-                            .unwrap_or_else(|| panic!("{caption} not painted at width {width}"));
-                    cursor = painted_x;
-                    assert_eq!(
-                        rect.x, painted_x,
-                        "{caption:?} ({col:?}) band x vs painted caption at width {width}, \
-                         origin {origin:?}"
-                    );
+                assert_eq!(
+                    recorded.len(),
+                    application_constraints().len(),
+                    "one band per column"
+                );
+                let painted = table_painted_column_xs(
+                    area,
+                    &application_constraints(),
+                    APPLICATION_COLUMN_SPACING,
+                );
+                for (i, ((rect, col), painted_x)) in recorded.iter().zip(painted.iter()).enumerate()
+                {
+                    if let Some(px) = painted_x {
+                        assert_eq!(
+                            rect.x, *px,
+                            "col {i} ({col:?}) band x vs the x the table painted at {area:?}"
+                        );
+                    }
                 }
+                assert_bands_sit_on_painted_columns(&term, area, &recorded);
             }
         }
     }
 
     /// Clicking the first glyph of a header the user can see must select THAT
-    /// column. The click points come from the rendered buffer, so this cannot
-    /// pass by re-deriving the same geometry it is checking.
+    /// column. The click points are the x positions a real `Table` painted the
+    /// columns at, so the check cannot pass by agreeing with the bands it is
+    /// validating.
     #[test]
     fn a_click_on_each_painted_header_selects_that_column() {
-        let captions = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"];
         let expected = [
             ProcessColumn::Pid,
             ProcessColumn::Name,
@@ -1054,32 +1091,30 @@ mod tests {
             ProcessColumn::Cpu,
             ProcessColumn::Mem,
         ];
-        // Real terminal sizes the audited drift reproduced at (84 and 86 lose
-        // the table's own border columns, hence widths 82 and 84 here) plus
-        // wider references.
-        for (width, height) in [(82u16, 11u16), (84, 17), (80, 18), (120, 24)] {
+        // 80..=84 are the table widths the audited drift reproduced at (terminal
+        // 84 and 86 lose the page's border columns), plus wider references.
+        for width in [80u16, 81, 82, 83, 84, 90, 120] {
             for origin in [(0u16, 0u16), (2, 5)] {
-                let area = Rect::new(origin.0, origin.1, width, height);
+                let area = Rect::new(origin.0, origin.1, width, 16);
                 let mut app = App::new();
                 app.monitor.monitor_subview = MonitorSubview::Processes;
                 app.system_state.processes = Vec::new();
 
-                let backend = TestBackend::new(area.x + width + 2, area.y + height);
+                let backend = TestBackend::new(area.x + width + 2, area.y + area.height);
                 let mut term = Terminal::new(backend).unwrap();
                 term.draw(|f| draw_processes_view(f, area, &mut app))
                     .unwrap();
 
                 let bands = app.monitor.process_column_bounds.clone();
-                let mut cursor = area.x;
-                for (i, caption) in captions.iter().enumerate() {
-                    let click_x = painted_caption_x(&term, area.y, cursor, area.x + width, caption)
-                        .unwrap_or_else(|| panic!("{caption} not painted at {area:?}"));
-                    cursor = click_x;
+                let painted =
+                    table_painted_column_xs(area, &process_constraints(), PROCESS_COLUMN_SPACING);
+                for (i, painted_x) in painted.iter().enumerate() {
+                    let Some(click_x) = painted_x else { continue };
                     let hit = bands
                         .iter()
                         .find(|(r, _)| {
                             r.contains(ratatui::layout::Position {
-                                x: click_x,
+                                x: *click_x,
                                 y: area.y,
                             })
                         })
@@ -1087,8 +1122,9 @@ mod tests {
                     assert_eq!(
                         hit,
                         Some(expected[i]),
-                        "clicking the painted {caption:?} at x={click_x} (area {area:?}) \
-                         must select {expected:?}, got {hit:?} from bands {:?}",
+                        "clicking column {i} at the x the table painted it (x={click_x}, \
+                         area {area:?}) must select {:?}, got {hit:?} from bands {:?}",
+                        expected[i],
                         bands
                             .iter()
                             .map(|(r, c)| (*c, r.x, r.x + r.width))
