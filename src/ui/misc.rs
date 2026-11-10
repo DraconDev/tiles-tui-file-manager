@@ -20,7 +20,7 @@ use dracon_terminal_engine::utils::format_time;
 use dracon_terminal_engine::widgets::HotkeyHint;
 
 pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
-    let area = crate::ui::centered_modal(64, 10, f.area());
+    let area = dracon_terminal_engine::layout::centered_rect(64, 10, f.area());
     f.render_widget(Clear, area);
 
     // The modal edits a custom-color row, so the label and the value both come
