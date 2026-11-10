@@ -830,11 +830,17 @@ if app.sidebar.editor_sidebar_cache_key != editor_cache_key {
     let mut current_y = inner.y;
 
 #[allow(clippy::explicit_counter_loop)]
-for (path, depth, is_dir) in tree_items.iter().cloned() {
+    let tree_filter = active_tree_filter(app);
+    for (path, depth, is_dir) in tree_items.iter().cloned() {
         let name = path
             .file_name()
             .map(|n| n.to_string_lossy().to_string())
             .unwrap_or("?".to_string());
+        // Filter while rendering, like the Files view: the cached tree holds
+        // every entry, so the filter can change without a stale tree.
+        if !name_matches_filter(&name, &tree_filter) {
+            continue;
+        }
         let current_idx = sidebar_items.len();
         let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
         let is_hovered_drop =
