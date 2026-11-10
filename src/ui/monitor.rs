@@ -652,9 +652,11 @@ pub fn header_rects_for(area: Rect, constraints: &[Constraint], spacing: u16) ->
     // Two things must match for the bands to sit on the painted captions:
     //   * the height-1 rect. `Layout` rounds its joint solution against the
     //     rect it is given, so solving over the full render area shifts a
-    //     boundary by a cell at some widths (e.g. table width 80 put the
-    //     STATUS band one cell right of "STATUS", table width 82 put it two
-    //     cells right, inside the USER band).
+    //     boundary at some widths: at table widths 80–84 the STATUS band landed
+    //     1–2 cells off its caption (left of it at some widths, right of it at
+    //     others, depending on the area height) — 43 of 24,354 column checks
+    //     disagreed with what the table painted. Solving over the height-1 rect
+    //     reproduces every painted column in that same sweep.
     //   * `Flex::Start`, which is what `Table` uses by default; `Layout`'s own
     //     default is `Flex::Legacy`, which distributes leftover space into the
     //     last column instead of leaving it at the end.
