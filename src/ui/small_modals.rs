@@ -29,6 +29,8 @@ pub fn draw_signal_select_modal(f: &mut Frame, _app: &App, pid: u32, name: &str,
         (18, "SIGCONT"),
         (19, "SIGSTOP"),
     ];
+    // Scrollable list dialogs size themselves relative to the frame; the
+    // arguments here are percentages, not cells.
     let area = centered_rect(50, 60, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
@@ -200,6 +202,7 @@ pub fn draw_drag_drop_modal(
 }
 
 pub fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
+    // Percentages, not cells: the hotkey list scrolls, so it follows the frame.
     let area = centered_rect(70, 80, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
@@ -324,7 +327,8 @@ pub fn draw_hotkeys_modal(f: &mut Frame, _area: Rect) {
 }
 
 pub fn draw_open_with_modal(f: &mut Frame, app: &mut App, path: &std::path::Path) {
-    let area = centered_rect(60, 60, f.area()); // Increased height
+    // Percentages: the suggestions list scrolls with the frame.
+    let area = centered_rect(60, 60, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Open With... ")

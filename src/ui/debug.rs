@@ -166,6 +166,7 @@ pub fn draw_remote_settings(f: &mut Frame, area: Rect, app: &App) {
 }
 
 pub fn draw_add_remote_modal(f: &mut Frame, app: &App) {
+    // Percentages: the form is tall and scroll-free only on large frames.
     let area = centered_rect(60, 50, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
