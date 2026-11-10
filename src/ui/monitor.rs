@@ -643,15 +643,19 @@ pub const APPLICATION_COLUMN_SPACING: u16 = 2;
 ///
 /// `spacing` must be the same value the table is rendered with.
 pub fn header_rects_for(area: Rect, constraints: &[Constraint], spacing: u16) -> Vec<Rect> {
-    // `Layout::spacing` already reserves the gaps itself, exactly as the
-    // table's own column layout does — subtracting them here too narrowed the
-    // header bands and pushed every box left of its column.
+    // The table derives its column rects from its own full render area, and
+    // ratatui's solver rounds joint solutions — so the height of the area can
+    // shift a column boundary by a cell. Solve over the SAME area the table
+    // uses, then clip each band to the header row; `Layout::spacing` already
+    // reserves the gaps, exactly as the table does.
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraints.to_vec())
         .spacing(spacing)
-        .split(Rect::new(area.x, area.y, area.width, 1))
-        .to_vec()
+        .split(area)
+        .iter()
+        .map(|r| Rect::new(r.x, area.y, r.width, 1))
+        .collect()
 }
 
 pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
