@@ -1205,6 +1205,75 @@ mod tests {
         let _ = std::fs::remove_dir_all(&home);
     }
 
+    /// The same invariant for the project/editor sidebar tree: its cache is
+    /// keyed by the tree root and the expanded folders, so the filter must be
+    /// applied while rendering there too.
+    #[test]
+    fn project_sidebar_tree_follows_the_search_filter() {
+        // Global theme style is shared across tests: serialize.
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+
+        let root = tree_fixture("filter");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        for dir in ["dir-alpha", "dir-beta"] {
+            std::fs::create_dir_all(root.join(dir)).unwrap();
+        }
+
+        let mut app = crate::app::App::new();
+        app.panes[0]
+            .current_state_mut()
+            .expect("focused pane")
+            .nav
+            .current_path = root.clone();
+        app.sidebar.sidebar_focus = true;
+        app.sidebar.show_sidebar = true;
+
+        let render = |app: &mut crate::app::App| {
+            let backend = TestBackend::new(40, 12);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal
+                .draw(|f| draw_project_sidebar(f, f.area(), app))
+                .unwrap();
+            let buffer = terminal.backend().buffer().clone();
+            let mut text = String::new();
+            for cell in buffer.content.iter() {
+                text.push_str(cell.symbol());
+            }
+            text
+        };
+        let set_filter = |app: &mut crate::app::App, filter: &str| {
+            app.panes[0]
+                .current_state_mut()
+                .expect("focused pane")
+                .nav
+                .search_filter = filter.to_string();
+        };
+
+        set_filter(&mut app, "alpha");
+        let text = render(&mut app);
+        assert!(text.contains("dir-alpha"), "alpha must show: {text}");
+        assert!(!text.contains("dir-beta"), "beta must not show: {text}");
+
+        set_filter(&mut app, "beta");
+        let text = render(&mut app);
+        assert!(
+            text.contains("dir-beta"),
+            "beta must show after the filter changed: {text}"
+        );
+        assert!(
+            !text.contains("dir-alpha"),
+            "alpha must be gone after the filter changed: {text}"
+        );
+
+        set_filter(&mut app, "");
+        let text = render(&mut app);
+        assert!(text.contains("dir-alpha"), "alpha must be back: {text}");
+        assert!(text.contains("dir-beta"), "beta must be back: {text}");
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
     fn tree_fixture(tag: &str) -> PathBuf {
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
