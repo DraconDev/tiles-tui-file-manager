@@ -286,6 +286,12 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         .map(|n| n.to_string_lossy().to_string())
                         .unwrap_or("?".to_string());
 
+                    // The FOLDERS tree lists directories only; files live in
+                    // the file panes (and in the project/editor sidebar tree).
+                    if !is_dir {
+                        continue;
+                    }
+
                     if !matches_filter(&name) {
                         continue;
                     }
