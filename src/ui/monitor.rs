@@ -1081,6 +1081,35 @@ mod tests {
         }
     }
 
+    /// The full page path: `draw_monitor_page` carves the content area, so the
+    /// bands must still line up when the geometry comes from a real terminal
+    /// size rather than a hand-picked area. These are the sizes the reported
+    /// click drift reproduced at.
+    #[test]
+    fn full_page_process_header_bands_sit_on_their_columns() {
+        for (tw, th) in [(84u16, 24u16), (85, 24), (86, 18), (87, 20), (88, 24), (120, 24)] {
+            let mut app = App::new();
+            app.monitor.monitor_subview = MonitorSubview::Processes;
+            app.system_state.processes = Vec::new();
+
+            let backend = TestBackend::new(tw, th);
+            let mut term = Terminal::new(backend).unwrap();
+            term.draw(|f| draw_monitor_page(f, Rect::new(0, 0, tw, th), &mut app))
+                .unwrap();
+
+            let recorded = app.monitor.process_column_bounds.clone();
+            assert_eq!(recorded.len(), process_constraints().len(), "one band per column");
+            let area = Rect::new(
+                recorded[0].0.x,
+                recorded[0].0.y,
+                recorded.last().unwrap().0.x + recorded.last().unwrap().0.width
+                    - recorded[0].0.x,
+                1,
+            );
+            assert_bands_sit_on_painted_columns(&term, area, &recorded);
+        }
+    }
+
     /// Clicking the first glyph of a header the user can see must select THAT
     /// column. The click points are the x positions a real `Table` painted the
     /// columns at, so the check cannot pass by agreeing with the bands it is
