@@ -1613,40 +1613,6 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
     }
 
-    /// TEMPORARY PROBE — reproduces the live render against the real HOME.
-    /// To be removed after diagnosis.
-    #[test]
-    fn probe_live_home_render() {
-        let _guard = style_lock();
-        let mut app = crate::app::App::new();
-        app.core.current_view = crate::state::CurrentView::Files;
-        app.sidebar.show_sidebar = true;
-        app.sidebar.sidebar_folders = true;
-        app.sidebar.sidebar_favorites = true;
-        app.sidebar.sidebar_recent = true;
-        app.sidebar.sidebar_storage = true;
-        app.sidebar.sidebar_remotes = true;
-        app.sidebar.sidebar_index = 0;
-        app.sidebar.sidebar_scroll_offset = 0;
-        let backend = TestBackend::new(120, 40);
-        let mut terminal = ratatui::Terminal::new(backend).unwrap();
-        terminal
-            .draw(|f| draw_sidebar(f, f.area(), &mut app))
-            .unwrap();
-        let buffer = terminal.backend().buffer().clone();
-        let w = buffer.area.width as usize;
-        let cells: Vec<String> =
-            buffer.content.iter().map(|c| c.symbol().to_string()).collect();
-        for (i, row) in cells.chunks(w).enumerate() {
-            let line: String = row.join("");
-            println!("{i:02}: {}", line.trim_end());
-        }
-        println!("--- bounds: {} total", app.sidebar.sidebar_bounds.len());
-        for b in app.sidebar.sidebar_bounds.iter().take(70) {
-            println!("idx={} y={} target={:?}", b.index, b.y, b.target);
-        }
-    }
-
     fn tree_fixture(tag: &str) -> PathBuf {
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
