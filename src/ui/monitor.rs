@@ -4,7 +4,7 @@
 //! Extracted from ui/mod.rs (Phase 3).
 
 use ratatui::{
-    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    layout::{Alignment, Constraint, Direction, Flex, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{
@@ -643,18 +643,34 @@ pub const APPLICATION_COLUMN_SPACING: u16 = 2;
 ///
 /// `spacing` must be the same value the table is rendered with.
 pub fn header_rects_for(area: Rect, constraints: &[Constraint], spacing: u16) -> Vec<Rect> {
-    // The table derives its column rects from its own full render area, and
-    // ratatui's solver rounds joint solutions — so the height of the area can
-    // shift a column boundary by a cell. Solve over the SAME area the table
-    // uses, then clip each band to the header row; `Layout::spacing` already
-    // reserves the gaps, exactly as the table does.
+    // Mirror ratatui's `Table::get_columns_widths` exactly (ratatui-0.29
+    // `widgets/table/table.rs`): it solves the columns over a ONE-ROW rect at
+    // the origin — `Rect::new(0, 0, max_width, 1)` — and then paints each cell
+    // at `table_area.x + column_x`. So the render height never reaches the
+    // solver, and neither does `area.y`.
+    //
+    // Two things must match for the bands to sit on the painted captions:
+    //   * the height-1 rect. `Layout` rounds its joint solution against the
+    //     rect it is given, so solving over the full render area shifts a
+    //     boundary by a cell at some widths (e.g. table width 80 put the
+    //     STATUS band one cell right of "STATUS", table width 82 put it two
+    //     cells right, inside the USER band).
+    //   * `Flex::Start`, which is what `Table` uses by default; `Layout`'s own
+    //     default is `Flex::Legacy`, which distributes leftover space into the
+    //     last column instead of leaving it at the end.
+    //
+    // These tables set no `highlight_symbol`, so ratatui reserves no selection
+    // gutter (`selection_width == 0`) and the column solve spans the full
+    // width — the intermediate `[Length(0), Fill(0)]` split collapses to that.
+    let columns_area = Rect::new(0, 0, area.width, 1);
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraints.to_vec())
+        .flex(Flex::Start)
         .spacing(spacing)
-        .split(area)
+        .split(columns_area)
         .iter()
-        .map(|r| Rect::new(r.x, area.y, r.width, 1))
+        .map(|r| Rect::new(area.x.saturating_add(r.x), area.y, r.width, 1))
         .collect()
 }
 
