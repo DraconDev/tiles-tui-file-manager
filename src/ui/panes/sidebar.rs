@@ -1631,7 +1631,7 @@ mod tests {
         let backend = TestBackend::new(120, 40);
         let mut terminal = ratatui::Terminal::new(backend).unwrap();
         terminal
-            .draw(|f| draw_sidebar(f, f.area(), app))
+            .draw(|f| draw_sidebar(f, f.area(), &mut app))
             .unwrap();
         let buffer = terminal.backend().buffer().clone();
         let w = buffer.area.width as usize;
