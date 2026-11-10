@@ -74,6 +74,20 @@ pub fn centered_modal(width: u16, height: u16, area: Rect) -> Rect {
     }
 }
 
+/// Row height of the delete confirmation dialog (borders + message + buttons).
+pub const DELETE_MODAL_HEIGHT: u16 = 7;
+
+/// Width percent of the delete dialog; it also enforces a 36-cell minimum.
+pub fn delete_modal_width_percent(area_width: u16) -> u16 {
+    40u16.max(((36u32 * 100) / area_width.max(1) as u32) as u16)
+}
+
+/// The delete dialog's rectangle for a frame of `w` by `h` cells.
+pub fn delete_modal_area(w: u16, h: u16) -> Rect {
+    let area = Rect::new(0, 0, w, h);
+    centered_modal(w * delete_modal_width_percent(w) / 100, DELETE_MODAL_HEIGHT, area)
+}
+
 /// Render the entire TUI frame.
 ///
 /// Dispatches to sub-modules based on the current view and mode:

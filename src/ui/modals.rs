@@ -272,10 +272,10 @@ pub fn draw_save_as_modal(f: &mut Frame, app: &App) {
 pub fn draw_delete_modal(f: &mut Frame, app: &App) {
     // At least 36 columns wide so [ YES ](+5..14) and [ NO ](+25..33) fit
     // inside the borders; 40% is narrower than that below ~90 columns.
-    let percent_x = 40u16.max(((36u32 * 100) / f.area().width.max(1) as u32) as u16);
-    // Width stays proportional (it has a computed minimum); height is a real
-    // row count, so it must not be a percentage.
-    let area = crate::ui::centered_modal(f.area().width * percent_x / 100, 7, f.area());
+    // Width stays proportional (it has a computed 36-cell minimum); the height
+    // is a real row count, so it must not be a percentage. Both halves come
+    // from the shared helper so the click hit-testing matches this box.
+    let area = crate::ui::delete_modal_area(f.area().width, f.area().height);
     f.render_widget(Clear, area);
 
     let (title, message) = match &app.core.mode {

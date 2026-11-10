@@ -314,14 +314,12 @@ pub fn handle_modal_mouse(
         }
         AppMode::Delete(_) | AppMode::DeleteFile(_) => {
             if let MouseEventKind::Down(MouseButton::Left) = me.kind {
-                let area_w = 40;
-                let area_h = 10;
-                let area_x = (w.saturating_sub(area_w)) / 2;
-                let area_y = (h.saturating_sub(area_h)) / 2;
+                // Shares draw_delete_modal's geometry exactly.
+                let area = crate::ui::delete_modal_area(w, h);
 
-                let inner_x = area_x + 1;
-                let inner_y = area_y + 1;
-                let inner_h = area_h - 2;
+                let inner_x = area.x + 1;
+                let inner_y = area.y + 1;
+                let inner_h = area.height.saturating_sub(2);
                 let button_y = inner_y + inner_h.saturating_sub(2);
 
                 let is_hit = |bx: u16, len: u16| {
