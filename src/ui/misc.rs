@@ -144,15 +144,8 @@ pub fn draw_reset_settings_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_highlight_modal(f: &mut Frame, _app: &App) {
-    // Clamp to frame: a hard-coded 34x5 overflowed small terminals.
-    let mw = 34u16.min(f.area().width);
-    let mh = 5u16.min(f.area().height);
-    let area = Rect::new(
-        (f.area().width.saturating_sub(mw)) / 2,
-        (f.area().height.saturating_sub(mh)) / 2,
-        mw,
-        mh,
-    );
+    // Shared with the click hit-test; clamps itself to small frames.
+    let area = crate::ui::highlight_modal_area(f.area().width, f.area().height);
 
     f.render_widget(Clear, area);
     let block = Block::default()

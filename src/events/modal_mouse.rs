@@ -61,17 +61,11 @@ pub fn handle_modal_mouse(
     match app.core.mode.clone() {
         AppMode::Highlight => {
             if let MouseEventKind::Down(_) = me.kind {
-                let area_w = 34;
-                let area_h = 5;
-                let area_x = (w.saturating_sub(area_w)) / 2;
-                let area_y = (h.saturating_sub(area_h)) / 2;
-                if column >= area_x
-                    && column < area_x + area_w
-                    && row >= area_y
-                    && row < area_y + area_h
-                {
-                    let rel_x = column.saturating_sub(area_x + 3);
-                    if row >= area_y + 2 && row <= area_y + 3 {
+                // Same box the picker renders; it clamps on small frames.
+                let area = crate::ui::highlight_modal_area(w, h);
+                if click_inside(area, column, row) {
+                    let rel_x = column.saturating_sub(area.x + 3);
+                    if row >= area.y + 2 && row <= area.y + 3 {
                         let colors = [1, 2, 3, 4, 5, 6, 0];
                         if let Some(&color_code) = colors.get((rel_x / 4) as usize) {
                             let color = if color_code == 0 {

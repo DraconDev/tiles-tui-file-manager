@@ -74,6 +74,14 @@ pub fn centered_modal(width: u16, height: u16, area: Rect) -> Rect {
     }
 }
 
+/// Cell size of the highlight-colour picker (see `draw_highlight_modal`).
+pub const HIGHLIGHT_MODAL_SIZE: (u16, u16) = (34, 5);
+
+/// The highlight picker's rectangle for a frame of `w` by `h` cells.
+pub fn highlight_modal_area(w: u16, h: u16) -> Rect {
+    centered_modal(HIGHLIGHT_MODAL_SIZE.0, HIGHLIGHT_MODAL_SIZE.1, Rect::new(0, 0, w, h))
+}
+
 /// Cell size of the style-color editor dialog (see `draw_style_color_modal`).
 pub const STYLE_COLOR_MODAL_SIZE: (u16, u16) = (64, 10);
 
