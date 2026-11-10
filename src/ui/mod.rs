@@ -433,3 +433,66 @@ pub fn draw(f: &mut Frame, app: &mut App) {
     draw_marquee_rect(f, app);
 }
 
+#[cfg(test)]
+mod modal_geometry_tests {
+    use super::*;
+    use ratatui::layout::Rect;
+
+    /// Every fixed-size dialog gets the size it asks for, centered — the
+    /// engine's `centered_rect` treats its arguments as percentages, which
+    /// shrank these boxes to a couple of rows and pushed their content
+    /// outside the border.
+    #[test]
+    fn centered_modal_returns_the_requested_cell_size_at_the_center() {
+        let frame = Rect::new(0, 0, 80, 24);
+        let area = centered_modal(64, 10, frame);
+        assert_eq!(area.width, 64, "width must be a cell count");
+        assert_eq!(area.height, 10, "height must be a cell count");
+        assert_eq!(area.x, 8, "(80 - 64) / 2");
+        assert_eq!(area.y, 7, "(24 - 10) / 2");
+    }
+
+    /// Oversized requests are clamped to the frame instead of drawing outside.
+    #[test]
+    fn centered_modal_clamps_to_the_frame() {
+        let frame = Rect::new(0, 0, 40, 10);
+        let area = centered_modal(64, 16, frame);
+        assert_eq!(area.width, 40);
+        assert_eq!(area.height, 10);
+        assert_eq!(area.x, 0);
+        assert_eq!(area.y, 0);
+    }
+
+    /// The comparison that failed before the fix: for the same frame, the
+    /// percent-based helper produced a box far too small for a dialog that
+    /// declares its size in cells.
+    #[test]
+    fn centered_modal_is_stable_across_frame_sizes_unlike_percentages() {
+        for (w, h) in [(80u16, 24u16), (120, 40), (200, 60)] {
+            let area = centered_modal(64, 10, Rect::new(0, 0, w, h));
+            assert_eq!(area.width, 64, "width is frame-independent");
+            assert_eq!(area.height, 10, "height is frame-independent");
+            let percent = dracon_terminal_engine::layout::centered_rect(64, 10, Rect::new(0, 0, w, h));
+            assert!(
+                area.height > percent.height || area.height == 10,
+                "the fixed size must not shrink with the frame"
+            );
+        }
+    }
+
+    /// The delete dialog's render box and its click hit-test box must agree.
+    #[test]
+    fn delete_modal_area_is_wide_enough_for_its_buttons() {
+        for w in [40u16, 80, 90, 120, 200] {
+            let area = delete_modal_area(w, 24);
+            assert!(
+                area.width >= 36,
+                "width {} at frame width {w} must leave room for both buttons",
+                area.width
+            );
+            assert_eq!(area.height, DELETE_MODAL_HEIGHT);
+            assert!(area.width <= w, "never wider than the frame");
+        }
+    }
+}
+
