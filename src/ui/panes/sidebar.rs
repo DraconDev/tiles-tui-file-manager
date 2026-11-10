@@ -124,127 +124,6 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             let show_storage = app.sidebar.sidebar_storage;
             let show_remotes = app.sidebar.sidebar_remotes;
 
-            // === FOLDERS Section (Tree) ===
-            if show_folders {
-                let folder_header_idx = sidebar_items.len();
-                let folders_icon = Icon::Folder.get(app.core.icon_mode);
-                let mut line_style = Style::default().fg(theme::muted());
-                let mut folders_style = Style::default()
-                    .fg(crate::ui::theme::accent_primary())
-                    .add_modifier(Modifier::BOLD);
-                if app.sidebar.sidebar_index == folder_header_idx {
-                    line_style = line_style.fg(crate::ui::theme::border_active());
-                    folders_style = folders_style
-                        .fg(crate::ui::theme::border_active())
-                        .add_modifier(Modifier::UNDERLINED);
-                }
-                let label = format!("{} FOLDERS", folders_icon);
-                let row_w = area.width.saturating_sub(2) as usize;
-                sidebar_items.push(ListItem::new(section_header_line(
-                    &label,
-                    row_w,
-                    line_style,
-                    folders_style,
-                )));
-                app.sidebar.sidebar_bounds.push(SidebarBounds {
-                    y: current_y,
-                    index: folder_header_idx,
-                    target: SidebarTarget::Header("FOLDERS".to_string()),
-                    ..Default::default()
-                });
-                current_y += 1;
-
-                // Collect and render folder tree
-                // Tree is always rooted at home (Dolphin-style) regardless of current pane path
-                let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
-
-                // Compute cache key: hash of the tree root and the expanded
-                // folders. The tree's CONTENT depends only on those two, so
-                // the key must too — the search filter is applied while
-                // rendering and must never invalidate the cache.
-                // Note: sidebar always hides dotfiles, so show_hidden is not part of the key
-                let cache_key = {
-                    use std::collections::hash_map::DefaultHasher;
-                    use std::hash::{Hash, Hasher};
-                    let mut hasher = DefaultHasher::new();
-                    base_path.hash(&mut hasher);
-                    let mut paths: Vec<_> = app.sidebar.tree_expanded_folders.iter().collect();
-                    paths.sort();
-                    for path in paths {
-                        path.hash(&mut hasher);
-                    }
-                    hasher.finish()
-                };
-
-if app.sidebar.sidebar_tree_cache_key != cache_key {
-            let mut items = Vec::new();
-            collect_tree_items(&base_path, 0, app, &mut items);
-            app.sidebar.sidebar_tree_cache = Some(items);
-            app.sidebar.sidebar_tree_cache_key = cache_key;
-        }
-        let tree_items = app.sidebar.sidebar_tree_cache.as_deref().unwrap_or(&[]);
-
-        for (path, depth, is_dir) in tree_items.iter().cloned() {
-                    let name = path
-                        .file_name()
-                        .map(|n| n.to_string_lossy().to_string())
-                        .unwrap_or("?".to_string());
-
-                    if !matches_filter(&name) {
-                        continue;
-                    }
-
-                    let current_idx = sidebar_items.len();
-                    let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
-
-                    let style = if is_selected {
-                        Style::default()
-                            .bg(selection_bg)
-                            .fg(theme::selection_fg())
-                            .add_modifier(Modifier::BOLD)
-                    } else {
-                        Style::default().fg(theme::fg())
-                    };
-
-                    let marker = if is_dir {
-                        if app.sidebar.tree_expanded_folders.contains(&path) {
-                            "▾ "
-                        } else {
-                            "▸ "
-                        }
-                    } else {
-                        "  "
-                    };
-
-                    let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.core.icon_mode);
-                    let icon = if !is_dir && matches!(
-                        path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
-                        "package.json" | "package-lock.json"
-                    ) {
-                        Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), false, crate::icons::IconMode::Unicode)
-                    } else {
-                        icon
-                    };
-                    let indent_str = "  ".repeat(depth as usize);
-                    let marker_w = if is_dir { 2 } else { 0 };
-                    let icon_w = icon.width();
-                    let arrow_end_x = inner.x + 1 + (depth * 2) + marker_w as u16 + icon_w as u16;
-                    let line = Line::from(vec![
-                        Span::raw(format!("{}{}", indent_str, marker)),
-                        Span::raw(icon.to_string()),
-                        Span::raw(name),
-                    ]);
-                    sidebar_items.push(ListItem::new(line).style(style));
-                    app.sidebar.sidebar_bounds.push(SidebarBounds {
-                        y: current_y,
-                        index: current_idx,
-                        target: SidebarTarget::Project(path.clone()),
-                        arrow_end_x,
-                    });
-                    current_y += 1;
-                }
-            }
-
             // === FAVORITES Section Header ===
             if show_favorites {
                 sidebar_items.push(ListItem::new(""));
@@ -336,6 +215,133 @@ if app.sidebar.sidebar_tree_cache_key != cache_key {
                         index: current_idx,
                         target: SidebarTarget::Favorite(path.clone()),
                         ..Default::default()
+                    });
+                    current_y += 1;
+                }
+            }
+
+            // === FOLDERS Section (Tree) ===
+            if show_folders {
+                let folder_header_idx = sidebar_items.len();
+                let folders_icon = Icon::Folder.get(app.core.icon_mode);
+                let mut line_style = Style::default().fg(theme::muted());
+                let mut folders_style = Style::default()
+                    .fg(crate::ui::theme::accent_primary())
+                    .add_modifier(Modifier::BOLD);
+                if app.sidebar.sidebar_index == folder_header_idx {
+                    line_style = line_style.fg(crate::ui::theme::border_active());
+                    folders_style = folders_style
+                        .fg(crate::ui::theme::border_active())
+                        .add_modifier(Modifier::UNDERLINED);
+                }
+                let label = format!("{} FOLDERS", folders_icon);
+                let row_w = area.width.saturating_sub(2) as usize;
+                sidebar_items.push(ListItem::new(section_header_line(
+                    &label,
+                    row_w,
+                    line_style,
+                    folders_style,
+                )));
+                app.sidebar.sidebar_bounds.push(SidebarBounds {
+                    y: current_y,
+                    index: folder_header_idx,
+                    target: SidebarTarget::Header("FOLDERS".to_string()),
+                    ..Default::default()
+                });
+                current_y += 1;
+
+                // Collect and render folder tree
+                // Tree is always rooted at home (Dolphin-style) regardless of current pane path
+                let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
+
+                // Compute cache key: hash of the tree root and the expanded
+                // folders. The tree's CONTENT depends only on those two, so
+                // the key must too — the search filter is applied while
+                // rendering and must never invalidate the cache.
+                // Note: sidebar always hides dotfiles, so show_hidden is not part of the key
+                let cache_key = {
+                    use std::collections::hash_map::DefaultHasher;
+                    use std::hash::{Hash, Hasher};
+                    let mut hasher = DefaultHasher::new();
+                    base_path.hash(&mut hasher);
+                    let mut paths: Vec<_> = app.sidebar.tree_expanded_folders.iter().collect();
+                    paths.sort();
+                    for path in paths {
+                        path.hash(&mut hasher);
+                    }
+                    hasher.finish()
+                };
+
+if app.sidebar.sidebar_tree_cache_key != cache_key {
+            let mut items = Vec::new();
+            collect_tree_items(&base_path, 0, app, &mut items);
+            app.sidebar.sidebar_tree_cache = Some(items);
+            app.sidebar.sidebar_tree_cache_key = cache_key;
+        }
+        let tree_items = app.sidebar.sidebar_tree_cache.as_deref().unwrap_or(&[]);
+
+        for (path, depth, is_dir) in tree_items.iter().cloned() {
+                    let name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().to_string())
+                        .unwrap_or("?".to_string());
+
+                    // The FOLDERS tree lists directories only; files live in
+                    // the file panes (and in the project/editor sidebar tree).
+                    if !is_dir {
+                        continue;
+                    }
+
+                    if !matches_filter(&name) {
+                        continue;
+                    }
+
+                    let current_idx = sidebar_items.len();
+                    let is_selected = app.sidebar.sidebar_focus && app.sidebar.sidebar_index == current_idx;
+
+                    let style = if is_selected {
+                        Style::default()
+                            .bg(selection_bg)
+                            .fg(theme::selection_fg())
+                            .add_modifier(Modifier::BOLD)
+                    } else {
+                        Style::default().fg(theme::fg())
+                    };
+
+                    let marker = if is_dir {
+                        if app.sidebar.tree_expanded_folders.contains(&path) {
+                            "▾ "
+                        } else {
+                            "▸ "
+                        }
+                    } else {
+                        "  "
+                    };
+
+                    let icon = Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), is_dir, app.core.icon_mode);
+                    let icon = if !is_dir && matches!(
+                        path.file_name().and_then(|n| n.to_str()).unwrap_or(""),
+                        "package.json" | "package-lock.json"
+                    ) {
+                        Icon::get_for_path(&path, crate::modules::files::get_file_category(&path), false, crate::icons::IconMode::Unicode)
+                    } else {
+                        icon
+                    };
+                    let indent_str = "  ".repeat(depth as usize);
+                    let marker_w = if is_dir { 2 } else { 0 };
+                    let icon_w = icon.width();
+                    let arrow_end_x = inner.x + 1 + (depth * 2) + marker_w as u16 + icon_w as u16;
+                    let line = Line::from(vec![
+                        Span::raw(format!("{}{}", indent_str, marker)),
+                        Span::raw(icon.to_string()),
+                        Span::raw(name),
+                    ]);
+                    sidebar_items.push(ListItem::new(line).style(style));
+                    app.sidebar.sidebar_bounds.push(SidebarBounds {
+                        y: current_y,
+                        index: current_idx,
+                        target: SidebarTarget::Project(path.clone()),
+                        arrow_end_x,
                     });
                     current_y += 1;
                 }
