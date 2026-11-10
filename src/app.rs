@@ -188,6 +188,8 @@ impl App {
 
                 sidebar_scroll_offset: 0,
 
+                sidebar_last_synced_index: None,
+
                 tree_expanded_folders: HashSet::new(),
 
                 sidebar_tree_cache: None,

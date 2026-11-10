@@ -60,6 +60,10 @@ pub struct SidebarState {
     pub sidebar_width_percent: u16,
     pub sidebar_bounds: Vec<SidebarBounds>,
     pub sidebar_scroll_offset: usize,
+    /// Selection index the scroll offset was last synced to. The auto-scroll
+    /// that keeps the selection in view only runs when the selection moved —
+    /// otherwise it would undo mouse-wheel scrolling on every frame.
+    pub sidebar_last_synced_index: Option<usize>,
     pub tree_expanded_folders: HashSet<PathBuf>,
     pub sidebar_tree_cache: Option<Vec<(PathBuf, u16, bool)>>,
     pub sidebar_tree_cache_key: u64,
@@ -82,6 +86,7 @@ impl Default for SidebarState {
             sidebar_width_percent: 15,
             sidebar_bounds: Vec::new(),
             sidebar_scroll_offset: 0,
+            sidebar_last_synced_index: None,
             tree_expanded_folders: HashSet::new(),
             sidebar_tree_cache: None,
             sidebar_tree_cache_key: 0,
