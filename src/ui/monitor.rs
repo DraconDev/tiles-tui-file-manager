@@ -892,17 +892,14 @@ mod tests {
         app.monitor.monitor_subview = MonitorSubview::Processes;
         app.monitor.process_column_bounds = header
             .iter()
-            .zip(
-                [
-                    ProcessColumn::Pid,
-                    ProcessColumn::Name,
-                    ProcessColumn::User,
-                    ProcessColumn::Status,
-                    ProcessColumn::Cpu,
-                    ProcessColumn::Mem,
-                ]
-                .into_iter(),
-            )
+            .zip([
+                ProcessColumn::Pid,
+                ProcessColumn::Name,
+                ProcessColumn::User,
+                ProcessColumn::Status,
+                ProcessColumn::Cpu,
+                ProcessColumn::Mem,
+            ])
             .map(|(rect, col)| (Rect::new(rect.x, area.y, rect.width, 1), col))
             .collect();
 
