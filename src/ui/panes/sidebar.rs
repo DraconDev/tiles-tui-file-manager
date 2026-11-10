@@ -1291,6 +1291,170 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
     }
 
+    /// Mouse-wheel scrolling must stick: the auto-scroll that keeps the
+    /// selection in view may only move the offset when the SELECTION moved.
+    /// An unconditional snap-back resets the offset to the selected row on
+    /// every frame, so with the selection parked at the top no wheel tick
+    /// ever moves the viewport — FAVORITES and everything below an
+    /// over-tall FOLDERS tree stay unreachable.
+    #[test]
+    fn files_sidebar_wheel_scroll_sticks_until_selection_moves() {
+        let _guard = style_lock();
+
+        let home = std::env::temp_dir()
+            .join(format!("tiles-sidebar-scroll-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        for i in 0..12 {
+            std::fs::create_dir_all(home.join(format!("dir-{i:02}"))).unwrap();
+        }
+
+        let mut app = crate::app::App::new();
+        // Folders only: deterministic item count.
+        app.core.current_view = crate::state::CurrentView::Files;
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_folders = true;
+        app.sidebar.sidebar_favorites = false;
+        app.sidebar.sidebar_recent = false;
+        app.sidebar.sidebar_storage = false;
+        app.sidebar.sidebar_remotes = false;
+        app.sidebar.sidebar_index = 0;
+        app.sidebar.sidebar_scroll_offset = 0;
+
+        // The tree is rooted at the home directory, so swap it only for the
+        // renders (App::new above already ran against the real one).
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &home);
+
+        // Small frame: fewer visible rows than tree rows.
+        let render = |app: &mut crate::app::App| {
+            let backend = TestBackend::new(40, 10);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal
+                .draw(|f| draw_sidebar(f, f.area(), app))
+                .unwrap();
+        };
+
+        render(&mut app);
+        let max_idx = app
+            .sidebar
+            .sidebar_bounds
+            .iter()
+            .map(|b| b.index)
+            .max()
+            .unwrap_or(0);
+        assert!(
+            max_idx + 1 > 7,
+            "fixture must overflow the viewport: {max_idx}"
+        );
+
+        // Wheel down with the selection parked at the top: the offset sticks.
+        app.sidebar.sidebar_scroll_offset = 2;
+        render(&mut app);
+        assert_eq!(
+            app.sidebar.sidebar_scroll_offset, 2,
+            "wheel scroll must not snap back to the selection"
+        );
+        assert!(
+            app.sidebar
+                .sidebar_bounds
+                .iter()
+                .any(|b| b.index == 0 && b.y == u16::MAX),
+            "first row must be scrolled out of view"
+        );
+
+        // Moving the selection still auto-scrolls it into view.
+        app.sidebar.sidebar_index = max_idx;
+        render(&mut app);
+        assert!(
+            app.sidebar
+                .sidebar_bounds
+                .iter()
+                .any(|b| b.index == max_idx && b.y != u16::MAX),
+            "selected row must be scrolled into view"
+        );
+
+        // Restore the real home before asserting nothing else: the swap is
+        // process-global.
+        match old_home {
+            Some(v) => std::env::set_var("HOME", v),
+            None => std::env::remove_var("HOME"),
+        }
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    /// Same invariant for the project/editor sidebar: wheel scrolling must
+    /// stick, and moving the selection must pull the viewport along.
+    #[test]
+    fn project_sidebar_wheel_scroll_sticks_until_selection_moves() {
+        let _guard = style_lock();
+
+        let root = tree_fixture("scroll");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        for i in 0..12 {
+            std::fs::create_dir_all(root.join(format!("dir-{i:02}"))).unwrap();
+        }
+
+        let mut app = crate::app::App::new();
+        app.panes[0]
+            .current_state_mut()
+            .expect("focused pane")
+            .nav
+            .current_path = root.clone();
+        app.sidebar.sidebar_focus = true;
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_index = 0;
+        app.sidebar.sidebar_scroll_offset = 0;
+
+        let render = |app: &mut crate::app::App| {
+            let backend = TestBackend::new(40, 10);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal
+                .draw(|f| draw_project_sidebar(f, f.area(), app))
+                .unwrap();
+        };
+
+        render(&mut app);
+        let max_idx = app
+            .sidebar
+            .sidebar_bounds
+            .iter()
+            .map(|b| b.index)
+            .max()
+            .unwrap_or(0);
+        assert!(
+            max_idx + 1 > 8,
+            "fixture must overflow the viewport: {max_idx}"
+        );
+
+        app.sidebar.sidebar_scroll_offset = 2;
+        render(&mut app);
+        assert_eq!(
+            app.sidebar.sidebar_scroll_offset, 2,
+            "wheel scroll must not snap back to the selection"
+        );
+        assert!(
+            app.sidebar
+                .sidebar_bounds
+                .iter()
+                .any(|b| b.index == 0 && b.y == u16::MAX),
+            "first row must be scrolled out of view"
+        );
+
+        app.sidebar.sidebar_index = max_idx;
+        render(&mut app);
+        assert!(
+            app.sidebar
+                .sidebar_bounds
+                .iter()
+                .any(|b| b.index == max_idx && b.y != u16::MAX),
+            "selected row must be scrolled into view"
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
     fn tree_fixture(tag: &str) -> PathBuf {
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
