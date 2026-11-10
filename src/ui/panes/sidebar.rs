@@ -1476,6 +1476,143 @@ mod tests {
         let _ = std::fs::remove_dir_all(&root);
     }
 
+    /// FAVORITES renders above FOLDERS: the starred shortcuts come first,
+    /// then the home directory tree.
+    #[test]
+    fn files_sidebar_favorites_render_above_folders() {
+        let _guard = style_lock();
+
+        let home = std::env::temp_dir()
+            .join(format!("tiles-sidebar-order-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(home.join("dir-keep")).unwrap();
+
+        let mut app = crate::app::App::new();
+        app.core.current_view = crate::state::CurrentView::Files;
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_folders = true;
+        app.sidebar.sidebar_favorites = true;
+        app.sidebar.sidebar_recent = false;
+        app.sidebar.sidebar_storage = false;
+        app.sidebar.sidebar_remotes = false;
+
+        // App::new stars the standard home folders, so the FAVORITES
+        // section is non-empty without further setup.
+        assert!(
+            !app.nav.starred.is_empty(),
+            "fixture needs starred entries for the FAVORITES section"
+        );
+
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &home);
+
+        let backend = TestBackend::new(40, 30);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_sidebar(f, f.area(), &mut app))
+            .unwrap();
+
+        match old_home {
+            Some(v) => std::env::set_var("HOME", v),
+            None => std::env::remove_var("HOME"),
+        }
+
+        let order: Vec<&str> = app
+            .sidebar
+            .sidebar_bounds
+            .iter()
+            .filter_map(|b| match &b.target {
+                SidebarTarget::Header(name) => Some(name.as_str()),
+                _ => None,
+            })
+            .collect();
+        let fav_pos = order.iter().position(|h| *h == "FAVORITES");
+        let folders_pos = order.iter().position(|h| *h == "FOLDERS");
+        assert_eq!(
+            fav_pos,
+            Some(0),
+            "FAVORITES must be the first section: {order:?}"
+        );
+        assert!(
+            folders_pos.is_some_and(|p| p > fav_pos.unwrap()),
+            "FOLDERS must render below FAVORITES: {order:?}"
+        );
+
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
+    /// The Files FOLDERS tree lists directories only; plain files stay in
+    /// the file panes. The project/editor sidebar keeps showing both.
+    #[test]
+    fn files_folders_tree_shows_directories_only() {
+        let _guard = style_lock();
+
+        let root = tree_fixture("dirsonly");
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(root.join("dir-keep")).unwrap();
+        std::fs::write(root.join("file-skip.txt"), "x").unwrap();
+
+        let mut app = crate::app::App::new();
+        app.core.current_view = crate::state::CurrentView::Files;
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_folders = true;
+        app.sidebar.sidebar_favorites = false;
+        app.sidebar.sidebar_recent = false;
+        app.sidebar.sidebar_storage = false;
+        app.sidebar.sidebar_remotes = false;
+        app.sidebar.sidebar_tree_cache = None;
+        app.sidebar.sidebar_tree_cache_key = 0;
+        app.sidebar.tree_expanded_folders.clear();
+
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &root);
+
+        let backend = TestBackend::new(40, 20);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_sidebar(f, f.area(), &mut app))
+            .unwrap();
+
+        match old_home {
+            Some(v) => std::env::set_var("HOME", v),
+            None => std::env::remove_var("HOME"),
+        }
+
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(text.contains("dir-keep"), "directory must show: {text}");
+        assert!(
+            !text.contains("file-skip"),
+            "file must not show in FOLDERS: {text}"
+        );
+
+        // The project sidebar still lists files.
+        app.panes[0]
+            .current_state_mut()
+            .expect("focused pane")
+            .nav
+            .current_path = root.clone();
+        let backend = TestBackend::new(40, 20);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal
+            .draw(|f| draw_project_sidebar(f, f.area(), &mut app))
+            .unwrap();
+        let buffer = terminal.backend().buffer().clone();
+        let mut text = String::new();
+        for cell in buffer.content.iter() {
+            text.push_str(cell.symbol());
+        }
+        assert!(
+            text.contains("dir-keep") && text.contains("file-skip"),
+            "project sidebar must keep showing files: {text}"
+        );
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
     fn tree_fixture(tag: &str) -> PathBuf {
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
