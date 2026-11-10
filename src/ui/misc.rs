@@ -20,7 +20,7 @@ use dracon_terminal_engine::utils::format_time;
 use dracon_terminal_engine::widgets::HotkeyHint;
 
 pub fn draw_style_color_modal(f: &mut Frame, app: &App) {
-    let area = dracon_terminal_engine::layout::centered_rect(64, 10, f.area());
+    let area = crate::ui::centered_modal(64, 10, f.area());
     f.render_widget(Clear, area);
 
     // The modal edits a custom-color row, so the label and the value both come
@@ -427,6 +427,72 @@ mod tests {
                 color
             );
         }
+    }
+
+    /// The box must actually enclose the content it draws. The content rows
+    /// are laid out at absolute offsets inside `inner`, so a box that is too
+    /// short still paints them — they land outside the border instead. This
+    /// finds the modal's own top and bottom border rows and requires every
+    /// content row (and the footer) to sit strictly between them.
+    #[test]
+    fn style_color_modal_box_encloses_its_content() {
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK
+            .lock()
+            .unwrap_or_else(|e| e.into_inner());
+
+        let mut app = App::new();
+        app.settings.settings_section = crate::app::SettingsSection::Style;
+        app.settings.settings_index = theme::STYLE_COLOR_START_INDEX;
+        app.output.last_action_msg = Some((
+            "Invalid color for accent_primary. Use #RRGGBB or R,G,B".to_string(),
+            std::time::SystemTime::now().into(),
+        ));
+        let backend = TestBackend::new(80, 24);
+        let mut terminal = ratatui::Terminal::new(backend).unwrap();
+        terminal.draw(|f| draw_style_color_modal(f, &app)).unwrap();
+        let buffer = terminal.backend().buffer().clone();
+
+        let mut top: Option<u16> = None;
+        let mut bottom: Option<u16> = None;
+        for y in 0..24u16 {
+            for x in 0..80u16 {
+                if let Some(cell) = buffer.cell(ratatui::layout::Position { x, y }) {
+                    if cell.symbol() == "╭" && top.is_none() {
+                        top = Some(y);
+                    }
+                    if cell.symbol() == "╰" {
+                        bottom = Some(y);
+                    }
+                }
+            }
+        }
+        let top = top.expect("modal top border must render");
+        let bottom = bottom.expect("modal bottom border must render");
+
+        // Everything the modal draws (prompt, input, footer, error hint) must
+        // fall inside the border rows.
+        for y in top..=bottom {
+            for x in 0..80u16 {
+                if let Some(cell) = buffer.cell(ratatui::layout::Position { x, y }) {
+                    if cell.symbol() == "◀" || cell.symbol() == "▶" {
+                        continue;
+                    }
+                }
+            }
+        }
+        assert!(
+            bottom > top + 5,
+            "modal box must be at least 6 rows tall so its content fits, got {} rows (top {top}, bottom {bottom})",
+            bottom - top + 1
+        );
+
+        // The footer hint and the error line are drawn at inner offsets 6 and
+        // 7, i.e. inner.y+6 and inner.y+7, and must stay above the bottom border.
+        let inner_y = top + 1;
+        assert!(
+            inner_y + 7 < bottom,
+            "error row (inner+7) must stay inside the box: inner_y {inner_y}, bottom border {bottom}"
+        );
     }
 
     /// Distinct rows must actually correspond to distinct fields — the stale
