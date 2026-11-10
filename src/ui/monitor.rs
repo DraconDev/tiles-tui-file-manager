@@ -704,31 +704,30 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     .iter()
     .enumerate()
     .map(|(i, (h, col))| {
-        let col = *col;
-            {
-            // Use the layout's own rects; accumulating widths by hand drifts
-            // away from them as soon as flex or spacing change.
-            let rect = header_rects[i];
-            app.monitor.process_column_bounds
-                .push((Rect::new(rect.x, area.y, rect.width, 1), col));
-            let mut text = h.to_string();
-            if app.monitor.process_sort_col == col {
-                text.push_str(if app.monitor.process_sort_asc {
-                    " 󰁝"
+        // Use the layout's own rects; accumulating widths by hand drifts away
+        // from them as soon as flex or spacing change.
+        let rect = header_rects[i];
+        app.monitor
+            .process_column_bounds
+            .push((Rect::new(rect.x, area.y, rect.width, 1), *col));
+        let mut text = h.to_string();
+        if app.monitor.process_sort_col == *col {
+            text.push_str(if app.monitor.process_sort_asc {
+                " 󰁝"
+            } else {
+                " 󰁅"
+            });
+        }
+        Cell::from(text).style(
+            Style::default()
+                .fg(if app.monitor.process_sort_col == *col {
+                    theme::accent_primary()
                 } else {
-                    " 󰁅"
-                });
-            }
-            Cell::from(text).style(
-                Style::default()
-                    .fg(if app.monitor.process_sort_col == col {
-                        theme::accent_primary()
-                    } else {
-                        theme::monitor_label()
-                    })
-                    .add_modifier(Modifier::BOLD),
-            )
-        });
+                    theme::monitor_label()
+                })
+                .add_modifier(Modifier::BOLD),
+        )
+    });
     let rows = procs.iter().enumerate().map(|(i, p)| {
         let mut is_selected = false;
         let mut style = if i % 2 == 0 {
