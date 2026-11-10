@@ -2,6 +2,56 @@
 
 All notable changes to this project will be documented in this file.
 
+## [14.118.0] - Sidebar overhaul + audit-fix rollup
+
+### Changed
+- **FAVORITES now renders above FOLDERS** — the starred shortcuts sit at the
+  top of the Files sidebar instead of below the home directory tree.
+- **FOLDERS tree lists directories only** — plain files stay in the file
+  panes (the project/editor sidebar keeps showing both).
+
+### Fixed
+- **Sidebar tree ignored the search filter** — the cached tree no longer
+  depends on the filter; filtering happens at render time in both the Files
+  and the project/editor sidebars, so changing the filter can never show a
+  stale tree again.
+- **Sidebar wheel scrolling snapped back** — the keep-selection-visible
+  auto-scroll ran on every frame and undid each wheel tick; it now only moves
+  the viewport when the selection itself moves.
+- **Monitor header clicks drifted up to 5 cells** — the Processes header hit
+  bands are derived with the table's own layout math, so clicks land on the
+  painted column at every width.
+- **Clipboard copy hung on read-to-EOF helpers** — stdin is closed before
+  waiting on the helper.
+- **Remote pane showed local files** — the remote listing result was
+  discarded; create/delete/rename/trash/symlink/copy/save also resolved the
+  session from the focused pane instead of the target pane.
+- **NewFile truncated an existing file of the same name** without asking.
+- **Empty Enter confirmed delete**, bypassing the prompt; the mouse delete
+  modal always permanently deleted, ignoring trash mode.
+- **Remote shell injection via unescaped search root** in global search.
+- **Editor header tabs drew on top of each other** and the tab highlight was
+  off by one; tab layout could underflow its width budget.
+- **Unreadable selection/monitor text in several presets** — contrast fixes
+  for `selection_fg` and the monitor label.
+- **Applications monitor view couldn't scroll** — it is stateful now.
+- **Style/reset/import/bulk modals rendered outside their box**; the context
+  menu, delete buttons, and highlight modal overflowed small frames.
+- **State saves silently dropped or corrupted** — the debounce no-op, the
+  poisoned dedup cache after a failed save, and the non-atomic state file
+  write are fixed; SSH config parsing and bookmark dedup hardened.
+- **Rename/new-file/new-folder accepted path traversal** and absolute paths;
+  SSH destination and git patch hashes are validated before use.
+- **Undo of Delete sent Delete again**; split toggle dropped pane-2 tabs.
+- **Ctrl+Shift+T reopen-tab was unreachable**; history navigation panicked
+  on corrupt state.
+- **Panics removed** — UTF-8 drag-ghost truncation, small-terminal height
+  underflows, truncated `/proc/stat` input, direct pane indexing, and
+  out-of-bounds refresh selection.
+- Plus some 60 further audited fixes across refresh guards, event routing,
+  preview loading, footer/progress clamping, settings mouse alignment,
+  theme swatches, help/README drift, and benchmarks.
+
 ## [14.117.0] - Remote session cleanup + scroll past selection + flashing fix
 
 ### Fixed
