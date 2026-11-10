@@ -16,7 +16,6 @@ use std::time::SystemTime;
 
 use crate::app::App;
 use crate::ui::theme as theme;
-use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::format_time;
 use dracon_terminal_engine::widgets::HotkeyHint;
 

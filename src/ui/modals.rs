@@ -16,7 +16,6 @@ use std::time::SystemTime;
 
 use crate::app::{App, AppMode};
 use crate::ui::theme as theme;
-use dracon_terminal_engine::layout::centered_rect;
 use dracon_terminal_engine::utils::{format_size, format_time, format_permissions};
 use dracon_terminal_engine::widgets::HotkeyHint;
 
@@ -258,7 +257,7 @@ pub fn draw_bulk_rename_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_save_as_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(50, 10, f.area());
+    let area = crate::ui::centered_modal(50, 5, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Save As ")
@@ -353,7 +352,7 @@ pub fn draw_delete_modal(f: &mut Frame, app: &App) {
 }
 
 pub fn draw_properties_modal(f: &mut Frame, app: &App) {
-    let area = centered_rect(50, 50, f.area());
+    let area = crate::ui::centered_modal(64, 16, f.area());
     f.render_widget(Clear, area);
 
     let mut text = Vec::new();
