@@ -464,11 +464,20 @@ mod tests {
             target: target.clone(),
         };
 
+        // Derive the click point from the same geometry the modal renders with,
+        // so a box resize cannot silently move the button out from under the
+        // test. Single source => buttons sit three rows below the top border;
+        // " [L] Link " is at inner_x + 24, 10 cells wide.
+        let (w, h) = app.core.terminal_size;
+        let area = crate::ui::centered_modal(60, 9, ratatui::layout::Rect::new(0, 0, w, h));
+        let column = area.x + 1 + 24 + 1;
+        let row = area.y + 1 + 3;
+
         let handled = handle_modal_mouse(
             &MouseEvent {
                 kind: MouseEventKind::Down(MouseButton::Left),
-                column: 46, // Link button region for 100x40 terminal.
-                row: 20,
+                column,
+                row,
                 modifiers: KeyModifiers::empty(),
             },
             &mut app,
