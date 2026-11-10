@@ -1108,6 +1108,89 @@ mod tests {
         );
     }
 
+    /// The folder tree is cached, and the cache key only covered the expanded
+    /// folders while the cached tree itself was built WITH the search filter
+    /// applied. A filter change therefore left the previous filter's tree on
+    /// screen instead of the new one.
+    #[test]
+    fn sidebar_tree_follows_the_search_filter() {
+        // Global theme style is shared across tests: serialize.
+        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+
+        let home = std::env::temp_dir().join(format!("tiles-sidebar-filter-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&home);
+        std::fs::create_dir_all(&home).unwrap();
+        for dir in ["dir-alpha", "dir-beta"] {
+            std::fs::create_dir_all(home.join(dir)).unwrap();
+        }
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &home);
+
+        let mut app = crate::app::App::new();
+        app.sidebar.sidebar_tree_cache = None;
+        app.sidebar.sidebar_tree_cache_key = 0;
+        app.sidebar.tree_expanded_folders.clear();
+        app.core.current_view = crate::state::CurrentView::Files;
+        app.sidebar.show_sidebar = true;
+        app.sidebar.sidebar_folders = true;
+        app.sidebar.sidebar_favorites = false;
+        app.sidebar.sidebar_recent = false;
+        app.sidebar.sidebar_storage = false;
+        app.sidebar.sidebar_remotes = false;
+        app.sidebar.sidebar_focus = true;
+
+        let render = |app: &mut crate::app::App| {
+            let backend = TestBackend::new(40, 12);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal
+                .draw(|f| draw_sidebar(f, f.area(), app))
+                .unwrap();
+            let buffer = terminal.backend().buffer().clone();
+            let mut text = String::new();
+            for cell in buffer.content.iter() {
+                text.push_str(cell.symbol());
+            }
+            text
+        };
+
+        let set_filter = |app: &mut crate::app::App, filter: &str| {
+            app.panes[0]
+                .current_state_mut()
+                .expect("focused pane")
+                .nav
+                .search_filter = filter.to_string();
+        };
+
+        set_filter(&mut app, "alpha");
+        let text = render(&mut app);
+        assert!(text.contains("dir-alpha"), "alpha must show: {text}");
+        assert!(!text.contains("dir-beta"), "beta must not show: {text}");
+
+        // The filter changed: the tree must follow it.
+        set_filter(&mut app, "beta");
+        let text = render(&mut app);
+        assert!(
+            text.contains("dir-beta"),
+            "beta must show after the filter changed: {text}"
+        );
+        assert!(
+            !text.contains("dir-alpha"),
+            "alpha must be gone after the filter changed: {text}"
+        );
+
+        // Clearing the filter must restore the whole tree.
+        set_filter(&mut app, "");
+        let text = render(&mut app);
+        assert!(text.contains("dir-alpha"), "alpha must be back: {text}");
+        assert!(text.contains("dir-beta"), "beta must be back: {text}");
+
+        match old_home {
+            Some(v) => std::env::set_var("HOME", v),
+            None => std::env::remove_var("HOME"),
+        }
+        let _ = std::fs::remove_dir_all(&home);
+    }
+
     fn tree_fixture(tag: &str) -> PathBuf {
         let unique = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
