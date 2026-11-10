@@ -638,6 +638,27 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     );
 }
 
+/// Spacing between process/application columns. The header hit boxes and the
+/// rendered table must use the SAME value: the header used 2 while the table
+/// rendered with 1, so every column's clickable band drifted right of the text
+/// it represented (5 cells by the last column, more once the flexible column
+/// absorbed the extra width).
+pub const PROCESS_COLUMN_SPACING: u16 = 1;
+
+/// Header rectangles for the process table, laid out exactly like the table's
+/// own columns so a click lands on the column the user sees.
+pub fn process_header_rects(area: Rect, constraints: &[Constraint]) -> Vec<Rect> {
+    let num_cols = constraints.len() as u16;
+    let total_spacing = num_cols.saturating_sub(1) * PROCESS_COLUMN_SPACING;
+    let effective_width = area.width.saturating_sub(total_spacing);
+    Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints(constraints.to_vec())
+        .spacing(PROCESS_COLUMN_SPACING)
+        .split(Rect::new(area.x, area.y, effective_width, 1))
+        .to_vec()
+}
+
 pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     let mut procs = app.system_state.processes.clone();
     if app.monitor.process_tree_view {
@@ -651,16 +672,9 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         Constraint::Length(10),
         Constraint::Length(10),
     ];
-    let num_cols = 6;
-    let spacing = 2;
-    let total_spacing = (num_cols - 1) * spacing;
-    let effective_width = area.width.saturating_sub(total_spacing);
+    let header_rects = process_header_rects(area, &column_constraints);
 
     app.monitor.process_column_bounds.clear();
-    let header_rects = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(column_constraints)
-        .split(Rect::new(area.x, area.y, effective_width, 1));
     let mut current_col_x = area.x;
     let header_cells = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"]
         .iter()
@@ -675,10 +689,11 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
                 "MEM%" => ProcessColumn::Mem,
                 _ => ProcessColumn::Pid,
             };
-            let width = header_rects[i].width;
+            // Use the layout's own rects; accumulating widths by hand drifts
+            // away from them as soon as flex or spacing change.
+            let rect = header_rects[i];
             app.monitor.process_column_bounds
-                .push((Rect::new(current_col_x, area.y, width, 1), col));
-            current_col_x += width + spacing;
+                .push((Rect::new(rect.x, area.y, rect.width, 1), col));
             let mut text = h.to_string();
             if app.monitor.process_sort_col == col {
                 text.push_str(if app.monitor.process_sort_asc {
@@ -751,7 +766,7 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_stateful_widget(
         Table::new(rows, column_constraints)
             .header(Row::new(header_cells).height(1).bottom_margin(1))
-            .column_spacing(1),
+            .column_spacing(PROCESS_COLUMN_SPACING),
         area,
         &mut app.monitor.process_table_state,
     );
