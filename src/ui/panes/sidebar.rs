@@ -1032,8 +1032,6 @@ mod tests {
         for dir in ["dir-alpha", "dir-beta", "dir-gamma", "dir-delta"] {
             std::fs::create_dir_all(home.join(dir)).unwrap();
         }
-        let old_home = std::env::var_os("HOME");
-        std::env::set_var("HOME", &home);
 
         let mut app = crate::app::App::new();
         // Fresh tree cache for the fake home.
@@ -1163,6 +1161,11 @@ mod tests {
         app.sidebar.sidebar_storage = false;
         app.sidebar.sidebar_remotes = false;
         app.sidebar.sidebar_focus = true;
+
+        // The tree is rooted at the home directory, so swap it only while
+        // rendering (the App above was built against the real one).
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &home);
 
         let render = |app: &mut crate::app::App| {
             let backend = TestBackend::new(40, 12);
