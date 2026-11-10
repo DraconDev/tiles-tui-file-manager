@@ -449,6 +449,135 @@ mod tests {
         App::new()
     }
 
+    /// Clicking a dialog's own border must not dismiss it: the border is part
+    /// of the drawn box. The outside-click hit area used to be one row shorter
+    /// than the rendered dialog, so the bottom border (and, for reset, the top
+    /// border) closed the dialog and discarded whatever the user had typed.
+    #[test]
+    fn clicking_a_dialog_border_keeps_the_dialog_open() {
+        let (tx, _rx) = mpsc::channel(8);
+
+        for (w, h) in [(80u16, 24u16), (100, 40), (120, 24)] {
+            // --- style colour editor ---
+            let mut app = test_app();
+            app.core.terminal_size = (w, h);
+            app.core.mode = AppMode::StyleColorInput;
+            app.core.input.value = "#123456".to_string();
+            let area = crate::ui::style_color_modal_area(w, h);
+
+            for (label, column, row) in [
+                ("top border", area.x + 2, area.y),
+                ("bottom border", area.x + 2, area.y + area.height - 1),
+                ("left border", area.x, area.y + 3),
+                ("right border", area.x + area.width - 1, area.y + 3),
+            ] {
+                app.core.mode = AppMode::StyleColorInput;
+                app.core.input.value = "#123456".to_string();
+                let handled = handle_modal_mouse(
+                    &MouseEvent {
+                        kind: MouseEventKind::Down(MouseButton::Left),
+                        column,
+                        row,
+                        modifiers: KeyModifiers::empty(),
+                    },
+                    &mut app,
+                    &tx,
+                );
+                assert!(handled, "the dialog must consume the click");
+                assert!(
+                    matches!(app.core.mode, AppMode::StyleColorInput),
+                    "{w}x{h}: a click on the style dialog's {label} must not dismiss it"
+                );
+                assert_eq!(
+                    app.core.input.value, "#123456",
+                    "{w}x{h}: a click on the {label} must not discard typed input"
+                );
+            }
+
+            // --- reset settings confirmation ---
+            let mut app2 = test_app();
+            app2.core.terminal_size = (w, h);
+            app2.core.mode = AppMode::ResetSettingsConfirm;
+            app2.core.input.value = "RESET".to_string();
+            let area2 = crate::ui::reset_settings_modal_area(w, h);
+
+            for (label, column, row) in [
+                ("top border", area2.x + 2, area2.y),
+                ("bottom border", area2.x + 2, area2.y + area2.height - 1),
+            ] {
+                app2.core.mode = AppMode::ResetSettingsConfirm;
+                app2.core.input.value = "RESET".to_string();
+                let handled = handle_modal_mouse(
+                    &MouseEvent {
+                        kind: MouseEventKind::Down(MouseButton::Left),
+                        column,
+                        row,
+                        modifiers: KeyModifiers::empty(),
+                    },
+                    &mut app2,
+                    &tx,
+                );
+                assert!(handled);
+                assert!(
+                    matches!(app2.core.mode, AppMode::ResetSettingsConfirm),
+                    "{w}x{h}: a click on the reset dialog's {label} must not dismiss it"
+                );
+                assert_eq!(
+                    app2.core.input.value, "RESET",
+                    "{w}x{h}: a click on the {label} must not discard typed confirmation"
+                );
+            }
+        }
+    }
+
+    /// A click genuinely outside the drawn box still dismisses, so the modal
+    /// cannot trap the mouse.
+    #[test]
+    fn clicking_outside_a_dialog_still_dismisses_it() {
+        let (tx, _rx) = mpsc::channel(8);
+
+        let mut app = test_app();
+        app.core.terminal_size = (80, 24);
+        app.core.mode = AppMode::StyleColorInput;
+        app.core.input.value = "#123456".to_string();
+        let area = crate::ui::style_color_modal_area(80, 24);
+        let handled = handle_modal_mouse(
+            &MouseEvent {
+                kind: MouseEventKind::Down(MouseButton::Left),
+                column: area.x.saturating_sub(1),
+                row: area.y,
+                modifiers: KeyModifiers::empty(),
+            },
+            &mut app,
+            &tx,
+        );
+        assert!(handled);
+        assert!(
+            matches!(app.core.mode, AppMode::Settings),
+            "a click left of the box must dismiss the dialog"
+        );
+
+        let mut app2 = test_app();
+        app2.core.terminal_size = (80, 24);
+        app2.core.mode = AppMode::ResetSettingsConfirm;
+        let area2 = crate::ui::reset_settings_modal_area(80, 24);
+        let handled = handle_modal_mouse(
+            &MouseEvent {
+                kind: MouseEventKind::Down(MouseButton::Left),
+                column: area2.x + 2,
+                row: area2.y + area2.height,
+                modifiers: KeyModifiers::empty(),
+            },
+            &mut app2,
+            &tx,
+        );
+        assert!(handled);
+        assert!(
+            matches!(app2.core.mode, AppMode::Settings),
+            "a click below the box must dismiss the dialog"
+        );
+    }
+
     #[test]
     fn drag_drop_link_click_emits_symlink_and_closes_modal() {
         let (tx, mut rx) = mpsc::channel(8);
