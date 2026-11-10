@@ -56,6 +56,24 @@ pub use misc::{
     draw_highlight_modal, draw_drag_ghost, draw_marquee_rect,
 };
 
+/// A modal box of an ABSOLUTE size in cells, centered inside `area`.
+///
+/// `dracon_terminal_engine::layout::centered_rect` interprets its arguments as
+/// PERCENTAGES. Passing cell counts there silently shrinks every dialog — 64x9
+/// on an 80x24 frame becomes 52x2, so the box is smaller than the content drawn
+/// at inner offsets and the rows spill outside their border. Fixed-size dialogs
+/// therefore state their size here, in cells, clamped to the frame.
+pub fn centered_modal(width: u16, height: u16, area: Rect) -> Rect {
+    let width = width.min(area.width).max(1);
+    let height = height.min(area.height).max(1);
+    Rect {
+        x: area.x + area.width.saturating_sub(width) / 2,
+        y: area.y + area.height.saturating_sub(height) / 2,
+        width,
+        height,
+    }
+}
+
 /// Render the entire TUI frame.
 ///
 /// Dispatches to sub-modules based on the current view and mode:
