@@ -16,6 +16,35 @@ use crate::icons::Icon;
 use crate::ui::theme as theme;
 use dracon_terminal_engine::utils::truncate_to_width;
 
+/// The search term the sidebar tree is filtered by: the focused pane's
+/// filter, empty while the sidebar does not have focus.
+///
+/// Filtering happens while RENDERING, never while collecting: the tree cache
+/// holds the whole expanded tree, so it cannot go stale when the filter
+/// changes (and a keystroke does not force a re-walk of the directory tree).
+fn active_tree_filter(app: &App) -> String {
+    if !app.sidebar.sidebar_focus {
+        return String::new();
+    }
+    app.panes
+        .get(app.focused_pane_index)
+        .and_then(|pane| pane.current_state())
+        .map(|fs| fs.nav.search_filter.clone())
+        .unwrap_or_default()
+}
+
+/// Whether a tree entry name passes the active filter.
+fn name_matches_filter(name: &str, filter: &str) -> bool {
+    if filter.is_empty() {
+        return true;
+    }
+    if FUZZY_SEARCH {
+        fuzzy_contains(name, filter)
+    } else {
+        name.to_lowercase().contains(&filter.to_lowercase())
+    }
+}
+
 pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     let selection_bg = crate::ui::theme::selection_bg();
     let inner = area.inner(ratatui::layout::Margin {
@@ -109,12 +138,16 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
                 // Tree is always rooted at home (Dolphin-style) regardless of current pane path
                 let base_path = dirs::home_dir().unwrap_or_else(|| PathBuf::from("/"));
 
-                // Compute cache key: hash of expanded folders
+                // Compute cache key: hash of the tree root and the expanded
+                // folders. The tree's CONTENT depends only on those two, so
+                // the key must too — the search filter is applied while
+                // rendering and must never invalidate the cache.
                 // Note: sidebar always hides dotfiles, so show_hidden is not part of the key
                 let cache_key = {
                     use std::collections::hash_map::DefaultHasher;
                     use std::hash::{Hash, Hasher};
                     let mut hasher = DefaultHasher::new();
+                    base_path.hash(&mut hasher);
                     let mut paths: Vec<_> = app.sidebar.tree_expanded_folders.iter().collect();
                     paths.sort();
                     for path in paths {
@@ -761,11 +794,15 @@ pub fn draw_project_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     let inner = block.inner(area);
     f.render_widget(block, area);
 
-    // Compute cache key for editor sidebar
+    // Compute cache key for editor sidebar: the tree root and the expanded
+    // folders. Sorted so the key is canonical instead of depending on the
+    // hash set's iteration order.
     let editor_cache_key: u64 = {
         let mut h = DefaultHasher::new();
         base_path.hash(&mut h);
-        for p in app.sidebar.tree_expanded_folders.iter() {
+        let mut expanded: Vec<_> = app.sidebar.tree_expanded_folders.iter().collect();
+        expanded.sort();
+        for p in expanded {
             p.hash(&mut h);
         }
         h.finish()
@@ -949,26 +986,11 @@ fn collect_tree_items(path: &PathBuf, depth: u16, app: &App, items: &mut Vec<(Pa
             }
 
             // Check if matches search filter (if any)
-            let matches_filter = if let Some(fs) = app.panes
-                .get(app.focused_pane_index)
-                .and_then(|p| p.current_state())
-            {
-                if !fs.nav.search_filter.is_empty() && app.sidebar.sidebar_focus {
-                    if FUZZY_SEARCH {
-                        fuzzy_contains(&name, &fs.nav.search_filter)
-                    } else {
-                        name.to_lowercase().contains(&fs.nav.search_filter.to_lowercase())
-                    }
-                } else {
-                    true
-                }
-            } else {
-                true
-            };
-
-            if matches_filter {
-                items.push((p.clone(), depth, is_dir));
-            }
+            // The tree is cached, so it must NOT depend on the search filter:
+            // filtering happens while rendering, otherwise a filter change
+            // would leave the previously filtered tree in the cache (the
+            // cache key only covers the root and the expanded folders).
+            items.push((p.clone(), depth, is_dir));
 
             if is_dir && app.sidebar.tree_expanded_folders.contains(&p) {
                 collect_tree_items(&p, depth + 1, app, items);
