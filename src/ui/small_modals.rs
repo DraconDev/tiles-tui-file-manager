@@ -129,7 +129,7 @@ pub fn draw_drag_drop_modal(
     let (mx, my) = app.core.mouse_pos;
 
     let is_hover = |bx: u16, len: u16| {
-        mx >= inner.x + bx && mx < inner.x + bx + len && my == inner.y + button_y_offset as u16
+        mx >= inner.x + bx && mx < inner.x + bx + len && my == inner.y + button_y_offset
     };
 
     let copy_style = if is_hover(0, 10) {
