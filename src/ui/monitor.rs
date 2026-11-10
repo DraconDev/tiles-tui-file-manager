@@ -956,11 +956,12 @@ mod tests {
         }
     }
 
-    /// Structural invariant of a rendered header row: every band starts on a
-    /// painted glyph, and every gap between two bands is blank. Text-agnostic —
-    /// relabelling a caption passes — but a band that drifted off its column
-    /// cannot: drifting right leaves the caption's first glyph in the gap,
-    /// drifting left leaves a blank where the band claims to start.
+    /// Structural invariant of a rendered header row: no caption glyph may be
+    /// painted in the blank gap between two bands, and every non-empty band must
+    /// contain glyphs. Text-agnostic (relabelling a caption passes, and leading
+    /// padding cells such as the applications view's "  Application" are
+    /// allowed), but a band that drifted right off its caption leaves that
+    /// caption's first glyph outside every band.
     fn assert_bands_sit_on_painted_columns(
         term: &Terminal<TestBackend>,
         area: Rect,
@@ -973,21 +974,20 @@ mod tests {
             if rect.width == 0 {
                 continue;
             }
-            assert!(
-                !is_blank(rect.x),
-                "{col:?} band starts at x={} on a blank cell (area {area:?}, bands {:?})",
-                rect.x,
-                bands.iter().map(|(r, c)| (*c, r.x, r.x + r.width)).collect::<Vec<_>>()
-            );
             for x in prev_end..rect.x {
                 assert!(
                     is_blank(x),
-                    "{col:?} band starts at x={} but its column's caption starts at x={x} \
-                     (area {area:?})",
-                    rect.x
+                    "{col:?} band starts at x={} but a caption glyph is painted at x={x}, \
+                     outside every band (area {area:?}, bands {:?})",
+                    rect.x,
+                    bands.iter().map(|(r, c)| (*c, r.x, r.x + r.width)).collect::<Vec<_>>()
                 );
             }
-            prev_end = rect.x + rect.width;
+            assert!(
+                (rect.x..rect.x + rect.width).any(|x| !is_blank(x)),
+                "{col:?} band {rect:?} covers no caption glyph (area {area:?})"
+            );
+            prev_end = prev_end.max(rect.x + rect.width);
         }
     }
 
