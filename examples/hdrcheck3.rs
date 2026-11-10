@@ -52,49 +52,7 @@ fn solve_cur(area: Rect, cons: &[Constraint], spacing: u16) -> Vec<(u16, u16)> {
         .split(area).iter().map(|r| (r.x, r.width)).collect()
 }
 
-fn run(name: &str, cons: &[Constraint], spacing: u16, painted_of: impl Fn() -> Vec<Option<u16>>) {
-    let mut checks = 0u32;
-    let mut cur_bad = 0u32;
-    let mut bl_bad = 0u32;
-    let mut bs_bad = 0u32;
-    let mut examples = Vec::new();
-    for w in 20u16..=260 {
-        for (ox, oy) in [(0u16, 0u16), (2, 5), (3, 1)] {
-            for h in [1u16, 2, 10, 17, 24, 40] {
-                let area = Rect::new(ox, oy, w, h);
-                let painted = painted_of();
-                let cur = solve_cur(area, cons, spacing);
-                let bl = solve_b(area, cons, spacing, Flex::Legacy);
-                let bs = solve_b(area, cons, spacing, Flex::Start);
-                let _ = h;
-                for i in 0..cons.len() {
-                    // skip zero-width columns: nothing is painted there
-                    if bs[i].1 == 0 { continue; }
-                    checks += 1;
-                    if painted[i] != Some(cur[i].0) { cur_bad += 1; }
-                    if painted[i] != Some(bl[i].0) { bl_bad += 1; }
-                    if painted[i] != Some(bs[i].0) {
-                        bs_bad += 1;
-                        if examples.len() < 5 {
-                            examples.push(format!("w={w} o=({ox},{oy}) col{i} painted={:?} bStart={:?}", painted[i], bs[i]));
-                        }
-                    }
-                }
-            }
-        }
-    }
-    println!("{name}: spacing={spacing} checks={checks} cur_bad={cur_bad} bLegacy_bad={bl_bad} bStart_bad={bs_bad} {examples:?}");
-    let _ = painted_of;
-}
-
 fn main() {
-    for cons in [procs().to_vec(), apps().to_vec()] {
-        let spacing = 1u16;
-        let c = cons.clone();
-        run("tbl", &cons, spacing, || Vec::new());
-        let _ = c;
-    }
-    // real sweep for each
     for (name, cons, spacing) in [("PROC", procs().to_vec(), 1u16), ("APPS", apps().to_vec(), 2u16)] {
         let mut checks = 0u32;
         let (mut cur_bad, mut bl_bad, mut bs_bad) = (0u32, 0u32, 0u32);
