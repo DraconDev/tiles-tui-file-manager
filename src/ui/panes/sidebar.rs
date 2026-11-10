@@ -1010,10 +1010,19 @@ mod tests {
     use super::*;
     use ratatui::backend::TestBackend;
 
+    /// The global theme style is shared across tests, so they serialize on its
+    /// lock. A failing test must not poison it for the others, hence the
+    /// poison-tolerant acquisition.
+    fn style_lock() -> std::sync::MutexGuard<'static, ()> {
+        crate::ui::theme::STYLE_TEST_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+
     #[test]
     fn files_sidebar_hint_does_not_overwrite_last_visible_row() {
         // Global theme style is shared across tests: serialize.
-        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        let _guard = style_lock();
 
         // Isolated fake home so the folder tree renders a known fixture
         // (dirs::home_dir reads $HOME on Linux). Restored afterwards.
@@ -1040,6 +1049,11 @@ mod tests {
         app.sidebar.sidebar_remotes = false;
         app.sidebar.sidebar_index = 0;
         app.sidebar.sidebar_scroll_offset = 0;
+
+        // The tree is rooted at the home directory, so swap it only for the
+        // render (App::new above already ran against the real one).
+        let old_home = std::env::var_os("HOME");
+        std::env::set_var("HOME", &home);
 
         // 7-row area => 5 inner rows => 4 list rows + 1 reserved hint row.
         let backend = TestBackend::new(30, 7);
@@ -1089,7 +1103,7 @@ mod tests {
     #[test]
     fn favorite_drag_hover_uses_absolute_area_bounds() {
         // Global theme style is shared across tests: serialize.
-        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        let _guard = style_lock();
 
         let mut app = crate::app::App::new();
         app.core.current_view = crate::state::CurrentView::Files;
@@ -1129,7 +1143,7 @@ mod tests {
     #[test]
     fn sidebar_tree_follows_the_search_filter() {
         // Global theme style is shared across tests: serialize.
-        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        let _guard = style_lock();
 
         let home = std::env::temp_dir().join(format!("tiles-sidebar-filter-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&home);
@@ -1137,9 +1151,6 @@ mod tests {
         for dir in ["dir-alpha", "dir-beta"] {
             std::fs::create_dir_all(home.join(dir)).unwrap();
         }
-        let old_home = std::env::var_os("HOME");
-        std::env::set_var("HOME", &home);
-
         let mut app = crate::app::App::new();
         app.sidebar.sidebar_tree_cache = None;
         app.sidebar.sidebar_tree_cache_key = 0;
@@ -1211,7 +1222,7 @@ mod tests {
     #[test]
     fn project_sidebar_tree_follows_the_search_filter() {
         // Global theme style is shared across tests: serialize.
-        let _guard = crate::ui::theme::STYLE_TEST_LOCK.lock().unwrap();
+        let _guard = style_lock();
 
         let root = tree_fixture("filter");
         let _ = std::fs::remove_dir_all(&root);
