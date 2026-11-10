@@ -954,7 +954,9 @@ mod tests {
         let captions = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"];
         // Table-area widths 80..=84 are the ones the audited defect hit; the
         // rest bound the sweep.
-        for width in [40u16, 60, 76, 78, 79, 80, 81, 82, 83, 84, 85, 100, 120, 200, 260] {
+        // Widths below 76 clip captions (the solver shrinks every column), so
+        // the painted-caption check starts where all six are legible.
+        for width in [76u16, 78, 79, 80, 81, 82, 83, 84, 85, 86, 88, 100, 120, 200, 260] {
             for origin in [(0u16, 0u16), (2, 5)] {
                 let area = Rect::new(origin.0, origin.1, width, 20);
                 let mut app = App::new();
@@ -995,7 +997,8 @@ mod tests {
     /// Same check for the applications view, whose captions and spacing differ.
     #[test]
     fn rendered_application_header_bands_line_up_with_the_table_columns() {
-        let captions = ["Application", "CPU", "Memory", "PID", "Status"];
+        // Captions as the header cells spell them, leading padding included.
+        let captions = ["  Application", "CPU", "Memory", "PID", "Status"];
         for width in [60u16, 80, 82, 100, 120, 200] {
             for origin in [(0u16, 0u16), (2, 5)] {
                 let area = Rect::new(origin.0, origin.1, width, 18);
