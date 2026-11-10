@@ -86,7 +86,9 @@ pub fn draw_drag_drop_modal(
     sources: &[std::path::PathBuf],
     target: &std::path::Path,
 ) {
-    let area = centered_rect(60, 20, f.area());
+    // Content is a fixed number of rows (item line, To: line, buttons), so the
+    // height is a cell count, not a percentage.
+    let area = crate::ui::centered_modal(60, 9, f.area());
     f.render_widget(Clear, area);
     let block = Block::default()
         .title(" Choice Action ")
