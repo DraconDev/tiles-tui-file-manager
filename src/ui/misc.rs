@@ -469,17 +469,6 @@ mod tests {
         let top = top.expect("modal top border must render");
         let bottom = bottom.expect("modal bottom border must render");
 
-        // Everything the modal draws (prompt, input, footer, error hint) must
-        // fall inside the border rows.
-        for y in top..=bottom {
-            for x in 0..80u16 {
-                if let Some(cell) = buffer.cell(ratatui::layout::Position { x, y }) {
-                    if cell.symbol() == "◀" || cell.symbol() == "▶" {
-                        continue;
-                    }
-                }
-            }
-        }
         assert!(
             bottom > top + 5,
             "modal box must be at least 6 rows tall so its content fits, got {} rows (top {top}, bottom {bottom})",
