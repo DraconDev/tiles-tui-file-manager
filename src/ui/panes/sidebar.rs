@@ -1209,13 +1209,16 @@ mod tests {
         // Clearing the filter must restore the whole tree.
         set_filter(&mut app, "");
         let text = render(&mut app);
-        assert!(text.contains("dir-alpha"), "alpha must be back: {text}");
-        assert!(text.contains("dir-beta"), "beta must be back: {text}");
 
+        // Restore the real home before asserting: the swap is process-global.
         match old_home {
             Some(v) => std::env::set_var("HOME", v),
             None => std::env::remove_var("HOME"),
         }
+
+        assert!(text.contains("dir-alpha"), "alpha must be back: {text}");
+        assert!(text.contains("dir-beta"), "beta must be back: {text}");
+
         let _ = std::fs::remove_dir_all(&home);
     }
 
