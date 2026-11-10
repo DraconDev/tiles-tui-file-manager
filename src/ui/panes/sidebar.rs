@@ -24,13 +24,8 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
     });
     match app.core.current_view {
         CurrentView::Files => {
-            let (mut sidebar_items, search_filter) = {
-                let items = Vec::new();
-                let filter = app.current_file_state()
-                    .map(|fs| fs.nav.search_filter.clone())
-                    .unwrap_or_default();
-                (items, filter)
-            };
+            let mut sidebar_items = Vec::new();
+            let search_filter = active_tree_filter(app);
             app.sidebar.sidebar_bounds.clear();
             let mut current_y = inner.y;
 
@@ -72,16 +67,7 @@ pub fn draw_sidebar(f: &mut Frame, area: Rect, app: &mut App) {
             }
 
             // Helper to check if name matches search filter
-            let matches_filter = |name: &str| {
-                if !app.sidebar.sidebar_focus || search_filter.is_empty() {
-                    return true;
-                }
-                if FUZZY_SEARCH {
-                    fuzzy_contains(name, &search_filter)
-                } else {
-                    name.to_lowercase().contains(&search_filter.to_lowercase())
-                }
-            };
+            let matches_filter = |name: &str| name_matches_filter(name, &search_filter);
 
             let show_folders = app.sidebar.sidebar_folders;
             let show_favorites = app.sidebar.sidebar_favorites;
