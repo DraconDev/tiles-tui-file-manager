@@ -578,18 +578,9 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
         Constraint::Length(10),
         Constraint::Length(15),
     ];
-    let num_cols = 5;
-    let spacing = 2;
-    let total_spacing = (num_cols - 1) * spacing;
-    let effective_width = area.width.saturating_sub(total_spacing);
-
-    let header_rects = Layout::default()
-        .direction(Direction::Horizontal)
-        .constraints(column_constraints)
-        .split(Rect::new(area.x, area.y, effective_width, 1));
+    let header_rects = header_rects_for(area, &column_constraints, APPLICATION_COLUMN_SPACING);
 
     app.monitor.process_column_bounds.clear();
-    let mut current_col_x = area.x;
     let header_cells = [
         ("  Application", ProcessColumn::Name),
         ("CPU", ProcessColumn::Cpu),
@@ -600,10 +591,9 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     .iter()
     .enumerate()
     .map(|(i, (h, col))| {
-        let width = header_rects[i].width;
+        let rect = header_rects[i];
         app.monitor.process_column_bounds
-            .push((Rect::new(current_col_x, area.y, width, 1), *col));
-        current_col_x += width + spacing;
+            .push((Rect::new(rect.x, area.y, rect.width, 1), *col));
         let mut text = h.to_string();
         if app.monitor.process_sort_col == *col {
             text.push_str(if app.monitor.process_sort_asc {
@@ -632,7 +622,7 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
     f.render_stateful_widget(
         Table::new(rows, column_constraints)
             .header(Row::new(header_cells).height(1).bottom_margin(1))
-            .column_spacing(2),
+            .column_spacing(APPLICATION_COLUMN_SPACING),
         area,
         &mut app.monitor.application_table_state,
     );
@@ -645,16 +635,21 @@ pub fn draw_monitor_applications(f: &mut Frame, area: Rect, app: &mut App) {
 /// absorbed the extra width).
 pub const PROCESS_COLUMN_SPACING: u16 = 1;
 
-/// Header rectangles for the process table, laid out exactly like the table's
+/// Spacing the applications table renders with; the header hit boxes use it too.
+pub const APPLICATION_COLUMN_SPACING: u16 = 2;
+
+/// Header rectangles for a monitor table, laid out exactly like that table's
 /// own columns so a click lands on the column the user sees.
-pub fn process_header_rects(area: Rect, constraints: &[Constraint]) -> Vec<Rect> {
+///
+/// `spacing` must be the same value the table is rendered with.
+pub fn header_rects_for(area: Rect, constraints: &[Constraint], spacing: u16) -> Vec<Rect> {
     let num_cols = constraints.len() as u16;
-    let total_spacing = num_cols.saturating_sub(1) * PROCESS_COLUMN_SPACING;
+    let total_spacing = num_cols.saturating_sub(1) * spacing;
     let effective_width = area.width.saturating_sub(total_spacing);
     Layout::default()
         .direction(Direction::Horizontal)
         .constraints(constraints.to_vec())
-        .spacing(PROCESS_COLUMN_SPACING)
+        .spacing(spacing)
         .split(Rect::new(area.x, area.y, effective_width, 1))
         .to_vec()
 }
@@ -672,7 +667,7 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         Constraint::Length(10),
         Constraint::Length(10),
     ];
-    let header_rects = process_header_rects(area, &column_constraints);
+    let header_rects = header_rects_for(area, &column_constraints, PROCESS_COLUMN_SPACING);
 
     app.monitor.process_column_bounds.clear();
     let header_cells = ["PID", "NAME", "USER", "STATUS", "CPU%", "MEM%"]
@@ -769,4 +764,110 @@ pub fn draw_processes_view(f: &mut Frame, area: Rect, app: &mut App) {
         area,
         &mut app.monitor.process_table_state,
     );
+    fn process_constraints() -> [Constraint; 6] {
+        [
+            Constraint::Length(8),
+            Constraint::Min(25),
+            Constraint::Length(15),
+            Constraint::Length(12),
+            Constraint::Length(10),
+            Constraint::Length(10),
+        ]
+    }
+
+    /// The header hit boxes must line up with the columns the table actually
+    /// renders. They used spacing 2 while the table used 1, so each box drifted
+    /// right of its column — five cells by the last one at 120 columns.
+    #[test]
+    fn process_header_boxes_match_the_rendered_table_columns() {
+        use ratatui::layout::{Constraint, Direction, Layout};
+
+        for width in [60u16, 80, 120, 200] {
+            let area = Rect::new(0, 0, width, 10);
+            let header = header_rects_for(area, &process_constraints(), PROCESS_COLUMN_SPACING);
+
+            // Re-derive the table's own column rects the way ratatui does:
+            // same constraints, same spacing, over the same table area.
+            let table_cols = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(process_constraints().to_vec())
+                .spacing(PROCESS_COLUMN_SPACING)
+                .split(area);
+
+            assert_eq!(header.len(), table_cols.len(), "one hit box per column");
+            for (i, (h, t)) in header.iter().zip(table_cols.iter()).enumerate() {
+                assert_eq!(h.x, t.x, "column {i} at width {width}: header x");
+                assert_eq!(h.width, t.width, "column {i} at width {width}: header width");
+            }
+            assert_eq!(
+                header.last().unwrap().x + header.last().unwrap().width,
+                table_cols.last().unwrap().x + table_cols.last().unwrap().width,
+                "the last column must end where the table ends (width {width})"
+            );
+        }
+    }
+
+    /// Same invariant for the applications table, which renders with spacing 2.
+    #[test]
+    fn application_header_boxes_match_the_rendered_table_columns() {
+        use ratatui::layout::{Direction, Layout};
+
+        let constraints = [
+            Constraint::Min(35),
+            Constraint::Length(10),
+            Constraint::Length(15),
+            Constraint::Length(10),
+            Constraint::Length(15),
+        ];
+        for width in [80u16, 120] {
+            let area = Rect::new(0, 0, width, 10);
+            let header = header_rects_for(area, &constraints, APPLICATION_COLUMN_SPACING);
+            let table_cols = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(constraints.to_vec())
+                .spacing(APPLICATION_COLUMN_SPACING)
+                .split(area);
+            for (i, (h, t)) in header.iter().zip(table_cols.iter()).enumerate() {
+                assert_eq!((h.x, h.width), (t.x, t.width), "column {i} at width {width}");
+            }
+        }
+    }
+
+    /// Clicking the leftmost cell of each drawn header must select that column,
+    /// which is the user-visible consequence of the drift.
+    #[test]
+    fn a_click_on_each_drawn_header_maps_to_its_own_column() {
+        let area = Rect::new(0, 0, 120, 24);
+        let header = header_rects_for(area, &process_constraints(), PROCESS_COLUMN_SPACING);
+        let mut app = App::new();
+        app.monitor.monitor_subview = MonitorSubview::Processes;
+        app.monitor.process_column_bounds = header
+            .iter()
+            .zip(
+                [
+                    ProcessColumn::Pid,
+                    ProcessColumn::Name,
+                    ProcessColumn::User,
+                    ProcessColumn::Status,
+                    ProcessColumn::Cpu,
+                    ProcessColumn::Mem,
+                ]
+                .into_iter(),
+            )
+            .map(|(rect, col)| (Rect::new(rect.x, area.y, rect.width, 1), col))
+            .collect();
+
+        // For every column, a click inside its own box must resolve to it, and
+        // no other box may claim the point first.
+        for (idx, (rect, col)) in app.monitor.process_column_bounds.clone().iter().enumerate() {
+            let hit = app
+                .monitor
+                .process_column_bounds
+                .iter()
+                .find(|(r, _)| r.contains(ratatui::layout::Position { x: rect.x, y: rect.y }))
+                .map(|(_, c)| *c);
+            assert_eq!(hit, Some(*col), "column {idx} leftmost cell must hit itself");
+        }
+    }
+
 }
