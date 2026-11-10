@@ -74,6 +74,22 @@ pub fn centered_modal(width: u16, height: u16, area: Rect) -> Rect {
     }
 }
 
+/// Cell size of the style-color editor dialog (see `draw_style_color_modal`).
+pub const STYLE_COLOR_MODAL_SIZE: (u16, u16) = (64, 10);
+
+/// Cell size of the reset-settings confirmation (see `draw_reset_settings_modal`).
+pub const RESET_SETTINGS_MODAL_SIZE: (u16, u16) = (56, 13);
+
+/// The style-color editor's rectangle for a frame of `w` by `h` cells.
+pub fn style_color_modal_area(w: u16, h: u16) -> Rect {
+    centered_modal(STYLE_COLOR_MODAL_SIZE.0, STYLE_COLOR_MODAL_SIZE.1, Rect::new(0, 0, w, h))
+}
+
+/// The reset-settings dialog's rectangle for a frame of `w` by `h` cells.
+pub fn reset_settings_modal_area(w: u16, h: u16) -> Rect {
+    centered_modal(RESET_SETTINGS_MODAL_SIZE.0, RESET_SETTINGS_MODAL_SIZE.1, Rect::new(0, 0, w, h))
+}
+
 /// Row height of the delete confirmation dialog (borders + message + buttons).
 pub const DELETE_MODAL_HEIGHT: u16 = 7;
 

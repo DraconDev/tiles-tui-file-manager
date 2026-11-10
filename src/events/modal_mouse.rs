@@ -12,6 +12,14 @@ use crate::ui::theme as theme;
 use serde::Deserialize;
 use tokio::sync::mpsc;
 
+/// True when the click at (`column`, `row`) falls on the dialog box `area`.
+fn click_inside(area: ratatui::layout::Rect, column: u16, row: u16) -> bool {
+    column >= area.x
+        && column < area.x.saturating_add(area.width)
+        && row >= area.y
+        && row < area.y.saturating_add(area.height)
+}
+
 pub fn handle_modal_mouse(
     me: &dracon_terminal_engine::contracts::MouseEvent,
     app: &mut App,
@@ -150,15 +158,12 @@ pub fn handle_modal_mouse(
         }
         AppMode::StyleColorInput => {
             if let MouseEventKind::Down(_) = me.kind {
-                let area_w = 64;
-                let area_h = 9;
-                let area_x = (w.saturating_sub(area_w)) / 2;
-                let area_y = (h.saturating_sub(area_h)) / 2;
-                let inside = column >= area_x
-                    && column < area_x + area_w
-                    && row >= area_y
-                    && row < area_y + area_h;
-                if !inside {
+                // Outside-click dismissal must use the SAME box the dialog
+                // renders. It used to assume 64x9 while the renderer drew
+                // 64x10, so clicking the drawn bottom border closed the dialog
+                // and threw away the typed colour.
+                let area = crate::ui::style_color_modal_area(w, h);
+                if !click_inside(area, column, row) {
                     app.core.mode = AppMode::Settings;
                     app.core.input.clear();
                 }
@@ -167,15 +172,8 @@ pub fn handle_modal_mouse(
         }
         AppMode::ResetSettingsConfirm => {
             if let MouseEventKind::Down(_) = me.kind {
-                let area_w = 56;
-                let area_h = 12;
-                let area_x = (w.saturating_sub(area_w)) / 2;
-                let area_y = (h.saturating_sub(area_h)) / 2;
-                let inside = column >= area_x
-                    && column < area_x + area_w
-                    && row >= area_y
-                    && row < area_y + area_h;
-                if !inside {
+                let area = crate::ui::reset_settings_modal_area(w, h);
+                if !click_inside(area, column, row) {
                     app.core.mode = AppMode::Settings;
                     app.core.input.clear();
                 }
