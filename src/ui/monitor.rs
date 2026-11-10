@@ -844,6 +844,44 @@ mod tests {
         }
     }
 
+    /// The header bands that `draw_processes_view` actually records must match
+    /// the columns the table draws — this exercises the renderer's own call
+    /// sites, not just the helper.
+    #[test]
+    fn rendered_process_header_bands_line_up_with_the_table_columns() {
+        use ratatui::layout::{Constraint, Direction, Layout};
+        use ratatui::backend::TestBackend;
+
+        let constraints = process_constraints();
+        for width in [80u16, 120, 200] {
+            let mut app = App::new();
+            app.monitor.monitor_subview = MonitorSubview::Processes;
+            app.system_state.processes = Vec::new();
+            let area = Rect::new(0, 0, width, 20);
+            let backend = TestBackend::new(width, 20);
+            let mut terminal = ratatui::Terminal::new(backend).unwrap();
+            terminal
+                .draw(|f| draw_processes_view(f, area, &mut app))
+                .unwrap();
+
+            let recorded = app.monitor.process_column_bounds.clone();
+            assert_eq!(recorded.len(), constraints.len(), "one band per column");
+
+            // The table solves its columns over its own full area.
+            let table_cols = Layout::default()
+                .direction(Direction::Horizontal)
+                .constraints(constraints.to_vec())
+                .spacing(PROCESS_COLUMN_SPACING)
+                .split(area);
+            for (i, ((rect, _), t)) in recorded.iter().zip(table_cols.iter()).enumerate() {
+                assert_eq!(rect.x, t.x, "band {i} x at width {width}");
+                assert_eq!(rect.width, t.width, "band {i} width at width {width}");
+                assert_eq!(rect.y, area.y, "band {i} sits on the header row");
+                assert_eq!(rect.height, 1, "band {i} is one row");
+            }
+        }
+    }
+
     /// Clicking the leftmost cell of each drawn header must select that column,
     /// which is the user-visible consequence of the drift.
     #[test]
