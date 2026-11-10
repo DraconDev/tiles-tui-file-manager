@@ -367,26 +367,19 @@ pub fn handle_modal_mouse(
             ref target,
         } => {
             if let MouseEventKind::Down(MouseButton::Left) = me.kind {
-                // Hit-testing must use the same geometry the modal renders
-                // with: a fixed 60x9 cell box (see draw_drag_drop_modal), not
-                // the 60x20 percentages it used to assume.
-                let area = crate::ui::centered_modal(60, 9, ratatui::layout::Rect::new(0, 0, w, h));
+                // Hit-testing shares the renderer's geometry: the box height
+                // and the button row both come from the same row count.
+                let area = crate::ui::centered_modal(
+                    60,
+                    crate::ui::small_modals::drag_drop_content_rows(sources.len()) + 2,
+                    ratatui::layout::Rect::new(0, 0, w, h),
+                );
 
                 // Block borders take 1 cell each side
                 let inner_x = area.x + 1;
                 let inner_y = area.y + 1;
 
-                let button_y_offset = if sources.len() == 1 {
-                    3
-                } else {
-                    let display_count = std::cmp::min(sources.len(), 3);
-                    let mut offset = 1 + display_count;
-                    if sources.len() > 3 {
-                        offset += 1;
-                    }
-                    offset + 2
-                };
-                let button_y = inner_y + button_y_offset as u16;
+                let button_y = inner_y + crate::ui::small_modals::drag_drop_button_offset(sources.len());
 
                 let is_hit = |bx: u16, len: u16| {
                     column >= inner_x + bx && column < inner_x + bx + len && row == button_y
