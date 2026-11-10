@@ -2,6 +2,14 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to attach binaries to (e.g. v14.118.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -38,5 +46,5 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: target/release/${{ matrix.artifact_name }}
           asset_name: ${{ matrix.asset_name }}
-          tag: ${{ github.ref }}
+          tag: ${{ inputs.tag }}
           overwrite: true
